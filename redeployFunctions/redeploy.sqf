@@ -5,6 +5,19 @@
 // Get the vic
 private _vic = _this select 0;
 
+// Group leader's variable name
+private _groupLeader = _this select 1;
+
+private _padRegistry = home_base getVariable "padRegistry";
+// prior to performing a redeploy, vic unassigns itself from the pad registry for cleanup
+{
+    // systemChat format ["_x, _y: %1, %2", _x, _y];
+    if (_y == (netId _vic)) then {
+        // release assignment of pad if vic leaves the base
+        _padRegistry set [_x, "unassigned"];
+    }
+} forEach _padRegistry;
+
 // Check if the vic is already on a mission
 if (_vic getVariable "isReinserting") exitWith {
     driver _vic sideChat "I am currently on a mission.";
@@ -13,8 +26,7 @@ if (_vic getVariable "isReinserting") exitWith {
 _vic setVariable ["waveOff", false, true];
 _vic setVariable ["requestingRedeploy", false, true];
 
-// Group leader's variable name
-private _groupLeader = bull;
+
 
 _vic setVariable ["isHeli", false, true];
 _vic setVariable ["performedReinsert", false, true];

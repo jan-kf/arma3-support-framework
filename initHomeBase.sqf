@@ -1,10 +1,10 @@
 #include "redeployFunctions\vicRegistration.sqf"
 
 // setup home_base variables 
-private _landingPadClasses = ["Land_HelipadEmpty_F", "Land_HelipadCircle_F", "Land_HelipadCivil_F", "Land_HelipadRescue_F", "Land_HelipadSquare_F", "Land_JumpTarget_F"];
 private _padRegistry = createHashMap;
 home_base setVariable ["padRegistry", _padRegistry];
 home_base setVariable ["vicRegistry", []];
+home_base setVariable ["landingPadClasses", ["Land_HelipadEmpty_F", "Land_HelipadCircle_F", "Land_HelipadCivil_F", "Land_HelipadRescue_F", "Land_HelipadSquare_F", "Land_JumpTarget_F"]];
 
 // Function to check if a vehicle is registered
 
@@ -157,7 +157,8 @@ while {true} do {
     } forEach _vehiclesNearBase;
 
 	// register new pads, remove any pads that have been deleted
-	private _padsNearBase = nearestObjects [home_base, _landingPadClasses, 1000]; 
+	private _padsNearBase = nearestObjects [home_base, home_base getVariable "landingPadClasses", 1000]; 
+	home_base setVariable ["padsNearBase", _padsNearBase];
 	private _padIdsNearBase = _padsNearBase apply { netId _x };
 	private _padRegistry = home_base getVariable "padRegistry";
 	{
@@ -237,11 +238,11 @@ while {true} do {
 					_actionID = _player addAction [
 						format ["<t color='%2'>Deploy %1</t>", _vehicleName, _deployColor], 
 						{
-							params ["_target", "_caller", "_actionID", "_vehicle"];
-							[_vehicle] execVM "redeployFunctions\redeploy.sqf";
+							params ["_target", "_caller", "_actionID", "_args"];
+							_args execVM "redeployFunctions\redeploy.sqf";
 
 						},
-						_vehicle, 
+						[_vehicle, _player], 
 						6, 
 						false, 
 						true, 
@@ -265,5 +266,5 @@ while {true} do {
 
     } forEach allPlayers;
 
-    sleep 10; // Wait for 10 seconds before running the loop again
+    sleep 3; 
 };

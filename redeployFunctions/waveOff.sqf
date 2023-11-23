@@ -18,7 +18,7 @@ for "_i" from (count waypoints _group - 1) to 0 step -1 do
 };
 
 // have vic RTB
-[_vic, bull, true, false, "Waving off, Returning to Base at: %1", "Ready for tasking...", true] call _goToLocation;
+[_vic, home_base, true, false, "Waving off, Returning to Base at: %1", "Ready for tasking...", true] call _goToLocation;
 
 _vic engineOn false;
 // reset State
