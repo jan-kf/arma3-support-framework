@@ -1,7 +1,6 @@
 //this addAction ["<t color='#00AA00'>Request Reinsert</t>", "redeploy.sqf", nil, 6, false, true, "", "true", 5, false, "", ""];
 
-#include "redeployFunctions\goToLocation.sqf"
-
+#include "goToLocation.sqf"
 
 // Get the vic
 private _vic = _this select 0;
@@ -38,11 +37,19 @@ if (_vic getVariable ["isHeli", false]) then {
     _touchdownMessage = "We're here, Please disembark now";
 };
 
+if (_vic getVariable "waveOff") exitWith {
+    true
+};
+
 [_vic, _groupLeader, false, true, _dustOffMessage, _touchdownMessage] call _goToLocation;
 _vic setVariable ["performedReinsert", true, true];
 
-private _currentIteration = 0;
 
+if (_vic getVariable "waveOff") exitWith {
+    true
+};
+
+private _currentIteration = 0;
 waitUntil {
     sleep 1; 
     private _cargoList = fullCrew [_vic, "cargo"]; 
@@ -51,12 +58,24 @@ waitUntil {
     _cargoCount < 1 || {_currentIteration >= 15};
 };
 
+if (_vic getVariable "waveOff") exitWith {
+    true
+};
+
 driver _vic sideChat "Transport Unload complete, RTB in 10 seconds.";
 sleep 10;
+
+if (_vic getVariable "waveOff") exitWith {
+    true
+};
 
 if (!(_vic getVariable ["fallbackTriggered", false])) then {
     // if fallback triggered, this prevents double calling RTB
     [_vic, _groupLeader, true, true, "Returning to Base at: %1", "Ready for tasking..."] call _goToLocation;
+};
+
+if (_vic getVariable "waveOff") exitWith {
+    true
 };
 
 _vic engineOn false;

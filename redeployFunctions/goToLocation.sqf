@@ -16,7 +16,15 @@ private _goToLocation = {
 		["_fallbackStationaryThreashold", 3]
 	];
 
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
+
 	[_vic, _groupLeader, _goHome, _first_message] call _leaveCurrentLocation;
+
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
 
 	if (!isNil "_doFallback") then {
 		private _fallbackTimelimit = 10;
@@ -24,6 +32,10 @@ private _goToLocation = {
 			_fallbackTimelimit = 5;
 		};
 		[_vic, _groupLeader, _fallbackTimeoutDuration, _fallbackTimelimit, _fallbackStationaryThreashold] spawn _checkIfStationary;
+	};
+
+	if (_vic getVariable "waveOff") exitWith {
+		true
 	};
 
 	[_vic, _groupLeader, _goHome, _last_message] call _arriveAtDestination;

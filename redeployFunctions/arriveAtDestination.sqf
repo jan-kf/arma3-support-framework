@@ -5,14 +5,27 @@ private _arriveAtDestination = {
 		"_goHome", 
 		["_last_message", nil]
 	];
+
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
+
 	private _destination = _vic getVariable ["destination", home_base];
 	private _destinationPos = getPos _destination;
 
 	//wait until vic is near destination 
 	waitUntil {sleep 1; _vic distance2D _destinationPos < 100};
 
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
+
 	// wait until vic stopped/landed
 	waitUntil {sleep 1; (isTouchingGround _vic) && (speed _vic < 1)};
+
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
 
 	_vic engineOn false;
 

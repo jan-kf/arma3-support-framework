@@ -8,6 +8,11 @@ private _leaveCurrentLocation = {
 		"_goHome", 
 		["_first_message", nil]
 	];
+
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
+
 	private _location = nil;
 
 	if (_goHome) then {
@@ -29,6 +34,9 @@ private _leaveCurrentLocation = {
 	private _destinationPos = getPos _location; 
 	private _currentPos = getPos _vic;
 
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
 
 	// set waypoint
 	private _grp = group _vic;
@@ -43,6 +51,13 @@ private _leaveCurrentLocation = {
 		driver _vic sideChat format [_first_message, _gridRef];
 	};
 
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
 	// wait until vic leaves it's current location
 	waitUntil {sleep 1; _vic distance2D _currentPos > 100};
+
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
 };

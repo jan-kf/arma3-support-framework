@@ -27,6 +27,10 @@ while {time - _startTime < _timeout} do {
 	private _currentPos = getPos _vic;
 	private _arrived = [_vic] call _didArrive;
 
+	if (_vic getVariable "waveOff") exitWith {
+		true
+	};
+
 	if (isNull _vic || isNil "_vic" || !(alive _vic) || isNil "_arrived" || _arrived) exitWith {
 		// hint "exiting stationary check";
 		true;
@@ -44,14 +48,33 @@ while {time - _startTime < _timeout} do {
 
 		if (_vic getVariable ["performedReinsert", false]) then {
 			// stalled, but has reinserted, RTB
+
+			if (_vic getVariable "waveOff") exitWith {
+				true
+			};
 			[_vic, _groupLeader, true, "Something went wrong, returning to Base"] call _leaveCurrentLocation;
+			if (_vic getVariable "waveOff") exitWith {
+				true
+			};
 			[_vic, _groupLeader, true, nil] call _arriveAtDestination;
+			if (_vic getVariable "waveOff") exitWith {
+				true
+			};
 			_vic setVariable ["isReinserting", false, true];
 
 		} else {
 			//stalled but hasn't reinserted, try again
+			if (_vic getVariable "waveOff") exitWith {
+				true
+			};
 			[_vic, _groupLeader, false, "Something went wrong, attempting redeploy at %1"] call _leaveCurrentLocation;
+			if (_vic getVariable "waveOff") exitWith {
+				true
+			};
 			[_vic, _groupLeader, true, nil] call _arriveAtDestination;
+			if (_vic getVariable "waveOff") exitWith {
+				true
+			};
 			_vic setVariable ["performedReinsert", true, true];
 		};
 		
