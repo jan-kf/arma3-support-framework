@@ -12,31 +12,33 @@ private _goToLocation = {
 		["_doFallback", nil],
 		["_first_message", nil], 
 		["_last_message", nil],
+		["_wavingOff", false],
 		["_fallbackTimeoutDuration", 300],
 		["_fallbackStationaryThreashold", 3]
 	];
 
-	if (_vic getVariable "waveOff") exitWith {
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
-	[_vic, _groupLeader, _goHome, _first_message] call _leaveCurrentLocation;
+	[_vic, _groupLeader, _goHome, _first_message, _wavingOff] call _leaveCurrentLocation;
 
-	if (_vic getVariable "waveOff") exitWith {
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
-	if (!isNil "_doFallback") then {
-		private _fallbackTimelimit = 10;
-		if (_vic getVariable ["isHeli", false]) then {
-			_fallbackTimelimit = 5;
-		};
-		[_vic, _groupLeader, _fallbackTimeoutDuration, _fallbackTimelimit, _fallbackStationaryThreashold] spawn _checkIfStationary;
-	};
+	// TODO: make the stationaryCheck more useful
+	// if (!isNil "_doFallback") then {
+	// 	private _fallbackTimelimit = 10;
+	// 	if (_vic getVariable ["isHeli", false]) then {
+	// 		_fallbackTimelimit = 5;
+	// 	};
+	// 	[_vic, _groupLeader, _fallbackTimeoutDuration, _fallbackTimelimit, _fallbackStationaryThreashold] spawn _checkIfStationary;
+	// };
 
-	if (_vic getVariable "waveOff") exitWith {
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
-	[_vic, _groupLeader, _goHome, _last_message] call _arriveAtDestination;
+	[_vic, _groupLeader, _goHome, _last_message, _wavingOff] call _arriveAtDestination;
 };

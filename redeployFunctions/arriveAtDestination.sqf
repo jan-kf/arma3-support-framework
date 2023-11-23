@@ -3,10 +3,11 @@ private _arriveAtDestination = {
 		"_vic",  
 		"_groupLeader", 
 		"_goHome", 
-		["_last_message", nil]
+		["_last_message", nil],
+		["_wavingOff", false]
 	];
 
-	if (_vic getVariable "waveOff") exitWith {
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
@@ -16,14 +17,14 @@ private _arriveAtDestination = {
 	//wait until vic is near destination 
 	waitUntil {sleep 1; _vic distance2D _destinationPos < 100};
 
-	if (_vic getVariable "waveOff") exitWith {
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
 	// wait until vic stopped/landed
 	waitUntil {sleep 1; (isTouchingGround _vic) && (speed _vic < 1)};
 
-	if (_vic getVariable "waveOff") exitWith {
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 

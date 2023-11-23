@@ -3,17 +3,25 @@
 // Get the vic
 private _vic = _this select 0;
 
+// set waveOff to true to stop previous commands
 _vic setVariable ["waveOff", true, true];
 
-private _group = group _vic;  // Replace 'myUnit' with your unit's variable name
+// cancel reinsertion, reset request for redeploy
+_vic setVariable ["isReinserting", false, true];
+_vic setVariable ["requestingRedeploy", false, true];
+
+// delete waypoints
+private _group = group _vic;  
 for "_i" from (count waypoints _group - 1) to 0 step -1 do
 {
 	deleteWaypoint [_group, _i];
 };
 
-[_vic, bull, true, false, "Waving off, Returning to Base at: %1", "Ready for tasking..."] call _goToLocation;
+// have vic RTB
+[_vic, bull, true, false, "Waving off, Returning to Base at: %1", "Ready for tasking...", true] call _goToLocation;
 
 _vic engineOn false;
+// reset State
 _vic setVariable ["performedReinsert", false, true];
 _vic setVariable ["isReinserting", false, true];
 _vic setVariable ["fallbackTriggered", false, true];

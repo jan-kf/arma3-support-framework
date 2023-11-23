@@ -1,11 +1,17 @@
 #include "redeployFunctions\vicRegistration.sqf"
 
+// setup home_base variables 
+private _landingPadClasses = ["Land_HelipadEmpty_F", "Land_HelipadCircle_F", "Land_HelipadCivil_F", "Land_HelipadRescue_F", "Land_HelipadSquare_F", "Land_JumpTarget_F"];
+private _padRegistry = createHashMap;
+home_base setVariable ["padRegistry", _padRegistry];
+home_base setVariable ["vicRegistry", []];
+
 // Function to check if a vehicle is registered
 
 missionNamespace setVariable ["_isVehicleRegistered", {
     params ["_vehicle"];
-    private _registeredVehicles = home_base getVariable ["registeredVehicles", []];
-    _vehicle in _registeredVehicles
+    private _vicRegistry = home_base getVariable ["vicRegistry", []];
+    _vehicle in _vicRegistry
 }];
 
 // Function to register a vehicle
@@ -16,9 +22,8 @@ missionNamespace setVariable ["_registerVehicle", {
 
     if (!_vicIsRegistered) then {
         // register the vic
-        private _registeredVehicles = home_base getVariable ["registeredVehicles", []];
-        _registeredVehicles pushBackUnique _vehicle;
-        home_base setVariable ["registeredVehicles", _registeredVehicles, true];
+        private _vicRegistry = home_base getVariable ["vicRegistry", []];
+        _vicRegistry pushBackUnique _vehicle;
 
         // remove old action if it exists
         private _oldRegActionID = _vehicle getVariable ["regActionID", nil];
@@ -51,9 +56,8 @@ missionNamespace setVariable ["_unregisterVehicle", {
 
     if (_vicIsRegistered) then {
         // unregister vic
-        private _registeredVehicles = home_base getVariable ["registeredVehicles", []];
-        _registeredVehicles deleteAt (_registeredVehicles find _vehicle);
-        home_base setVariable ["registeredVehicles", _registeredVehicles, true];
+        private _vicRegistry = home_base getVariable ["vicRegistry", []];
+        _vicRegistry deleteAt (_vicRegistry find _vehicle);
 
         // remove old action if it exists
         private _oldRegActionID = _vehicle getVariable ["regActionID", nil];
@@ -73,6 +77,16 @@ missionNamespace setVariable ["_unregisterVehicle", {
             nil, 6, false, true, "", "true", 5, false, "", ""
         ];
 
+		// remove any request for redeploy if it gets unregistered
+		private _requestActionID = _vehicle getVariable ["requestActionID", nil];
+		_vehicle setVariable ["requestingRedeploy", false, true];
+
+		// remove current action to stay up to date
+		if (!isNil "_requestActionID") then {
+			_vehicle removeAction _requestActionID;
+			_vehicle setVariable ["requestActionID", nil, true];
+		};
+
         // save action id for later
         _vehicle setVariable ["regActionID", _regActionID, true];
     
@@ -84,6 +98,8 @@ missionNamespace setVariable ["_unregisterVehicle", {
 // [_vehicle] call _unregisterVehicle;
 // private _registered = [_vehicle] call _isVehicleRegistered;
 
+
+// gameloop -- consider making separate functions and "spawn" -ing them in separate threads
 while {true} do {
 
     // Find all vehicles within a certain radius of home_base
@@ -93,13 +109,77 @@ while {true} do {
     {
         // Your command here. Example:
         // hint format ["Vehicle %1 is near the base", _x];
+		private _vehicle = _x;
 		private _hasRegistrationAction = _x getVariable ["regActionID", nil];
 
 		if (_x isKindOf "Helicopter" && isNil "_hasRegistrationAction") then {
 			[_x] call _addRegistrationChoicesToVehicles;
 		};
 
+		// // Give players the ability to signal that they want to redeploy:
+		private _vicIsRegistered = [_vehicle] call (missionNamespace getVariable "_isVehicleRegistered");
+		private _requestingRedeploy = _vehicle getVariable ["requestingRedeploy", false];
+		private _requestActionID = _vehicle getVariable ["requestActionID", nil];
+
+		// remove current action to stay up to date
+		if (!isNil "_requestActionID") then {
+			_vehicle removeAction _requestActionID;
+			_vehicle setVariable ["requestActionID", nil, true];
+		};
+
+		// only add actions if the vic is registered
+		if (_vicIsRegistered) then {
+			private _vehicleName = getText (configFile >> "CfgVehicles" >> (typeOf _vehicle) >> "displayName");
+			if (_requestingRedeploy) then {
+				// add ability to cancel redeployement request
+				_requestActionID = _vehicle addAction [
+					format ["<t color='#FFA200'>Cancel Redeploy Request %1</t>", _vehicleName], 
+					{
+						private _vehicle = _this select 0;
+						_vehicle setVariable ["requestingRedeploy", false, true];
+					},
+					nil, 6, false, true, "", "true", 5, false, "", ""
+				];
+			} else {
+				// add ability to request redeployement
+				_requestActionID = _vehicle addAction [
+					format ["<t color='#FFD500'>Request Redeploy %1</t>", _vehicleName], 
+					{
+						private _vehicle = _this select 0;
+						_vehicle setVariable ["requestingRedeploy", true, true];
+					},
+					nil, 6, false, true, "", "true", 5, false, "", ""
+				];
+			};
+			_vehicle setVariable ["requestActionID", _requestActionID, true];
+		};
+
     } forEach _vehiclesNearBase;
+
+	// register new pads, remove any pads that have been deleted
+	private _padsNearBase = nearestObjects [home_base, _landingPadClasses, 1000]; 
+	private _padIdsNearBase = _padsNearBase apply { netId _x };
+	private _padRegistry = home_base getVariable "padRegistry";
+	{
+		// add any missing pads
+		if (!(_x in _padRegistry)) then {
+			_padRegistry set [_x, "unassigned"]
+		};
+	} forEach _padIdsNearBase;
+	private _allPads = keys _padRegistry;
+	// find if any pads were removed
+	private _padsToRemove = [];
+	{
+		if (!(_x in _padIdsNearBase)) then {
+			_padsToRemove pushBack _x;
+		}
+	} forEach _allPads;
+	// if any pads were removed, then delete them from registry
+	{
+		_padRegistry deleteAt _x;
+	} forEach _padsToRemove;
+
+	//systemChat format ["registry: %1", _padRegistry];
 
 	// Iterate through each player
     {
@@ -118,15 +198,23 @@ while {true} do {
 		if (_hasRadio) then {
 			private _newActions = [];
 			// Get the current list of registered vehicles
-			private _currentRegisteredVehicles = home_base getVariable ["registeredVehicles", []];
+			private _currentRegisteredVehicles = home_base getVariable ["vicRegistry", []];
 
 			// Add an action for each registered vehicle		
 			{
 				private _vehicle = _x;
 				private _vehicleName = getText (configFile >> "CfgVehicles" >> (typeOf _vehicle) >> "displayName");
 				private _reinserting = _vehicle getVariable ['isReinserting', false];
+				private _waveOff = _vehicle getVariable ['waveOff', false];
+				private _requestingRedeploy = _vehicle getVariable ['requestingRedeploy', false];
+
+				private _deployColor = "#FFFFFF";
+				if (_requestingRedeploy) then {
+					_deployColor = "#00FF00"
+				};
+
 				private _actionID = nil;
-				if (_reinserting) then {
+				if (_reinserting && !_waveOff) then {
 					_actionID = _player addAction [
 						format ["<t color='#FF0000'>Wave Off %1</t>", _vehicleName], 
 						{
@@ -147,7 +235,7 @@ while {true} do {
 					];
 				} else {
 					_actionID = _player addAction [
-						format ["<t color='#00FF00'>Deploy %1</t>", _vehicleName], 
+						format ["<t color='%2'>Deploy %1</t>", _vehicleName, _deployColor], 
 						{
 							params ["_target", "_caller", "_actionID", "_vehicle"];
 							[_vehicle] execVM "redeployFunctions\redeploy.sqf";

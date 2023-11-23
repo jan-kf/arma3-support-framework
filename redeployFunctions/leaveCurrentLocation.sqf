@@ -6,17 +6,18 @@ private _leaveCurrentLocation = {
 		"_vic",  
 		"_groupLeader",
 		"_goHome", 
-		["_first_message", nil]
+		["_first_message", nil],
+		["_wavingOff", false]
 	];
 
-	if (_vic getVariable "waveOff") exitWith {
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
 	private _location = nil;
 
 	if (_goHome) then {
-		_location = [_vic, home_base, true] call _findRendezvousPoint;
+		_location = [_vic, home_base, true, true] call _findRendezvousPoint;
 	} else {
 		_location = [_vic, _groupLeader] call _findRendezvousPoint;
 	};
@@ -30,11 +31,18 @@ private _leaveCurrentLocation = {
 		_vic setVariable ["isReinserting", false, true];
 	};
 
+
 	_vic setVariable ["destination", _location, true];
 	private _destinationPos = getPos _location; 
 	private _currentPos = getPos _vic;
+	
 
-	if (_vic getVariable "waveOff") exitWith {
+	// logic to check if Vic is already at location
+	if (_vic distance2D _destinationPos < 100) exitWith {
+		true
+	};
+
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
@@ -51,13 +59,25 @@ private _leaveCurrentLocation = {
 		driver _vic sideChat format [_first_message, _gridRef];
 	};
 
-	if (_vic getVariable "waveOff") exitWith {
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 	// wait until vic leaves it's current location
 	waitUntil {sleep 1; _vic distance2D _currentPos > 100};
 
-	if (_vic getVariable "waveOff") exitWith {
+	if (!_goHome) then {
+		// vic is not going home
+		private _padRegistry = home_base getVariable "padRegistry";
+		{
+			// systemChat format ["_x, _y: %1, %2", _x, _y];
+			if (_y == (netId _vic)) then {
+				// release assignment of pad if vic leaves the base
+				_padRegistry set [_x, "unassigned"];
+			}
+		} forEach _padRegistry;
+	};
+
+	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 };
