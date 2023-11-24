@@ -36,7 +36,7 @@ if (_vic isKindOf "Helicopter") then {
     _vic setVariable ["isHeli", true, true];
 };
 
-driver _vic sideChat "Starting Procedures";
+// driver _vic sideChat "Starting Procedures";
 
 // Prevent multiple simultaneous reinsertion requests
 _vic setVariable ["isReinserting", true, true];
@@ -70,7 +70,7 @@ waitUntil {
     private _cargoList = fullCrew [_vic, "cargo"]; 
     private _cargoCount = count _cargoList; 
     _currentIteration = _currentIteration + 1;
-    _cargoCount < 1 || {_currentIteration >= 15};
+    _cargoCount < 1 || {_currentIteration >= 15} || _vic getVariable "waveOff";
 };
 
 if (_vic getVariable "waveOff" ) exitWith {
@@ -92,6 +92,8 @@ if (!(_vic getVariable ["fallbackTriggered", false]) && !(_vic getVariable ["wav
 if (_vic getVariable "waveOff") exitWith {
     true
 };
+
+driver _vic sideChat "Ready for tasking...";
 
 _vic engineOn false;
 _vic setVariable ["performedReinsert", false, true];

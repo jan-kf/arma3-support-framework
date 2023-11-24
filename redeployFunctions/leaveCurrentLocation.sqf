@@ -19,7 +19,7 @@ private _leaveCurrentLocation = {
 	if (_goHome) then {
 		_location = [_vic, home_base, true, true] call _findRendezvousPoint;
 	} else {
-		_location = [_vic, _groupLeader] call _findRendezvousPoint;
+		_location = [_vic, _groupLeader, true] call _findRendezvousPoint;
 	};
 
 	if (isNil "_location") exitWith {
@@ -63,7 +63,7 @@ private _leaveCurrentLocation = {
 		true
 	};
 	// wait until vic leaves it's current location
-	waitUntil {sleep 1; _vic distance2D _currentPos > 100};
+	waitUntil {sleep 1; (_vic distance2D _currentPos > 100) || _vic getVariable "waveOff"};
 
 	if (!_goHome) then {
 		// vic is not going home
@@ -75,6 +75,20 @@ private _leaveCurrentLocation = {
 				_padRegistry set [_x, "unassigned"];
 			}
 		} forEach _padRegistry;
+	} else {
+		// vicis heading home, it can release it's parkingPass
+		private _activeAwayPads = home_base getVariable "activeAwayPads";
+		private _parkingPassToReturn = _vic getVariable "awayParkingPass";
+
+		// systemChat format ["activeAwayPads: %1 | parkingPassToReturn: %2", _activeAwayPads, _parkingPassToReturn];
+
+		if (!isNil "_parkingPassToReturn") then {
+			private _index = _activeAwayPads find _parkingPassToReturn;
+			if (_index != -1) then {
+				// Remove the element
+				_activeAwayPads deleteAt _index;
+			};
+		};
 	};
 
 	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {

@@ -1,3 +1,24 @@
+/*
+if you want to create a home base (only 1 is allowed at a time) 
+you first place down an object (or logic entity), and set it's variable name to: 
+
+home_base
+
+then provide it this code:
+
+execVM "initHomeBase.sqf";
+
+---
+
+if you want some vehicles to start off being registered, 
+you need to use a logic entity (Systems > Logic Entities) instead of a physical object. 
+I like the "Base" under Locations -- do the same setup as above.
+
+Then you can sync the vehicles to this logic entity (home_base)
+
+*/
+
+
 #include "redeployFunctions\vicRegistration.sqf"
 
 // setup home_base variables 
@@ -5,8 +26,21 @@ private _padRegistry = createHashMap;
 home_base setVariable ["padRegistry", _padRegistry];
 home_base setVariable ["vicRegistry", []];
 home_base setVariable ["landingPadClasses", ["Land_HelipadEmpty_F", "Land_HelipadCircle_F", "Land_HelipadCivil_F", "Land_HelipadRescue_F", "Land_HelipadSquare_F", "Land_JumpTarget_F"]];
+home_base setVariable ["activeAwayPads", []];
 
 // Function to check if a vehicle is registered
+
+
+// register all objects that are synced to home_base
+private _syncedObjects = synchronizedObjects home_base;
+{
+	if (_x isKindOf "Helicopter") then {
+		private _vicRegistry = home_base getVariable ["vicRegistry", []];
+		_vicRegistry pushBack _x;
+	};
+} forEach _syncedObjects;
+
+////////////////////////////////////////////////////////////////////////////////////////
 
 missionNamespace setVariable ["_isVehicleRegistered", {
     params ["_vehicle"];
@@ -180,7 +214,8 @@ while {true} do {
 		_padRegistry deleteAt _x;
 	} forEach _padsToRemove;
 
-	//systemChat format ["registry: %1", _padRegistry];
+	// private _activeAwayPads = home_base getVariable "activeAwayPads";
+	// systemChat format ["activeAwayPads: %1", _activeAwayPads];
 
 	// Iterate through each player
     {
@@ -208,10 +243,16 @@ while {true} do {
 				private _reinserting = _vehicle getVariable ['isReinserting', false];
 				private _waveOff = _vehicle getVariable ['waveOff', false];
 				private _requestingRedeploy = _vehicle getVariable ['requestingRedeploy', false];
+				private _extraText = "";
+
+				if (!isTouchingGround _vehicle) then {
+					_extraText = "(In Air)";
+				};
 
 				private _deployColor = "#FFFFFF";
+
 				if (_requestingRedeploy) then {
-					_deployColor = "#00FF00"
+					_deployColor = "#00FF00";
 				};
 
 				private _actionID = nil;
@@ -236,7 +277,7 @@ while {true} do {
 					];
 				} else {
 					_actionID = _player addAction [
-						format ["<t color='%2'>Deploy %1</t>", _vehicleName, _deployColor], 
+						format ["<t color='%2'>%3 Deploy %1</t>", _vehicleName, _deployColor, _extraText], 
 						{
 							params ["_target", "_caller", "_actionID", "_args"];
 							_args execVM "redeployFunctions\redeploy.sqf";
