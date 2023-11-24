@@ -39,7 +39,7 @@ private _leaveCurrentLocation = {
 
 	// logic to check if Vic is already at location
 	if (_vic distance2D _destinationPos < 100) exitWith {
-		true
+		driver _vic sideChat "Already at location, wait one...";
 	};
 
 	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
@@ -63,7 +63,7 @@ private _leaveCurrentLocation = {
 		true
 	};
 	// wait until vic leaves it's current location
-	waitUntil {sleep 1; (_vic distance2D _currentPos > 100) || _vic getVariable "waveOff"};
+	waitUntil {sleep 1; (_vic distance2D _currentPos > 100) || (_vic getVariable "waveOff" && !_wavingOff)};
 
 	if (!_goHome) then {
 		// vic is not going home

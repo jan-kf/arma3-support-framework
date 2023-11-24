@@ -10,9 +10,9 @@ private _goToLocation = {
 		"_groupLeader", 
 		"_goHome", 
 		["_doFallback", nil],
+		["_wavingOff", false],
 		["_first_message", nil], 
 		["_last_message", nil],
-		["_wavingOff", false],
 		["_fallbackTimeoutDuration", 300],
 		["_fallbackStationaryThreashold", 3]
 	];

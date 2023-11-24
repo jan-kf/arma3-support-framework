@@ -56,7 +56,7 @@ if (_vic getVariable "waveOff") exitWith {
     true
 };
 
-[_vic, _groupLeader, false, true, _dustOffMessage, _touchdownMessage] call _goToLocation;
+[_vic, _groupLeader, false, true, false, _dustOffMessage, _touchdownMessage] call _goToLocation;
 _vic setVariable ["performedReinsert", true, true];
 
 
@@ -86,7 +86,7 @@ if (_vic getVariable "waveOff" ) exitWith {
 
 if (!(_vic getVariable ["fallbackTriggered", false]) && !(_vic getVariable ["waveOff", false])) then {
     // if fallback triggered, this prevents double calling RTB
-    [_vic, _groupLeader, true, true, "Returning to Base at: %1", "Ready for tasking..."] call _goToLocation;
+    [_vic, _groupLeader, true, true, false, "Returning to Base at: %1", "Ready for tasking..."] call _goToLocation;
 };
 
 if (_vic getVariable "waveOff") exitWith {

@@ -15,14 +15,14 @@ private _arriveAtDestination = {
 	private _destinationPos = getPos _destination;
 
 	//wait until vic is near destination 
-	waitUntil {sleep 1; (_vic distance2D _destinationPos < 100) || _vic getVariable "waveOff"};
+	waitUntil {sleep 1; (_vic distance2D _destinationPos < 100) || (_vic getVariable "waveOff" && !_wavingOff)};
 
 	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
 	// wait until vic stopped/landed
-	waitUntil {sleep 1; ((isTouchingGround _vic) && (speed _vic < 1)) || _vic getVariable "waveOff"};
+	waitUntil {sleep 1; ((isTouchingGround _vic) && (speed _vic < 1)) || (_vic getVariable "waveOff" && !_wavingOff)};
 
 	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
 		true
