@@ -36,6 +36,6 @@ private _arriveAtDestination = {
 
 	if (_goHome) then {
 		// vic sent back home, so since it's home it can take on a new mission
-		_vic setVariable ["isReinserting", false, true];
+		_vic setVariable ["isReinserting", false];
 	};
 };

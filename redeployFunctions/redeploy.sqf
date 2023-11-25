@@ -23,23 +23,23 @@ if (_vic getVariable "isReinserting") exitWith {
     driver _vic sideChat "I am currently on a mission.";
 };
 
-_vic setVariable ["waveOff", false, true];
-_vic setVariable ["requestingRedeploy", false, true];
+_vic setVariable ["waveOff", false];
+_vic setVariable ["requestingRedeploy", false];
 
 
 
-_vic setVariable ["isHeli", false, true];
-_vic setVariable ["performedReinsert", false, true];
-_vic setVariable ["destination", nil, true];
+_vic setVariable ["isHeli", false];
+_vic setVariable ["performedReinsert", false];
+_vic setVariable ["destination", nil];
 
 if (_vic isKindOf "Helicopter") then {
-    _vic setVariable ["isHeli", true, true];
+    _vic setVariable ["isHeli", true];
 };
 
 // driver _vic sideChat "Starting Procedures";
 
 // Prevent multiple simultaneous reinsertion requests
-_vic setVariable ["isReinserting", true, true];
+_vic setVariable ["isReinserting", true];
 
 private _dustOffMessage = nil;
 private _touchdownMessage = nil;
@@ -57,7 +57,7 @@ if (_vic getVariable "waveOff") exitWith {
 };
 
 [_vic, _groupLeader, false, true, false, _dustOffMessage, _touchdownMessage] call _goToLocation;
-_vic setVariable ["performedReinsert", true, true];
+_vic setVariable ["performedReinsert", true];
 
 
 if (_vic getVariable "waveOff" ) exitWith {
@@ -96,6 +96,6 @@ if (_vic getVariable "waveOff") exitWith {
 driver _vic sideChat "Ready for tasking...";
 
 _vic engineOn false;
-_vic setVariable ["performedReinsert", false, true];
-_vic setVariable ["isReinserting", false, true];
-_vic setVariable ["fallbackTriggered", false, true];
+_vic setVariable ["performedReinsert", false];
+_vic setVariable ["isReinserting", false];
+_vic setVariable ["fallbackTriggered", false];

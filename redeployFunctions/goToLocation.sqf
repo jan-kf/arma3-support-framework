@@ -1,8 +1,7 @@
 #include "leaveCurrentLocation.sqf"
 #include "arriveAtDestination.sqf"
-// #include "checkIfStationary.sqf"
 
-_checkIfStationary = compile preprocessFile "redeployFunctions\checkIfStationary.sqf";
+// _checkIfStationary = compile preprocessFile "redeployFunctions\checkIfStationary.sqf";
 
 private _goToLocation = {
 	params [

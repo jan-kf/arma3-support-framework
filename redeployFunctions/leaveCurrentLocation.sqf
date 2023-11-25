@@ -28,11 +28,11 @@ private _leaveCurrentLocation = {
 		} else {
 			driver _vic sideChat "No nearby RP found!";
 		};
-		_vic setVariable ["isReinserting", false, true];
+		_vic setVariable ["isReinserting", false];
 	};
 
 
-	_vic setVariable ["destination", _location, true];
+	_vic setVariable ["destination", _location];
 	private _destinationPos = getPos _location; 
 	private _currentPos = getPos _vic;
 	

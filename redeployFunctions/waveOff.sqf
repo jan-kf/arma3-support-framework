@@ -4,11 +4,11 @@
 private _vic = _this select 0;
 
 // set waveOff to true to stop previous commands
-_vic setVariable ["waveOff", true, true];
+_vic setVariable ["waveOff", true];
 
 // cancel reinsertion, reset request for redeploy
-_vic setVariable ["isReinserting", false, true];
-_vic setVariable ["requestingRedeploy", false, true];
+_vic setVariable ["isReinserting", false];
+_vic setVariable ["requestingRedeploy", false];
 
 // delete waypoints
 private _group = group _vic;  
@@ -44,7 +44,7 @@ if (!isTouchingGround _vic) then {
 driver _vic sideChat "Ready for tasking...";
 _vic engineOn false;
 // reset State
-_vic setVariable ["performedReinsert", false, true];
-_vic setVariable ["isReinserting", false, true];
-_vic setVariable ["fallbackTriggered", false, true];
-_vic setVariable ["waveOff", false, true];
+_vic setVariable ["performedReinsert", false];
+_vic setVariable ["isReinserting", false];
+_vic setVariable ["fallbackTriggered", false];
+_vic setVariable ["waveOff", false];
