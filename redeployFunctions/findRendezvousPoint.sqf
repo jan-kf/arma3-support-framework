@@ -1,15 +1,17 @@
 private _findRendezvousPoint = {
 	params ["_vic", "_target", ["_checkOccupied", false], ["_goHome", false]];
 	private _dropOffPoint = nil;
+	private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
 
-	if (_vic getVariable ["isHeli", false]) then {
-		private _padRegistry = home_base getVariable "padRegistry";
-		private _activeAwayPads = home_base getVariable "activeAwayPads";
-		private _padsNearBase = home_base getVariable "padsNearBase";
+	if (_vicStatus get "isHeli") then {
+		private _manifest = home_base getVariable "homeBaseManifest";
+		private _padRegistry = _manifest get "padRegistry";
+		private _activeAwayPads = _manifest get "activeAwayPads";
+		private _padsNearBase = _manifest get "padsNearBase";
 
 		private _nearestLandingPads = _padsNearBase;
 		if (!_goHome) then {
-			_nearestLandingPads = nearestObjects [_target, home_base getVariable "landingPadClasses", 250]; // Adjust the range as needed
+			_nearestLandingPads = nearestObjects [_target, _manifest get "landingPadClasses", 250]; // Adjust the range as needed
 		};
 
 		if (_checkOccupied) then {
@@ -39,7 +41,7 @@ private _findRendezvousPoint = {
 			};
 			private _unoccupiedPad = nil;
 			{
-				private _isOccupied = [_x, _vic, _padRegistry, _activeAwayPads, _goHome, home_base getVariable "landingPadClasses"] call _isPadOccupied;
+				private _isOccupied = [_x, _vic, _padRegistry, _activeAwayPads, _goHome, _manifest get "landingPadClasses"] call _isPadOccupied;
 				if (!_isOccupied) then {
 					_unoccupiedPad = _x;
 					break;
@@ -54,7 +56,7 @@ private _findRendezvousPoint = {
 				// add the pad to the list of pads in use that are not at the homebase
 				private _locationID = netId _unoccupiedPad;
 				_activeAwayPads pushBack _locationId;
-				_vic setVariable ["awayParkingPass", _locationID];
+				_vicStatus set ["awayParkingPass", _locationID];
 			} else {
 				// assign the _vic to the _unoccupiedPad at home
 				_padRegistry set [netId _unoccupiedPad, netId _vic]; 

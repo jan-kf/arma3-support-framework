@@ -4,11 +4,13 @@
 private _vic = _this select 0;
 
 // set waveOff to true to stop previous commands
-_vic setVariable ["waveOff", true];
+private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
+
+_vicStatus set ["waveOff", true];
 
 // cancel reinsertion, reset request for redeploy
-_vic setVariable ["isReinserting", false];
-_vic setVariable ["requestingRedeploy", false];
+_vicStatus set ["isReinserting", false];
+_vicStatus set ["requestingRedeploy", false];
 
 // delete waypoints
 private _group = group _vic;  
@@ -19,8 +21,8 @@ for "_i" from (count waypoints _group - 1) to 0 step -1 do
 
 
 // make sure that the vic releases it's parking pass during a wave off
-private _activeAwayPads = home_base getVariable "activeAwayPads";
-private _parkingPassToReturn = _vic getVariable "awayParkingPass";
+private _activeAwayPads = home_base getVariable "homeBaseManifest" get "activeAwayPads";
+private _parkingPassToReturn = _vicStatus get "awayParkingPass";
 
 if (!isNil "_parkingPassToReturn") then {
 	private _index = _activeAwayPads find _parkingPassToReturn;
@@ -41,10 +43,10 @@ if (!isTouchingGround _vic) then {
 	[_vic, home_base, true, false, true, "Waving off, Returning to Base at: %1", "Ready for tasking..."] call _goToLocation;
 };
 
-driver _vic sideChat "Ready for tasking...";
+[driver _vic, "Ready for tasking..."] remoteExec ["sideChat"];
 _vic engineOn false;
 // reset State
-_vic setVariable ["performedReinsert", false];
-_vic setVariable ["isReinserting", false];
-_vic setVariable ["fallbackTriggered", false];
-_vic setVariable ["waveOff", false];
+_vicStatus set ["performedReinsert", false];
+_vicStatus set ["isReinserting", false];
+
+_vicStatus set ["waveOff", false];

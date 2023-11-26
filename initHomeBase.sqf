@@ -5,8 +5,8 @@ you first place down an object (or logic entity), and set it's variable name to:
 home_base
 
 then provide it this code:
-execVM "initHomeBase.sqf";
 
+execVM "initHomeBase.sqf";
 
 ---
 
@@ -23,14 +23,17 @@ waitUntil { not isNull player };
 
 systemChat "Starting initHomeBase...";
 
-#include "redeployFunctions\vicRegistration.sqf"
-
 // setup home_base variables 
 private _padRegistry = createHashMap;
-home_base setVariable ["padRegistry", _padRegistry];
-home_base setVariable ["vicRegistry", []];
-home_base setVariable ["landingPadClasses", ["Land_HelipadEmpty_F", "Land_HelipadCircle_F", "Land_HelipadCivil_F", "Land_HelipadRescue_F", "Land_HelipadSquare_F", "Land_JumpTarget_F"]];
-home_base setVariable ["activeAwayPads", []];
+
+private _homeBaseManifest = createHashMapFromArray [
+	["padRegistry", _padRegistry],
+	["vicRegistry", []],
+	["landingPadClasses", ["Land_HelipadEmpty_F", "Land_HelipadCircle_F", "Land_HelipadCivil_F", "Land_HelipadRescue_F", "Land_HelipadSquare_F", "Land_JumpTarget_F"]],
+	["activeAwayPads", []],
+	["padsNearBase", []]
+];
+home_base setVariable ["homeBaseManifest", _homeBaseManifest, true];
 
 // Function to check if a vehicle is registered
 
@@ -39,16 +42,59 @@ home_base setVariable ["activeAwayPads", []];
 private _syncedObjects = synchronizedObjects home_base;
 {
 	if (_x isKindOf "Helicopter") then {
-		private _vicRegistry = home_base getVariable ["vicRegistry", []];
+		private _vicRegistry = _homeBaseManifest get "vicRegistry"; 
 		_vicRegistry pushBack _x;
+
+		_x setVariable ["vicStatus", createHashMapFromArray [
+			["regActionID", nil],
+			["requestActionID", nil],
+			["requestingRedeploy", false],
+			["isReinserting", false],
+			["waveOff", false],
+			["cancelRedeploy", false],
+			["destination", nil],
+			["isHeli", true],
+			["awayParkingPass", nil]
+		], true];
 	};
 } forEach _syncedObjects;
 
 ////////////////////////////////////////////////////////////////////////////////////////
 
+missionNamespace setVariable ["removeVehicleFromPadRegistry", {
+	params ["_vehicle"];
+	private _registry = home_base getVariable "homeBaseManifest" get "padRegistry";
+	{
+		if (_y == (netId _vehicle)) then {
+			// release assignment of pad if vic leaves the base
+			_registry set [_x, "unassigned"];
+		}
+	} forEach _registry;
+}];
+
+missionNamespace setVariable ["getVehicleStatus", {
+	params ["_vehicle"];
+	private _vicStatus = _vehicle getVariable "vicStatus";
+	if (isNil "_vicStatus") then {
+		_vicStatus = createHashMapFromArray [
+			["regActionID", nil],
+			["requestActionID", nil],
+			["requestingRedeploy", false],
+			["isReinserting", false],
+			["waveOff", false],
+			["cancelRedeploy", false],
+			["destination", nil],
+			["isHeli", _vehicle isKindOf "Helicopter"],
+			["awayParkingPass", nil]
+		];
+		_vehicle setVariable ["vicStatus", _vicStatus, true];
+	};
+	_vicStatus
+}];
+
 missionNamespace setVariable ["_isVehicleRegistered", {
 	params ["_vehicle"];
-	private _vicRegistry = home_base getVariable ["vicRegistry", []];
+	private _vicRegistry = home_base getVariable "homeBaseManifest" get "vicRegistry";
 	_vehicle in _vicRegistry
 }];
 
@@ -60,11 +106,13 @@ missionNamespace setVariable ["_registerVehicle", {
 
 	if (!_vicIsRegistered) then {
 		// register the vic
-		private _vicRegistry = home_base getVariable ["vicRegistry", []];
+		private _vicRegistry = home_base getVariable "homeBaseManifest" get "vicRegistry";
 		_vicRegistry pushBackUnique _vehicle;
 
+		private _vicStatus = [_vehicle] call (missionNamespace getVariable "getVehicleStatus");
+
 		// remove old action if it exists
-		private _oldRegActionID = _vehicle getVariable ["regActionID", nil];
+		private _oldRegActionID = _vicStatus get "regActionID";
 		if (!isNil "_oldRegActionID") then {
 			_vehicle removeAction _oldRegActionID;
 		};
@@ -82,7 +130,7 @@ missionNamespace setVariable ["_registerVehicle", {
 		];
 
 		// save action id for later
-		_vehicle setVariable ["regActionID", _regActionID];
+		_vicStatus set ["regActionID", _regActionID];
 	};
 }];
 
@@ -94,11 +142,13 @@ missionNamespace setVariable ["_unregisterVehicle", {
 
 	if (_vicIsRegistered) then {
 		// unregister vic
-		private _vicRegistry = home_base getVariable ["vicRegistry", []];
+		private _vicRegistry = home_base getVariable "homeBaseManifest" get "vicRegistry";
 		_vicRegistry deleteAt (_vicRegistry find _vehicle);
 
+		private _vicStatus = [_vehicle] call (missionNamespace getVariable "getVehicleStatus");
+
 		// remove old action if it exists
-		private _oldRegActionID = _vehicle getVariable ["regActionID", nil];
+		private _oldRegActionID = _vicStatus get "regActionID";
 		if (!isNil "_oldRegActionID") then {
 			_vehicle removeAction _oldRegActionID;
 		};
@@ -116,17 +166,17 @@ missionNamespace setVariable ["_unregisterVehicle", {
 		];
 
 		// remove any request for redeploy if it gets unregistered
-		private _requestActionID = _vehicle getVariable ["requestActionID", nil];
-		_vehicle setVariable ["requestingRedeploy", false];
+		private _requestActionID = _vicStatus get "requestActionID";
+		_vicStatus set ["requestingRedeploy", false];
 
 		// remove current action to stay up to date
 		if (!isNil "_requestActionID") then {
 			_vehicle removeAction _requestActionID;
-			_vehicle setVariable ["requestActionID", nil];
+			_vicStatus set ["requestActionID", nil];
 		};
 
 		// save action id for later
-		_vehicle setVariable ["regActionID", _regActionID];
+		_vicStatus set ["regActionID", _regActionID];
 	
 	};
 }];
@@ -135,9 +185,10 @@ private _addRegistrationChoicesToVehicles = {
 	params ["_vic"];
 
 	private _vicIsRegistered = [_vic] call (missionNamespace getVariable "_isVehicleRegistered");
+	private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
 
 	if (_vicIsRegistered) then {
-		private _oldRegActionID = _vic getVariable ["regActionID", nil];
+		private _oldRegActionID =_vicStatus get "regActionID";
 		if (!isNil "_oldRegActionID") then {
 			_vic removeAction _oldRegActionID;
 		};
@@ -151,9 +202,9 @@ private _addRegistrationChoicesToVehicles = {
 			},
 			nil, 6, false, true, "", "true", 5, false, "", ""
 		];
-		_vic setVariable ["regActionID", _regActionID];
+		_vicStatus set ["regActionID", _regActionID];
 	} else {
-		private _oldRegActionID = _vic getVariable ["regActionID", nil];
+		private _oldRegActionID = _vicStatus get "regActionID";
 		if (!isNil "_oldRegActionID") then {
 			_vic removeAction _oldRegActionID;
 		};
@@ -167,28 +218,26 @@ private _addRegistrationChoicesToVehicles = {
 			},
 			nil, 6, false, true, "", "true", 5, false, "", ""
 		];
-		_vic setVariable ["regActionID", _regActionID];
+		_vicStatus set ["regActionID", _regActionID];
 	};
 };
-
-// // Usage
-// [_vehicle] call _registerVehicle;
-// [_vehicle] call _unregisterVehicle;
-// private _registered = [_vehicle] call _isVehicleRegistered;
 
 
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
 while {true} do {
 
 	// Find all vehicles within a certain radius of home_base
-	private _vehiclesNearBase = home_base nearEntities ["AllVehicles", 500]; // Adjust the radius as needed
+	private _vehiclesNearBase = home_base nearEntities ["Helicopter", 500]; // Adjust the radius as needed
 
 	// Iterate through each vehicle and perform your desired command
 	{
 		// Your command here. Example:
 		// hint format ["Vehicle %1 is near the base", _x];
 		private _vehicle = _x;
-		private _hasRegistrationAction = _x getVariable ["regActionID", nil];
+
+		private _vicStatus = [_vehicle] call (missionNamespace getVariable "getVehicleStatus");
+
+		private _hasRegistrationAction = _vicStatus get "regActionID";
 
 		if (_x isKindOf "Helicopter" && isNil "_hasRegistrationAction") then {
 			[_x] call _addRegistrationChoicesToVehicles;
@@ -196,13 +245,13 @@ while {true} do {
 
 		// // Give players the ability to signal that they want to redeploy:
 		private _vicIsRegistered = [_vehicle] call (missionNamespace getVariable "_isVehicleRegistered");
-		private _requestingRedeploy = _vehicle getVariable ["requestingRedeploy", false];
-		private _requestActionID = _vehicle getVariable ["requestActionID", nil];
+		private _requestingRedeploy = _vicStatus get "requestingRedeploy";
+		private _requestActionID = _vicStatus get "requestActionID";
 
 		// remove current action to stay up to date
 		if (!isNil "_requestActionID") then {
 			_vehicle removeAction _requestActionID;
-			_vehicle setVariable ["requestActionID", nil];
+			_vicStatus set ["requestActionID", nil];
 		};
 
 		// only add actions if the vic is registered
@@ -214,7 +263,8 @@ while {true} do {
 					format ["<t color='#FFA200'>Cancel Redeploy Request %1</t>", _vehicleName], 
 					{
 						private _vehicle = _this select 0;
-						_vehicle setVariable ["requestingRedeploy", false];
+						private _vicStatus = [_vehicle] call (missionNamespace getVariable "getVehicleStatus");
+						_vicStatus set ["requestingRedeploy", false];
 					},
 					nil, 6, false, true, "", "true", 5, false, "", ""
 				];
@@ -224,21 +274,22 @@ while {true} do {
 					format ["<t color='#FFD500'>Request Redeploy %1</t>", _vehicleName], 
 					{
 						private _vehicle = _this select 0;
-						_vehicle setVariable ["requestingRedeploy"];
+						private _vicStatus = [_vehicle] call (missionNamespace getVariable "getVehicleStatus");
+						_vicStatus set ["requestingRedeploy", true];
 					},
 					nil, 6, false, true, "", "true", 5, false, "", ""
 				];
 			};
-			_vehicle setVariable ["requestActionID", _requestActionID];
+			_vicStatus set ["requestActionID", _requestActionID];
 		};
 
 	} forEach _vehiclesNearBase;
 
 	// register new pads, remove any pads that have been deleted
-	private _padsNearBase = nearestObjects [home_base, home_base getVariable "landingPadClasses", 500]; 
-	home_base setVariable ["padsNearBase", _padsNearBase];
+	private _padsNearBase = nearestObjects [home_base, _homeBaseManifest get "landingPadClasses", 500]; 
+	_homeBaseManifest set ["padsNearBase", _padsNearBase];
 	private _padIdsNearBase = _padsNearBase apply { netId _x };
-	private _padRegistry = home_base getVariable "padRegistry";
+	private _padRegistry = _homeBaseManifest get "padRegistry";
 	{
 		// add any missing pads
 		if (!(_x in _padRegistry)) then {
@@ -257,9 +308,6 @@ while {true} do {
 	{
 		_padRegistry deleteAt _x;
 	} forEach _padsToRemove;
-
-	// private _activeAwayPads = home_base getVariable "activeAwayPads";
-	// systemChat format ["activeAwayPads: %1", _activeAwayPads];
 	
 	// Check if the player has a radio in their inventory
 	private _player = player;
@@ -276,15 +324,16 @@ while {true} do {
 	if (_hasRadio) then {
 		private _newActions = [];
 		// Get the current list of registered vehicles
-		private _currentRegisteredVehicles = home_base getVariable ["vicRegistry", []];
+		private _currentRegisteredVehicles = _homeBaseManifest get "vicRegistry";
 
 		// Add an action for each registered vehicle		
 		{
 			private _vehicle = _x;
+			private _vicStatus = [_vehicle] call (missionNamespace getVariable "getVehicleStatus");
 			private _vehicleName = getText (configFile >> "CfgVehicles" >> (typeOf _vehicle) >> "displayName");
-			private _reinserting = _vehicle getVariable ['isReinserting', false];
-			private _waveOff = _vehicle getVariable ['waveOff', false];
-			private _requestingRedeploy = _vehicle getVariable ['requestingRedeploy', false];
+			private _reinserting = _vicStatus get "isReinserting";
+			private _waveOff = _vicStatus get "waveOff";
+			private _requestingRedeploy = _vicStatus get "requestingRedeploy";
 			private _extraText = "";
 
 			if (!isTouchingGround _vehicle) then {

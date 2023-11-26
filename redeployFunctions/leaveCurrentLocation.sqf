@@ -10,7 +10,10 @@ private _leaveCurrentLocation = {
 		["_wavingOff", false]
 	];
 
-	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
+	private _manifest = home_base getVariable "homeBaseManifest";
+	private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
+
+	if (_vicStatus get "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
@@ -23,26 +26,27 @@ private _leaveCurrentLocation = {
 	};
 
 	if (isNil "_location") exitWith {
-		if (_vic getVariable ["isHeli", false]) then {
-			driver _vic sideChat "No nearby LZ found!";
+		if (_vicStatus get "isHeli") then {
+			[driver _vic, "No nearby LZ found! Staying Put."] remoteExec ["sideChat"];
 		} else {
-			driver _vic sideChat "No nearby RP found!";
+			[driver _vic, "No nearby RP found! Staying Put."] remoteExec ["sideChat"];
 		};
-		_vic setVariable ["isReinserting", false];
+		_vicStatus set ["isReinserting", false];
+		_vicStatus set ["cancelRedeploy", true];
 	};
 
 
-	_vic setVariable ["destination", _location];
+	_vicStatus set ["destination", _location];
 	private _destinationPos = getPos _location; 
 	private _currentPos = getPos _vic;
 	
 
 	// logic to check if Vic is already at location
 	if (_vic distance2D _destinationPos < 100) exitWith {
-		driver _vic sideChat "Already at location, wait one...";
+		[driver _vic, "Already at location, wait one..."] remoteExec ["sideChat"];
 	};
 
-	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
+	if (_vicStatus get "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
@@ -56,29 +60,22 @@ private _leaveCurrentLocation = {
 		// get gridRef if message has format specifier.
 		private _gridRef = [_destinationPos] call _posToGrid;
 		// msg that driver sends once waypoint is recieved 
-		driver _vic sideChat format [_first_message, _gridRef];
+		[driver _vic, format [_first_message, _gridRef]] remoteExec ["sideChat"];
 	};
 
-	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
+	if (_vicStatus get "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 	// wait until vic leaves it's current location
-	waitUntil {sleep 1; (_vic distance2D _currentPos > 100) || (_vic getVariable "waveOff" && !_wavingOff)};
+	waitUntil {sleep 1; (_vic distance2D _currentPos > 100) || (_vicStatus get "waveOff" && !_wavingOff)};
 
 	if (!_goHome) then {
 		// vic is not going home
-		private _padRegistry = home_base getVariable "padRegistry";
-		{
-			// systemChat format ["_x, _y: %1, %2", _x, _y];
-			if (_y == (netId _vic)) then {
-				// release assignment of pad if vic leaves the base
-				_padRegistry set [_x, "unassigned"];
-			}
-		} forEach _padRegistry;
+		[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
 	} else {
 		// vicis heading home, it can release it's parkingPass
-		private _activeAwayPads = home_base getVariable "activeAwayPads";
-		private _parkingPassToReturn = _vic getVariable "awayParkingPass";
+		private _activeAwayPads = _manifest get "activeAwayPads";
+		private _parkingPassToReturn = _vicStatus get "awayParkingPass";
 
 		// systemChat format ["activeAwayPads: %1 | parkingPassToReturn: %2", _activeAwayPads, _parkingPassToReturn];
 
@@ -91,7 +88,7 @@ private _leaveCurrentLocation = {
 		};
 	};
 
-	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
+	if (_vicStatus get "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 };

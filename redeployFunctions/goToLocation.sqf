@@ -15,27 +15,22 @@ private _goToLocation = {
 		["_fallbackTimeoutDuration", 300],
 		["_fallbackStationaryThreashold", 3]
 	];
+	private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
 
-	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
+	if (_vicStatus get "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 
 	[_vic, _groupLeader, _goHome, _first_message, _wavingOff] call _leaveCurrentLocation;
 
-	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
+
+	if (_vicStatus get "cancelRedeploy" || (_vicStatus get "waveOff" && !_wavingOff)) exitWith {
 		true
 	};
 
-	// TODO: make the stationaryCheck more useful
-	// if (!isNil "_doFallback") then {
-	// 	private _fallbackTimelimit = 10;
-	// 	if (_vic getVariable ["isHeli", false]) then {
-	// 		_fallbackTimelimit = 5;
-	// 	};
-	// 	[_vic, _groupLeader, _fallbackTimeoutDuration, _fallbackTimelimit, _fallbackStationaryThreashold] spawn _checkIfStationary;
-	// };
+	
 
-	if (_vic getVariable "waveOff" && !_wavingOff) exitWith {
+	if (_vicStatus get "waveOff" && !_wavingOff) exitWith {
 		true
 	};
 

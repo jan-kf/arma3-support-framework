@@ -8,43 +8,32 @@ private _vic = _this select 0;
 // Group leader's variable name
 private _groupLeader = _this select 1;
 
-private _padRegistry = home_base getVariable "padRegistry";
+private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
+
+private _padRegistry = home_base getVariable "homeBaseManifest" get "padRegistry";
 // prior to performing a redeploy, vic unassigns itself from the pad registry for cleanup
-{
-    // systemChat format ["_x, _y: %1, %2", _x, _y];
-    if (_y == (netId _vic)) then {
-        // release assignment of pad if vic leaves the base
-        _padRegistry set [_x, "unassigned"];
-    }
-} forEach _padRegistry;
+[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
 
 // Check if the vic is already on a mission
-if (_vic getVariable "isReinserting") exitWith {
-    driver _vic sideChat "I am currently on a mission.";
+if (_vicStatus get "isReinserting") exitWith {
+    [driver _vic, "I am currently on a mission."] remoteExec ["sideChat"];
 };
 
-_vic setVariable ["waveOff", false];
-_vic setVariable ["requestingRedeploy", false];
-
-
-
-_vic setVariable ["isHeli", false];
-_vic setVariable ["performedReinsert", false];
-_vic setVariable ["destination", nil];
-
-if (_vic isKindOf "Helicopter") then {
-    _vic setVariable ["isHeli", true];
-};
+_vicStatus set ["waveOff", false];
+_vicStatus set ["cancelRedeploy", false];
+_vicStatus set ["requestingRedeploy", false];
+_vicStatus set ["performedReinsert", false];
+_vicStatus set ["destination", nil];
 
 // driver _vic sideChat "Starting Procedures";
 
 // Prevent multiple simultaneous reinsertion requests
-_vic setVariable ["isReinserting", true];
+_vicStatus set ["isReinserting", true];
 
 private _dustOffMessage = nil;
 private _touchdownMessage = nil;
 
-if (_vic getVariable ["isHeli", false]) then {
+if (_vicStatus get "isHeli") then {
     _dustOffMessage = "Heading to LZ at: %1";
     _touchdownMessage = "Touchdown, Please disembark now";
 } else {
@@ -52,15 +41,15 @@ if (_vic getVariable ["isHeli", false]) then {
     _touchdownMessage = "We're here, Please disembark now";
 };
 
-if (_vic getVariable "waveOff") exitWith {
+if (_vicStatus get "waveOff") exitWith {
     true
 };
 
 [_vic, _groupLeader, false, true, false, _dustOffMessage, _touchdownMessage] call _goToLocation;
-_vic setVariable ["performedReinsert", true];
+_vicStatus set ["performedReinsert", true];
 
 
-if (_vic getVariable "waveOff" ) exitWith {
+if (_vicStatus get "waveOff" || _vicStatus get "cancelRedeploy") exitWith {
     true
 };
 
@@ -70,32 +59,34 @@ waitUntil {
     private _cargoList = fullCrew [_vic, "cargo"]; 
     private _cargoCount = count _cargoList; 
     _currentIteration = _currentIteration + 1;
-    _cargoCount < 1 || {_currentIteration >= 15} || _vic getVariable "waveOff";
+    _cargoCount < 1 || {_currentIteration >= 15} || _vicStatus get "waveOff";
 };
 
-if (_vic getVariable "waveOff" ) exitWith {
+if (_vicStatus get "waveOff" ) exitWith {
     true
 };
 
-driver _vic sideChat "Transport Unload complete, RTB in 10 seconds.";
+[driver _vic, "Transport Unload complete, RTB in 10 seconds."] remoteExec ["sideChat"];
 sleep 10;
 
-if (_vic getVariable "waveOff" ) exitWith {
+if (_vicStatus get "waveOff" ) exitWith {
     true
 };
 
-if (!(_vic getVariable ["fallbackTriggered", false]) && !(_vic getVariable ["waveOff", false])) then {
-    // if fallback triggered, this prevents double calling RTB
+if (!(_vicStatus get "waveOff")) then {
     [_vic, _groupLeader, true, true, false, "Returning to Base at: %1", "Ready for tasking..."] call _goToLocation;
 };
 
-if (_vic getVariable "waveOff") exitWith {
+if (_vicStatus get "waveOff") exitWith {
     true
 };
 
-driver _vic sideChat "Ready for tasking...";
+// always release parking request 
+[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
+
+[driver _vic, "Ready for tasking..."] remoteExec ["sideChat"];
 
 _vic engineOn false;
-_vic setVariable ["performedReinsert", false];
-_vic setVariable ["isReinserting", false];
-_vic setVariable ["fallbackTriggered", false];
+_vicStatus set ["performedReinsert", false];
+_vicStatus set ["isReinserting", false];
+
