@@ -1,10 +1,13 @@
+#include "auditManifest.sqf"
+
 private _findRendezvousPoint = {
 	params ["_vic", "_target", ["_checkOccupied", false], ["_goHome", false]];
 	private _dropOffPoint = nil;
 	private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
+	call _auditPadRegistry; // fix the registry incase any issue occured
 
 	if (_vicStatus get "isHeli") then {
-		private _manifest = home_base getVariable "homeBaseManifest";
+		private _manifest = missionNamespace getVariable "homeBaseManifest";
 		private _padRegistry = _manifest get "padRegistry";
 		private _activeAwayPads = _manifest get "activeAwayPads";
 		private _padsNearBase = _manifest get "padsNearBase";
@@ -22,7 +25,7 @@ private _findRendezvousPoint = {
 				// checks registry if it's going back to base
 				private _padId = netId _pad;
 				private _homePad = _registry getOrDefault [_padId, "unassigned"];
-				private _homeHasFreePads = (_goHome && _padId in _registry && _homePad == "unassigned");
+				private _homeHasFreePads = (_goHome && _padId in _registry && (_homePad == "unassigned" || _homePad == netId _vic));
 				private _awayHasFreePads = (!_goHome && !(_padId in _awayPads));
 				if ( _homeHasFreePads || _awayHasFreePads) then {
 					private _nearbyObjects = _pad nearEntities 10; // Adjust the radius as needed
