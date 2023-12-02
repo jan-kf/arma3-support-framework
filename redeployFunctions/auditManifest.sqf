@@ -1,5 +1,5 @@
 private _auditPadRegistry = {
-    private _manifest = missionNamespace getVariable "homeBaseManifest";
+    private _manifest = home_base getVariable "homeBaseManifest";
     private _padRegistry = _manifest get "padRegistry";
     private _registeredVics = _manifest get "vicRegistry";
     private _padsNearBase = _manifest get "padsNearBase";

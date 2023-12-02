@@ -1,7 +1,11 @@
-params ["_player", "_vehicle", "_vehicleName", "_condition"];
+params ["_player", "_vehicle"];
 
-// ["Adding Vic to Player "] remoteExec ["systemChat"];
+[format ["Adding %1 to %2", _vehicle, _player]] remoteExec ["systemChat"];
 diag_log "[REDEPLOY] Adding Vic to Player...";
+
+private _vehicleName = getText (configFile >> "CfgVehicles" >> (typeOf _vehicle) >> "displayName");
+_player setVariable ["show-" + netId _vehicle, true, true];
+private _condition = format["('hgun_esd_01_F' in (items %2)) && ((%2 getVariable ['show-%1', false]) isEqualTo true)", netId _vehicle, _player];
 
 private _actionID = _player addAction [
 	format ["<t color='#FFFFFF'>Deploy %1</t>", _vehicleName], 
@@ -9,22 +13,22 @@ private _actionID = _player addAction [
 		params ["_target", "_caller", "_actionID", "_args"];
 		private _vic = _args select 0;
 		private _player = _args select 1;
-		private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
 		private _vehicleName = getText (configFile >> "CfgVehicles" >> (typeOf _vic) >> "displayName");
-		private _reinserting = _vicStatus get "isReinserting";
-		private _waveOff = _vicStatus get "waveOff";
-		_vicStatus set ["targetGroupLeader", _player];
+		private _reinserting = _vic getVariable ["isReinserting", false];
+		private _waveOff = _vic getVariable ["waveOff", false];
+		_vic setVariable ["targetGroupLeader", _player, true];
 		if (_reinserting && !_waveOff) then {
-			_vicStatus set ["currentTask", "waveOff"];
+			_vic setVariable ["currentTask", "waveOff", true];
 		} else {
-			_vicStatus set ["currentTask", "begin"];
+			_vic setVariable ["currentTask", "begin", true];
 		};
+
 
 		_player setVariable ["show-" + netId _vic, false, true];
 
 		sleep 10;
 
-		if (_vicStatus get "isReinserting") then {
+		if (_vic getVariable ["isReinserting", false]) then {
 			_player setUserActionText [_actionId, format["<t color='#FF0000'>Wave Off %1</t>", _vehicleName]];
 		} else {
 			_player setUserActionText [_actionId, format["<t color='#FFFFFF'>Deploy %1</t>", _vehicleName]];
@@ -32,8 +36,6 @@ private _actionID = _player addAction [
 
 		_player setVariable ["show-" + netId _vic, true, true];
 
-
-		// [driver (_args select 0), format["debug stat: %1", _vicStatus]] remoteExec ["sideChat"];
 	},
 	[_vehicle, _player], // args
 	6, // priority
@@ -47,6 +49,11 @@ private _actionID = _player addAction [
 	""    // memoryPoint
 ];
 
+private _playerActionMap = _vehicle getVariable "playerActionMap";
+
+if (isNil "_playerActionMap") then {
+	_vehicle setVariable ["playerActionMap", createHashMap, true];
+};
 private _playerActionMap = _vehicle getVariable "playerActionMap";
 
 _playerActionMap set [netId _player, _actionID];

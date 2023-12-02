@@ -5,8 +5,7 @@ if (!isServer) exitWith {};
 
 private _vic = _this select 0;
 
-private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
-private _manifest = missionNamespace getVariable "homeBaseManifest";
+private _manifest = home_base getVariable "homeBaseManifest";
 
 private _vehicleClass = typeOf _vic;
 private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
@@ -15,7 +14,7 @@ private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleCl
 private _dustOffMessage = nil;
 private _touchdownMessage = nil;
 
-if (_vicStatus get "isHeli") then {
+if (_vic getVariable ["isHeli", false]) then {
 	_dustOffMessage = "Heading to LZ at: %1";
 	_touchdownMessage = "Touchdown, Please disembark now";
 } else {
@@ -43,7 +42,7 @@ while {_vic in (_manifest get "vicRegistry")} do {
 			- if not it should remedy it 
 	*/
 
-	private _task = _vicStatus getOrDefault ["currentTask", "waiting"];
+	private _task = _vic getVariable ["currentTask", "waiting"];
 
 	// [format["%1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time]] remoteExec ["systemChat"];
 
@@ -60,25 +59,22 @@ while {_vic in (_manifest get "vicRegistry")} do {
 			once ready, set task to waiting
 			*/ 
 
-			_vicStatus set ["currentTask", "waiting"];
+			_vic setVariable ["currentTask", "waiting", true];
 		};
 		case "begin": {
 			// vic was told to begin it's mission, perform startup
 			// clear out params:
-			_vicStatus set ["waveOff", false];
-			_vicStatus set ["cancelRedeploy", false];
-			_vicStatus set ["requestingRedeploy", false];
-			_vicStatus set ["performedReinsert", false];
-			_vicStatus set ["destination", nil];
+			_vic setVariable ["waveOff", false, true];
+			_vic setVariable ["destination", nil, true];
 
-			_vicStatus set ["isReinserting", true];
+			_vic setVariable ["isReinserting", true, true];
 
-			private _groupLeader = _vicStatus get "targetGroupLeader";
+			private _groupLeader = _vic getVariable "targetGroupLeader";
 
 			if (isNil "_groupLeader") exitWith {
 				[driver _vic, "No group leader was assigned, Staying Put."] remoteExec ["sideChat"];
-				_vicStatus set ["currentTask", "waiting"];
-				_vicStatus set ["isReinserting", false];
+				_vic setVariable ["currentTask", "waiting", true];
+				_vic setVariable ["isReinserting", false, true];
 			};
 
 			private _groupLeaderGroup = group _groupLeader;
@@ -91,27 +87,27 @@ while {_vic in (_manifest get "vicRegistry")} do {
 			
 
 			if (isNil "_location") exitWith {
-				if (_vicStatus get "isHeli") then {
+				if (_vic getVariable ["isHeli", false]) then {
 					[[west, "base"], format ["%1, we have no available LZ for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
 				} else {
 					[[west, "base"], format ["%1, we have no available RP for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
 				};
 				sleep 3;
-				_vicStatus set ["currentTask", "waiting"];
-				_vicStatus set ["isReinserting", false];
+				_vic setVariable ["currentTask", "waiting", true];
+				_vic setVariable ["isReinserting", false, true];
 			};
 
 			[[west, "base"], format ["Roger %1, beginning redeployment, out.", _groupLeaderCallsign]] remoteExec ["sideChat"];
 			sleep 3;
 
-			_vicStatus set ["destination", _location];
+			_vic setVariable ["destination", _location, true];
 			private _destinationPos = getPos _location; 
 			private _currentPos = getPos _vic;
 
 			// logic to check if Vic is already at location
 			if (_vic distance2D _destinationPos < 100) exitWith {
 				[driver _vic, "Already at location, wait one..."] remoteExec ["sideChat"];
-				_vicStatus set ["requestBaseLZ", nil];
+				_vic setVariable ["currentTask", "requestBaseLZ", true];
 			};
 
 			// set waypoint
@@ -137,7 +133,7 @@ while {_vic in (_manifest get "vicRegistry")} do {
 			[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
 
 			// once vic is underway, set it's task to onMission
-			_vicStatus set ["currentTask", "onMission"];
+			_vic setVariable ["currentTask", "onMission", true];
 		};
 		case "onMission": {
 			// vic is currently making its way to the redeploy LZ
@@ -145,10 +141,10 @@ while {_vic in (_manifest get "vicRegistry")} do {
 			// check if there are any issues
 
 			// check the vic is near the objective, and ready to land 
-			if (_vic distance2D getPos (_vicStatus get "destination") < 100 && unitReady _vic) then {
+			if (_vic distance2D getPos (_vic getVariable "destination") < 100 && unitReady _vic) then {
 				// set task to land at objective
 				_vic land "LAND";
-				_vicStatus set ["currentTask", "landingAtObjective"];
+				_vic setVariable ["currentTask", "landingAtObjective", true];
 			};
 
 		};
@@ -158,10 +154,10 @@ while {_vic in (_manifest get "vicRegistry")} do {
 			// check if there are any issues
 			
 			// check the vic is near the base, and ready to land 
-			if (_vic distance2D getPos (_vicStatus get "destination") < 100 && unitReady _vic) then {
+			if (_vic distance2D getPos (_vic getVariable "destination") < 100 && unitReady _vic) then {
 				// set task to land at base
 				_vic land "LAND";
-				_vicStatus set ["currentTask", "landingAtBase"];
+				_vic setVariable ["currentTask", "landingAtBase", true];
 			};
 
 		};
@@ -170,19 +166,18 @@ while {_vic in (_manifest get "vicRegistry")} do {
 
 			if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 				_vic engineOn false;
-				_vicStatus set ["performedReinsert", true];
 				[driver _vic, _touchdownMessage] remoteExec ["sideChat"];
 
 				// wait after touchdown
 				sleep 10;
-				_vicStatus set ["isReinserting", false];
-				_vicStatus set ["currentTask", "requestBaseLZ"];
+				_vic setVariable ["isReinserting", false, true];
+				_vic setVariable ["currentTask", "requestBaseLZ", true];
 			};
 		};
 		case "requestBaseLZ": {
 			// vic attempts to kickstart it's RTB procedures
 
-			private _parkingPassToReturn = _vicStatus get "awayParkingPass";
+			private _parkingPassToReturn = _vic getVariable "awayParkingPass";
 			if (!isNil "_parkingPassToReturn") then {
 				private _awayPads = _manifest get "activeAwayPads";
 				private _index = _awayPads find _parkingPassToReturn;
@@ -195,7 +190,7 @@ while {_vic in (_manifest get "vicRegistry")} do {
 			sleep 3;
 			_location = [_vic, home_base, true, true] call _findRendezvousPoint;
 			if (isNil "_location") exitWith {
-				if (_vicStatus get "isHeli") then {
+				if (_vic getVariable ["isHeli", false]) then {
 					[[west, "base"], format ["%1, No helipad is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];
 				} else {
 					[[west, "base"], format ["%1, No parking is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];
@@ -204,16 +199,16 @@ while {_vic in (_manifest get "vicRegistry")} do {
 				[driver _vic, format ["Roger that Base, will check in again later. %1 out.", groupId group _vic]] remoteExec ["sideChat"];
 				[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
 				// what should it's status be?
-				_vicStatus set ["currentTask", "marooned"];
+				_vic setVariable ["currentTask", "marooned", true];
 			};
-			_vicStatus set ["destination", _location];
+			_vic setVariable ["destination", _location, true];
 			_destinationPos = getPos _location; 
 			_currentPos = getPos _vic;
 
 			// logic to check if Vic is already at location
 			if ((_vic distance2D _destinationPos < 100) && (isTouchingGround _vic) && (speed _vic < 1)) exitWith {
 				[driver _vic, "Already at base..."] remoteExec ["sideChat"];
-				_vicStatus set ["currentTask", "waiting"];
+				_vic setVariable ["currentTask", "waiting", true];
 			};
 
 			// set waypoint
@@ -232,15 +227,14 @@ while {_vic in (_manifest get "vicRegistry")} do {
 			};
 
 			// once complete, set task to RTB
-			_vicStatus set ["currentTask", "RTB"];
+			_vic setVariable ["currentTask", "RTB", true];
 			
 		};
 		case "waveOff": {
 			// cancel reinsertion, reset request for redeploy
-			_vicStatus set ["isReinserting", false];
-			_vicStatus set ["requestingRedeploy", false];
+			_vic setVariable ["isReinserting", false, true];
 
-			private _groupLeader = _vicStatus get "targetGroupLeader";
+			private _groupLeader = _vic getVariable "targetGroupLeader";
 			private _groupLeaderGroup = group _groupLeader;
 			private _groupLeaderCallsign = groupId _groupLeaderGroup;
 
@@ -257,7 +251,7 @@ while {_vic in (_manifest get "vicRegistry")} do {
 			{
 				deleteWaypoint [_group, _i];
 			};
-			_vicStatus set ["currentTask", "requestBaseLZ"];
+			_vic setVariable ["currentTask", "requestBaseLZ", true];
 		};
 		case "landingAtBase": {
 			// vic is performing it's landing procedures at the base
@@ -267,29 +261,29 @@ while {_vic in (_manifest get "vicRegistry")} do {
 				[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
 				
 				_vic engineOn false;
-				_vicStatus set ["performedReinsert", false];
-				_vicStatus set ["isReinserting", false];
+				_vic setVariable ["isReinserting", false, true];
 
 				[driver _vic, format ["%1 is ready for tasking...", groupId group _vic]] remoteExec ["sideChat"];
 
 				// once landed, go back to waiting
-				_vicStatus set ["currentTask", "waiting"];
+				_vic setVariable ["currentTask", "waiting", true];
 			};
 		};
 		case "marooned": {
 			// vic was denyed a landing pad at home base
 			sleep 10;
 			
-			_vicStatus set ["requestBaseLZ", nil];
+			_vic setVariable ["currentTask", "requestBaseLZ", true];
 		};
 		default {
 			//vic is waiting for a task, wait
-			_vicStatus set ["targetGroupLeader", nil];
+			_vic setVariable ["isReinserting", false, true];
+			_vic setVariable ["targetGroupLeader", nil, true];
 		};
 
 	};
 
-
+	
 	sleep 3;
 };
 

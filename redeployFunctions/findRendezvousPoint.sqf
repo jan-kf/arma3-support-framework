@@ -3,11 +3,10 @@
 private _findRendezvousPoint = {
 	params ["_vic", "_target", ["_checkOccupied", false], ["_goHome", false]];
 	private _dropOffPoint = nil;
-	private _vicStatus = [_vic] call (missionNamespace getVariable "getVehicleStatus");
 	call _auditPadRegistry; // fix the registry incase any issue occured
 
-	if (_vicStatus get "isHeli") then {
-		private _manifest = missionNamespace getVariable "homeBaseManifest";
+	if (_vic getVariable ["isHeli", false]) then {
+		private _manifest = home_base getVariable "homeBaseManifest";
 		private _padRegistry = _manifest get "padRegistry";
 		private _activeAwayPads = _manifest get "activeAwayPads";
 		private _padsNearBase = _manifest get "padsNearBase";
@@ -59,7 +58,7 @@ private _findRendezvousPoint = {
 				// add the pad to the list of pads in use that are not at the homebase
 				private _locationID = netId _unoccupiedPad;
 				_activeAwayPads pushBack _locationId;
-				_vicStatus set ["awayParkingPass", _locationID];
+				_vic setVariable ["awayParkingPass", _locationID, true];
 			} else {
 				// assign the _vic to the _unoccupiedPad at home
 				_padRegistry set [netId _unoccupiedPad, netId _vic]; 
