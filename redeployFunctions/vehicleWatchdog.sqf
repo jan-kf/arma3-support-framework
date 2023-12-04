@@ -5,7 +5,13 @@ if (!isServer) exitWith {};
 
 private _vic = _this select 0;
 
-private _manifest = home_base getVariable "homeBaseManifest";
+[format ["Starting watchdog for %1 ... ", _vic]] remoteExec ["systemChat"];
+
+private _watchdog = _vic getVariable "watchdog";
+if (!isNil "_watchdog") exitWith {
+	[format ["watchdog exists for %1, skipping | %2", _vic, _watchdog]] remoteExec ["systemChat"];
+	diag_log format ["watchdog exists for %1, skipping", _vic];
+};
 
 private _vehicleClass = typeOf _vic;
 private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
@@ -24,7 +30,7 @@ if (_vic getVariable ["isHeli", false]) then {
 
 [driver _vic, format["%1 On Station...", groupId group _vic]] remoteExec ["sideChat"];
 
-while {_vic in (_manifest get "vicRegistry")} do {
+while {_vic getVariable ["isRegistered", false]} do {
 	// run while the vic is registered
 
 	/*
@@ -97,6 +103,13 @@ while {_vic in (_manifest get "vicRegistry")} do {
 				_vic setVariable ["isReinserting", false, true];
 			};
 
+			private _actionID = _vic getVariable "regActionID";
+			if (!isNil "_actionID") then {
+				private _vehicleClass = typeOf _vic;
+				private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+				[[MissionNamespace, "UpdateActionText", [_vic, _actionID, format["Wave Off %1", _vehicleDisplayName], "##FF0000"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
+			};
+
 			[[west, "base"], format ["Roger %1, beginning redeployment, out.", _groupLeaderCallsign]] remoteExec ["sideChat"];
 			sleep 3;
 
@@ -106,6 +119,7 @@ while {_vic in (_manifest get "vicRegistry")} do {
 
 			// logic to check if Vic is already at location
 			if (_vic distance2D _destinationPos < 100) exitWith {
+				[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
 				[driver _vic, "Already at location, wait one..."] remoteExec ["sideChat"];
 				_vic setVariable ["currentTask", "requestBaseLZ", true];
 			};
@@ -176,16 +190,8 @@ while {_vic in (_manifest get "vicRegistry")} do {
 		};
 		case "requestBaseLZ": {
 			// vic attempts to kickstart it's RTB procedures
-
-			private _parkingPassToReturn = _vic getVariable "awayParkingPass";
-			if (!isNil "_parkingPassToReturn") then {
-				private _awayPads = _manifest get "activeAwayPads";
-				private _index = _awayPads find _parkingPassToReturn;
-				if (_index != -1) then {
-					// Remove the element
-					_awayPads deleteAt _index;
-				};
-			};
+			[_vic] call (missionNamespace getVariable "removeVehicleFromAwayPads");
+			
 			[driver _vic, format ["Base, this is %1, requesting permission to land, over", groupId group _vic]] remoteExec ["sideChat"];
 			sleep 3;
 			_location = [_vic, home_base, true, true] call _findRendezvousPoint;
@@ -232,16 +238,19 @@ while {_vic in (_manifest get "vicRegistry")} do {
 		};
 		case "waveOff": {
 			// cancel reinsertion, reset request for redeploy
+
+			private _actionID = _vic getVariable "regActionID";
+			if (!isNil "_actionID") then {
+				private _vehicleClass = typeOf _vic;
+				private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+				[[MissionNamespace, "UpdateActionText", [_vic, _actionID, format["Deploy %1", _vehicleDisplayName], "#FFFFFF"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
+			};
+
 			_vic setVariable ["isReinserting", false, true];
 
 			private _groupLeader = _vic getVariable "targetGroupLeader";
 			private _groupLeaderGroup = group _groupLeader;
 			private _groupLeaderCallsign = groupId _groupLeaderGroup;
-
-			[_groupLeader, format ["%1, this is %2, Wave off, over.",groupId group _vic, _groupLeaderCallsign]] remoteExec ["sideChat"];
-			sleep 3;
-			[driver _vic, format ["Roger that %1, Waving off, out.", _groupLeaderCallsign]] remoteExec ["sideChat"];
-			sleep 3;
 
 			_vic land "NONE"; // cancel landing 
 
@@ -252,6 +261,11 @@ while {_vic in (_manifest get "vicRegistry")} do {
 				deleteWaypoint [_group, _i];
 			};
 			_vic setVariable ["currentTask", "requestBaseLZ", true];
+			
+			[_groupLeader, format ["%1, this is %2, Wave off, over.",groupId group _vic, _groupLeaderCallsign]] remoteExec ["sideChat"];
+			sleep 2;
+			[driver _vic, format ["Roger that %1, Waving off, out.", _groupLeaderCallsign]] remoteExec ["sideChat"];
+			sleep 1;
 		};
 		case "landingAtBase": {
 			// vic is performing it's landing procedures at the base
@@ -265,6 +279,12 @@ while {_vic in (_manifest get "vicRegistry")} do {
 
 				[driver _vic, format ["%1 is ready for tasking...", groupId group _vic]] remoteExec ["sideChat"];
 
+				private _actionID = _vic getVariable "regActionID";
+				if (!isNil "_actionID") then {
+					private _vehicleClass = typeOf _vic;
+					private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+					[[MissionNamespace, "UpdateActionText", [_vic, _actionID, format["Deploy %1", _vehicleDisplayName], "#FFFFFF"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
+				};
 				// once landed, go back to waiting
 				_vic setVariable ["currentTask", "waiting", true];
 			};

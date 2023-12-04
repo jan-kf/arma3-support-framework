@@ -8,13 +8,31 @@ private _addRegistrationChoicesToVehicles = {
 
 	params ["_vic"];
 
-	private _vicIsRegistered = [_vic] call (missionNamespace getVariable "isVehicleRegistered");
 
+	[[_vic], "redeployFunctions\addRegistrationAction.sqf"] remoteExec ["execVM", 2];
+
+
+	sleep 1; // should spawn a task to wait and update each action...
+
+	private _vicIsRegistered = _vic getVariable ["isRegistered", false];
 	if (_vicIsRegistered) then {
-		[[_vic], "redeployFunctions\addUnresistrationAction.sqf"] remoteExec ["execVM", 0, true];
-	} else {
-		[[_vic], "redeployFunctions\addResistrationAction.sqf"] remoteExec ["execVM", 0, true];
+		private _actionID = _vic getVariable "regActionID";
+		if (!isNil "_actionID") then {
+			private _vehicleClass = typeOf _vic;
+			private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+			[[MissionNamespace, "UpdateActionText", [_vic, _actionID, format["Unregister %1", _vehicleDisplayName], "#FF8000"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
+		};
 	};
+};
+
+private _safeIsNull = {
+    params ["_var"];
+
+    if (_var isEqualTo false) then {
+        true; // The variable is undefined (nil)
+    } else {
+        isNull _var; // The variable is defined, check if it's a null object
+    };
 };
 
 
@@ -23,7 +41,6 @@ while {true} do {
 
 	// ["base Heartbeat, bu bum..."] remoteExec ["systemChat"];
 	diag_log "[REDEPLOY] base heartbeat, bu bum...";
-	private _homeBaseManifest = home_base getVariable "homeBaseManifest";
 
 	// Find all vehicles within a certain radius of home_base
 	private _vehiclesNearBase = home_base nearEntities ["Helicopter", 500]; // Adjust the radius as needed
@@ -36,54 +53,33 @@ while {true} do {
 
 		private _hasRegistrationAction = _vehicle getVariable "regActionID";
 		
-		private _checkHeli = _x getVariable "isHeli";
-		if (_x isKindOf "Helicopter" && isNil "_checkHeli") then {
-			_x setVariable ["isHeli", true, true];
+		private _checkHeli = _vehicle getVariable "isHeli";
+		if (_vehicle isKindOf "Helicopter" && isNil "_checkHeli") then {
+			_vehicle setVariable ["isHeli", true, true];
 		};
 
-		if (_x isKindOf "Helicopter" && isNil "_hasRegistrationAction") then {
-			[_x] call _addRegistrationChoicesToVehicles;
+		if (_vehicle isKindOf "Helicopter" && isNil "_hasRegistrationAction") then {
+			[_vehicle] call _addRegistrationChoicesToVehicles;
 		};
 
-		private _vicIsRegistered = [_vehicle] call (missionNamespace getVariable "isVehicleRegistered");
-		if (_vicIsRegistered) then {
+		private _vicIsRegistered = _vehicle getVariable ["isRegistered", false];
+		private _watchdog = _vehicle getVariable ["watchdog", false];
+		if (_vicIsRegistered && [_watchdog] call _safeIsNull) then {
 			// check if watchdog is running, if not, start it
-			private _watchdog = _vehicle getVariable "watchdog";
-			if (isNil "_watchdog") then{
-				_watchdog = [_vehicle] spawn {
-					params ["_vehicle"];
-					[_vehicle] spawn (missionNamespace getVariable "vicWatchdog");
-				};
-				_vehicle setVariable ["watchdog", _watchdog, true];
-			};
+			[format ["kicking off wd for: %1 ... ", _vehicle]] remoteExec ["systemChat"];
+
+			_watchdog = [_vehicle] spawn (missionNamespace getVariable "vicWatchdog");
+			sleep 2;
+			_vehicle setVariable ["watchdog", _watchdog, true];
+		};
+		if (!_vicIsRegistered && !isNil "_watchdog" && (_watchdog isNotEqualTo false)) then {
+			// if not registered, and a watchdog exists, kill it.
+			[format ["terminating wd for: %1 ... ", _vehicle]] remoteExec ["systemChat"];
+			terminate _watchdog;
+			_vehicle setVariable ["watchdog", nil, true];
 		};
 
 	} forEach _vehiclesNearBase;
-
-	// register new pads, remove any pads that have been deleted
-	private _padsNearBase = nearestObjects [home_base, _homeBaseManifest get "landingPadClasses", 500]; 
-	_homeBaseManifest set ["padsNearBase", _padsNearBase];
-	home_base setVariable ["homeBaseManifest", _homeBaseManifest, true];
-	private _padIdsNearBase = _padsNearBase apply { netId _x };
-	private _padRegistry = _homeBaseManifest get "padRegistry";
-	{
-		// add any missing pads
-		if (!(_x in _padRegistry)) then {
-			_padRegistry set [_x, "unassigned"]
-		};
-	} forEach _padIdsNearBase;
-	private _allPads = keys _padRegistry;
-	// find if any pads were removed
-	private _padsToRemove = [];
-	{
-		if (!(_x in _padIdsNearBase)) then {
-			_padsToRemove pushBack _x;
-		}
-	} forEach _allPads;
-	// if any pads were removed, then delete them from registry
-	{
-		_padRegistry deleteAt _x;
-	} forEach _padsToRemove;
 	
     sleep 3; 
 };

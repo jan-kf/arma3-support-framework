@@ -1,7 +1,14 @@
 params ["_player", "_vehicle"];
 
 [format ["Adding %1 to %2", _vehicle, _player]] remoteExec ["systemChat"];
-diag_log "[REDEPLOY] Adding Vic to Player...";
+diag_log format ["[REDEPLOY] Adding %1 to %2", _vehicle, _player];
+
+// if the player already has an action for that vehicle, we should stop
+private _checkVicAction = _player getVariable (netId _vehicle);
+if (!isNil "_checkVicAction") exitWith {
+	[format ["%1 already exists for %2, skipping", _vehicle, _player]] remoteExec ["systemChat"];
+	diag_log format ["[REDEPLOY] %1 already exists for %2, skipping", _vehicle, _player];
+};
 
 private _vehicleName = getText (configFile >> "CfgVehicles" >> (typeOf _vehicle) >> "displayName");
 _player setVariable ["show-" + netId _vehicle, true, true];
@@ -23,16 +30,11 @@ private _actionID = _player addAction [
 			_vic setVariable ["currentTask", "begin", true];
 		};
 
-
+		//a little spooky, but the idea is that something else
 		_player setVariable ["show-" + netId _vic, false, true];
 
-		sleep 10;
-
-		if (_vic getVariable ["isReinserting", false]) then {
-			_player setUserActionText [_actionId, format["<t color='#FF0000'>Wave Off %1</t>", _vehicleName]];
-		} else {
-			_player setUserActionText [_actionId, format["<t color='#FFFFFF'>Deploy %1</t>", _vehicleName]];
-		};
+		// this is dumb, but I'll replace it with event handlers
+		sleep 15;
 
 		_player setVariable ["show-" + netId _vic, true, true];
 
@@ -49,11 +51,4 @@ private _actionID = _player addAction [
 	""    // memoryPoint
 ];
 
-private _playerActionMap = _vehicle getVariable "playerActionMap";
-
-if (isNil "_playerActionMap") then {
-	_vehicle setVariable ["playerActionMap", createHashMap, true];
-};
-private _playerActionMap = _vehicle getVariable "playerActionMap";
-
-_playerActionMap set [netId _player, _actionID];
+_player setVariable [netId _vehicle, _actionID, true];

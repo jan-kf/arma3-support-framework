@@ -1,32 +1,33 @@
-#include "auditManifest.sqf"
-
 private _findRendezvousPoint = {
 	params ["_vic", "_target", ["_checkOccupied", false], ["_goHome", false]];
 	private _dropOffPoint = nil;
-	call _auditPadRegistry; // fix the registry incase any issue occured
 
 	if (_vic getVariable ["isHeli", false]) then {
-		private _manifest = home_base getVariable "homeBaseManifest";
-		private _padRegistry = _manifest get "padRegistry";
-		private _activeAwayPads = _manifest get "activeAwayPads";
-		private _padsNearBase = _manifest get "padsNearBase";
+		private _padsNearBase = call (missionNamespace getVariable "getBasePads");
+		private _padsNearTarget = [_target] call (missionNamespace getVariable "getTargetPads");
+		private _landingPadClasses = ["Land_HelipadEmpty_F", "Land_HelipadCircle_F", "Land_HelipadCivil_F", "Land_HelipadRescue_F", "Land_HelipadSquare_F", "Land_JumpTarget_F"];
 
 		private _nearestLandingPads = _padsNearBase;
 		if (!_goHome) then {
-			_nearestLandingPads = nearestObjects [_target, _manifest get "landingPadClasses", 250]; // Adjust the range as needed
+			_nearestLandingPads = _padsNearTarget
 		};
 
 		if (_checkOccupied) then {
 			// Function to check if a landing pad is occupied
 			
 			private _isPadOccupied = {
-				params ["_pad", "_vic", "_registry", "_awayPads", "_goHome", "_classesToSkip"];
+				params ["_pad", "_vic", "_homePads", "_awayPads", "_goHome", "_classesToSkip"];
 				// checks registry if it's going back to base
 				private _padId = netId _pad;
-				private _homePad = _registry getOrDefault [_padId, "unassigned"];
-				private _homeHasFreePads = (_goHome && _padId in _registry && (_homePad == "unassigned" || _homePad == netId _vic));
-				private _awayHasFreePads = (!_goHome && !(_padId in _awayPads));
-				if ( _homeHasFreePads || _awayHasFreePads) then {
+				
+				private _unassigned = false;
+				// check if the pad is already assigned
+				private _check = _pad getVariable "assignment";
+				if (isNil "_check") then {
+					_unassigned = true;
+				};
+
+				if ( _unassigned) then {
 					private _nearbyObjects = _pad nearEntities 10; // Adjust the radius as needed
 					private _occupied = false;
 					{
@@ -43,7 +44,7 @@ private _findRendezvousPoint = {
 			};
 			private _unoccupiedPad = nil;
 			{
-				private _isOccupied = [_x, _vic, _padRegistry, _activeAwayPads, _goHome, _manifest get "landingPadClasses"] call _isPadOccupied;
+				private _isOccupied = [_x, _vic, _padsNearBase, _padsNearTarget, _goHome, _landingPadClasses] call _isPadOccupied;
 				if (!_isOccupied) then {
 					_unoccupiedPad = _x;
 					break;
@@ -53,17 +54,11 @@ private _findRendezvousPoint = {
 			if (isNil "_unoccupiedPad") exitWith {
 				nil // return nil if there's no valid pad
 			};
-			// return the _unoccupiedPad
-			if (!_goHome) then {
-				// add the pad to the list of pads in use that are not at the homebase
-				private _locationID = netId _unoccupiedPad;
-				_activeAwayPads pushBack _locationId;
-				_vic setVariable ["awayParkingPass", _locationID, true];
-			} else {
-				// assign the _vic to the _unoccupiedPad at home
-				_padRegistry set [netId _unoccupiedPad, netId _vic]; 
-			};
 
+			// reserve the pad
+			_unoccupiedPad setVariable ["assignment", netId _vic, true]; 
+
+			// return the _unoccupiedPad
 			_unoccupiedPad
 		} else {
 			// this is not checking for obstructions
