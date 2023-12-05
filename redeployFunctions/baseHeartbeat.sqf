@@ -9,7 +9,7 @@ private _addRegistrationChoicesToVehicles = {
 	params ["_vic"];
 
 
-	[[_vic], "redeployFunctions\addRegistrationAction.sqf"] remoteExec ["execVM", 2];
+	[[_vic], "redeployFunctions\addRegistrationAction.sqf"] remoteExec ["execVM", 0, true];
 
 
 	sleep 1; // should spawn a task to wait and update each action...
@@ -20,7 +20,7 @@ private _addRegistrationChoicesToVehicles = {
 		if (!isNil "_actionID") then {
 			private _vehicleClass = typeOf _vic;
 			private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-			[[MissionNamespace, "UpdateActionText", [_vic, _actionID, format["Unregister %1", _vehicleDisplayName], "#FF8000"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
+			[[MissionNamespace, "UpdateActionText", [_vic, _actionID, format["Unregister %1", _vehicleDisplayName], "#FF8000"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0, true];
 		};
 	};
 };
