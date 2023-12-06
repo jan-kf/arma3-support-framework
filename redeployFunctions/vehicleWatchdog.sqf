@@ -5,11 +5,12 @@ if (!isServer) exitWith {};
 
 private _vic = _this select 0;
 
-[format ["Starting watchdog for %1 ... ", _vic]] remoteExec ["systemChat"];
+// [format ["Starting watchdog for %1 ... ", _vic]] remoteExec ["systemChat"];
+diag_log format ["Starting watchdog for %1 ... ", _vic];
 
 private _watchdog = _vic getVariable "watchdog";
 if (!isNil "_watchdog") exitWith {
-	[format ["watchdog exists for %1, skipping | %2", _vic, _watchdog]] remoteExec ["systemChat"];
+	// [format ["watchdog exists for %1, skipping | %2", _vic, _watchdog]] remoteExec ["systemChat"];
 	diag_log format ["watchdog exists for %1, skipping", _vic];
 };
 
@@ -103,12 +104,6 @@ while {_vic getVariable ["isRegistered", false]} do {
 				_vic setVariable ["isReinserting", false, true];
 			};
 
-			private _actionID = _groupLeader getVariable (netId _vic);
-			if (!isNil "_actionID") then {
-				private _vehicleClass = typeOf _vic;
-				private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-				[[MissionNamespace, "UpdateActionText", [_groupLeader, _actionID, format["Wave Off %1", _vehicleDisplayName], "#FF0000"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
-			};
 
 			[[west, "base"], format ["Roger %1, beginning redeployment, out.", _groupLeaderCallsign]] remoteExec ["sideChat"];
 			sleep 3;
@@ -241,15 +236,6 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 			private _groupLeader = _vic getVariable "targetGroupLeader";
 
-			if (!isNil "_groupLeader") then {
-				private _actionID = _groupLeader getVariable (netId _vic);
-				if (!isNil "_actionID") then {
-					private _vehicleClass = typeOf _vic;
-					private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-					[[MissionNamespace, "UpdateActionText", [_groupLeader, _actionID, format["(waving off) Deploy %1", _vehicleDisplayName], "#FFFFFF"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
-				};
-			};
-
 			_vic setVariable ["isReinserting", false, true];
 
 			private _groupLeader = _vic getVariable "targetGroupLeader";
@@ -282,16 +268,6 @@ while {_vic getVariable ["isRegistered", false]} do {
 				_vic setVariable ["isReinserting", false, true];
 
 				[driver _vic, format ["%1 is ready for tasking...", groupId group _vic]] remoteExec ["sideChat"];
-
-				private _groupLeader = _vic getVariable "targetGroupLeader";
-				if (!isNil "_groupLeader") then {
-					private _actionID = _groupLeader getVariable (netId _vic);
-					if (!isNil "_actionID") then {
-						private _vehicleClass = typeOf _vic;
-						private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-						[[MissionNamespace, "UpdateActionText", [_groupLeader, _actionID, format["Deploy %1", _vehicleDisplayName], "#FFFFFF"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
-					};
-				};
 
 				// once landed, go back to waiting
 				_vic setVariable ["currentTask", "waiting", true];

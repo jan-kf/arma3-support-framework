@@ -4,10 +4,6 @@
 	
 	home_base
 	
-	then provide it this code:
-	
-	"initHomeBase.sqf" remoteExec ["execVM", 2];
-	
 	---
 	
 	if you want some vehicles to start off being registered, 
@@ -22,41 +18,10 @@ if (!isServer) exitWith {};
 
 diag_log "[REDEPLOY] initHomeBase is beginning initilization...";
 
-// setup home_base variables 
-private _padRegistry = createHashMap;
-
-private _homeBaseManifest = createHashMapFromArray [
-	["activeAwayPads", []]
-];
-home_base setVariable ["homeBaseManifest", _homeBaseManifest, true];
-
 missionNamespace setVariable ["vicWatchdog", compile preprocessFileLineNumbers "redeployFunctions\vehicleWatchdog.sqf"];
 missionNamespace setVariable ["getBasePads", compile preprocessFileLineNumbers "redeployFunctions\getPadsNearBase.sqf"];
 missionNamespace setVariable ["getTargetPads", compile preprocessFileLineNumbers "redeployFunctions\getPadsNearTarget.sqf"];
 missionNamespace setVariable ["getRegisteredVehicles", compile preprocessFileLineNumbers "redeployFunctions\getRegisteredVehicles.sqf"];
-
-missionNamespace setVariable ["addVicToPlayers", {
-	params ["_vehicle"];
-
-	{
-		private _player = _x;
-		[[_player, _vehicle], "redeployFunctions\addVicActionToPlayer.sqf"] remoteExec ["execVM", 0];
-	} forEach allPlayers;
-}];
-
-missionNamespace setVariable ["removeVicFromPlayers", {
-	params ["_vehicle"];
-
-	private _vicNetId = netId _vehicle;
-
-	{
-		private _actionID = _x getVariable _vicNetId;
-		if (!isNil "_actionID") then {
-			[_x, _actionID] remoteExec ["removeAction", 0, true];
-			_x setVariable [_vicNetId, nil, true];
-		};
-	} forEach allPlayers;
-}];
 
 missionNamespace setVariable ["removeVehicleFromPadRegistry", {
 	params ["_vehicle"];
@@ -100,8 +65,6 @@ publicVariable "vicWatchdog";
 publicVariable "getBasePads";
 publicVariable "getTargetPads";
 publicVariable "getRegisteredVehicles";
-publicVariable "addVicToPlayers";
-publicVariable "removeVicFromPlayers";
 publicVariable "removeVehicleFromPadRegistry";
 publicVariable "removeVehicleFromAwayPads";
 
@@ -110,93 +73,20 @@ publicVariable "removeVehicleFromAwayPads";
 private _syncedObjects = synchronizedObjects home_base;
 {
 	if (_x isKindOf "Helicopter") then {
-
-		[[MissionNamespace, "CallToRegisterVehicle", [_x]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 2];
-
+		_x setVariable ["isRegistered", true, true];
 		_x setVariable ["isHeli", true, true];
 	};
 } forEach _syncedObjects;
 
 //// //// ////////////////////////////////////////////////////////////////////////////////
 
-[missionNamespace, "VehicleRegistered", {
-	// Logic for if a vehicle is called to be registered, and it currently is not 
-	params ["_vehicle"];
-
-	// register the vic
-	_vehicle setVariable ["isRegistered", true, true];
-
-	[_vehicle] call (missionNamespace getVariable "addVicToPlayers");
-
-}] call BIS_fnc_addScriptedEventHandler;
-
-[missionNamespace, "VehicleUnregistered", {
-	
-	params ["_vehicle"];
-
-	// register the vic
-	_vehicle setVariable ["isRegistered", false, true];
-
-
-	[_vehicle] call (missionNamespace getVariable "removeVicFromPlayers");
-
-}] call BIS_fnc_addScriptedEventHandler;
-
-[missionNamespace, "UpdateActionText", {
-	// Logic to update any text of an action
-	// GLOBALLY executed 
-	params ["_object", "_actionID", "_text", ["_color", "#FFFFFF"]];
-
-	[_object, [_actionID, format ["<t color='%2'>%1</t>", _text, _color]]] remoteExec ["setUserActionText", 0];
-}] call BIS_fnc_addScriptedEventHandler;
-
-
-// Function to register a vehicle
-[missionNamespace, "CallToRegisterVehicle", {
-	params ["_vehicle"];
-
-	private _isRegistered = _vehicle getVariable ["isRegistered", false];
-
-	if (!_isRegistered) then {
-		// register the vic
-		[[MissionNamespace, "VehicleRegistered", [_vehicle]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 2];
-
-		private _actionID = _vehicle getVariable "regActionID";
-		if (!isNil "_actionID") then {
-			private _vehicleClass = typeOf _vehicle;
-			private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-			[[MissionNamespace, "UpdateActionText", [_vehicle, _actionID, format["Unregister %1", _vehicleDisplayName], "#FF8000"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
-		};
-	};
-}] call BIS_fnc_addScriptedEventHandler;
-
-
-// Function to unregister a vehicle
-[missionNamespace, "CallToUnregisterVehicle", {
-	params ["_vehicle"];
-
-	private _isRegistered = _vehicle getVariable ["isRegistered", false];
-
-	if (_isRegistered) then {
-		// unregister the vic
-		[[MissionNamespace, "VehicleUnregistered", [_vehicle]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 2];
-
-		private _actionID = _vehicle getVariable "regActionID";
-		if (!isNil "_actionID") then {
-			private _vehicleClass = typeOf _vehicle;
-			private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-			[[MissionNamespace, "UpdateActionText", [_vehicle, _actionID, format["Register %1", _vehicleDisplayName], "#00ABFF"]], BIS_fnc_callScriptedEventHandler] remoteExec ["call", 0];
-		};
-	};
-}] call BIS_fnc_addScriptedEventHandler;
-
 
 
 // once everything is set up, kick off the heartbeat for players (JIP true)
 diag_log "[REDEPLOY] kicking off heartbeat...";
-["[REDEPLOY] kicking off heartbeat..."] remoteExec ["systemChat"];
+// ["[REDEPLOY] kicking off heartbeat..."] remoteExec ["systemChat"];
 
 [] spawn (compile preprocessFileLineNumbers "redeployFunctions\baseHeartbeat.sqf");
 
 diag_log "[REDEPLOY] initHomeBase is done initializing";
-["[REDEPLOY] initHomeBase is done initializing"] remoteExec ["systemChat"];
+// ["[REDEPLOY] initHomeBase is done initializing"] remoteExec ["systemChat"];
