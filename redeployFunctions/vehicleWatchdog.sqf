@@ -77,6 +77,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 			_vic setVariable ["isReinserting", true, true];
 
 			private _groupLeader = _vic getVariable "targetGroupLeader";
+			private _fullRun = _vic getVariable ["fullRun", true];
 
 			if (isNil "_groupLeader") exitWith {
 				[driver _vic, "No group leader was assigned, Staying Put."] remoteExec ["sideChat"];
@@ -88,8 +89,13 @@ while {_vic getVariable ["isRegistered", false]} do {
 			private _groupLeaderCallsign = groupId _groupLeaderGroup;
 
 			private _location = [_vic, _groupLeader, true] call _findRendezvousPoint;
+
+			private _gl_message = "Base, this is %1, requesting redeployment from %2, over";
+			if (!_fullRun) then{
+				_gl_message = "Base, this is %1, requesting %2 on my position, over";
+			};
 			
-			[_groupLeader, format ["Base, this is %1, requesting redeployment from %2, over", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+			[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
 			sleep 3;
 			
 
@@ -104,8 +110,13 @@ while {_vic getVariable ["isRegistered", false]} do {
 				_vic setVariable ["isReinserting", false, true];
 			};
 
+			private _base_message = "Roger %1, beginning redeployment, out.";
+			if (!_fullRun) then{
+				_base_message = "Roger %1, dispatching %2, out.";
+			};
 
-			[[west, "base"], format ["Roger %1, beginning redeployment, out.", _groupLeaderCallsign]] remoteExec ["sideChat"];
+
+			[[west, "base"], format [_base_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
 			sleep 3;
 
 			_vic setVariable ["destination", _location, true];
@@ -140,13 +151,13 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 			// vic is leaving base, release base pad reservation
 			[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
-
+			// cancel request
+			_vic setVariable ["requestingRedeploy", false, true];
 			// once vic is underway, set it's task to onMission
 			_vic setVariable ["currentTask", "onMission", true];
 		};
 		case "onMission": {
 			// vic is currently making its way to the redeploy LZ
-
 			// check if there are any issues
 
 			// check the vic is near the objective, and ready to land 
@@ -180,7 +191,13 @@ while {_vic getVariable ["isRegistered", false]} do {
 				// wait after touchdown
 				sleep 10;
 				_vic setVariable ["isReinserting", false, true];
-				_vic setVariable ["currentTask", "requestBaseLZ", true];
+				private _fullRun = _vic getVariable ["fullRun", true];
+				if (_fullRun) then {
+					_vic setVariable ["currentTask", "requestBaseLZ", true];
+				} else {
+					[driver _vic, format ["%1 on standby, awaiting orders.", groupId group _vic]] remoteExec ["sideChat"];
+					_vic setVariable ["currentTask", "awaitOrders", true];
+				};
 			};
 		};
 		case "requestBaseLZ": {
@@ -273,8 +290,12 @@ while {_vic getVariable ["isRegistered", false]} do {
 				_vic setVariable ["currentTask", "waiting", true];
 			};
 		};
+		case "awaitOrders": {
+			// vic was called in to land, awaiting explicit orders to RTB
+			// no code, leader will set the current task manually
+		};
 		case "marooned": {
-			// vic was denyed a landing pad at home base
+			// vic was denied a landing pad at home base
 			sleep 10;
 			
 			_vic setVariable ["currentTask", "requestBaseLZ", true];
@@ -283,6 +304,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 			//vic is waiting for a task, wait
 			_vic setVariable ["isReinserting", false, true];
 			_vic setVariable ["targetGroupLeader", nil, true];
+			_vic setVariable ["fullRun", true, true];
 		};
 
 	};
