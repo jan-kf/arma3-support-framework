@@ -145,6 +145,42 @@ private _insertVehicles = {
 					{}, // 5: Insert children code <CODE> (Optional)
 					_vehicle // 6: Action parameters <ANY> (Optional)
 				] call ace_interact_menu_fnc_createAction;
+
+				{ // add all HLS and LZ markers as valid locations
+					private _marker = _x;
+					private _markerName = markerText _marker;
+					private _displayName = toLower _markerName;
+					if ((_displayName find "hls " == 0) || (_displayName find "lz " == 0)) then {
+						private _vicRequestToLZAction = [
+							format["%1-requestTo-%2", netId _vehicle, _marker], format["<t color='%1'>Send to %2</t>", _color, _markerName], "",
+							{
+								// statement 
+								params ["_target", "_caller", "_args"];
+								private _vic = _args select 0;
+								private _marker = _args select 1;
+								_vic setVariable ["targetGroupLeader", _caller, true];
+								_vic setVariable ["targetLocation", _marker, true];
+								_vic setVariable ["currentTask", "begin", true];
+								_vic setVariable ["fullRun", false, true];
+							}, 
+							{
+								params ["_target", "_caller", "_args"];
+								private _vic = _args select 0;
+								// // Condition code here
+								private _notReinserting = !(_vic getVariable ["isReinserting", false]);
+								private _task = _vic getVariable ["currentTask", "waiting"];
+								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "begin"]);
+								_notReinserting && _notOnRestrictedTask
+							},
+							{}, // 5: Insert children code <CODE> (Optional)
+							[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
+						] call ace_interact_menu_fnc_createAction;
+						_actions pushBack [_vicRequestToLZAction, [], _target];
+					};
+				} forEach allMapMarkers;
+
+				
+
 				_actions pushBack [_vicRTBAction, [], _target];
 					
 

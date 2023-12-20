@@ -5,6 +5,14 @@ if (!isServer) exitWith {};
 
 private _vic = _this select 0;
 
+private _baseCallsign = [west, "base"];
+private _baseName = "Base";
+if !(isNil "home_base_atc") then {
+	_baseCallsign = home_base_atc;
+	_baseName = groupId group home_base_atc;
+};
+
+
 // [format ["Starting watchdog for %1 ... ", _vic]] remoteExec ["systemChat"];
 diag_log format ["Starting watchdog for %1 ... ", _vic];
 
@@ -88,22 +96,28 @@ while {_vic getVariable ["isRegistered", false]} do {
 			private _groupLeaderGroup = group _groupLeader;
 			private _groupLeaderCallsign = groupId _groupLeaderGroup;
 
-			private _location = [_vic, _groupLeader, true] call _findRendezvousPoint;
-
-			private _gl_message = "Base, this is %1, requesting redeployment from %2, over";
-			if (!_fullRun) then{
-				_gl_message = "Base, this is %1, requesting %2 on my position, over";
+			private _location = _vic getVariable "targetLocation";
+			if (isNil "_location") then {
+				private _location = [_vic, _groupLeader, true] call _findRendezvousPoint;
+				private _gl_message = "%3, this is %1, requesting redeployment from %2, over";
+				if (!_fullRun) then{
+					_gl_message = "%3, this is %1, requesting %2 on my position, over";
+				};
+				[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName]] remoteExec ["sideChat"];
+			}else{
+				private _gl_message = "%4, this is %1, requesting %2 at %3, over";
+				[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, markerText _location, _baseName]] remoteExec ["sideChat"];
 			};
+
 			
-			[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
 			sleep 3;
 			
 
 			if (isNil "_location") exitWith {
 				if (_vic getVariable ["isHeli", false]) then {
-					[[west, "base"], format ["%1, we have no available LZ for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+					[_baseCallsign, format ["%1, we have no available LZ for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
 				} else {
-					[[west, "base"], format ["%1, we have no available RP for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+					[_baseCallsign, format ["%1, we have no available RP for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
 				};
 				sleep 3;
 				_vic setVariable ["currentTask", "waiting", true];
@@ -116,11 +130,22 @@ while {_vic getVariable ["isRegistered", false]} do {
 			};
 
 
-			[[west, "base"], format [_base_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+			[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
 			sleep 3;
 
+			private _destinationPos = nil;
+			if (typeName _location == "STRING") then {
+				// _location is a string
+				_destinationPos = getMarkerPos _location;
+			} else {
+				if (typeName _location == "OBJECT") then {
+					// _location is an object
+					_destinationPos = getPos _location;
+				};
+			};
+
 			_vic setVariable ["destination", _location, true];
-			private _destinationPos = getPos _location; 
+			 
 			private _currentPos = getPos _vic;
 
 			// logic to check if Vic is already at location
@@ -140,11 +165,11 @@ while {_vic getVariable ["isRegistered", false]} do {
 			if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 				// get gridRef if message has format specifier.
 				// msg that driver sends once destination grid is recieved 
-				[[west, "base"], format ["Over to you %1, you are cleared for departure to %2, over.", groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				[_baseCallsign, format ["Over to you %1, you are cleared for departure to %2, over.", groupId group _vic, _gridRef]] remoteExec ["sideChat"];
 				sleep 3;
 				[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
 			}else{
-				[[west, "base"], format ["Over to you %1, you are cleared for approach to %2, over.", groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				[_baseCallsign, format ["Over to you %1, you are cleared for approach to %2, over.", groupId group _vic, _gridRef]] remoteExec ["sideChat"];
 				sleep 3;
 				[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
 			};
@@ -160,8 +185,20 @@ while {_vic getVariable ["isRegistered", false]} do {
 			// vic is currently making its way to the redeploy LZ
 			// check if there are any issues
 
+			private _destination = _vic getVariable "destination";
+			private _destinationPos = nil;
+			if (typeName _destination == "STRING") then {
+				// _destination is a string
+				_destinationPos = getMarkerPos _destination;
+			} else {
+				if (typeName _destination == "OBJECT") then {
+					// _destination is an object
+					_destinationPos = getPos _destination;
+				};
+			};
+
 			// check the vic is near the objective, and ready to land 
-			if (_vic distance2D getPos (_vic getVariable "destination") < 100 && unitReady _vic) then {
+			if (_vic distance2D _destinationPos < 100 && unitReady _vic) then {
 				// set task to land at objective
 				_vic land "LAND";
 				_vic setVariable ["currentTask", "landingAtObjective", true];
@@ -172,9 +209,21 @@ while {_vic getVariable ["isRegistered", false]} do {
 			// vic is currently making it's way back to home_base
 
 			// check if there are any issues
+
+			private _destination = _vic getVariable "destination";
+			private _destinationPos = nil;
+			if (typeName _destination == "STRING") then {
+				// _destination is a string
+				_destinationPos = getMarkerPos _destination;
+			} else {
+				if (typeName _destination == "OBJECT") then {
+					// _destination is an object
+					_destinationPos = getPos _destination;
+				};
+			};
 			
 			// check the vic is near the base, and ready to land 
-			if (_vic distance2D getPos (_vic getVariable "destination") < 100 && unitReady _vic) then {
+			if (_vic distance2D _destinationPos < 100 && unitReady _vic) then {
 				// set task to land at base
 				_vic land "LAND";
 				_vic setVariable ["currentTask", "landingAtBase", true];
@@ -204,17 +253,17 @@ while {_vic getVariable ["isRegistered", false]} do {
 			// vic attempts to kickstart it's RTB procedures
 			[_vic] call (missionNamespace getVariable "removeVehicleFromAwayPads");
 			
-			[driver _vic, format ["Base, this is %1, requesting permission to land, over", groupId group _vic]] remoteExec ["sideChat"];
+			[driver _vic, format ["%2, this is %1, requesting permission to land, over", groupId group _vic, _baseName]] remoteExec ["sideChat"];
 			sleep 3;
 			_location = [_vic, home_base, true, true] call _findRendezvousPoint;
 			if (isNil "_location") exitWith {
 				if (_vic getVariable ["isHeli", false]) then {
-					[[west, "base"], format ["%1, No helipad is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];
+					[_baseCallsign, format ["%1, No helipad is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];
 				} else {
-					[[west, "base"], format ["%1, No parking is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];
+					[_baseCallsign, format ["%1, No parking is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];
 				};
 				sleep 3;
-				[driver _vic, format ["Roger that Base, will check in again later. %1 out.", groupId group _vic]] remoteExec ["sideChat"];
+				[driver _vic, format ["Roger that %2, will check in again later. %1 out.", groupId group _vic, _baseName]] remoteExec ["sideChat"];
 				[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
 				// what should it's status be?
 				_vic setVariable ["currentTask", "marooned", true];
@@ -239,7 +288,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 				// get gridRef if message has format specifier.
 				private _gridRef = [_destinationPos] call _posToGrid;
 				// msg that driver sends once destination grid is recieved 
-				[[west, "base"], format ["%1, you are cleared to land at landing pad at %2, over.", groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				[_baseCallsign, format ["%1, you are cleared to land at landing pad at %2, over.", groupId group _vic, _gridRef]] remoteExec ["sideChat"];
 				sleep 3;
 				[driver _vic, format ["Cleared for pad at %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
 			};

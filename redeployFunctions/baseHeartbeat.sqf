@@ -52,6 +52,22 @@ while {true} do {
 		};
 
 	} forEach _vehiclesNearBase;
+
+	// Function to get markers and spawn landing pads if necessary
+
+    {
+        private _markerName = _x;
+        private _displayName = toLower (markerText _markerName);
+        if ((_displayName find "hls " == 0) || (_displayName find "lz " == 0)) then {
+            private _markerPos = getMarkerPos _markerName;
+            // Check for existing landing pads
+            private _landingPadsNearby = nearestObjects [_markerPos, ["Land_HelipadEmpty_F"], 10];
+            if (count _landingPadsNearby == 0) then {
+                // No landing pad nearby, spawn one
+                private _landingPad = createVehicle ["Land_HelipadEmpty_F", _markerPos, [], 0, "CAN_COLLIDE"];
+            };
+        };
+    } forEach allMapMarkers;
 	
     sleep 3; 
 };
