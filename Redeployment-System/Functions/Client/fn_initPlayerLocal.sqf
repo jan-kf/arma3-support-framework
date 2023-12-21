@@ -39,7 +39,7 @@ private _getBuiltInPads = {
 	private _validLandingPads = [];
 	{
 		private _landingPadPos = getPos _x;
-		if (_landingPadPos distance _homeBasePos > 500) then {
+		if (_landingPadPos distance _homeBasePos > ((missionNamespace getVariable "home_base") getVariable ["Radius", 500])) then {
 			private _nearbyLocations = nearestLocations [_landingPadPos, _locationTypes, 50];
 			if (count _nearbyLocations > 0) then {
 				private _nearestLocation = _nearbyLocations select 0;
@@ -268,7 +268,30 @@ private _redeploymentActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		('hgun_esd_01_F' in (items _caller))
+		// Retrieve the custom argument value
+		private _requiredItemsStr = (missionNamespace getVariable "home_base") getVariable ["RequiredItems", "hgun_esd_01_F"];
+		private _requiredItems = [];
+		if (_requiredItemsStr != "") then {
+			_requiredItems = _requiredItemsStr splitString ", ";
+		};
+		private _hasItem = false;
+		{
+			// Check general inventory
+			if (_x in (items _caller)) exitWith {
+				_hasItem = true;
+			};
+
+			// Check assigned items (like night vision, binoculars, GPS, and radio)
+			if (_x in (assignedItems _caller)) exitWith {
+				_hasItem = true;
+			};
+
+			// Check uniform, vest, and backpack items
+			if (_x in (uniformItems _caller) || _x in (vestItems _caller) || _x in (backpackItems _caller)) exitWith {
+				_hasItem = true;
+			};
+		} forEach _requiredItems;
+		_hasItem
 	},
 	_insertVehicles
 ] call ace_interact_menu_fnc_createAction;
@@ -291,7 +314,7 @@ private _insertVicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < 500;
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
 			private _not_registered = !(_target getVariable ["isRegistered", false]);
 			// show if:
 			_atBase && _not_registered
@@ -309,7 +332,7 @@ private _insertVicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < 500;
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
 			private _registered = _target getVariable ["isRegistered", false];
 			// show if:
 			_atBase && _registered
@@ -327,7 +350,7 @@ private _insertVicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < 500;
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
 			private _registered = _target getVariable ["isRegistered", false];
 			private _notRequested = !(_target getVariable ["requestingRedeploy", false]);
 			// show if:
@@ -346,7 +369,7 @@ private _insertVicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < 500;
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
 			private _registered = _target getVariable ["isRegistered", false];
 			private _requested = _target getVariable ["requestingRedeploy", false];
 			// show if:
@@ -373,7 +396,8 @@ private _heliActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		true
+		private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
+		_atBase
 	},
 	_insertVicActions
 ] call ace_interact_menu_fnc_createAction;

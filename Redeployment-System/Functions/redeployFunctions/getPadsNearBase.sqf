@@ -8,7 +8,7 @@ _nearestPads = nearestObjects [
         "Land_HelipadSquare_F", 
         "Land_JumpTarget_F"
     ], 
-    500
+    ((missionNamespace getVariable "home_base") getVariable ["Radius", 500])
 ];
 
 _nearestPads // This is the value that the script will return

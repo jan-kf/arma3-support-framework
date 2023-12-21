@@ -21,7 +21,7 @@ while {true} do {
 	diag_log "[REDEPLOY] base heartbeat, bu bum...";
 
 	// Find all vehicles within a certain radius of (missionNamespace getVariable "home_base")
-	private _vehiclesNearBase = (missionNamespace getVariable "home_base") nearEntities ["Helicopter", 500]; // Adjust the radius as needed
+	private _vehiclesNearBase = (missionNamespace getVariable "home_base") nearEntities ["Helicopter", ((missionNamespace getVariable "home_base") getVariable ["Radius", 500])]; // Adjust the radius as needed
 
 	// Iterate through each vehicle and perform your desired command
 	{
