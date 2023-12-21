@@ -1,3 +1,61 @@
+// TODO: maybe add support for landing pads that already exist in the map.
+private _getBuiltInPads = {
+	// Define the landing pad classes
+	private _landingPadClasses = [
+		"Land_HelipadEmpty_F", 
+		"Land_HelipadCircle_F", 
+		"Land_HelipadCivil_F", 
+		"Land_HelipadRescue_F", 
+		"Land_HelipadSquare_F", 
+		"Land_JumpTarget_F",
+		// CUP pads:
+		"HeliH",
+		"HeliHCivil",
+		"Heli_H_civil",
+		"HeliHEmpty",
+		"HeliHRescue",
+		"Heli_H_rescue",
+		"PARACHUTE_TARGET"
+	];
+
+	// Define the location types
+	private _locationTypes = [
+		"Airport", "CityCenter", "CivilDefense", "CulturalProperty",
+		"DangerousForces", "FlatArea", "FlatAreaCity", "FlatAreaCitySmall",
+		"Name", "NameCity", "NameCityCapital", "NameLocal", "NameMarine",
+		"NameVillage", "SafetyZone", "Strategic", "StrongpointArea"
+	];
+
+	// Get the position of home_base
+	private _homeBasePos = getPos (missionNamespace getVariable ["home_base", objNull]);
+
+	// Find all landing pads on the map
+	private _allLandingPads = [];
+	{
+		_allLandingPads append (allMissionObjects _x);
+	} forEach _landingPadClasses;
+
+	// Filter landing pads and check for nearby locations
+	private _validLandingPads = [];
+	{
+		private _landingPadPos = getPos _x;
+		if (_landingPadPos distance _homeBasePos > 500) then {
+			private _nearbyLocations = nearestLocations [_landingPadPos, _locationTypes, 50];
+			if (count _nearbyLocations > 0) then {
+				private _nearestLocation = _nearbyLocations select 0;
+				private _locationName = text _nearestLocation;
+				if (_locationName != "") then {
+					_validLandingPads pushBack _x;
+				};
+			};
+		};
+	} forEach _allLandingPads;
+
+	// Return the array of valid landing pads
+	_validLandingPads
+
+};
+
 
 private _insertVehicles = {
     params ["_target", "_caller", "_params"];
@@ -166,11 +224,13 @@ private _insertVehicles = {
 							{
 								params ["_target", "_caller", "_args"];
 								private _vic = _args select 0;
+								private _marker = _args select 1;
 								// // Condition code here
 								private _notReinserting = !(_vic getVariable ["isReinserting", false]);
 								private _task = _vic getVariable ["currentTask", "waiting"];
 								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "begin"]);
-								_notReinserting && _notOnRestrictedTask
+								private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
+								_notReinserting && _notOnRestrictedTask && _notAtLZ
 							},
 							{}, // 5: Insert children code <CODE> (Optional)
 							[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
@@ -231,7 +291,7 @@ private _insertVicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D home_base) < 500;
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < 500;
 			private _not_registered = !(_target getVariable ["isRegistered", false]);
 			// show if:
 			_atBase && _not_registered
@@ -249,7 +309,7 @@ private _insertVicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D home_base) < 500;
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < 500;
 			private _registered = _target getVariable ["isRegistered", false];
 			// show if:
 			_atBase && _registered
@@ -267,7 +327,7 @@ private _insertVicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D home_base) < 500;
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < 500;
 			private _registered = _target getVariable ["isRegistered", false];
 			private _notRequested = !(_target getVariable ["requestingRedeploy", false]);
 			// show if:
@@ -286,7 +346,7 @@ private _insertVicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D home_base) < 500;
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < 500;
 			private _registered = _target getVariable ["isRegistered", false];
 			private _requested = _target getVariable ["requestingRedeploy", false];
 			// show if:

@@ -7,11 +7,14 @@ private _vic = _this select 0;
 
 private _baseCallsign = [west, "base"];
 private _baseName = "Base";
-if !(isNil "home_base_atc") then {
-	_baseCallsign = home_base_atc;
-	_baseName = groupId group home_base_atc;
-};
 
+private _syncedObjects = synchronizedObjects (missionNamespace getVariable "home_base");
+{
+	if (_x isKindOf "Man") exitWith {
+		_baseCallsign = _x;
+		_baseName = groupId group _x;
+	};
+} forEach _syncedObjects;
 
 // [format ["Starting watchdog for %1 ... ", _vic]] remoteExec ["systemChat"];
 diag_log format ["Starting watchdog for %1 ... ", _vic];
@@ -152,7 +155,11 @@ while {_vic getVariable ["isRegistered", false]} do {
 			if (_vic distance2D _destinationPos < 100) exitWith {
 				[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
 				[driver _vic, "Already at location, wait one..."] remoteExec ["sideChat"];
-				_vic setVariable ["currentTask", "requestBaseLZ", true];
+				if (_fullRun) then {
+					_vic setVariable ["currentTask", "requestBaseLZ", true];
+				} else {
+					_vic setVariable ["currentTask", "waiting", true];
+				};
 			};
 
 			// set waypoint
@@ -206,7 +213,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 		};
 		case "RTB": {
-			// vic is currently making it's way back to home_base
+			// vic is currently making it's way back to (missionNamespace getVariable "home_base")
 
 			// check if there are any issues
 
@@ -255,7 +262,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 			
 			[driver _vic, format ["%2, this is %1, requesting permission to land, over", groupId group _vic, _baseName]] remoteExec ["sideChat"];
 			sleep 3;
-			_location = [_vic, home_base, true, true] call _findRendezvousPoint;
+			_location = [_vic, (missionNamespace getVariable "home_base"), true, true] call _findRendezvousPoint;
 			if (isNil "_location") exitWith {
 				if (_vic getVariable ["isHeli", false]) then {
 					[_baseCallsign, format ["%1, No helipad is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];

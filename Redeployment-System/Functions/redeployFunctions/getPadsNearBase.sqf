@@ -1,5 +1,5 @@
 _nearestPads = nearestObjects [
-    home_base, 
+    (missionNamespace getVariable "home_base"), 
     [
         "Land_HelipadEmpty_F", 
         "Land_HelipadCircle_F", 
