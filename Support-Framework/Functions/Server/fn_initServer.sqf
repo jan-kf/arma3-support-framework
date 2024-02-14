@@ -16,12 +16,12 @@
 
 if (!isServer) exitWith {};
 
-diag_log "[REDEPLOY] initHomeBase is beginning initilization...";
+diag_log "[SUPPORT] initHomeBase is beginning initilization...";
 
-missionNamespace setVariable ["vicWatchdog", compile preprocessFileLineNumbers "\Redeployment-System\Functions\redeployFunctions\vehicleWatchdog.sqf"];
-missionNamespace setVariable ["getBasePads", compile preprocessFileLineNumbers "\Redeployment-System\Functions\redeployFunctions\getPadsNearBase.sqf"];
-missionNamespace setVariable ["getTargetPads", compile preprocessFileLineNumbers "\Redeployment-System\Functions\redeployFunctions\getPadsNearTarget.sqf"];
-missionNamespace setVariable ["getRegisteredVehicles", compile preprocessFileLineNumbers "\Redeployment-System\Functions\redeployFunctions\getRegisteredVehicles.sqf"];
+missionNamespace setVariable ["vicWatchdog", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\vehicleWatchdog.sqf"];
+missionNamespace setVariable ["getBasePads", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\getPadsNearBase.sqf"];
+missionNamespace setVariable ["getTargetPads", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\getPadsNearTarget.sqf"];
+missionNamespace setVariable ["getRegisteredVehicles", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\getRegisteredVehicles.sqf"];
 
 missionNamespace setVariable ["removeVehicleFromPadRegistry", {
 	params ["_vehicle"];
@@ -83,10 +83,10 @@ private _syncedObjects = synchronizedObjects (missionNamespace getVariable "home
 
 
 // once everything is set up, kick off the heartbeat for players (JIP true)
-diag_log "[REDEPLOY] kicking off heartbeat...";
-// ["[REDEPLOY] kicking off heartbeat..."] remoteExec ["systemChat"];
+diag_log "[SUPPORT] kicking off heartbeat...";
+// ["[SUPPORT] kicking off heartbeat..."] remoteExec ["systemChat"];
 
-[] spawn (compile preprocessFileLineNumbers "\Redeployment-System\Functions\redeployFunctions\baseHeartbeat.sqf");
+[] spawn (compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\baseHeartbeat.sqf");
 
-diag_log "[REDEPLOY] initHomeBase is done initializing";
-// ["[REDEPLOY] initHomeBase is done initializing"] remoteExec ["systemChat"];
+diag_log "[SUPPORT] initHomeBase is done initializing";
+// ["[SUPPORT] initHomeBase is done initializing"] remoteExec ["systemChat"];

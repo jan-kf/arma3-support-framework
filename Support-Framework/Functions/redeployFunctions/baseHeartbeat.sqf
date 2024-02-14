@@ -1,7 +1,7 @@
 if (!isServer) exitWith {};
 
-diag_log "[REDEPLOY] heartbeat starting ...";
-// ["[REDEPLOY] heartbeat starting ..."] remoteExec ["systemChat"];
+diag_log "[SUPPORT] heartbeat starting ...";
+// ["[SUPPORT] heartbeat starting ..."] remoteExec ["systemChat"];
 
 private _safeIsNull = {
     params ["_var"];
@@ -18,7 +18,7 @@ private _safeIsNull = {
 while {true} do {
 
 	// ["base Heartbeat, bu bum..."] remoteExec ["systemChat"];
-	diag_log "[REDEPLOY] base heartbeat, bu bum...";
+	diag_log "[SUPPORT] base heartbeat, bu bum...";
 
 	// Find all vehicles within a certain radius of (missionNamespace getVariable "home_base")
 	private _vehiclesNearBase = (missionNamespace getVariable "home_base") nearEntities ["Helicopter", ((missionNamespace getVariable "home_base") getVariable ["Radius", 500])]; // Adjust the radius as needed

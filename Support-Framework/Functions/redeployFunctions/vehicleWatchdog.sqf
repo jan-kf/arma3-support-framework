@@ -40,7 +40,15 @@ if (_vic getVariable ["isHeli", false]) then {
 	_touchdownMessage = "We're here, Please disembark now";
 };
 
-[driver _vic, format["%1 On Station...", groupId group _vic]] remoteExec ["sideChat"];
+private _isCAS = _vic getVariable "isCAS";
+
+private _helloMsg = "%1 On Station...";
+
+if (_isCAS) then {
+	_helloMsg = "Close Air Support, %1 On Station...";
+};
+
+[driver _vic, format[_helloMsg, groupId group _vic]] remoteExec ["sideChat"];
 
 while {_vic getVariable ["isRegistered", false]} do {
 	// run while the vic is registered
@@ -65,7 +73,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 	// [format["%1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time]] remoteExec ["systemChat"];
 
 	// [driver _vic, format["%1 -> current task: %2", _vehicleDisplayName, _task]] remoteExec ["sideChat"];
-	diag_log format["[REDEPLOY] %1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time];
+	diag_log format["[SUPPORT] %1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time];
 
 
 	switch (_task) do
@@ -79,7 +87,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 			_vic setVariable ["currentTask", "waiting", true];
 		};
-		case "begin": {
+		case "requestReinsert": {
 			// vic was told to begin it's mission, perform startup
 			// clear out params:
 			_vic setVariable ["waveOff", false, true];
@@ -88,6 +96,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 			_vic setVariable ["isReinserting", true, true];
 
 			private _groupLeader = _vic getVariable "targetGroupLeader";
+			private _straightFromTop = (_groupLeader == _baseCallsign);
 			private _fullRun = _vic getVariable ["fullRun", true];
 
 			if (isNil "_groupLeader") exitWith {
@@ -100,41 +109,46 @@ while {_vic getVariable ["isRegistered", false]} do {
 			private _groupLeaderCallsign = groupId _groupLeaderGroup;
 
 			private _location = _vic getVariable "targetLocation";
-			if (isNil "_location") then {
-				private _location = [_vic, _groupLeader, true] call _findRendezvousPoint;
-				private _gl_message = "%3, this is %1, requesting redeployment from %2, over";
-				if (!_fullRun) then{
-					_gl_message = "%3, this is %1, requesting %2 on my position, over";
+			if (!_straightFromTop) then {
+				if (isNil "_location") then {
+					private _location = [_vic, _groupLeader, true] call _findRendezvousPoint;
+					private _gl_message = "%3, this is %1, requesting redeployment from %2, over";
+					if (!_fullRun) then{
+						_gl_message = "%3, this is %1, requesting %2 on my position, over";
+					};
+					[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName]] remoteExec ["sideChat"];
+				}else{
+					private _gl_message = "%4, this is %1, requesting %2 at %3, over";
+					[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, markerText _location, _baseName]] remoteExec ["sideChat"];
 				};
-				[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName]] remoteExec ["sideChat"];
-			}else{
-				private _gl_message = "%4, this is %1, requesting %2 at %3, over";
-				[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, markerText _location, _baseName]] remoteExec ["sideChat"];
+				sleep 3;
 			};
 
 			
-			sleep 3;
 			
 
 			if (isNil "_location") exitWith {
-				if (_vic getVariable ["isHeli", false]) then {
-					[_baseCallsign, format ["%1, we have no available LZ for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
-				} else {
-					[_baseCallsign, format ["%1, we have no available RP for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+				if (!_straightFromTop) then {
+					if (_vic getVariable ["isHeli", false]) then {
+						[_baseCallsign, format ["%1, we have no available LZ for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+					} else {
+						[_baseCallsign, format ["%1, we have no available RP for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+					};
+					sleep 3;
 				};
-				sleep 3;
 				_vic setVariable ["currentTask", "waiting", true];
 				_vic setVariable ["isReinserting", false, true];
 			};
 
-			private _base_message = "Roger %1, beginning redeployment, out.";
-			if (!_fullRun) then{
-				_base_message = "Roger %1, dispatching %2, out.";
+
+			if (!_straightFromTop) then {
+				private _base_message = "Roger %1, beginning redeployment, out.";
+				if (!_fullRun) then{
+					_base_message = "Roger %1, dispatching %2, out.";
+				};
+				[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+				sleep 3;
 			};
-
-
-			[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
-			sleep 3;
 
 			private _destinationPos = nil;
 			if (typeName _location == "STRING") then {
@@ -172,11 +186,19 @@ while {_vic getVariable ["isRegistered", false]} do {
 			if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 				// get gridRef if message has format specifier.
 				// msg that driver sends once destination grid is recieved 
-				[_baseCallsign, format ["Over to you %1, you are cleared for departure to %2, over.", groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				private _base_to_vic_msg = "Over to you %1, you are cleared for departure to %2, over.";
+				if (!_straightFromTop) then {
+					_base_to_vic_msg = "%1, you are cleared for departure to %2, over.";
+				};
+				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
 				sleep 3;
 				[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
 			}else{
-				[_baseCallsign, format ["Over to you %1, you are cleared for approach to %2, over.", groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				private _base_to_vic_msg = "Over to you %1, you are cleared for approach to %2, over.";
+				if (!_straightFromTop) then {
+					_base_to_vic_msg = "%1, you are cleared for approach to %2, over.";
+				};
+				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
 				sleep 3;
 				[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
 			};
@@ -203,12 +225,24 @@ while {_vic getVariable ["isRegistered", false]} do {
 					_destinationPos = getPos _destination;
 				};
 			};
-
-			// check the vic is near the objective, and ready to land 
-			if (_vic distance2D _destinationPos < 100 && unitReady _vic) then {
-				// set task to land at objective
-				_vic land "LAND";
-				_vic setVariable ["currentTask", "landingAtObjective", true];
+			
+			// TODO: change check for when it's a CAS mission
+			private _isCAS = _vic getVariable "isCAS";
+			if (_isCAS) then {
+				// check if near target
+				if (_vic distance2D _destinationPos < 100 && unitReady _vic) then {
+					//save the current time for later use 
+					_vic setVariable ["taskStartTime", serverTime, true];
+					//set task to CAS duties
+					_vic setVariable ["currentTask", "performingCAS", true];
+				};
+			}else{
+				// check the vic is near the objective, and ready to land 
+				if (_vic distance2D _destinationPos < 100 && unitReady _vic) then {
+					// set task to land at objective
+					_vic land "LAND";
+					_vic setVariable ["currentTask", "landingAtObjective", true];
+				};
 			};
 
 		};
@@ -236,6 +270,19 @@ while {_vic getVariable ["isRegistered", false]} do {
 				_vic setVariable ["currentTask", "landingAtBase", true];
 			};
 
+		};
+		case "performingCAS": {
+			// vic is performing close air support at the location
+			private _start = _vic getVariable "taskStartTime";
+			private _elapsedTime = serverTime - _start;
+			if (_elapsedTime > 210) then { // 3 minutes, 30 seconds
+				// send message about finishing mission?
+
+				// requestLZ at base, and RTB
+				_vic setVariable ["currentTask", "requestBaseLZ", true];
+			};
+			// should listen if it gets an early wave-off, 
+			// otherwise it should perform it's mission for a set amount of time
 		};
 		case "landingAtObjective": {
 			// vic is performing it's landing procedures at the location

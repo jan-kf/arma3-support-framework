@@ -125,7 +125,7 @@ private _insertVehicles = {
 						// statement 
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
-						_vic setVariable ["currentTask", "begin", true];
+						_vic setVariable ["currentTask", "requestReinsert", true];
 						_vic setVariable ["fullRun", true, true];
 					}, 
 					{
@@ -133,7 +133,7 @@ private _insertVehicles = {
 						// // Condition code here
 						private _notReinserting = !(_vic getVariable ["isReinserting", false]);
 						private _task = _vic getVariable ["currentTask", "waiting"];
-						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "begin", "awaitOrders"]);
+						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
 						_notReinserting && _notOnRestrictedTask
 					},
 					{}, // 5: Insert children code <CODE> (Optional)
@@ -153,7 +153,7 @@ private _insertVehicles = {
 						// // Condition code here
 						private _isReinserting = _vic getVariable ["isReinserting", false];
 						private _task = _vic getVariable ["currentTask", "waiting"];
-						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "begin", "awaitOrders"]);
+						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
 						_isReinserting && _notOnRestrictedTask
 					},
 					{}, // 5: Insert children code <CODE> (Optional)
@@ -166,7 +166,7 @@ private _insertVehicles = {
 						// statement 
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
-						_vic setVariable ["currentTask", "begin", true];
+						_vic setVariable ["currentTask", "requestReinsert", true];
 						_vic setVariable ["fullRun", false, true];
 					}, 
 					{
@@ -174,7 +174,7 @@ private _insertVehicles = {
 						// // Condition code here
 						private _notReinserting = !(_vic getVariable ["isReinserting", false]);
 						private _task = _vic getVariable ["currentTask", "waiting"];
-						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "begin", "awaitOrders"]);
+						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
 						_notReinserting && _notOnRestrictedTask
 					},
 					{}, // 5: Insert children code <CODE> (Optional)
@@ -218,7 +218,7 @@ private _insertVehicles = {
 								private _marker = _args select 1;
 								_vic setVariable ["targetGroupLeader", _caller, true];
 								_vic setVariable ["targetLocation", _marker, true];
-								_vic setVariable ["currentTask", "begin", true];
+								_vic setVariable ["currentTask", "requestReinsert", true];
 								_vic setVariable ["fullRun", false, true];
 							}, 
 							{
@@ -228,7 +228,7 @@ private _insertVehicles = {
 								// // Condition code here
 								private _notReinserting = !(_vic getVariable ["isReinserting", false]);
 								private _task = _vic getVariable ["currentTask", "waiting"];
-								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "begin"]);
+								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
 								private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
 								_notReinserting && _notOnRestrictedTask && _notAtLZ
 							},
@@ -298,8 +298,6 @@ private _redeploymentActions = [
 
 [player, 1, ["ACE_SelfActions"], _redeploymentActions] call ace_interact_menu_fnc_addActionToObject;
 
-// Define the action
-
 
 private _insertVicActions = {
 	params ["_target", "_caller", "_params"];
@@ -322,7 +320,7 @@ private _insertVicActions = {
 	] call ace_interact_menu_fnc_createAction;
 
 	private _unregisterVicAction = [
-		"UnregisterVehicle", "<t color='#f7812d'>Unregister Vehicle</t>", "",
+		"UnregisterVehicle", "<t color='#ffda36'>Unregister Vehicle</t>", "",
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Statement code here
@@ -339,7 +337,58 @@ private _insertVicActions = {
 		}
 	] call ace_interact_menu_fnc_createAction;
 
-	private _requestVicAction = [
+	private _assignCasVicAction = [
+		"AssignCasVehicle", "<t color='#f7812d'>Assign to CAS</t>", "",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			// Statement code here
+			_target setVariable ["isCAS", true, true];
+		}, 
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			// Condition code here
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
+			private _registered = _target getVariable ["isRegistered", false];
+			private _isCAS = _target getVariable ["isCAS", false];
+			
+			_nonCombatKeywords = ["safe", "designator", "horn"];  // these are works that appear in some cases but should be disregarded as weapons
+			_allWeapons = weapons _target; 
+			_combatWeapons = _allWeapons select { 
+				_isCombatWeapon = true;
+				_weaponNameLower = toLower _x; 
+				{  
+					if (toLower _x in _weaponNameLower) then {
+						_isCombatWeapon = false;
+					}; 
+				} forEach _nonCombatKeywords; 
+				_isCombatWeapon; 
+			}; // if count of the combat weapons is more than 0, then in theory the vic has weapons that can be used for CAS
+
+			// show if:
+			_atBase && _registered && !_isCAS && (count _combatWeapons > 0)
+		}
+	] call ace_interact_menu_fnc_createAction;
+
+	private _unassignCasVicAction = [
+		"UnassignCasVehicle", "<t color='#f2a974'>Remove from CAS</t>", "",
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			// Statement code here
+			_target setVariable ["isCAS", false, true];
+		}, 
+		{
+			params ["_target", "_caller", "_actionId", "_arguments"];
+			// Condition code here
+			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
+			private _registered = _target getVariable ["isRegistered", false];
+			private _isCAS = _target getVariable ["isCAS", false];
+
+			// show if:
+			_atBase && _registered && _isCAS
+		}
+	] call ace_interact_menu_fnc_createAction;
+
+	private _requestVicRedeployAction = [
 		"RequestRedeploy", "<t color='#5EC445'>Request Redeploy</t>", "",
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
@@ -358,7 +407,7 @@ private _insertVicActions = {
 		}
 	] call ace_interact_menu_fnc_createAction;
 
-	private _cancelVicAction = [
+	private _cancelVicRedeployAction = [
 		"CancelRedeploy", "<t color='#fae441'>Cancel Redeploy Request</t>", "",
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
@@ -379,8 +428,10 @@ private _insertVicActions = {
 	private _actions = [];
 	_actions pushBack [_registerVicAction, [], _target];
 	_actions pushBack [_unregisterVicAction, [], _target];
-	_actions pushBack [_requestVicAction, [], _target];
-	_actions pushBack [_cancelVicAction, [], _target];
+	_actions pushBack [_assignCasVicAction, [], _target];
+	_actions pushBack [_unassignCasVicAction, [], _target];
+	_actions pushBack [_requestVicRedeployAction, [], _target];
+	_actions pushBack [_cancelVicRedeployAction, [], _target];
 
 
 	_actions
