@@ -230,11 +230,12 @@ while {_vic getVariable ["isRegistered", false]} do {
 			private _isCAS = _vic getVariable "isCAS";
 			if (_isCAS) then {
 				// check if near target
-				if (_vic distance2D _destinationPos < 100 && unitReady _vic) then {
+				if (_vic distance2D _destinationPos < 300 ) then {
 					//save the current time for later use 
 					_vic setVariable ["taskStartTime", serverTime, true];
 					//set task to CAS duties
 					_vic setVariable ["currentTask", "performingCAS", true];
+					[driver _vic, format ["Beginning my attack...", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
 				};
 			}else{
 				// check the vic is near the objective, and ready to land 
