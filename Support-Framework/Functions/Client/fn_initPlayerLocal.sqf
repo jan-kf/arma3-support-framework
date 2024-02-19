@@ -68,7 +68,7 @@ private _insertVehicles = {
 		private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
 		private _color = "#FFFFFF";
 		private _requested = _vehicle getVariable ["requestingRedeploy", false];
-		private _reinserting = _vehicle getVariable ["isReinserting", false];
+		private _reinserting = _vehicle getVariable ["isPerformingDuties", false];
 		private _task = _vehicle getVariable ["currentTask", "waiting"];
 		if (_reinserting) then {
 			_color = "#30ADE3";
@@ -131,7 +131,7 @@ private _insertVehicles = {
 					{
 						params ["_target", "_caller", "_vic"];
 						// // Condition code here
-						private _notReinserting = !(_vic getVariable ["isReinserting", false]);
+						private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 						private _task = _vic getVariable ["currentTask", "waiting"];
 						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
 						_notReinserting && _notOnRestrictedTask
@@ -151,10 +151,10 @@ private _insertVehicles = {
 					{
 						params ["_target", "_caller", "_vic"];
 						// // Condition code here
-						private _isReinserting = _vic getVariable ["isReinserting", false];
+						private _isPerformingDuties = _vic getVariable ["isPerformingDuties", false];
 						private _task = _vic getVariable ["currentTask", "waiting"];
 						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
-						_isReinserting && _notOnRestrictedTask
+						_isPerformingDuties && _notOnRestrictedTask
 					},
 					{}, // 5: Insert children code <CODE> (Optional)
 					_vehicle // 6: Action parameters <ANY> (Optional)
@@ -172,7 +172,7 @@ private _insertVehicles = {
 					{
 						params ["_target", "_caller", "_vic"];
 						// // Condition code here
-						private _notReinserting = !(_vic getVariable ["isReinserting", false]);
+						private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 						private _task = _vic getVariable ["currentTask", "waiting"];
 						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
 						_notReinserting && _notOnRestrictedTask
@@ -195,7 +195,7 @@ private _insertVehicles = {
 					{
 						params ["_target", "_caller", "_vic"];
 						// // Condition code here
-						private _notReinserting = !(_vic getVariable ["isReinserting", false]);
+						private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 						private _task = _vic getVariable ["currentTask", "waiting"];
 						private _awaitingOrders = _task == "awaitOrders";
 						_awaitingOrders
@@ -226,7 +226,35 @@ private _insertVehicles = {
 								private _vic = _args select 0;
 								private _marker = _args select 1;
 								// // Condition code here
-								private _notReinserting = !(_vic getVariable ["isReinserting", false]);
+								private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
+								private _task = _vic getVariable ["currentTask", "waiting"];
+								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
+								private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
+								_notReinserting && _notOnRestrictedTask && _notAtLZ
+							},
+							{}, // 5: Insert children code <CODE> (Optional)
+							[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
+						] call ace_interact_menu_fnc_createAction;
+						_actions pushBack [_vicRequestToLZAction, [], _target];
+					} else if (_displayName find "target " == 0) then {
+						private _vicRequestToLZAction = [
+							format["%1-casTo-%2", netId _vehicle, _marker], format["<t color='%1'>Request Firemission at %2</t>", _color, _markerName], "",
+							{
+								// statement 
+								params ["_target", "_caller", "_args"];
+								private _vic = _args select 0;
+								private _marker = _args select 1;
+								_vic setVariable ["targetGroupLeader", _caller, true];
+								_vic setVariable ["targetLocation", _marker, true];
+								_vic setVariable ["currentTask", "requestReinsert", true];
+								_vic setVariable ["fullRun", false, true];
+							}, 
+							{
+								params ["_target", "_caller", "_args"];
+								private _vic = _args select 0;
+								private _marker = _args select 1;
+								// // Condition code here
+								private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 								private _task = _vic getVariable ["currentTask", "waiting"];
 								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
 								private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
