@@ -133,8 +133,9 @@ private _insertVehicles = {
 						// // Condition code here
 						private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 						private _task = _vic getVariable ["currentTask", "waiting"];
+						private _isCAS = _target getVariable ["isCAS", false];
 						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
-						_notReinserting && _notOnRestrictedTask
+						_notReinserting && _notOnRestrictedTask && !_isCAS
 					},
 					{}, // 5: Insert children code <CODE> (Optional)
 					_vehicle // 6: Action parameters <ANY> (Optional)
@@ -174,8 +175,9 @@ private _insertVehicles = {
 						// // Condition code here
 						private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 						private _task = _vic getVariable ["currentTask", "waiting"];
+						private _isCAS = _target getVariable ["isCAS", false];
 						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
-						_notReinserting && _notOnRestrictedTask
+						_notReinserting && _notOnRestrictedTask && !_isCAS
 					},
 					{}, // 5: Insert children code <CODE> (Optional)
 					_vehicle // 6: Action parameters <ANY> (Optional)
@@ -205,10 +207,30 @@ private _insertVehicles = {
 				] call ace_interact_menu_fnc_createAction;
 
 				{ // add all HLS and LZ markers as valid locations
+					
+					// marker details
 					private _marker = _x;
 					private _markerName = markerText _marker;
 					private _displayName = toLower _markerName;
-					if ((_displayName find "hls " == 0) || (_displayName find "lz " == 0)) then {
+
+					// LZ search details
+					private _lzPrefixStr = (missionNamespace getVariable "home_base") getVariable ["LzPrefixes", ""];
+					private _lzPrefixes = [];
+					if (_lzPrefixStr != "") then {
+						_lzPrefixes = _lzPrefixStr splitString ", ";
+					} else {
+						_lzPrefixes = ["lz ", "hls "]; // default value -- hard fallback
+					};
+
+					private _lzMatch = false;
+					{
+						private _prefix = toLower _x;
+						if (_displayName find _prefix == 0) exitWith {
+							_lzMatch = true;
+						}
+					} forEach _lzPrefixes;
+
+					if (_lzMatch) then {
 						private _vicRequestToLZAction = [
 							format["%1-requestTo-%2", netId _vehicle, _marker], format["<t color='%1'>Send to %2</t>", _color, _markerName], "",
 							{
@@ -228,15 +250,35 @@ private _insertVehicles = {
 								// // Condition code here
 								private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 								private _task = _vic getVariable ["currentTask", "waiting"];
+								private _isCAS = _target getVariable ["isCAS", false];
 								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
 								private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
-								_notReinserting && _notOnRestrictedTask && _notAtLZ
+								_notReinserting && _notOnRestrictedTask && _notAtLZ && !_isCAS
 							},
 							{}, // 5: Insert children code <CODE> (Optional)
 							[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
 						] call ace_interact_menu_fnc_createAction;
 						_actions pushBack [_vicRequestToLZAction, [], _target];
-					} else if (_displayName find "target " == 0) then {
+					};
+
+					// CAS search details
+					private _casPrefixStr = (missionNamespace getVariable "home_base") getVariable ["CasPrefixes", ""];
+					private _casPrefixes = [];
+					if (_casPrefixStr != "") then {
+						_casPrefixes = _casPrefixStr splitString ", ";
+					} else {
+						_casPrefixes = ["target ", "firemission "]; // default value -- hard fallback
+					};
+
+					private _casMatch = false;
+					{
+						private _prefix = toLower _x;
+						if (_displayName find _prefix == 0) exitWith {
+							_casMatch = true;
+						}
+					} forEach _casPrefixes;
+
+					if (_casMatch) then {
 						private _vicRequestToLZAction = [
 							format["%1-casTo-%2", netId _vehicle, _marker], format["<t color='%1'>Request Firemission at %2</t>", _color, _markerName], "",
 							{
@@ -246,7 +288,7 @@ private _insertVehicles = {
 								private _marker = _args select 1;
 								_vic setVariable ["targetGroupLeader", _caller, true];
 								_vic setVariable ["targetLocation", _marker, true];
-								_vic setVariable ["currentTask", "requestReinsert", true];
+								_vic setVariable ["currentTask", "requestCas", true];
 								_vic setVariable ["fullRun", false, true];
 							}, 
 							{
@@ -254,11 +296,12 @@ private _insertVehicles = {
 								private _vic = _args select 0;
 								private _marker = _args select 1;
 								// // Condition code here
+								private _isCAS = _target getVariable ["isCAS", false];
 								private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 								private _task = _vic getVariable ["currentTask", "waiting"];
 								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
 								private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
-								_notReinserting && _notOnRestrictedTask && _notAtLZ
+								_isCAS && _notReinserting && _notOnRestrictedTask && _notAtLZ
 							},
 							{}, // 5: Insert children code <CODE> (Optional)
 							[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
@@ -297,10 +340,12 @@ private _redeploymentActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
-		private _requiredItemsStr = (missionNamespace getVariable "home_base") getVariable ["RequiredItems", "hgun_esd_01_F"];
+		private _requiredItemsStr = (missionNamespace getVariable "home_base") getVariable ["RequiredItems", ""];
 		private _requiredItems = [];
 		if (_requiredItemsStr != "") then {
 			_requiredItems = _requiredItemsStr splitString ", ";
+		} else {
+			_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
 		};
 		private _hasItem = false;
 		{
@@ -371,6 +416,7 @@ private _insertVicActions = {
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Statement code here
 			_target setVariable ["isCAS", true, true];
+			[_target, format ["%1 is ready for tasking... ",groupId group _target]] remoteExec ["sideChat"];
 		}, 
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
@@ -430,8 +476,9 @@ private _insertVicActions = {
 			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
 			private _registered = _target getVariable ["isRegistered", false];
 			private _notRequested = !(_target getVariable ["requestingRedeploy", false]);
+			private _isCAS = _target getVariable ["isCAS", false];
 			// show if:
-			_atBase && _registered && _notRequested
+			_atBase && _registered && _notRequested && !_isCAS
 		}
 	] call ace_interact_menu_fnc_createAction;
 
@@ -449,8 +496,9 @@ private _insertVicActions = {
 			private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
 			private _registered = _target getVariable ["isRegistered", false];
 			private _requested = _target getVariable ["requestingRedeploy", false];
+			private _isCAS = _target getVariable ["isCAS", false];
 			// show if:
-			_atBase && _registered && _requested
+			_atBase && _registered && _requested && !_isCAS
 		}
 	] call ace_interact_menu_fnc_createAction;
 	private _actions = [];

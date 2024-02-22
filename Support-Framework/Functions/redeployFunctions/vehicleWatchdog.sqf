@@ -40,7 +40,7 @@ if (_vic getVariable ["isHeli", false]) then {
 	_touchdownMessage = "We're here, Please disembark now";
 };
 
-private _isCAS = _vic getVariable "isCAS";
+private _isCAS = _vic getVariable ["isCAS", false];
 
 private _helloMsg = "%1 On Station...";
 
@@ -187,7 +187,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 				// get gridRef if message has format specifier.
 				// msg that driver sends once destination grid is recieved 
 				private _base_to_vic_msg = "Over to you %1, you are cleared for departure to %2, over.";
-				if (!_straightFromTop) then {
+				if (_straightFromTop) then {
 					_base_to_vic_msg = "%1, you are cleared for departure to %2, over.";
 				};
 				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
@@ -195,7 +195,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 				[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
 			}else{
 				private _base_to_vic_msg = "Over to you %1, you are cleared for approach to %2, over.";
-				if (!_straightFromTop) then {
+				if (_straightFromTop) then {
 					_base_to_vic_msg = "%1, you are cleared for approach to %2, over.";
 				};
 				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
@@ -258,22 +258,11 @@ while {_vic getVariable ["isRegistered", false]} do {
 			_vic setVariable ["destination", _location, true];
 			 
 			private _currentPos = getPos _vic;
-/// stopped here
-			// logic to check if Vic is already at location
-			if (_vic distance2D _destinationPos < 100) exitWith {
-				[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
-				[driver _vic, "Already at location, wait one..."] remoteExec ["sideChat"];
-				if (_fullRun) then {
-					_vic setVariable ["currentTask", "requestBaseLZ", true];
-				} else {
-					_vic setVariable ["currentTask", "waiting", true];
-				};
-			};
 
 			// set waypoint
 			private _grp = group _vic;
 			private _base_wp = _grp addWaypoint [_destinationPos, 0];
-			_base_wp setWaypointType "MOVE";
+			_base_wp setWaypointType "SAD"; // seek and destroy
 			_grp setCurrentWaypoint _base_wp;
 
 			private _gridRef = [_destinationPos] call _posToGrid;
@@ -321,16 +310,15 @@ while {_vic getVariable ["isRegistered", false]} do {
 				};
 			};
 			
-			// TODO: change check for when it's a CAS mission
-			private _isCAS = _vic getVariable "isCAS";
+			private _isCAS = _vic getVariable ["isCAS", false];
 			if (_isCAS) then {
 				// check if near target
-				if (_vic distance2D _destinationPos < 300 ) then {
+				if (_vic distance2D _destinationPos < 500 ) then {
 					//save the current time for later use 
 					_vic setVariable ["taskStartTime", serverTime, true];
 					//set task to CAS duties
 					_vic setVariable ["currentTask", "performingCAS", true];
-					[driver _vic, format ["Beginning my attack...", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
+					[driver _vic, format ["Beginning my attack..."]] remoteExec ["sideChat"];
 				};
 			}else{
 				// check the vic is near the objective, and ready to land 
@@ -373,10 +361,12 @@ while {_vic getVariable ["isRegistered", false]} do {
 			private _elapsedTime = serverTime - _start;
 			if (_elapsedTime > 210) then { // 3 minutes, 30 seconds
 				// send message about finishing mission?
-
+				// TODO: set behavior to ignore enemies when flying away
+				[driver _vic, format ["Attack complete, returning to base."]] remoteExec ["sideChat"];
 				// requestLZ at base, and RTB
 				_vic setVariable ["currentTask", "requestBaseLZ", true];
 			};
+			
 			// should listen if it gets an early wave-off, 
 			// otherwise it should perform it's mission for a set amount of time
 		};

@@ -65,16 +65,30 @@ class CfgVehicles {
             class RequiredItems: Edit {
                 property = "SupportFramework_HomeBase_Module_RequiredItems";
                 displayName = "Required item to call in redeploy";
-                tooltip = "Comma-separated list of item classes required for redeploy. If empty, hgun_esd_01_F will be used";
+                tooltip = "Comma-separated list of item classes required for redeploy. If empty, hgun_esd_01_F (spectrum device) will be used";
                 typeName = "STRING"; // Value type
-                defaultValue = "hgun_esd_01_F"; // Default value
+                defaultValue = """hgun_esd_01_F"""; // Default value
             };
             class Radius: Edit {
                 property = "SupportFramework_HomeBase_Module_Radius";
                 displayName = "Home Base's Area of Influence";
-                tooltip = "Radius in meters that defines where the home base is, calculated from the module itself.";
+                tooltip = "Radius in meters that defines where the home base is, calculated from the module itself. (500m if empty)";
                 typeName = "NUMBER";
                 defaultValue = "500"; // Default radius value in meters
+            };
+            class LzPrefixes: Edit {
+                property = "SupportFramework_HomeBase_Module_LzPrefixes";
+                displayName = "Prefixes for landing zone markers";
+                tooltip = "Comma-separated list of prefixes that are searched for viable landing zones. Case Insensitive.";
+                typeName = "STRING"; // Value type
+                defaultValue = """LZ, HLS"""; // Default value
+            };
+            class CasPrefixes: Edit {
+                property = "SupportFramework_HomeBase_Module_CasPrefixes";
+                displayName = "Prefixes for CAS markers";
+                tooltip = "Comma-separated list of prefixes that are searched for CAS missions. Case Insensitive.";
+                typeName = "STRING"; // Value type
+                defaultValue = """Target, Firemission"""; // Default value
             };
             class ModuleDescription: ModuleDescription{}; // Module description should be shown last
         };
