@@ -309,11 +309,15 @@ while {_vic getVariable ["isRegistered", false]} do {
 					_destinationPos = getPos _destination;
 				};
 			};
+			private _vicGroup = group _vic;
+			_vicGroup setCombatMode "GREEN";
+			_vicGroup setCombatBehaviour "AWARE";
 			
 			private _isCAS = _vic getVariable ["isCAS", false];
 			if (_isCAS) then {
 				// check if near target
 				if (_vic distance2D _destinationPos < 500 ) then {
+					_vicGroup setCombatMode "RED";
 					//save the current time for later use 
 					_vic setVariable ["taskStartTime", serverTime, true];
 					//set task to CAS duties
@@ -362,6 +366,9 @@ while {_vic getVariable ["isRegistered", false]} do {
 			if (_elapsedTime > 210) then { // 3 minutes, 30 seconds
 				// send message about finishing mission?
 				// TODO: set behavior to ignore enemies when flying away
+				private _vicGroup = group _vic;
+				_vicGroup setCombatMode "BLUE";
+				_vicGroup setCombatBehaviour "CARELESS";
 				[driver _vic, format ["Attack complete, returning to base."]] remoteExec ["sideChat"];
 				// requestLZ at base, and RTB
 				_vic setVariable ["currentTask", "requestBaseLZ", true];

@@ -62,6 +62,13 @@ class CfgVehicles {
         isDisposable = 0;
         class Attributes: AttributesBase {
             class Units: Units {};
+            class BaseSide: Edit {
+                property = "SupportFramework_HomeBase_Module_BaseSide";
+                displayName = "Base's Side";
+                tooltip = "The choices are: west, east, guer, civ -- [BLUFOR, OPFOR, Independent and Civilian, respectively], only choose one. Default is west (blufor)";
+                typeName = "STRING"; // Value type
+                defaultValue = """west"""; // Default value
+            };
             class RequiredItems: Edit {
                 property = "SupportFramework_HomeBase_Module_RequiredItems";
                 displayName = "Required item to call in redeploy";

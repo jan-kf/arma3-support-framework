@@ -56,6 +56,158 @@ private _getBuiltInPads = {
 
 };
 
+private _insertArtyVehicles = {
+    params ["_target", "_caller", "_params"];
+	
+	private _markerActions = [];
+	{ 
+					
+		// marker details
+		private _marker = _x;
+		private _markerName = markerText _marker;
+		private _displayName = toLower _markerName;
+
+		// CAS search details
+		private _casPrefixStr = (missionNamespace getVariable "home_base") getVariable ["CasPrefixes", ""];
+		private _casPrefixes = [];
+		if (_casPrefixStr != "") then {
+			_casPrefixes = _casPrefixStr splitString ", ";
+		} else {
+			_casPrefixes = ["target ", "firemission "]; // default value -- hard fallback
+		};
+
+		private _casMatch = false;
+		{
+			private _prefix = toLower _x;
+			if (_displayName find _prefix == 0) exitWith {
+				_casMatch = true;
+			}
+		} forEach _casPrefixes;
+
+		if (_casMatch) then {
+			private _color = "#FFFFFF";
+			private _markerAction = [
+				format["%1-arty-marker", _displayName], format["<t color='%2'>%1</t>",_markerName, _color], "",
+				{}, // statement
+				{true}, // condition
+				{// children
+					params ["_target", "_caller", "_params"];
+					private _marker = _target;
+					private _artyActions = [];
+					private _registeredVehicles = call (missionNamespace getVariable "getRegisteredVehicles");
+					{
+						private _vehicle = _x;
+						if (_vehicle getVariable ["isArtillery", false]) then {
+							private _vehicleClass = typeOf _vehicle;
+							private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+							private _color = "#FFFFFF";
+
+							private _artyAction = [
+								netId _vehicle, format["<t color='%3'>(%1) %2</t>",groupId group _vehicle, _vehicleDisplayName, _color], "",
+								{
+									params ["_target", "_caller", "_args"];
+									hint format["Shalom from %1", _target];
+								}, 
+								{
+									params ["_target", "_caller", "_args"];
+									// Condition code here
+									private _vic = _args select 0;
+									private _marker = _args select 1;
+									private _registered = _vic getVariable ["isRegistered", false];
+									private _ammoTypes = getArtilleryAmmo [_vic];
+									private _targetPos = getMarkerPos _marker;
+									private _inRange = false;
+									{
+										if (_targetPos inRangeOfArtillery [[_vic], _x]) then{
+											_inRange = true;
+										}
+									} forEach _ammoTypes;
+									_registered && _inRange
+								},
+								{ // 5: Insert children code <CODE> (Munition Selection, then Amount, then Spread)
+
+									params ["_target", "_caller", "_params"];
+									
+									private _shellActions = [];
+									private _marker = _params select 1;
+									private _vehicle = _target;
+									private _vehicleClass = typeOf _vehicle;
+									private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+									private _color = "#FFFFFF";
+									{
+										private _shellType = _x;
+										private _shellAction = [
+											format["%1-shell", netId _vehicle], format["%1", _shellType], "",
+											{
+												// statement 
+												params ["_target", "_caller", "_args"];
+												hint format["Shalom from %1", _args];
+											}, 
+											{
+												params ["_target", "_caller", "_args"];
+												// // Condition code here
+												private _vic = _args select 0;
+												private _marker = _args select 1;
+												private _shellType = _args select 2;
+												private _targetPos = getMarkerPos _marker;
+												_targetPos inRangeOfArtillery [[_vic], _shellType]
+											},
+											// { // 5: Insert children code (Amount, then Spread)
+											// 	params ["_target", "_caller", "_args"];
+											// 	private _vic = _args select 0;
+											// 	private _marker = _args select 1;
+											// 	private _shellType = _args select 2;
+											// 	private _amountActions = [];
+											// 	{
+											// 		private _amount = _x;
+											// 		private _amountAction = [
+											// 			format["%1-amount", _amount], format["%1 Round(s)", _amount], "",
+											// 			{
+											// 				// statement 
+											// 				params ["_target", "_caller", "_args"];
+											// 				private _vic = _args select 0;
+											// 				private _marker = _args select 1;
+											// 				private _shellType = _args select 2;
+											// 				private _amount = _args select 3;
+											// 				private _targetPos = getMarkerPos _marker;
+											// 				_vic doArtilleryFire [_target, _shellType, _amount];
+											// 			}, 
+											// 			{
+											// 				params ["_target", "_caller", "_args"];
+											// 				// // Condition code here
+											// 				true
+											// 			},
+											// 			{}, //5
+											// 			[_vic, _marker, _shellType, _amount] // 6: Action parameters <ANY> (Optional)
+											// 		];
+											// 		_amountActions pushBack [_amountAction, [], _vic];
+											// 	} forEach [1,2,4,8];
+											// 	_amountActions
+											// }, 
+											{},
+											[_vehicle, _marker, _shellType] // 6: Action parameters <ANY> (Optional)
+										] call ace_interact_menu_fnc_createAction;
+										_shellActions pushBack [_shellAction, [], _vehicle];
+									} forEach (getArtilleryAmmo [_vehicle]);
+
+									_shellActions
+								},
+								[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
+							] call ace_interact_menu_fnc_createAction;
+							_artyActions pushBack [_artyAction, [], _vehicle]; 
+						};
+						
+					} forEach _registeredVehicles;
+
+					_artyActions	
+				}
+			] call ace_interact_menu_fnc_createAction;
+			_markerActions pushBack [_markerAction, [], _marker]; 
+		};
+	} forEach allMapMarkers;
+		
+    _markerActions
+};
 
 private _insertVehicles = {
     params ["_target", "_caller", "_params"];
@@ -64,154 +216,148 @@ private _insertVehicles = {
 	private _registeredVehicles = call (missionNamespace getVariable "getRegisteredVehicles");
 	{
 		private _vehicle = _x;
-		private _vehicleClass = typeOf _vehicle;
-		private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-		private _color = "#FFFFFF";
-		private _requested = _vehicle getVariable ["requestingRedeploy", false];
-		private _reinserting = _vehicle getVariable ["isPerformingDuties", false];
-		private _task = _vehicle getVariable ["currentTask", "waiting"];
-		if (_reinserting) then {
-			_color = "#30ADE3";
-		};
-		if (_requested) then {
-			_color = "#5EC445";
-		};
-		if (_task == "awaitOrders") then {
-			_color = "#f7e76a";
-		};
-		private _vicAction = [
-			netId _vehicle, format["<t color='%3'>(%1) %2</t>",groupId group _vehicle, _vehicleDisplayName, _color], "",
-			{
-				params ["_target", "_caller", "_vic"];
-				//statement
-				private _task = _vic getVariable ["currentTask", "waiting"];
-				if (_task == "waiting") then {
-					private _allInVehicle = (crew _vic) - (units _vic); // Get all units in the vehicle and remove the crew members
+		if (!(_vehicle getVariable ["isArtillery", false])) then {
+			private _vehicleClass = typeOf _vehicle;
+			private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+			private _color = "#FFFFFF";
+			private _requested = _vehicle getVariable ["requestingRedeploy", false];
+			private _reinserting = _vehicle getVariable ["isPerformingDuties", false];
+			private _task = _vehicle getVariable ["currentTask", "waiting"];
+			if (_reinserting) then {
+				_color = "#30ADE3";
+			};
+			if (_requested) then {
+				_color = "#5EC445";
+			};
+			if (_task == "awaitOrders") then {
+				_color = "#f7e76a";
+			};
+			private _vicAction = [
+				netId _vehicle, format["<t color='%3'>(%1) %2</t>",groupId group _vehicle, _vehicleDisplayName, _color], "",
+				{
+					params ["_target", "_caller", "_vic"];
+					//statement
+					private _task = _vic getVariable ["currentTask", "waiting"];
+					if (_task == "waiting") then {
+						private _allInVehicle = (crew _vic) - (units _vic); // Get all units in the vehicle and remove the crew members
 
-					// Getting names of non-crew members
-					private _names = [];
-					{
-						_names pushBack (name _x);
-					} forEach _allInVehicle;
+						// Getting names of non-crew members
+						private _names = [];
+						{
+							_names pushBack (name _x);
+						} forEach _allInVehicle;
 
-					// Format the names into a string
-					private _namesString = format ["Waiting for redeploy in %2: %1", _names joinString ", ", groupId group _vic];
+						// Format the names into a string
+						private _namesString = format ["Waiting for redeploy in %2: %1", _names joinString ", ", groupId group _vic];
 
-					// Display the names using a hint
-					hint _namesString;
-				} else {
-					// Display the vic's current task
-					hint format ["%1's current task: %2", groupId group _vic, _task];
-				};
-			}, 
-			{
-				params ["_target", "_caller", "_vic"];
-				// Condition code here
-				private _registered = _vic getVariable ["isRegistered", false];
-				_registered
-			},
-			{ // 5: Insert children code <CODE> (Optional)
-				params ["_target", "_caller", "_params"];
-				
-				private _actions = [];
-				
-				private _vehicle = _target;
-				private _vehicleClass = typeOf _vehicle;
-				private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-				private _color = "#FFFFFF";
-				private _vicDeployAction = [
-					format["%1-deploy", netId _vehicle], format["<t color='%1'>Deploy! (Auto dust-off after 10 sec)</t>", _color], "",
-					{
-						// statement 
-						params ["_target", "_caller", "_vic"];
-						_vic setVariable ["targetGroupLeader", _caller, true];
-						_vic setVariable ["currentTask", "requestReinsert", true];
-						_vic setVariable ["fullRun", true, true];
-					}, 
-					{
-						params ["_target", "_caller", "_vic"];
-						// // Condition code here
-						private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
-						private _task = _vic getVariable ["currentTask", "waiting"];
-						private _isCAS = _target getVariable ["isCAS", false];
-						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
-						_notReinserting && _notOnRestrictedTask && !_isCAS
-					},
-					{}, // 5: Insert children code <CODE> (Optional)
-					_vehicle // 6: Action parameters <ANY> (Optional)
-				] call ace_interact_menu_fnc_createAction;
-				_actions pushBack [_vicDeployAction, [], _target];
-				private _vicWaveOffAction = [
-					format["%1-waveOff", netId _vehicle], "<t color='#F23838'>Wave Off!</t>", "",
-					{
-						// statement 
-						params ["_target", "_caller", "_vic"];
-						_vic setVariable ["targetGroupLeader", _caller, true];
-						_vic setVariable ["currentTask", "waveOff", true];
-					}, 
-					{
-						params ["_target", "_caller", "_vic"];
-						// // Condition code here
-						private _isPerformingDuties = _vic getVariable ["isPerformingDuties", false];
-						private _task = _vic getVariable ["currentTask", "waiting"];
-						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
-						_isPerformingDuties && _notOnRestrictedTask
-					},
-					{}, // 5: Insert children code <CODE> (Optional)
-					_vehicle // 6: Action parameters <ANY> (Optional)
-				] call ace_interact_menu_fnc_createAction;
-				_actions pushBack [_vicWaveOffAction, [], _target]; 
-				private _vicRequestAction = [
-					format["%1-request", netId _vehicle], format["<t color='%1'>Call in (Land and wait for orders)</t>", _color], "",
-					{
-						// statement 
-						params ["_target", "_caller", "_vic"];
-						_vic setVariable ["targetGroupLeader", _caller, true];
-						_vic setVariable ["currentTask", "requestReinsert", true];
-						_vic setVariable ["fullRun", false, true];
-					}, 
-					{
-						params ["_target", "_caller", "_vic"];
-						// // Condition code here
-						private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
-						private _task = _vic getVariable ["currentTask", "waiting"];
-						private _isCAS = _target getVariable ["isCAS", false];
-						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
-						_notReinserting && _notOnRestrictedTask && !_isCAS
-					},
-					{}, // 5: Insert children code <CODE> (Optional)
-					_vehicle // 6: Action parameters <ANY> (Optional)
-				] call ace_interact_menu_fnc_createAction;
-				_actions pushBack [_vicRequestAction, [], _target];
-				private _vicRTBAction = [
-					format["%1-rtb", netId _vehicle], format["<t color='%1'>RTB</t>", _color], "",
-					{
-						// statement 
-						params ["_target", "_caller", "_vic"];
-						_vic setVariable ["targetGroupLeader", _caller, true];
-						_vic setVariable ["currentTask", "requestBaseLZ", true];
-						private _groupLeaderGroup = group _caller;
-						private _groupLeaderCallsign = groupId _groupLeaderGroup;
-						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] remoteExec ["sideChat"];
-					}, 
-					{
-						params ["_target", "_caller", "_vic"];
-						// // Condition code here
-						private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
-						private _task = _vic getVariable ["currentTask", "waiting"];
-						private _awaitingOrders = _task == "awaitOrders";
-						_awaitingOrders
-					},
-					{}, // 5: Insert children code <CODE> (Optional)
-					_vehicle // 6: Action parameters <ANY> (Optional)
-				] call ace_interact_menu_fnc_createAction;
-
-				{ // add all HLS and LZ markers as valid locations
+						// Display the names using a hint
+						hint _namesString;
+					} else {
+						// Display the vic's current task
+						hint format ["%1's current task: %2", groupId group _vic, _task];
+					};
+				}, 
+				{
+					params ["_target", "_caller", "_vic"];
+					// Condition code here
+					private _registered = _vic getVariable ["isRegistered", false];
+					_registered
+				},
+				{ // 5: Insert children code <CODE> (Optional)
+					params ["_target", "_caller", "_params"];
 					
-					// marker details
-					private _marker = _x;
-					private _markerName = markerText _marker;
-					private _displayName = toLower _markerName;
+					private _actions = [];
+					
+					private _vehicle = _target;
+					private _vehicleClass = typeOf _vehicle;
+					private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+					private _color = "#FFFFFF";
+					private _vicDeployAction = [
+						format["%1-deploy", netId _vehicle], format["<t color='%1'>Deploy! (Auto dust-off after 10 sec)</t>", _color], "",
+						{
+							// statement 
+							params ["_target", "_caller", "_vic"];
+							_vic setVariable ["targetGroupLeader", _caller, true];
+							_vic setVariable ["currentTask", "requestReinsert", true];
+							_vic setVariable ["fullRun", true, true];
+						}, 
+						{
+							params ["_target", "_caller", "_vic"];
+							// // Condition code here
+							private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
+							private _task = _vic getVariable ["currentTask", "waiting"];
+							private _isCAS = _target getVariable ["isCAS", false];
+							private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
+							_notReinserting && _notOnRestrictedTask && !_isCAS
+						},
+						{}, // 5: Insert children code <CODE> (Optional)
+						_vehicle // 6: Action parameters <ANY> (Optional)
+					] call ace_interact_menu_fnc_createAction;
+					_actions pushBack [_vicDeployAction, [], _target];
+					private _vicWaveOffAction = [
+						format["%1-waveOff", netId _vehicle], "<t color='#F23838'>Wave Off!</t>", "",
+						{
+							// statement 
+							params ["_target", "_caller", "_vic"];
+							_vic setVariable ["targetGroupLeader", _caller, true];
+							_vic setVariable ["currentTask", "waveOff", true];
+						}, 
+						{
+							params ["_target", "_caller", "_vic"];
+							// // Condition code here
+							private _isPerformingDuties = _vic getVariable ["isPerformingDuties", false];
+							private _task = _vic getVariable ["currentTask", "waiting"];
+							private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
+							_isPerformingDuties && _notOnRestrictedTask
+						},
+						{}, // 5: Insert children code <CODE> (Optional)
+						_vehicle // 6: Action parameters <ANY> (Optional)
+					] call ace_interact_menu_fnc_createAction;
+					_actions pushBack [_vicWaveOffAction, [], _target]; 
+					private _vicRequestAction = [
+						format["%1-request", netId _vehicle], format["<t color='%1'>Call in (Land and wait for orders)</t>", _color], "",
+						{
+							// statement 
+							params ["_target", "_caller", "_vic"];
+							_vic setVariable ["targetGroupLeader", _caller, true];
+							_vic setVariable ["currentTask", "requestReinsert", true];
+							_vic setVariable ["fullRun", false, true];
+						}, 
+						{
+							params ["_target", "_caller", "_vic"];
+							// // Condition code here
+							private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
+							private _task = _vic getVariable ["currentTask", "waiting"];
+							private _isCAS = _target getVariable ["isCAS", false];
+							private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
+							_notReinserting && _notOnRestrictedTask && !_isCAS
+						},
+						{}, // 5: Insert children code <CODE> (Optional)
+						_vehicle // 6: Action parameters <ANY> (Optional)
+					] call ace_interact_menu_fnc_createAction;
+					_actions pushBack [_vicRequestAction, [], _target];
+					private _vicRTBAction = [
+						format["%1-rtb", netId _vehicle], format["<t color='%1'>RTB</t>", _color], "",
+						{
+							// statement 
+							params ["_target", "_caller", "_vic"];
+							_vic setVariable ["targetGroupLeader", _caller, true];
+							_vic setVariable ["currentTask", "requestBaseLZ", true];
+							private _groupLeaderGroup = group _caller;
+							private _groupLeaderCallsign = groupId _groupLeaderGroup;
+							[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] remoteExec ["sideChat"];
+						}, 
+						{
+							params ["_target", "_caller", "_vic"];
+							// // Condition code here
+							private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
+							private _task = _vic getVariable ["currentTask", "waiting"];
+							private _awaitingOrders = _task == "awaitOrders";
+							_awaitingOrders
+						},
+						{}, // 5: Insert children code <CODE> (Optional)
+						_vehicle // 6: Action parameters <ANY> (Optional)
+					] call ace_interact_menu_fnc_createAction;
 
 					// LZ search details
 					private _lzPrefixStr = (missionNamespace getVariable "home_base") getVariable ["LzPrefixes", ""];
@@ -221,46 +367,6 @@ private _insertVehicles = {
 					} else {
 						_lzPrefixes = ["lz ", "hls "]; // default value -- hard fallback
 					};
-
-					private _lzMatch = false;
-					{
-						private _prefix = toLower _x;
-						if (_displayName find _prefix == 0) exitWith {
-							_lzMatch = true;
-						}
-					} forEach _lzPrefixes;
-
-					if (_lzMatch) then {
-						private _vicRequestToLZAction = [
-							format["%1-requestTo-%2", netId _vehicle, _marker], format["<t color='%1'>Send to %2</t>", _color, _markerName], "",
-							{
-								// statement 
-								params ["_target", "_caller", "_args"];
-								private _vic = _args select 0;
-								private _marker = _args select 1;
-								_vic setVariable ["targetGroupLeader", _caller, true];
-								_vic setVariable ["targetLocation", _marker, true];
-								_vic setVariable ["currentTask", "requestReinsert", true];
-								_vic setVariable ["fullRun", false, true];
-							}, 
-							{
-								params ["_target", "_caller", "_args"];
-								private _vic = _args select 0;
-								private _marker = _args select 1;
-								// // Condition code here
-								private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
-								private _task = _vic getVariable ["currentTask", "waiting"];
-								private _isCAS = _target getVariable ["isCAS", false];
-								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
-								private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
-								_notReinserting && _notOnRestrictedTask && _notAtLZ && !_isCAS
-							},
-							{}, // 5: Insert children code <CODE> (Optional)
-							[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
-						] call ace_interact_menu_fnc_createAction;
-						_actions pushBack [_vicRequestToLZAction, [], _target];
-					};
-
 					// CAS search details
 					private _casPrefixStr = (missionNamespace getVariable "home_base") getVariable ["CasPrefixes", ""];
 					private _casPrefixes = [];
@@ -270,60 +376,106 @@ private _insertVehicles = {
 						_casPrefixes = ["target ", "firemission "]; // default value -- hard fallback
 					};
 
-					private _casMatch = false;
-					{
-						private _prefix = toLower _x;
-						if (_displayName find _prefix == 0) exitWith {
-							_casMatch = true;
-						}
-					} forEach _casPrefixes;
+					{ // add all valid markers as valid locations
+						
+						// marker details
+						private _marker = _x;
+						private _markerName = markerText _marker;
+						private _displayName = toLower _markerName;
 
-					if (_casMatch) then {
-						private _vicRequestToLZAction = [
-							format["%1-casTo-%2", netId _vehicle, _marker], format["<t color='%1'>Request Firemission at %2</t>", _color, _markerName], "",
-							{
-								// statement 
-								params ["_target", "_caller", "_args"];
-								private _vic = _args select 0;
-								private _marker = _args select 1;
-								_vic setVariable ["targetGroupLeader", _caller, true];
-								_vic setVariable ["targetLocation", _marker, true];
-								_vic setVariable ["currentTask", "requestCas", true];
-								_vic setVariable ["fullRun", false, true];
-							}, 
-							{
-								params ["_target", "_caller", "_args"];
-								private _vic = _args select 0;
-								private _marker = _args select 1;
-								// // Condition code here
-								private _isCAS = _target getVariable ["isCAS", false];
-								private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
-								private _task = _vic getVariable ["currentTask", "waiting"];
-								private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
-								private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
-								_isCAS && _notReinserting && _notOnRestrictedTask && _notAtLZ
-							},
-							{}, // 5: Insert children code <CODE> (Optional)
-							[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
-						] call ace_interact_menu_fnc_createAction;
-						_actions pushBack [_vicRequestToLZAction, [], _target];
-					};
-				} forEach allMapMarkers;
+						private _lzMatch = false;
+						{
+							private _prefix = toLower _marker;
+							if (_displayName find _prefix == 0) exitWith {
+								_lzMatch = true;
+							}
+						} forEach _lzPrefixes;
 
-				
+						if (_lzMatch) then {
+							private _vicRequestToLZAction = [
+								format["%1-requestTo-%2", netId _vehicle, _marker], format["<t color='%1'>Send to %2</t>", _color, _markerName], "",
+								{
+									// statement 
+									params ["_target", "_caller", "_args"];
+									private _vic = _args select 0;
+									private _marker = _args select 1;
+									_vic setVariable ["targetGroupLeader", _caller, true];
+									_vic setVariable ["targetLocation", _marker, true];
+									_vic setVariable ["currentTask", "requestReinsert", true];
+									_vic setVariable ["fullRun", false, true];
+								}, 
+								{
+									params ["_target", "_caller", "_args"];
+									private _vic = _args select 0;
+									private _marker = _args select 1;
+									// // Condition code here
+									private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
+									private _task = _vic getVariable ["currentTask", "waiting"];
+									private _isCAS = _target getVariable ["isCAS", false];
+									private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
+									private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
+									_notReinserting && _notOnRestrictedTask && _notAtLZ && !_isCAS
+								},
+								{}, // 5: Insert children code <CODE> (Optional)
+								[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
+							] call ace_interact_menu_fnc_createAction;
+							_actions pushBack [_vicRequestToLZAction, [], _target];
+						};
 
-				_actions pushBack [_vicRTBAction, [], _target];
+						private _casMatch = false;
+						{
+							private _prefix = toLower _marker;
+							if (_displayName find _prefix == 0) exitWith {
+								_casMatch = true;
+							}
+						} forEach _casPrefixes;
+
+						if (_casMatch) then {
+							private _vicRequestToLZAction = [
+								format["%1-casTo-%2", netId _vehicle, _marker], format["<t color='%1'>Request Firemission at %2</t>", _color, _markerName], "",
+								{
+									// statement 
+									params ["_target", "_caller", "_args"];
+									private _vic = _args select 0;
+									private _marker = _args select 1;
+									_vic setVariable ["targetGroupLeader", _caller, true];
+									_vic setVariable ["targetLocation", _marker, true];
+									_vic setVariable ["currentTask", "requestCas", true];
+									_vic setVariable ["fullRun", false, true];
+								}, 
+								{
+									params ["_target", "_caller", "_args"];
+									private _vic = _args select 0;
+									private _marker = _args select 1;
+									// // Condition code here
+									private _isCAS = _target getVariable ["isCAS", false];
+									private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
+									private _task = _vic getVariable ["currentTask", "waiting"];
+									private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
+									private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
+									_isCAS && _notReinserting && _notOnRestrictedTask && _notAtLZ
+								},
+								{}, // 5: Insert children code <CODE> (Optional)
+								[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
+							] call ace_interact_menu_fnc_createAction;
+							_actions pushBack [_vicRequestToLZAction, [], _target];
+						};
+					} forEach allMapMarkers;
+
 					
 
-				_actions
-			},
-			_vehicle, // 6: Action parameters <ANY> (Optional)
-			"", // 7: Position (Position array, Position code or Selection Name) <ARRAY>, <CODE> or <STRING> (Optional)
-			4, // 8: Distance <NUMBER>
-			[false, false, false, true, false] // 9: Other parameters [showDisabled,enableInside,canCollapse,runOnHover,doNotCheckLOS] <ARRAY> (Optional)
-		] call ace_interact_menu_fnc_createAction;
-		_actions pushBack [_vicAction, [], _vehicle]; 
-		
+					_actions pushBack [_vicRTBAction, [], _target];
+						
+
+					_actions
+				},
+				_vehicle, // 6: Action parameters <ANY> (Optional)
+				"", // 7: Position (Position array, Position code or Selection Name) <ARRAY>, <CODE> or <STRING> (Optional)
+				4, // 8: Distance <NUMBER>
+				[false, false, false, true, false] // 9: Other parameters [showDisabled,enableInside,canCollapse,runOnHover,doNotCheckLOS] <ARRAY> (Optional)
+			] call ace_interact_menu_fnc_createAction;
+			_actions pushBack [_vicAction, [], _vehicle]; 
+		};
 	} forEach _registeredVehicles;
 
     _actions
@@ -340,6 +492,9 @@ private _redeploymentActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
+		private _homeBase = missionNamespace getVariable ["home_base", nil];
+		private _homeBaseConfigured = !(isNil "_homeBase");
+
 		private _requiredItemsStr = (missionNamespace getVariable "home_base") getVariable ["RequiredItems", ""];
 		private _requiredItems = [];
 		if (_requiredItemsStr != "") then {
@@ -364,15 +519,59 @@ private _redeploymentActions = [
 				_hasItem = true;
 			};
 		} forEach _requiredItems;
-		_hasItem
+		_homeBaseConfigured && _hasItem
 	},
 	_insertVehicles
 ] call ace_interact_menu_fnc_createAction;
 
+private _artilleryActions = [
+	"ArtilleryActions", "Artillery", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		true
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Condition code here
+		// Retrieve the custom argument value
+		private _homeBase = missionNamespace getVariable ["home_base", nil];
+		private _homeBaseConfigured = !(isNil "_homeBase");
+
+		private _requiredItemsStr = (missionNamespace getVariable "home_base") getVariable ["RequiredItems", ""];
+		private _requiredItems = [];
+		if (_requiredItemsStr != "") then {
+			_requiredItems = _requiredItemsStr splitString ", ";
+		} else {
+			_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
+		};
+		private _hasItem = false;
+		{
+			// Check general inventory
+			if (_x in (items _caller)) exitWith {
+				_hasItem = true;
+			};
+
+			// Check assigned items (like night vision, binoculars, GPS, and radio)
+			if (_x in (assignedItems _caller)) exitWith {
+				_hasItem = true;
+			};
+
+			// Check uniform, vest, and backpack items
+			if (_x in (uniformItems _caller) || _x in (vestItems _caller) || _x in (backpackItems _caller)) exitWith {
+				_hasItem = true;
+			};
+		} forEach _requiredItems;
+		_homeBaseConfigured && _hasItem
+	},
+	_insertArtyVehicles
+] call ace_interact_menu_fnc_createAction;
+
 [player, 1, ["ACE_SelfActions"], _redeploymentActions] call ace_interact_menu_fnc_addActionToObject;
+[player, 1, ["ACE_SelfActions"], _artilleryActions] call ace_interact_menu_fnc_addActionToObject;
 
 
-private _insertVicActions = {
+private _vicActions = {
 	params ["_target", "_caller", "_params"];
 	private _registerVicAction = [
 		"RegisterVehicle", "<t color='#2daaf7'>Register Vehicle</t>", "",
@@ -437,9 +636,9 @@ private _insertVicActions = {
 				} forEach _nonCombatKeywords; 
 				_isCombatWeapon; 
 			}; // if count of the combat weapons is more than 0, then in theory the vic has weapons that can be used for CAS
-
+			private _canDoArtilleryFire = _target getVariable ["isArtillery", false];
 			// show if:
-			_atBase && _registered && !_isCAS && (count _combatWeapons > 0)
+			!_canDoArtilleryFire && _atBase && _registered && !_isCAS && (count _combatWeapons > 0)
 		}
 	] call ace_interact_menu_fnc_createAction;
 
@@ -457,8 +656,9 @@ private _insertVicActions = {
 			private _registered = _target getVariable ["isRegistered", false];
 			private _isCAS = _target getVariable ["isCAS", false];
 
+			private _canDoArtilleryFire = _target getVariable ["isArtillery", false];
 			// show if:
-			_atBase && _registered && _isCAS
+			!_canDoArtilleryFire && _atBase && _registered && _isCAS
 		}
 	] call ace_interact_menu_fnc_createAction;
 
@@ -477,8 +677,10 @@ private _insertVicActions = {
 			private _registered = _target getVariable ["isRegistered", false];
 			private _notRequested = !(_target getVariable ["requestingRedeploy", false]);
 			private _isCAS = _target getVariable ["isCAS", false];
+			
+			private _canDoArtilleryFire = _target getVariable ["isArtillery", false];
 			// show if:
-			_atBase && _registered && _notRequested && !_isCAS
+			!_canDoArtilleryFire && _atBase && _registered && _notRequested && !_isCAS
 		}
 	] call ace_interact_menu_fnc_createAction;
 
@@ -497,8 +699,10 @@ private _insertVicActions = {
 			private _registered = _target getVariable ["isRegistered", false];
 			private _requested = _target getVariable ["requestingRedeploy", false];
 			private _isCAS = _target getVariable ["isCAS", false];
+			
+			private _canDoArtilleryFire = _target getVariable ["isArtillery", false];
 			// show if:
-			_atBase && _registered && _requested && !_isCAS
+			!_canDoArtilleryFire && _atBase && _registered && _requested && !_isCAS
 		}
 	] call ace_interact_menu_fnc_createAction;
 	private _actions = [];
@@ -523,11 +727,38 @@ private _heliActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
+		private _homeBase = missionNamespace getVariable ["home_base", nil];
+		private _homeBaseConfigured = !(isNil "_homeBase");
 		private _atBase = (_target distance2D (missionNamespace getVariable "home_base")) < ((missionNamespace getVariable "home_base") getVariable ["Radius", 500]);
-		_atBase
+		_homeBaseConfigured && _atBase
 	},
-	_insertVicActions
+	_vicActions
 ] call ace_interact_menu_fnc_createAction;
 
 // Add the actions to the Helicopter class
 ["Helicopter", 0, ["ACE_MainActions"], _heliActions, true] call ace_interact_menu_fnc_addActionToClass;
+
+
+private _artilleryVicActions = [
+	"ArtilleryVicActions", "Support Actions", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		
+		true
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Condition code here
+		private _homeBase = missionNamespace getVariable ["home_base", nil];
+		private _homeBaseConfigured = !(isNil "_homeBase");
+
+		private _canDoArtilleryFire = _target getVariable ["isArtillery", false];
+
+		_homeBaseConfigured && _canDoArtilleryFire
+	},
+	_vicActions
+] call ace_interact_menu_fnc_createAction;
+
+// Add the actions to the classes that might have arty support
+["LandVehicle", 0, ["ACE_MainActions"], _artilleryVicActions, true] call ace_interact_menu_fnc_addActionToClass;
+["Ship", 0, ["ACE_MainActions"], _artilleryVicActions, true] call ace_interact_menu_fnc_addActionToClass;

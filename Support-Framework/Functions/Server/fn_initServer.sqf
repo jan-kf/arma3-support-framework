@@ -73,9 +73,9 @@ publicVariable "removeVehicleFromAwayPads";
 private _syncedObjects = synchronizedObjects (missionNamespace getVariable "home_base");
 {
 	if (_x isKindOf "Helicopter") then {
-		_x setVariable ["isRegistered", true, true];
 		_x setVariable ["isHeli", true, true];
 	};
+	_x setVariable ["isRegistered", true, true];
 } forEach _syncedObjects;
 
 //// //// ////////////////////////////////////////////////////////////////////////////////

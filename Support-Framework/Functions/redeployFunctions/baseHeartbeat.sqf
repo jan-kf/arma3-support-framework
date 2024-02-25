@@ -13,27 +13,39 @@ private _safeIsNull = {
     };
 };
 
+private _isArtilleryCapable = {
+    params ["_unit"];
+    
+    // Check if the unit is capable of artillery fire
+    // This checks if the unit is an artillery piece by verifying it can accept the doArtilleryFire command
+    private _isArtillery = !(_unit isKindOf "Air") && {(_unit isKindOf "LandVehicle") || (_unit isKindOf "Ship")}; // Exclude air units, include land vehicles and ships
+    private _canDoArtilleryFire = _isArtillery && {alive _unit} && {getArtilleryAmmo [_unit] isNotEqualTo []}; // Must be alive and have artillery ammo available
+
+    _canDoArtilleryFire // Return true if capable, false otherwise
+};
+
+
+
 
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
 while {true} do {
+	
+	private _homeBase = missionNamespace getVariable ["home_base", nil];
 
-	// ["base Heartbeat, bu bum..."] remoteExec ["systemChat"];
+	if (isNil "_homeBase") exitWith {diag_log "[SUPPORT] home_base is not set, terminating process";};
+	
 	diag_log "[SUPPORT] base heartbeat, bu bum...";
+	// Find all vehicles within a certain radius of _homeBase
+	private _vehiclesNearBase = _homeBase nearEntities ["Helicopter", (_homeBase getVariable ["Radius", 500])]; 
 
-	// Find all vehicles within a certain radius of (missionNamespace getVariable "home_base")
-	private _vehiclesNearBase = (missionNamespace getVariable "home_base") nearEntities ["Helicopter", ((missionNamespace getVariable "home_base") getVariable ["Radius", 500])]; // Adjust the radius as needed
-
-	// Iterate through each vehicle and perform your desired command
+	// Iterate through each vehicle
 	{
-		// Your command here. Example:
-		// hint format ["Vehicle %1 is near the base", _x];
 		private _vehicle = _x;
 		
 		private _checkHeli = _vehicle getVariable "isHeli";
 		if (_vehicle isKindOf "Helicopter" && isNil "_checkHeli") then {
 			_vehicle setVariable ["isHeli", true, true];
 		};
-
 		private _vicIsRegistered = _vehicle getVariable ["isRegistered", false];
 		private _watchdog = _vehicle getVariable ["watchdog", false];
 		if (_vicIsRegistered && [_watchdog] call _safeIsNull) then {
@@ -54,11 +66,25 @@ while {true} do {
 	} forEach _vehiclesNearBase;
 
 	// Function to get markers and spawn landing pads if necessary
+	private _lzPrefixStr = (missionNamespace getVariable "home_base") getVariable ["LzPrefixes", ""];
+	private _lzPrefixes = [];
+	if (_lzPrefixStr != "") then {
+		_lzPrefixes = _lzPrefixStr splitString ", ";
+	} else {
+		_lzPrefixes = ["lz ", "hls "]; // default value -- hard fallback
+	};
 
     {
         private _markerName = _x;
         private _displayName = toLower (markerText _markerName);
-        if ((_displayName find "hls " == 0) || (_displayName find "lz " == 0)) then {
+		private _lzMatch = false;
+		{
+			private _prefix = toLower _markerName;
+			if (_displayName find _prefix == 0) exitWith {
+				_lzMatch = true;
+			}
+		} forEach _lzPrefixes;
+        if (_lzMatch) then {
             private _markerPos = getMarkerPos _markerName;
             // Check for existing landing pads
             private _landingPadsNearby = nearestObjects [_markerPos, ["Land_HelipadEmpty_F"], 10];
@@ -68,6 +94,18 @@ while {true} do {
             };
         };
     } forEach allMapMarkers;
+
+	private _baseSide = (missionNamespace getVariable "home_base") getVariable ["BaseSide", ""];
+	{
+		private _vehicle = _x;
+
+		private _isArtillery = [_vehicle] call _isArtilleryCapable;
+		private _checkArtillery = _vehicle getVariable "isArtillery";
+		if (_isArtillery && isNil "_checkArtillery") then {
+			_vehicle setVariable ["isArtillery", true, true];
+		};
+
+	} forEach (vehicles select {(toLower str(side _x)) isEqualTo (toLower _baseSide)});
 	
     sleep 3; 
 };
