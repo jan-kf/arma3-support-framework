@@ -232,18 +232,6 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 			private _location = _vic getVariable "targetLocation";
 
-			if (!_straightFromTop) then {
-				private _gl_message = "%3, this is %1, requesting immediate fire support from %2 at TODO, over";
-				[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName]] remoteExec ["sideChat"];
-				sleep 3;
-			};
-
-			if (!_straightFromTop) then {
-				_base_message = "Roger %1, dispatching %2, out.";
-				[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
-				sleep 3;
-			};
-
 			private _destinationPos = nil;
 			if (typeName _location == "STRING") then {
 				// _location is a string
@@ -266,24 +254,39 @@ while {_vic getVariable ["isRegistered", false]} do {
 			_grp setCurrentWaypoint _base_wp;
 
 			private _gridRef = [_destinationPos] call _posToGrid;
+
+
+			if (!_straightFromTop) then {
+				private _gl_message = "%3, this is %1, requesting immediate fire support from %2 at %4, over";
+				[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName, _gridRef]] remoteExec ["sideChat"];
+				sleep 3;
+			};
+
+			if (!_straightFromTop) then {
+				_base_message = "Roger %1, dispatching %2, out.";
+				[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+				sleep 3;
+			};
+
+			
 			if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 				// get gridRef if message has format specifier.
 				// msg that driver sends once destination grid is recieved 
 				private _base_to_vic_msg = "Over to you %1, you are cleared for departure to %2, over.";
-				if (!_straightFromTop) then {
-					_base_to_vic_msg = "%1, you are cleared for departure to %2, over.";
+				if (_straightFromTop) then {
+					_base_to_vic_msg = "%1, you are cleared for departure to %2. Mission objective: Seek and Destroy, over.";
 				};
 				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
 				sleep 3;
-				[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
+				[driver _vic, format ["Cleared for firemission to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
 			}else{
 				private _base_to_vic_msg = "Over to you %1, you are cleared for approach to %2, over.";
-				if (!_straightFromTop) then {
-					_base_to_vic_msg = "%1, you are cleared for approach to %2, over.";
+				if (_straightFromTop) then {
+					_base_to_vic_msg = "%1, you are cleared for approach to %2. Mission objective: Seek and Destroy, over.";
 				};
 				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
 				sleep 3;
-				[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
+				[driver _vic, format ["Cleared for firemission at %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
 			};
 
 			// vic is leaving base, release base pad reservation
@@ -311,7 +314,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 			};
 			private _vicGroup = group _vic;
 			_vicGroup setCombatMode "GREEN";
-			_vicGroup setCombatBehaviour "AWARE";
+			_vicGroup setBehaviourStrong "AWARE";
 			
 			private _isCAS = _vic getVariable ["isCAS", false];
 			if (_isCAS) then {
@@ -368,7 +371,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 				// TODO: set behavior to ignore enemies when flying away
 				private _vicGroup = group _vic;
 				_vicGroup setCombatMode "BLUE";
-				_vicGroup setCombatBehaviour "CARELESS";
+				_vicGroup setBehaviourStrong "SAFE";
 				[driver _vic, format ["Attack complete, returning to base."]] remoteExec ["sideChat"];
 				// requestLZ at base, and RTB
 				_vic setVariable ["currentTask", "requestBaseLZ", true];
@@ -446,7 +449,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 		};
 		case "waveOff": {
 			// cancel reinsertion, reset request for redeploy
-
+			[_vic] call ace_common_fnc_doStop;
 			private _groupLeader = _vic getVariable "targetGroupLeader";
 
 			_vic setVariable ["isPerformingDuties", false, true];

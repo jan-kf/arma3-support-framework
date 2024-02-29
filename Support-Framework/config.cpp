@@ -71,8 +71,8 @@ class CfgVehicles {
             };
             class RequiredItems: Edit {
                 property = "SupportFramework_HomeBase_Module_RequiredItems";
-                displayName = "Required item to call in redeploy";
-                tooltip = "Comma-separated list of item classes required for redeploy. If empty, hgun_esd_01_F (spectrum device) will be used";
+                displayName = "Required item to call in support(s)";
+                tooltip = "Comma-separated list of item classes required for redeploy. If empty, hgun_esd_01_F (spectrum device) will be used. Separate items for different supports (redeployment, CAS, artillery, etc.) is a planned feature in the future";
                 typeName = "STRING"; // Value type
                 defaultValue = """hgun_esd_01_F"""; // Default value
             };
@@ -107,9 +107,9 @@ class CfgVehicles {
                 "",
                 "Any synced helicopters will be automatically registered at the start of the mission.",
                 "",
-                "Any markers places that begin with `LZ ` or `HLS ` will be added to the list of available deployment locations (the space after LZ and HLS is required, but the capitilization is ignored, so `hLs Conway` is valid",
+                "Any markers places that begin with the prefixes defined above, will be added to the list of available support locations. Capitilization is ignored. EX: a prefix of 'HLS' will register 'hls Conway' as a valid location",
                 "",
-                "If you'd like to have a custom callsign for the Base, then sync a single unit (non-vehicle) and it will use that unit's callsign instead." 
+                "If you'd like to have a custom callsign for the Base, then sync a single unit (non-vehicle) and it will use that unit's callsign instead. Syncing a player is allowed." 
             };
             sync[] = {"Man", "Helicopter"}; // only able to sync units and helicopters
             position=1;
