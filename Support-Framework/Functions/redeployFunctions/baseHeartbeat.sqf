@@ -30,9 +30,9 @@ private _isArtilleryCapable = {
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
 while {true} do {
 	
-	private _homeBase = missionNamespace getVariable ["home_base", nil];
+	private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
 
-	if (isNil "_homeBase") exitWith {diag_log "[SUPPORT] home_base is not set, terminating process";};
+	if (isNil "_homeBase") exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG is not set, terminating process";};
 	
 	diag_log "[SUPPORT] base heartbeat, bu bum...";
 	// Find all vehicles within a certain radius of _homeBase
@@ -66,7 +66,7 @@ while {true} do {
 	} forEach _vehiclesNearBase;
 
 	// Function to get markers and spawn landing pads if necessary
-	private _lzPrefixStr = (missionNamespace getVariable "home_base") getVariable ["LzPrefixes", ""];
+	private _lzPrefixStr = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["LzPrefixes", ""];
 	private _lzPrefixes = [];
 	if (_lzPrefixStr != "") then {
 		_lzPrefixes = _lzPrefixStr splitString ", ";
@@ -95,7 +95,7 @@ while {true} do {
         };
     } forEach allMapMarkers;
 
-	private _baseSide = (missionNamespace getVariable "home_base") getVariable ["BaseSide", ""];
+	private _baseSide = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["BaseSide", ""];
 	{
 		private _vehicle = _x;
 

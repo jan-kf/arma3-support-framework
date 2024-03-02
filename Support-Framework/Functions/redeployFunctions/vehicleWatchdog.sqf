@@ -3,12 +3,16 @@ if (!isServer) exitWith {};
 #include "findRendezvousPoint.sqf"
 #include "posToGrid.sqf"
 
+private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
+
+if (isNil "_homeBase") exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG is not set, terminating process";};
+
 private _vic = _this select 0;
 
 private _baseCallsign = [west, "base"];
 private _baseName = "Base";
 
-private _syncedObjects = synchronizedObjects (missionNamespace getVariable "home_base");
+private _syncedObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG");
 {
 	if (_x isKindOf "Man") exitWith {
 		_baseCallsign = _x;
@@ -250,7 +254,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 			// set waypoint
 			private _grp = group _vic;
 			private _base_wp = _grp addWaypoint [_destinationPos, 0];
-			_base_wp setWaypointType "SAD"; // seek and destroy
+			_base_wp setWaypointType "MOVE"; // will automatically seek and destroy
 			_grp setCurrentWaypoint _base_wp;
 
 			private _gridRef = [_destinationPos] call _posToGrid;
@@ -313,13 +317,16 @@ while {_vic getVariable ["isRegistered", false]} do {
 				};
 			};
 			private _vicGroup = group _vic;
+			{
+				_x enableAI "all";
+			} forEach (units _vicGroup);
 			_vicGroup setCombatMode "GREEN";
 			_vicGroup setBehaviourStrong "AWARE";
 			
 			private _isCAS = _vic getVariable ["isCAS", false];
 			if (_isCAS) then {
 				// check if near target
-				if (_vic distance2D _destinationPos < 500 ) then {
+				if (_vic distance2D _destinationPos < 1000 ) then {
 					_vicGroup setCombatMode "RED";
 					//save the current time for later use 
 					_vic setVariable ["taskStartTime", serverTime, true];
@@ -338,7 +345,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 		};
 		case "RTB": {
-			// vic is currently making it's way back to (missionNamespace getVariable "home_base")
+			// vic is currently making it's way back to (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")
 
 			// check if there are any issues
 
@@ -370,8 +377,16 @@ while {_vic getVariable ["isRegistered", false]} do {
 				// send message about finishing mission?
 				// TODO: set behavior to ignore enemies when flying away
 				private _vicGroup = group _vic;
+				
+				{
+					_x disableAI "all";
+					_x enableAI "ANIM";
+					_x enableAI "MOVE";
+					_x enableAI "PATH";
+				} forEach (units _vicGroup);
 				_vicGroup setCombatMode "BLUE";
 				_vicGroup setBehaviourStrong "SAFE";
+
 				[driver _vic, format ["Attack complete, returning to base."]] remoteExec ["sideChat"];
 				// requestLZ at base, and RTB
 				_vic setVariable ["currentTask", "requestBaseLZ", true];
@@ -405,7 +420,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 			
 			[driver _vic, format ["%2, this is %1, requesting permission to land, over", groupId group _vic, _baseName]] remoteExec ["sideChat"];
 			sleep 3;
-			_location = [_vic, (missionNamespace getVariable "home_base"), true, true] call _findRendezvousPoint;
+			_location = [_vic, (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG"), true, true] call _findRendezvousPoint;
 			if (isNil "_location") exitWith {
 				if (_vic getVariable ["isHeli", false]) then {
 					[_baseCallsign, format ["%1, No helipad is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];
@@ -426,6 +441,13 @@ while {_vic getVariable ["isRegistered", false]} do {
 			if ((_vic distance2D _destinationPos < 100) && (isTouchingGround _vic) && (speed _vic < 1)) exitWith {
 				[driver _vic, "Already at base..."] remoteExec ["sideChat"];
 				_vic setVariable ["currentTask", "waiting", true];
+			};
+
+			private _group = group _vic;
+			// delete current waypoints 
+			for "_i" from (count waypoints _group - 1) to 0 step -1 do
+			{
+				deleteWaypoint [_group, _i];
 			};
 
 			// set waypoint
@@ -449,7 +471,6 @@ while {_vic getVariable ["isRegistered", false]} do {
 		};
 		case "waveOff": {
 			// cancel reinsertion, reset request for redeploy
-			[_vic] call ace_common_fnc_doStop;
 			private _groupLeader = _vic getVariable "targetGroupLeader";
 
 			_vic setVariable ["isPerformingDuties", false, true];
@@ -459,6 +480,16 @@ while {_vic getVariable ["isRegistered", false]} do {
 			private _groupLeaderCallsign = groupId _groupLeaderGroup;
 
 			_vic land "NONE"; // cancel landing 
+
+			private _vicGroup = group _vic;
+			{
+				_x disableAI "all";
+				_x enableAI "ANIM";
+				_x enableAI "MOVE";
+				_x enableAI "PATH";
+			} forEach (units _vicGroup);
+			_vicGroup setCombatMode "BLUE";
+			_vicGroup setBehaviourStrong "SAFE";
 
 			private _group = group _vic;
 			// delete waypoints 

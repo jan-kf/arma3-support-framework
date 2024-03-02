@@ -1,5 +1,5 @@
 _nearestPads = nearestObjects [
-    (missionNamespace getVariable "home_base"), 
+    (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG"), 
     [
         "Land_HelipadEmpty_F", 
         "Land_HelipadCircle_F", 
@@ -16,7 +16,7 @@ _nearestPads = nearestObjects [
 		"Heli_H_rescue",
 		"PARACHUTE_TARGET"
     ], 
-    ((missionNamespace getVariable "home_base") getVariable ["Radius", 500])
+    ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Radius", 500])
 ];
 
 _nearestPads // This is the value that the script will return
