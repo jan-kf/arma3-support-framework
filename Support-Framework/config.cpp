@@ -52,6 +52,8 @@ class CfgVehicles {
         {
             class Edit;
             class Units;
+            class Combo;
+            class Checkbox;
         };
         class ModuleDescription;
     };
@@ -60,13 +62,26 @@ class CfgVehicles {
         author = "Yoshi";
         category = "SupportFramework_Category";
         displayName = "Home Base Module [REQUIRED]";
-        icon = "\Support-Framework\UI\watchtower.paa"
+        icon = "\Support-Framework\UI\tower.paa"
         function = "SupportFramework_fnc_setHomeBase";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
         isTriggerActivated = 0;
         isDisposable = 0;
+
+        //https://community.bistudio.com/wiki/Modules#Creating_the_Module_Config
+        canSetArea = 1;						// Allows for setting the area values in the Attributes menu in 3DEN
+		canSetAreaShape = 1;				// Allows for setting "Rectangle" or "Ellipse" in Attributes menu in 3DEN
+        canSetAreaHeight = 0;
+
+		class AttributeValues
+		{
+			// This section allows you to set the default values for the attributes menu in 3DEN
+			size3[] = { 500, 500, -1 };		// 3D size (x-axis radius, y-axis radius, z-axis radius)
+			isRectangle = 0;				// Sets if the default shape should be a rectangle or ellipse
+		};
+
         class Attributes: AttributesBase {
             class Units: Units {};
             class RequiredItems: Edit {
@@ -76,19 +91,19 @@ class CfgVehicles {
                 typeName = "STRING"; // Value type
                 defaultValue = """hgun_esd_01_F"""; // Default value
             };
-            class Radius: Edit {
-                property = "SupportFramework_HomeBase_Module_Radius";
-                displayName = "Home Base's Area of Influence";
-                tooltip = "Radius in meters that defines where the home base is, calculated from the module itself. (500m if empty)";
-                typeName = "NUMBER";
-                defaultValue = "500"; // Default radius value in meters
-            };
             class LzPrefixes: Edit {
                 property = "SupportFramework_HomeBase_Module_LzPrefixes";
                 displayName = "Prefixes for landing zone markers";
                 tooltip = "Comma-separated list of prefixes that are searched for viable landing zones. Case Insensitive.";
                 typeName = "STRING"; // Value type
                 defaultValue = """LZ, HLS"""; // Default value
+            };
+            class Hush: Checkbox {
+                property = "SupportFramework_HomeBase_Module_Hush";
+                displayName = "Disable Radio Chatter";
+                tooltip = "By default, the mod will have radio chatter play in side chat that simulates actually calling in the supports, this allows you to disable all chats (will keep hints)";
+                typeName = "BOOLEAN";
+                defaultValue = "false"; 
             };
             class ModuleDescription: ModuleDescription{}; // Module description should be shown last
         };
@@ -113,7 +128,7 @@ class CfgVehicles {
         author = "Yoshi";
         category = "SupportFramework_Category";
         displayName = "CAS Module";
-        icon = "\Support-Framework\UI\watchtower.paa"
+        icon = "\Support-Framework\UI\cas.paa"
         function = "SupportFramework_fnc_setCAS";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
@@ -150,7 +165,7 @@ class CfgVehicles {
                 "",
                 "Any synced helicopters will be automatically registered as CAS at the start of the mission. No need to sync to the Home Base Module (or any other module)",
                 "",
-                "Any markers places that begin with the prefixes defined above, will be added to the list of available support locations. Capitilization is ignored. EX: a prefix of 'Firemission' will register 'firemission Hammer' as a valid location"
+                "Any markers placed that begin with the prefixes defined above, will be added to the list of available support locations. Capitilization is ignored. EX: a prefix of 'Firemission' will register 'firemission Hammer' as a valid location"
             };
             sync[] = {"Helicopter"}; // only able to sync units and helicopters
         };
@@ -160,7 +175,7 @@ class CfgVehicles {
         author = "Yoshi";
         category = "SupportFramework_Category";
         displayName = "Artillery Module";
-        icon = "\Support-Framework\UI\watchtower.paa"
+        icon = "\Support-Framework\UI\artillery.paa"
         function = "SupportFramework_fnc_setArtillery";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
@@ -169,12 +184,20 @@ class CfgVehicles {
         isDisposable = 0;
         class Attributes: AttributesBase {
             class Units: Units {};
-            class BaseSide: Edit {
+            class BaseSide: Combo {
                 property = "SupportFramework_HomeBase_Module_BaseSide";
                 displayName = "Base's Side";
-                tooltip = "The choices are: west, east, guer, civ -- [BLUFOR, OPFOR, Independent and Civilian, respectively], only choose one. Default is west (blufor)";
+                tooltip = "The choices are: west, east, guer, civ -- [BLUFOR, OPFOR, Independent and Civilian, respectively]. Default is west (blufor)";
                 typeName = "STRING"; // Value type
-                defaultValue = """west"""; // Default value
+                defaultValue = "west"; // Default value
+                // Listbox items
+				class Values
+				{
+					class BluforWest { name = "Blufor (West)";	value = "west"; };
+                    class OpforEast	{ name = "Opfor (East)";	value = "east"; };
+                    class IndepGuer	{ name = "Independent (Guer)";	value = "guer"; };
+                    class CivilCiv	{ name = "Civilian (Civ)";	value = "civ"; };
+				};
             };
             class RequiredItems: Edit {
                 property = "SupportFramework_Artillery_Module_RequiredItems";
@@ -204,7 +227,7 @@ class CfgVehicles {
                 "",
                 "Any synced units will be automatically registered as Artillery at the start of the mission. No need to sync to the Home Base Module (or any other module)",
                 "",
-                "Any markers places that begin with the prefixes defined above, will be added to the list of available support locations. Capitilization is ignored. EX: a prefix of 'Firemission' will register 'firemission Hammer' as a valid location"
+                "Any markers placed that begin with the prefixes defined above, will be added to the list of available support locations. Capitilization is ignored. EX: a prefix of 'Firemission' will register 'firemission Hammer' as a valid location"
             };
             sync[] = {"Helicopter"}; // only able to sync units and helicopters
         };

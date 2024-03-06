@@ -1,5 +1,3 @@
-#include "posToGrid.sqf"
-
 // TODO: maybe add support for landing pads that already exist in the map.
 // private _getBuiltInPads = {
 // 	// Define the landing pad classes
@@ -41,7 +39,7 @@
 // 	private _validLandingPads = [];
 // 	{
 // 		private _landingPadPos = getPos _x;
-// 		if (_landingPadPos distance _homeBasePos > ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Radius", 500])) then {
+// 		if (_landingPadPos call (missionNamespace getVariable "isAtBase")) then {
 // 			private _nearbyLocations = nearestLocations [_landingPadPos, _locationTypes, 50];
 // 			if (count _nearbyLocations > 0) then {
 // 				private _nearestLocation = _nearbyLocations select 0;
@@ -57,178 +55,6 @@
 // 	_validLandingPads
 
 // };
-
-// private _insertArtyVehicles = {
-//     params ["_target", "_caller", "_params"];
-	
-// 	private _markerActions = [];
-// 	{ 
-					
-// 		// marker details
-// 		private _marker = _x;
-// 		private _markerName = markerText _marker;
-// 		private _displayName = toLower _markerName;
-
-// 		// CAS search details
-// 		private _casPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_CAS_CONFIG") getVariable ["CasPrefixes", ""];
-// 		private _casPrefixes = [];
-// 		if (_casPrefixStr != "") then {
-// 			_casPrefixes = _casPrefixStr splitString ", ";
-// 		} else {
-// 			_casPrefixes = ["target ", "firemission "]; // default value -- hard fallback
-// 		};
-
-// 		private _casMatch = false;
-// 		{
-// 			private _prefix = toLower _x;
-// 			if (_displayName find _prefix == 0) exitWith {
-// 				_casMatch = true;
-// 			}
-// 		} forEach _casPrefixes;
-
-// 		if (_casMatch) then {
-// 			private _color = "#FFFFFF";
-// 			private _markerAction = [
-// 				format["%1-arty-marker", _displayName], format["<t color='%2'>%1</t>",_markerName, _color], "",
-// 				{}, // statement
-// 				{true}, // condition
-// 				{// children
-// 					params ["_target", "_caller", "_params"];
-// 					private _marker = _target;
-// 					private _artyActions = [];
-// 					private _registeredVehicles = call (missionNamespace getVariable "getRegisteredVehicles");
-// 					{
-// 						private _vehicle = _x;
-// 						if (_vehicle getVariable ["isArtillery", false]) then {
-// 							private _vehicleClass = typeOf _vehicle;
-// 							private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-// 							private _color = "#FFFFFF";
-
-// 							private _artyAction = [
-// 								netId _vehicle, format["<t color='%3'>(%1) %2</t>",groupId group _vehicle, _vehicleDisplayName, _color], "",
-// 								{
-// 									params ["_target", "_caller", "_args"];
-// 									hint format["Shalom from %1", _target];
-// 								}, 
-// 								{
-// 									params ["_target", "_caller", "_args"];
-// 									// Condition code here
-// 									private _vic = _args select 0;
-// 									private _marker = _args select 1;
-// 									private _registered = _vic getVariable ["isRegistered", false];
-// 									private _ammoTypes = getArtilleryAmmo [_vic];
-// 									private _targetPos = getMarkerPos _marker;
-// 									private _inRange = false;
-// 									{
-// 										if (_targetPos inRangeOfArtillery [[_vic], _x]) then{
-// 											_inRange = true;
-// 										}
-// 									} forEach _ammoTypes;
-// 									_registered && _inRange
-// 								},
-// 								{ // 5: Insert children code <CODE> (Munition Selection, then Amount, then Spread)
-
-// 									params ["_target", "_caller", "_params"];
-									
-// 									private _shellActions = [];
-// 									private _marker = _params select 1;
-// 									private _vehicle = _target;
-// 									private _vehicleClass = typeOf _vehicle;
-// 									private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-// 									private _color = "#FFFFFF";
-// 									{
-// 										private _shellType = _x;
-// 										private _shellAction = [
-// 											format["%1-shell", netId _vehicle], format["%1", _shellType], "",
-// 											{
-// 												// statement 
-// 												params ["_target", "_caller", "_args"];
-// 												hint format["Shalom from %1", _args];
-// 											}, 
-// 											{
-// 												params ["_target", "_caller", "_args"];
-// 												// // Condition code here
-// 												private _vic = _args select 0;
-// 												private _marker = _args select 1;
-// 												private _shellType = _args select 2;
-// 												private _targetPos = getMarkerPos _marker;
-// 												_targetPos inRangeOfArtillery [[_vic], _shellType]
-// 											},
-// 											// { // 5: Insert children code (Amount, then Spread)
-// 											// 	params ["_target", "_caller", "_args"];
-// 											// 	private _vic = _args select 0;
-// 											// 	private _marker = _args select 1;
-// 											// 	private _shellType = _args select 2;
-// 											// 	private _amountActions = [];
-// 											// 	{
-// 											// 		private _amount = _x;
-// 											// 		private _amountAction = [
-// 											// 			format["%1-amount", _amount], format["%1 Round(s)", _amount], "",
-// 											// 			{
-// 											// 				// statement 
-// 											// 				params ["_target", "_caller", "_args"];
-// 											// 				private _vic = _args select 0;
-// 											// 				private _marker = _args select 1;
-// 											// 				private _shellType = _args select 2;
-// 											// 				private _amount = _args select 3;
-// 											// 				private _targetPos = getMarkerPos _marker;
-// 											// 				_vic doArtilleryFire [_target, _shellType, _amount];
-// 											// 			}, 
-// 											// 			{
-// 											// 				params ["_target", "_caller", "_args"];
-// 											// 				// // Condition code here
-// 											// 				true
-// 											// 			},
-// 											// 			{}, //5
-// 											// 			[_vic, _marker, _shellType, _amount] // 6: Action parameters <ANY> (Optional)
-// 											// 		];
-// 											// 		_amountActions pushBack [_amountAction, [], _vic];
-// 											// 	} forEach [1,2,4,8];
-// 											// 	_amountActions
-// 											// }, 
-// 											{},
-// 											[_vehicle, _marker, _shellType] // 6: Action parameters <ANY> (Optional)
-// 										] call ace_interact_menu_fnc_createAction;
-// 										_shellActions pushBack [_shellAction, [], _vehicle];
-// 									} forEach (getArtilleryAmmo [_vehicle]);
-
-// 									_shellActions
-// 								},
-// 								[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
-// 							] call ace_interact_menu_fnc_createAction;
-// 							_artyActions pushBack [_artyAction, [], _vehicle]; 
-// 						};
-						
-// 					} forEach _registeredVehicles;
-
-// 					_artyActions	
-// 				}
-// 			] call ace_interact_menu_fnc_createAction;
-// 			_markerActions pushBack [_markerAction, [], _marker]; 
-// 		};
-// 	} forEach allMapMarkers;
-		
-//     _markerActions
-// };
-
-// private _action = [
-// 	format["uniqueID"], format["Action Label"], "",
-// 	{
-// 		params ["_target", "_caller", "_vic"];
-// 		//statement
-// 	}, 
-// 	{
-// 		params ["_target", "_caller", "_vic"];
-// 		// Condition code here
-// 		true
-// 	},
-// 	{ // 5: Insert children code <CODE> (Optional)
-// 	},
-// 	[], // 6 Params
-// 	"", // 7: Position (Position array, Position code or Selection Name) <ARRAY>, <CODE> or <STRING> (Optional)
-// 	4, // 8: Distance <NUMBER>
-// 	[false, false, false, true, false] // 9: Other parameters [showDisabled,enableInside,canCollapse,runOnHover,doNotCheckLOS] <ARRAY> (Optional)
-// ] call ace_interact_menu_fnc_createAction;
 
 
 private _artyVehicles = {
@@ -286,7 +112,7 @@ private _artyVehicles = {
 
 
 								private _vehicleAction = [
-									format["vicActionArty-%1", netId _vehicle], format["%1", _vehicleDisplayName], "",
+									format["vicActionArty-%1", netId _vehicle], format["(%1) %2",groupId group _vehicle, _vehicleDisplayName], "",
 									{
 										params ["_targetMarker", "_caller", "_vehicle"];
 										//statement
@@ -346,23 +172,45 @@ private _artyVehicles = {
 																	};
 
 																	private _targetPos = getMarkerPos _targetMarker;
+
+																	private _posToGrid = {
+																		params ["_pos"];
+																		private _gridX = floor ((_pos select 0) / 10); // 10m precision for X
+																		private _gridY = floor ((_pos select 1) / 10); // 10m precision for Y
+
+																		private _formattedX = if (_gridX < 10) then {format ["000%1", _gridX]} 
+																							else {if (_gridX < 100) then {format ["00%1", _gridX]} 
+																							else {if (_gridX < 1000) then {format ["0%1", _gridX]}
+																							else {format ["%1", _gridX]}}};
+
+																		private _formattedY = if (_gridY < 10) then {format ["000%1", _gridY]} 
+																							else {if (_gridY < 100) then {format ["00%1", _gridY]} 
+																							else {if (_gridY < 1000) then {format ["0%1", _gridY]}
+																							else {format ["%1", _gridY]}}};
+
+																		format ["%1-%2", _formattedX, _formattedY];
+																	};
+
 																	private _gridRef = [_targetPos] call _posToGrid;
 																	private _ETA = _vehicle getArtilleryETA [_targetPos, _shellType];
 
 																	private _groupLeaderGroup = group _caller;
 																	private _groupLeaderCallsign = groupId _groupLeaderGroup;
-																	[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] remoteExec ["sideChat"];
+																	[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] call (missionNamespace getVariable "sideChatter");
 																	private _response = format ["Affirmative %1, %2 times %3 at %4. ETA: %5 seconds, Out.", _groupLeaderCallsign, _amount, _shellDescription, _gridRef, _ETA];
 																	
-																	
-																	[_vehicle, _response] spawn  {
-																		params ["_vehicle", "_response"];
-																		
-																		sleep 3;
+																	if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+																		hint _response;
+																	} else {
+																		[_vehicle, _response] spawn  {
+																			params ["_vehicle", "_response"];
+																			
+																			sleep 3;
 
-																		[_vehicle, _response] remoteExec ["sideChat"];
-																	
+																			[_vehicle, _response] call (missionNamespace getVariable "sideChatter");
+																		};
 																	};
+																	
 
 																	_vehicle doArtilleryFire [_targetPos, _shellType, _amount];
 																	// BOOM
@@ -492,6 +340,9 @@ private _casVehicles = {
 							params ["_target", "_caller", "_vic"];
 							_vic setVariable ["targetGroupLeader", _caller, true];
 							_vic setVariable ["currentTask", "waveOff", true];
+							if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+								hint "Waving off CAS...";
+							}
 						}, 
 						{
 							params ["_target", "_caller", "_vic"];
@@ -515,7 +366,10 @@ private _casVehicles = {
 							_vic setVariable ["currentTask", "requestBaseLZ", true];
 							private _groupLeaderGroup = group _caller;
 							private _groupLeaderCallsign = groupId _groupLeaderGroup;
-							[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] remoteExec ["sideChat"];
+							[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call (missionNamespace getVariable "sideChatter");
+							if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+								hint "CAS returning to base...";
+							}
 						}, 
 						{
 							params ["_target", "_caller", "_vic"];
@@ -559,6 +413,9 @@ private _casVehicles = {
 										_vic setVariable ["targetLocation", _marker, true];
 										_vic setVariable ["currentTask", "requestCas", true];
 										_vic setVariable ["fullRun", false, true];
+										if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+											hint "Calling in CAS...";
+										}
 									}, 
 									{
 										params ["_target", "_caller", "_args"];
@@ -700,6 +557,9 @@ private _insertVehicles = {
 							params ["_target", "_caller", "_vic"];
 							_vic setVariable ["targetGroupLeader", _caller, true];
 							_vic setVariable ["currentTask", "waveOff", true];
+							if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+								hint "Waving off transport...";
+							}
 						}, 
 						{
 							params ["_target", "_caller", "_vic"];
@@ -744,7 +604,10 @@ private _insertVehicles = {
 							_vic setVariable ["currentTask", "requestBaseLZ", true];
 							private _groupLeaderGroup = group _caller;
 							private _groupLeaderCallsign = groupId _groupLeaderGroup;
-							[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] remoteExec ["sideChat"];
+							[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call (missionNamespace getVariable "sideChatter");
+							if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+								hint "Transport returning to base...";
+							}
 						}, 
 						{
 							params ["_target", "_caller", "_vic"];
@@ -791,6 +654,9 @@ private _insertVehicles = {
 										_vic setVariable ["targetLocation", _marker, true];
 										_vic setVariable ["currentTask", "requestReinsert", true];
 										_vic setVariable ["fullRun", false, true];
+										if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+											hint "Requesting transport...";
+										}
 									}, 
 									{
 										params ["_target", "_caller", "_args"];
@@ -1004,7 +870,7 @@ private _vicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")) < ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Radius", 500]);
+			private _atBase = _target call (missionNamespace getVariable "isAtBase");
 			private _not_registered = !(_target getVariable ["isRegistered", false]);
 			// show if:
 			_atBase && _not_registered
@@ -1022,7 +888,7 @@ private _vicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")) < ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Radius", 500]);
+			private _atBase = _target call (missionNamespace getVariable "isAtBase");
 			private _registered = _target getVariable ["isRegistered", false];
 			// show if:
 			_atBase && _registered
@@ -1035,14 +901,14 @@ private _vicActions = {
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Statement code here
 			_target setVariable ["isCAS", true, true];
-			[_target, format ["%1 is ready for tasking... ",groupId group _target]] remoteExec ["sideChat"];
+			[_target, format ["%1 is ready for tasking... ",groupId group _target]] call (missionNamespace getVariable "sideChatter");
 		}, 
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
 			private _casConfig = missionNamespace getVariable ["YOSHI_SUPPORT_CAS_CONFIG", nil];
 			private _CasConfigured = !(isNil "_casConfig");
-			private _atBase = (_target distance2D (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")) < ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Radius", 500]);
+			private _atBase = _target call (missionNamespace getVariable "isAtBase");
 			private _registered = _target getVariable ["isRegistered", false];
 			private _isCAS = _target getVariable ["isCAS", false];
 			private _isArty = _target getVariable ["isArtillery", false];
@@ -1077,7 +943,7 @@ private _vicActions = {
 			// Condition code here
 			private _casConfig = missionNamespace getVariable ["YOSHI_SUPPORT_CAS_CONFIG", nil];
 			private _CasConfigured = !(isNil "_casConfig");
-			private _atBase = (_target distance2D (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")) < ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Radius", 500]);
+			private _atBase = _target call (missionNamespace getVariable "isAtBase");
 			private _registered = _target getVariable ["isRegistered", false];
 			private _isCAS = _target getVariable ["isCAS", false];
 
@@ -1093,7 +959,7 @@ private _vicActions = {
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Statement code here
 			_target setVariable ["isArtillery", true, true];
-			[_target, format ["%1 is ready for tasking... ",groupId group _target]] remoteExec ["sideChat"];
+			[_target, format ["%1 is ready for tasking... ",groupId group _target]] call (missionNamespace getVariable "sideChatter");
 		}, 
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
@@ -1143,7 +1009,7 @@ private _vicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")) < ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Radius", 500]);
+			private _atBase = _target call (missionNamespace getVariable "isAtBase");
 			private _registered = _target getVariable ["isRegistered", false];
 			private _notRequested = !(_target getVariable ["requestingRedeploy", false]);
 			private _isCAS = _target getVariable ["isCAS", false];
@@ -1165,7 +1031,7 @@ private _vicActions = {
 		{
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Condition code here
-			private _atBase = (_target distance2D (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")) < ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Radius", 500]);
+			private _atBase = _target call (missionNamespace getVariable "isAtBase");
 			private _registered = _target getVariable ["isRegistered", false];
 			private _requested = _target getVariable ["requestingRedeploy", false];
 			private _isCAS = _target getVariable ["isCAS", false];
@@ -1180,11 +1046,8 @@ private _vicActions = {
 	_actions pushBack [_unregisterVicAction, [], _target];
 	_actions pushBack [_assignCasVicAction, [], _target];
 	_actions pushBack [_unassignCasVicAction, [], _target];
-	_actions pushBack [_assignCasVicAction, [], _target];
-	_actions pushBack [_unassignCasVicAction, [], _target];
 	_actions pushBack [_requestVicRedeployAction, [], _target];
 	_actions pushBack [_cancelVicRedeployAction, [], _target];
-
 
 	_actions
 };
@@ -1202,7 +1065,7 @@ private _heliActions = [
 		private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
 		private _homeBaseConfigured = !(isNil "_homeBase");
 		if (_homeBaseConfigured) then {
-			private _atBase = (_target distance2D (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")) < ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Radius", 500]);
+			private _atBase = _target call (missionNamespace getVariable "isAtBase");
 			_atBase
 		} else {
 			false

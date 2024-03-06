@@ -22,6 +22,8 @@ missionNamespace setVariable ["vicWatchdog", compile preprocessFileLineNumbers "
 missionNamespace setVariable ["getBasePads", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\getPadsNearBase.sqf"];
 missionNamespace setVariable ["getTargetPads", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\getPadsNearTarget.sqf"];
 missionNamespace setVariable ["getRegisteredVehicles", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\getRegisteredVehicles.sqf"];
+missionNamespace setVariable ["sideChatter", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\sideChatter.sqf"];
+missionNamespace setVariable ["isAtBase", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\isAtBase.sqf"];
 
 missionNamespace setVariable ["removeVehicleFromPadRegistry", {
 	params ["_vehicle"];

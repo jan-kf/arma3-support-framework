@@ -12,11 +12,14 @@ private _vic = _this select 0;
 private _baseCallsign = [west, "base"];
 private _baseName = "Base";
 
+private _baseIsNotVirtual = false;
+
 private _syncedObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG");
 {
 	if (_x isKindOf "Man") exitWith {
 		_baseCallsign = _x;
 		_baseName = groupId group _x;
+		_baseIsNotVirtual = true;
 	};
 } forEach _syncedObjects;
 
@@ -52,7 +55,7 @@ if (_isCAS) then {
 	_helloMsg = "Close Air Support, %1 On Station...";
 };
 
-[driver _vic, format[_helloMsg, groupId group _vic]] remoteExec ["sideChat"];
+[driver _vic, format[_helloMsg, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 
 while {_vic getVariable ["isRegistered", false]} do {
 	// run while the vic is registered
@@ -76,7 +79,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 	// [format["%1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time]] remoteExec ["systemChat"];
 
-	// [driver _vic, format["%1 -> current task: %2", _vehicleDisplayName, _task]] remoteExec ["sideChat"];
+	// [driver _vic, format["%1 -> current task: %2", _vehicleDisplayName, _task]] call (missionNamespace getVariable "sideChatter");
 	diag_log format["[SUPPORT] %1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time];
 
 
@@ -100,11 +103,16 @@ while {_vic getVariable ["isRegistered", false]} do {
 			_vic setVariable ["isPerformingDuties", true, true];
 
 			private _groupLeader = _vic getVariable "targetGroupLeader";
-			private _straightFromTop = (_groupLeader == _baseCallsign);
+			private _straightFromTop =  false;
+			if (_baseIsNotVirtual && (typeName _baseCallsign != "ARRAY")) then{
+				if (_groupLeader == _baseCallsign) then {
+					_straightFromTop = true;
+				}
+			};
 			private _fullRun = _vic getVariable ["fullRun", true];
 
 			if (isNil "_groupLeader") exitWith {
-				[driver _vic, "No group leader was assigned, Staying Put."] remoteExec ["sideChat"];
+				[driver _vic, "No group leader was assigned, Staying Put."] call (missionNamespace getVariable "sideChatter");
 				_vic setVariable ["currentTask", "waiting", true];
 				_vic setVariable ["isPerformingDuties", false, true];
 			};
@@ -120,10 +128,10 @@ while {_vic getVariable ["isRegistered", false]} do {
 					if (!_fullRun) then{
 						_gl_message = "%3, this is %1, requesting %2 on my position, over";
 					};
-					[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName]] remoteExec ["sideChat"];
+					[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName]] call (missionNamespace getVariable "sideChatter");
 				}else{
 					private _gl_message = "%4, this is %1, requesting %2 at %3, over";
-					[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, markerText _location, _baseName]] remoteExec ["sideChat"];
+					[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, markerText _location, _baseName]] call (missionNamespace getVariable "sideChatter");
 				};
 				sleep 3;
 			};
@@ -134,9 +142,9 @@ while {_vic getVariable ["isRegistered", false]} do {
 			if (isNil "_location") exitWith {
 				if (!_straightFromTop) then {
 					if (_vic getVariable ["isHeli", false]) then {
-						[_baseCallsign, format ["%1, we have no available LZ for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+						[_baseCallsign, format ["%1, we have no available LZ for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 					} else {
-						[_baseCallsign, format ["%1, we have no available RP for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+						[_baseCallsign, format ["%1, we have no available RP for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 					};
 					sleep 3;
 				};
@@ -150,7 +158,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 				if (!_fullRun) then{
 					_base_message = "Roger %1, dispatching %2, out.";
 				};
-				[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+				[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 				sleep 3;
 			};
 
@@ -172,7 +180,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 			// logic to check if Vic is already at location
 			if (_vic distance2D _destinationPos < 100) exitWith {
 				[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
-				[driver _vic, "Already at location, wait one..."] remoteExec ["sideChat"];
+				[driver _vic, "Already at location, wait one..."] call (missionNamespace getVariable "sideChatter");
 				if (_fullRun) then {
 					_vic setVariable ["currentTask", "requestBaseLZ", true];
 				} else {
@@ -194,17 +202,17 @@ while {_vic getVariable ["isRegistered", false]} do {
 				if (_straightFromTop) then {
 					_base_to_vic_msg = "%1, you are cleared for departure to %2, over.";
 				};
-				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call (missionNamespace getVariable "sideChatter");
 				sleep 3;
-				[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
+				[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 			}else{
 				private _base_to_vic_msg = "Over to you %1, you are cleared for approach to %2, over.";
 				if (_straightFromTop) then {
 					_base_to_vic_msg = "%1, you are cleared for approach to %2, over.";
 				};
-				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call (missionNamespace getVariable "sideChatter");
 				sleep 3;
-				[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
+				[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 			};
 
 			// vic is leaving base, release base pad reservation
@@ -223,10 +231,15 @@ while {_vic getVariable ["isRegistered", false]} do {
 			_vic setVariable ["isPerformingDuties", true, true];
 
 			private _groupLeader = _vic getVariable "targetGroupLeader";
-			private _straightFromTop = (_groupLeader == _baseCallsign);
+			private _straightFromTop =  false;
+			if (_baseIsNotVirtual && (typeName _baseCallsign != "ARRAY")) then{
+				if (_groupLeader == _baseCallsign) then {
+					_straightFromTop = true;
+				}
+			};
 
 			if (isNil "_groupLeader") exitWith {
-				[driver _vic, "No group leader was assigned, Staying Put."] remoteExec ["sideChat"];
+				[driver _vic, "No group leader was assigned, Staying Put."] call (missionNamespace getVariable "sideChatter");
 				_vic setVariable ["currentTask", "waiting", true];
 				_vic setVariable ["isPerformingDuties", false, true];
 			};
@@ -262,13 +275,13 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 			if (!_straightFromTop) then {
 				private _gl_message = "%3, this is %1, requesting immediate fire support from %2 at %4, over";
-				[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName, _gridRef]] remoteExec ["sideChat"];
+				[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName, _gridRef]] call (missionNamespace getVariable "sideChatter");
 				sleep 3;
 			};
 
 			if (!_straightFromTop) then {
 				_base_message = "Roger %1, dispatching %2, out.";
-				[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] remoteExec ["sideChat"];
+				[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 				sleep 3;
 			};
 
@@ -280,17 +293,17 @@ while {_vic getVariable ["isRegistered", false]} do {
 				if (_straightFromTop) then {
 					_base_to_vic_msg = "%1, you are cleared for departure to %2. Mission objective: Seek and Destroy, over.";
 				};
-				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call (missionNamespace getVariable "sideChatter");
 				sleep 3;
-				[driver _vic, format ["Cleared for firemission to %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
+				[driver _vic, format ["Cleared for firemission to %1, %2 out.", _gridRef, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 			}else{
 				private _base_to_vic_msg = "Over to you %1, you are cleared for approach to %2, over.";
 				if (_straightFromTop) then {
 					_base_to_vic_msg = "%1, you are cleared for approach to %2. Mission objective: Seek and Destroy, over.";
 				};
-				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call (missionNamespace getVariable "sideChatter");
 				sleep 3;
-				[driver _vic, format ["Cleared for firemission at %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
+				[driver _vic, format ["Cleared for firemission at %1, %2 out.", _gridRef, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 			};
 
 			// vic is leaving base, release base pad reservation
@@ -332,7 +345,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 					_vic setVariable ["taskStartTime", serverTime, true];
 					//set task to CAS duties
 					_vic setVariable ["currentTask", "performingCAS", true];
-					[driver _vic, format ["Beginning my attack..."]] remoteExec ["sideChat"];
+					[driver _vic, format ["Beginning my attack..."]] call (missionNamespace getVariable "sideChatter");
 				};
 			}else{
 				// check the vic is near the objective, and ready to land 
@@ -387,7 +400,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 				_vicGroup setCombatMode "BLUE";
 				_vicGroup setBehaviourStrong "SAFE";
 
-				[driver _vic, format ["Attack complete, returning to base."]] remoteExec ["sideChat"];
+				[driver _vic, format ["Attack complete, returning to base."]] call (missionNamespace getVariable "sideChatter");
 				// requestLZ at base, and RTB
 				_vic setVariable ["currentTask", "requestBaseLZ", true];
 			};
@@ -400,7 +413,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 			if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 				_vic engineOn false;
-				[driver _vic, _touchdownMessage] remoteExec ["sideChat"];
+				[driver _vic, _touchdownMessage] call (missionNamespace getVariable "sideChatter");
 
 				// wait after touchdown
 				sleep 10;
@@ -409,7 +422,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 				if (_fullRun) then {
 					_vic setVariable ["currentTask", "requestBaseLZ", true];
 				} else {
-					[driver _vic, format ["%1 on standby, awaiting orders.", groupId group _vic]] remoteExec ["sideChat"];
+					[driver _vic, format ["%1 on standby, awaiting orders.", groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 					_vic setVariable ["currentTask", "awaitOrders", true];
 				};
 			};
@@ -418,17 +431,17 @@ while {_vic getVariable ["isRegistered", false]} do {
 			// vic attempts to kickstart it's RTB procedures
 			[_vic] call (missionNamespace getVariable "removeVehicleFromAwayPads");
 			
-			[driver _vic, format ["%2, this is %1, requesting permission to land, over", groupId group _vic, _baseName]] remoteExec ["sideChat"];
+			[driver _vic, format ["%2, this is %1, requesting permission to land, over", groupId group _vic, _baseName]] call (missionNamespace getVariable "sideChatter");
 			sleep 3;
 			_location = [_vic, (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG"), true, true] call _findRendezvousPoint;
 			if (isNil "_location") exitWith {
 				if (_vic getVariable ["isHeli", false]) then {
-					[_baseCallsign, format ["%1, No helipad is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];
+					[_baseCallsign, format ["%1, No helipad is available at the moment, over.", groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 				} else {
-					[_baseCallsign, format ["%1, No parking is available at the moment, over.", groupId group _vic]] remoteExec ["sideChat"];
+					[_baseCallsign, format ["%1, No parking is available at the moment, over.", groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 				};
 				sleep 3;
-				[driver _vic, format ["Roger that %2, will check in again later. %1 out.", groupId group _vic, _baseName]] remoteExec ["sideChat"];
+				[driver _vic, format ["Roger that %2, will check in again later. %1 out.", groupId group _vic, _baseName]] call (missionNamespace getVariable "sideChatter");
 				[_vic] call (missionNamespace getVariable "removeVehicleFromPadRegistry");
 				// what should it's status be?
 				_vic setVariable ["currentTask", "marooned", true];
@@ -439,7 +452,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 			// logic to check if Vic is already at location
 			if ((_vic distance2D _destinationPos < 100) && (isTouchingGround _vic) && (speed _vic < 1)) exitWith {
-				[driver _vic, "Already at base..."] remoteExec ["sideChat"];
+				[driver _vic, "Already at base..."] call (missionNamespace getVariable "sideChatter");
 				_vic setVariable ["currentTask", "waiting", true];
 			};
 
@@ -460,9 +473,9 @@ while {_vic getVariable ["isRegistered", false]} do {
 				// get gridRef if message has format specifier.
 				private _gridRef = [_destinationPos] call _posToGrid;
 				// msg that driver sends once destination grid is recieved 
-				[_baseCallsign, format ["%1, you are cleared to land at landing pad at %2, over.", groupId group _vic, _gridRef]] remoteExec ["sideChat"];
+				[_baseCallsign, format ["%1, you are cleared to land at landing pad at %2, over.", groupId group _vic, _gridRef]] call (missionNamespace getVariable "sideChatter");
 				sleep 3;
-				[driver _vic, format ["Cleared for pad at %1, %2 out.", _gridRef, groupId group _vic]] remoteExec ["sideChat"];
+				[driver _vic, format ["Cleared for pad at %1, %2 out.", _gridRef, groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 			};
 
 			// once complete, set task to RTB
@@ -499,9 +512,9 @@ while {_vic getVariable ["isRegistered", false]} do {
 			};
 			_vic setVariable ["currentTask", "requestBaseLZ", true];
 			
-			[_groupLeader, format ["%1, this is %2, Wave off, over.",groupId group _vic, _groupLeaderCallsign]] remoteExec ["sideChat"];
+			[_groupLeader, format ["%1, this is %2, Wave off, over.",groupId group _vic, _groupLeaderCallsign]] call (missionNamespace getVariable "sideChatter");
 			sleep 2;
-			[driver _vic, format ["Roger that %1, Waving off, out.", _groupLeaderCallsign]] remoteExec ["sideChat"];
+			[driver _vic, format ["Roger that %1, Waving off, out.", _groupLeaderCallsign]] call (missionNamespace getVariable "sideChatter");
 			sleep 1;
 		};
 		case "landingAtBase": {
@@ -514,7 +527,7 @@ while {_vic getVariable ["isRegistered", false]} do {
 				_vic engineOn false;
 				_vic setVariable ["isPerformingDuties", false, true];
 
-				[driver _vic, format ["%1 is ready for tasking...", groupId group _vic]] remoteExec ["sideChat"];
+				[driver _vic, format ["%1 is ready for tasking...", groupId group _vic]] call (missionNamespace getVariable "sideChatter");
 
 				// once landed, go back to waiting
 				_vic setVariable ["currentTask", "waiting", true];
@@ -543,4 +556,4 @@ while {_vic getVariable ["isRegistered", false]} do {
 	sleep 3;
 };
 
-[driver _vic, format["%1 Off Station...", groupId group _vic]] remoteExec ["sideChat"];
+[driver _vic, format["%1 Off Station...", groupId group _vic]] call (missionNamespace getVariable "sideChatter");

@@ -36,7 +36,7 @@ while {true} do {
 	
 	diag_log "[SUPPORT] base heartbeat, bu bum...";
 	// Find all vehicles within a certain radius of _homeBase
-	private _vehiclesNearBase = _homeBase nearEntities ["Helicopter", (_homeBase getVariable ["Radius", 500])]; 
+	private _vehiclesNearBase = vehicles select {(_x call (missionNamespace getVariable "isAtBase")) && (_x isKindOf "Helicopter")}; 
 
 	// Iterate through each vehicle
 	{
@@ -95,7 +95,7 @@ while {true} do {
         };
     } forEach allMapMarkers;
 
-	private _baseSide = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["BaseSide", ""];
+	private _baseSide = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["BaseSide", "west"];
 	{
 		private _vehicle = _x;
 
