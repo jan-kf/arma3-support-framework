@@ -30,8 +30,85 @@ class CfgFunctions {
             class setArtillery {
                 description = "Function to set the Artillery variables.";
             };
-            
         };
+        class SupportFunctions {
+            file = "\Support-Framework\Functions\supportFunctions";
+            class baseHeartbeat {
+                description = "Function to monitor and manage base status updates";
+            };
+            class findRendezvousPoint {
+                description = "Function to locate a meeting point";
+            };
+            class getArtyTargetActions {
+                description = "Function to get the artillery target actions";
+            };
+            class getCasActions {
+                description = "Function to get the CAS vehicle actions";
+            };
+            class getPadsNearBase {
+                description = "Function to find pads in proximity to the base";
+            };
+            class getPadsNearTarget {
+                description = "Function to find pads close to a target location";
+            };
+            class getRedeployActions {
+                description = "Function to get the redeploy vehicle actions";
+            };
+            class getRegisteredVehicles {
+                description = "Function to retrieve a list of registered vehicles";
+            };
+            class getVicActions {
+                description = "Function to get the vehicle actions";
+            };
+            class hasItems {
+                description = "Function to check if items are present";
+            };
+            class isAtBase {
+                description = "Function to determine if at base location";
+            };
+            class landingAtBase {
+                description = "Function to manage landing procedures at base";
+            };
+            class landingAtObjective {
+                description = "Function to manage landing procedures at an objective";
+            };
+            class onMission {
+                description = "Function to check or set mission status";
+            };
+            class performingCAS {
+                description = "Function to manage or check Close Air Support operations";
+            };
+            class posToGrid {
+                description = "Function to convert position to grid coordinates";
+            };
+            class removeVehicleFromAwayPads {
+                description = "Function to remove a vehicle from away pads registry";
+            };
+            class removeVehicleFromPadRegistry {
+                description = "Function to deregister a vehicle from pad registry";
+            };
+            class requestBaseLZ {
+                description = "Function to request a landing zone at base";
+            };
+            class requestCas {
+                description = "Function to request close air support";
+            };
+            class requestReinsert {
+                description = "Function to begin redeploy procedures";
+            };
+            class RTB {
+                description = "Function to manage Return To Base procedures";
+            };
+            class sideChatter {
+                description = "Function to handle side channel communications";
+            };
+            class vehicleWatchdog {
+                description = "Function to monitor and manage vehicle status";
+            };
+            class waveOff {
+                description = "Function to manage aborting or redirecting a vehicle/operation";
+            };
+        }
     };
 };
 

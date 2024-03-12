@@ -21,4 +21,4 @@ _nearestPads = nearestObjects [
     10000
 ];
 
-_nearestPads select {_x call (missionNamespace getVariable "isAtBase")}// This is the value that the script will return
+_nearestPads select {_x call SupportFramework_fnc_isAtBase}

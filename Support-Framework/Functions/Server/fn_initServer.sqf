@@ -18,58 +18,6 @@ if (!isServer) exitWith {};
 
 diag_log "[SUPPORT] initHomeBase is beginning initilization...";
 
-missionNamespace setVariable ["vicWatchdog", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\vehicleWatchdog.sqf"];
-missionNamespace setVariable ["getBasePads", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\getPadsNearBase.sqf"];
-missionNamespace setVariable ["getTargetPads", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\getPadsNearTarget.sqf"];
-missionNamespace setVariable ["getRegisteredVehicles", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\getRegisteredVehicles.sqf"];
-missionNamespace setVariable ["sideChatter", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\sideChatter.sqf"];
-missionNamespace setVariable ["isAtBase", compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\isAtBase.sqf"];
-
-missionNamespace setVariable ["removeVehicleFromPadRegistry", {
-	params ["_vehicle"];
-	private _basePads = call (missionNamespace getVariable "getBasePads");
-	// Vehicle netId to check against
-    private _vehicleNetId = netId _vehicle;
-
-    // Iterate over each pad in _basePads
-    {
-        // Get the stored vehicle netId for this pad
-        private _storedVehicleNetId = _x getVariable ["assignment", ""];
-
-        // Check if this pad has the vehicle registered
-        if (_storedVehicleNetId isEqualTo _vehicleNetId) then {
-            // If so, set the variable to nil to unregister the vehicle
-            _x setVariable ["assignment", nil];
-        };
-    } forEach _basePads;
-}];
-
-missionNamespace setVariable ["removeVehicleFromAwayPads", {
-	params ["_vehicle"];
-	private _groupLeader = _vehicle getVariable "targetGroupLeader";
-
-	if (isNil "_groupLeader") exitWith {};
-
-	private _vehicleNetId = netId _vehicle;
-	private _awayPads = [_groupLeader] call (missionNamespace getVariable "getTargetPads");
-	{
-		private _storedVehicleNetId = _x getVariable ["assignment", ""];
-		// Check if this pad has the vehicle registered
-		if (_storedVehicleNetId isEqualTo _vehicleNetId) then {
-			// If so, set the variable to nil to unregister the vehicle
-			_x setVariable ["assignment", nil];
-		};
-	} forEach _awayPads;
-}];
-
-publicVariable "homeBaseManifest";
-publicVariable "vicWatchdog";
-publicVariable "getBasePads";
-publicVariable "getTargetPads";
-publicVariable "getRegisteredVehicles";
-publicVariable "removeVehicleFromPadRegistry";
-publicVariable "removeVehicleFromAwayPads";
-
 // register all objects that are synced to (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")
 private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
 private _homeBaseConfigured = !(isNil "_homeBase");
@@ -113,7 +61,7 @@ if (_artyConfigured) then {
 diag_log "[SUPPORT] kicking off heartbeat...";
 // ["[SUPPORT] kicking off heartbeat..."] remoteExec ["systemChat"];
 
-[] spawn (compile preprocessFileLineNumbers "\Support-Framework\Functions\redeployFunctions\baseHeartbeat.sqf");
+[] spawn SupportFramework_fnc_baseHeartbeat;
 
 diag_log "[SUPPORT] initHomeBase is done initializing";
 // ["[SUPPORT] initHomeBase is done initializing"] remoteExec ["systemChat"];

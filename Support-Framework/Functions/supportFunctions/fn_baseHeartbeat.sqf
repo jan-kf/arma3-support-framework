@@ -36,7 +36,7 @@ while {true} do {
 	
 	diag_log "[SUPPORT] base heartbeat, bu bum...";
 	// Find all vehicles within a certain radius of _homeBase
-	private _vehiclesNearBase = vehicles select {(_x call (missionNamespace getVariable "isAtBase")) && (_x isKindOf "Helicopter")}; 
+	private _vehiclesNearBase = vehicles select {(_x call SupportFramework_fnc_isAtBase) && (_x isKindOf "Helicopter")}; 
 
 	// Iterate through each vehicle
 	{
@@ -52,7 +52,7 @@ while {true} do {
 			// check if watchdog is running, if not, start it
 			// [format ["kicking off wd for: %1 ... ", _vehicle]] remoteExec ["systemChat"];
 
-			_watchdog = [_vehicle] spawn (missionNamespace getVariable "vicWatchdog");
+			_watchdog = [_vehicle] spawn SupportFramework_fnc_vehicleWatchdog;
 			sleep 2;
 			_vehicle setVariable ["watchdog", _watchdog, true];
 		};
@@ -78,8 +78,10 @@ while {true} do {
         private _markerName = _x;
         private _displayName = toLower (markerText _markerName);
 		private _lzMatch = false;
+
+
 		{
-			private _prefix = toLower _markerName;
+			private _prefix = toLower _x;
 			if (_displayName find _prefix == 0) exitWith {
 				_lzMatch = true;
 			}
@@ -96,16 +98,18 @@ while {true} do {
     } forEach allMapMarkers;
 
 	private _baseSide = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["BaseSide", "west"];
-	{
-		private _vehicle = _x;
+	if (!isNil "_baseSide") then {
+		{
+			private _vehicle = _x;
 
-		private _isArtillery = [_vehicle] call _isArtilleryCapable;
-		private _checkArtillery = _vehicle getVariable "isArtillery";
-		if (_isArtillery && isNil "_checkArtillery") then {
-			_vehicle setVariable ["isArtillery", true, true];
-		};
+			private _isArtillery = [_vehicle] call _isArtilleryCapable;
+			private _checkArtillery = _vehicle getVariable "isArtillery";
+			if (_isArtillery && isNil "_checkArtillery") then {
+				_vehicle setVariable ["isArtillery", true, true];
+			};
 
-	} forEach (vehicles select {(toLower str(side _x)) isEqualTo (toLower _baseSide)});
+		} forEach (vehicles select {(toLower str(side _x)) isEqualTo (toLower str(_baseSide))});
+	};
 	
     sleep 3; 
 };
