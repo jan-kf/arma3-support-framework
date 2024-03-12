@@ -3,16 +3,11 @@ params ["_vic"];
 // check if there are any issues
 
 private _destination = _vic getVariable "destination";
-private _destinationPos = nil;
-if (typeName _destination == "STRING") then {
-	// _destination is a string
-	_destinationPos = getMarkerPos _destination;
-} else {
-	if (typeName _destination == "OBJECT") then {
-		// _destination is an object
-		_destinationPos = getPos _destination;
-	};
-};
+
+private _locationData = [_destination] call SupportFramework_fnc_getLocation;
+private _locationName = _locationData select 0;
+private _locationPOS = _locationData select 1;
+
 private _vicGroup = group _vic;
 {
 	_x enableAI "all";
@@ -23,7 +18,7 @@ _vicGroup setBehaviourStrong "AWARE";
 private _isCAS = _vic getVariable ["isCAS", false];
 if (_isCAS) then {
 	// check if near target
-	if (_vic distance2D _destinationPos < 1000 ) then {
+	if (_vic distance2D _locationPOS < 1000 ) then {
 		_vicGroup setCombatMode "RED";
 		//save the current time for later use 
 		_vic setVariable ["taskStartTime", serverTime, true];
@@ -33,7 +28,7 @@ if (_isCAS) then {
 	};
 }else{
 	// check the vic is near the objective, and ready to land 
-	if (_vic distance2D _destinationPos < 100 && unitReady _vic) then {
+	if (_vic distance2D _locationPOS < 100 && unitReady _vic) then {
 		// set task to land at objective
 		_vic land "LAND";
 		_vic setVariable ["currentTask", "landingAtObjective", true];

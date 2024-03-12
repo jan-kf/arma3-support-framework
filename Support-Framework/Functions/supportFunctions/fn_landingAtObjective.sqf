@@ -8,7 +8,7 @@ if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 	// wait after touchdown
 	sleep 10;
 	_vic setVariable ["isPerformingDuties", false, true];
-	private _fullRun = _vic getVariable ["fullRun", true];
+	private _fullRun = _vic getVariable ["fullRun", false];
 	if (_fullRun) then {
 		_vic setVariable ["currentTask", "requestBaseLZ", true];
 	} else {

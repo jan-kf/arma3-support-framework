@@ -1,4 +1,9 @@
-params ["_vic", "_baseCallsign", "_baseName"];
+params ["_vic"];
+
+private _baseParams = call SupportFramework_fnc_getBaseCallsign;
+private _baseCallsign = _baseParams select 0;
+private _baseName = _baseParams select 1;
+
 // vic attempts to kickstart it's RTB procedures
 [_vic] call SupportFramework_fnc_removeVehicleFromAwayPads;
 

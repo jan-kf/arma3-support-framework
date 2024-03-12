@@ -6,20 +6,6 @@ if (isNil "_homeBase") exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG is n
 
 private _vic = _this select 0;
 
-private _baseCallsign = [west, "base"];
-private _baseName = "Base";
-
-private _baseIsNotVirtual = false;
-
-private _syncedObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG");
-{
-	if (_x isKindOf "Man") exitWith {
-		_baseCallsign = _x;
-		_baseName = groupId group _x;
-		_baseIsNotVirtual = true;
-	};
-} forEach _syncedObjects;
-
 // [format ["Starting watchdog for %1 ... ", _vic]] remoteExec ["systemChat"];
 diag_log format ["Starting watchdog for %1 ... ", _vic];
 
@@ -91,16 +77,16 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 			_vic setVariable ["currentTask", "waiting", true];
 		};
-		case "requestReinsert": {
-			// vic was told to begin it's mission, perform startup
+		// case "requestReinsert": { // called directly
+		// 	// vic was told to begin it's mission, perform startup
 
-			[_vic, _baseCallsign, _baseName, _baseIsNotVirtual] call SupportFramework_fnc_requestReinsert;
-		};
-		case "requestCas": {
-			// vic was told to begin it's cas mission, perform startup
+		// 	[_vic] call SupportFramework_fnc_requestReinsert;
+		// };
+		// case "requestCas": {
+		// 	// vic was told to begin it's cas mission, perform startup
 			
-			[_vic, _baseCallsign, _baseName, _baseIsNotVirtual] call SupportFramework_fnc_requestCas;
-		};
+		// 	[_vic] call SupportFramework_fnc_requestCas;
+		// };
 		case "onMission": {
 			// vic is currently making its way to the redeploy LZ
 			
@@ -119,12 +105,12 @@ while {_vic getVariable ["isRegistered", false]} do {
 		};
 		case "requestBaseLZ": {
 			
-			[_vic, _baseCallsign, _baseName] call SupportFramework_fnc_requestBaseLZ;
+			[_vic] call SupportFramework_fnc_requestBaseLZ;
 		};
-		case "waveOff": {
+		// case "waveOff": {
 
-			[_vic] call SupportFramework_fnc_waveOff;
-		};
+		// 	[_vic] call SupportFramework_fnc_waveOff;
+		// };
 		case "landingAtBase": {
 
 			[_vic] call SupportFramework_fnc_landingAtBase;
@@ -141,9 +127,6 @@ while {_vic getVariable ["isRegistered", false]} do {
 		};
 		default {
 			//vic is waiting for a task, wait
-			_vic setVariable ["isPerformingDuties", false, true];
-			_vic setVariable ["targetGroupLeader", nil, true];
-			_vic setVariable ["fullRun", true, true];
 		};
 
 	};

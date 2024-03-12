@@ -97,10 +97,10 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						// statement 
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
-						_vic setVariable ["currentTask", "waveOff", true];
 						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
 							hint "Waving off transport...";
-						}
+						};
+						[_vic] remoteExec ["SupportFramework_fnc_waveOff", 2];
 					}, 
 					{
 						params ["_target", "_caller", "_vic"];
@@ -192,12 +192,12 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 									private _vic = _args select 0;
 									private _marker = _args select 1;
 									_vic setVariable ["targetGroupLeader", _caller, true];
-									_vic setVariable ["targetLocation", _marker, true];
 									_vic setVariable ["currentTask", "requestReinsert", true];
 									_vic setVariable ["fullRun", false, true];
 									if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
 										hint "Requesting transport...";
-									}
+									};
+									[_vic, _marker] remoteExec ["SupportFramework_fnc_requestReinsert", 2];
 								}, 
 								{
 									params ["_target", "_caller", "_args"];

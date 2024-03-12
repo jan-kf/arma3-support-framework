@@ -42,7 +42,19 @@ class CfgFunctions {
             class getArtyTargetActions {
                 description = "Function to get the artillery target actions";
             };
+            class getBaseCallsign {
+                description = "Function to get the params of the base";
+            };
             class getCasActions {
+                description = "Function to get the CAS vehicle actions";
+            };
+            class getLocation {
+                description = "Function to get the CAS vehicle actions";
+            };
+            class getNearestLocationParams {
+                description = "Function to get the CAS vehicle actions";
+            };
+            class getNearestLocationText {
                 description = "Function to get the CAS vehicle actions";
             };
             class getPadsNearBase {

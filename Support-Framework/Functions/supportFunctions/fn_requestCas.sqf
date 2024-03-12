@@ -1,7 +1,16 @@
-params ["_vic", "_baseCallsign", "_baseName", "_baseIsNotVirtual"];
+params ["_vic", "_location"];
 // vic was told to begin it's cas mission, perform startup
+
+private _locationData = [_location] call SupportFramework_fnc_getLocation;
+private _locationName = _locationData select 0;
+private _locationPOS = _locationData select 1;
+
+private _baseParams = call SupportFramework_fnc_getBaseCallsign;
+private _baseCallsign = _baseParams select 0;
+private _baseName = _baseParams select 1;
+private _baseIsNotVirtual = _baseParams select 2;
+
 // clear out params:
-_vic setVariable ["waveOff", false, true];
 _vic setVariable ["destination", nil, true];
 
 _vic setVariable ["isPerformingDuties", true, true];
@@ -23,30 +32,17 @@ if (isNil "_groupLeader") exitWith {
 private _groupLeaderGroup = group _groupLeader;
 private _groupLeaderCallsign = groupId _groupLeaderGroup;
 
-private _location = _vic getVariable "targetLocation";
-
-private _destinationPos = nil;
-if (typeName _location == "STRING") then {
-	// _location is a string
-	_destinationPos = getMarkerPos _location;
-} else {
-	if (typeName _location == "OBJECT") then {
-		// _location is an object
-		_destinationPos = getPos _location;
-	};
-};
-
-_vic setVariable ["destination", _location, true];
+_vic setVariable ["destination", _locationPOS, true];
 	
 private _currentPos = getPos _vic;
 
 // set waypoint
 private _grp = group _vic;
-private _base_wp = _grp addWaypoint [_destinationPos, 0];
+private _base_wp = _grp addWaypoint [_locationPOS, 0];
 _base_wp setWaypointType "MOVE"; // will automatically seek and destroy
 _grp setCurrentWaypoint _base_wp;
 
-private _gridRef = [_destinationPos] call SupportFramework_fnc_posToGrid;
+private _gridRef = [_locationPOS] call SupportFramework_fnc_posToGrid;
 
 
 if (!_straightFromTop) then {
