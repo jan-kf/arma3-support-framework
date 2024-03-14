@@ -134,7 +134,7 @@ if (_artyPrefixStr != "") then {
 																};
 																
 
-																_vehicle doArtilleryFire [_targetPos, _shellType, _amount];
+																[_vehicle, [_targetPos, _shellType, _amount]] remoteExec ["doArtilleryFire", 2];
 																// BOOM
 
 															}, 

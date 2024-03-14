@@ -98,6 +98,10 @@ while {true} do {
     } forEach allMapMarkers;
 
 	private _baseSide = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["BaseSide", "west"];
+	if ((typeName _baseSide) != "STRING") then {
+		_baseSide = toLower str(_baseSide)
+	};
+
 	if (!isNil "_baseSide") then {
 		{
 			private _vehicle = _x;
@@ -108,7 +112,7 @@ while {true} do {
 				_vehicle setVariable ["isArtillery", true, true];
 			};
 
-		} forEach (vehicles select {(toLower str(side _x)) isEqualTo (toLower str(_baseSide))});
+		} forEach (vehicles select {(toLower str(side _x)) isEqualTo _baseSide});
 	};
 	
     sleep 3; 

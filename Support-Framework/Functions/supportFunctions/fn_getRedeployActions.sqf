@@ -197,7 +197,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 									if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
 										hint "Requesting transport...";
 									};
-									[_vic, _marker] remoteExec ["SupportFramework_fnc_requestReinsert", 2];
+									[_vic, getMarkerPos _marker] remoteExec ["SupportFramework_fnc_requestReinsert", 2];
 								}, 
 								{
 									params ["_target", "_caller", "_args"];

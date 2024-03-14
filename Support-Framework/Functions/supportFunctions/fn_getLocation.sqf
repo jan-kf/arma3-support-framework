@@ -18,5 +18,11 @@ if (typeName _location == "OBJECT") then {
     _locationName = [_pos] call SupportFramework_fnc_getNearestLocationText;
 };
 
+private _landingPadsNearby = nearestObjects [_pos, ["Land_HelipadEmpty_F"], 10];
+if (count _landingPadsNearby == 0) then {
+    // No landing pad nearby, spawn one
+    private _landingPad = createVehicle ["Land_HelipadEmpty_F", _pos, [], 0, "CAN_COLLIDE"];
+};
+
 // Return the results
 [_locationName, _pos]
