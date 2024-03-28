@@ -107,8 +107,9 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						// // Condition code here
 						private _isPerformingDuties = _vic getVariable ["isPerformingDuties", false];
 						private _task = _vic getVariable ["currentTask", "waiting"];
+						private _isLoitering = _task == "loiter";
 						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
-						_isPerformingDuties && _notOnRestrictedTask
+						(_isPerformingDuties || _isLoitering) && _notOnRestrictedTask
 					},
 					{}, // 5: Insert children code <CODE> (Optional)
 					_vehicle // 6: Action parameters <ANY> (Optional)
@@ -220,9 +221,11 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 
 				} forEach allMapMarkers;
 
+				private _loiterActions = [_vehicle, _target] call SupportFramework_fnc_getLoiterActions;
+
 				_actions pushBack [_vicRTBAction, [], _target];
 					
-				_actions
+				_actions + _loiterActions
 			},
 			_vehicle, // 6: Action parameters <ANY> (Optional)
 			"", // 7: Position (Position array, Position code or Selection Name) <ARRAY>, <CODE> or <STRING> (Optional)

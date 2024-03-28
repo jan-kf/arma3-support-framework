@@ -123,7 +123,9 @@ private _casActions = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		[_target, _caller, _params] call SupportFramework_fnc_getCasActions;
+		private _actions = [_target, _caller, _params] call SupportFramework_fnc_getCasActions;
+		_actions 
+
 	}
 ] call ace_interact_menu_fnc_createAction;
 

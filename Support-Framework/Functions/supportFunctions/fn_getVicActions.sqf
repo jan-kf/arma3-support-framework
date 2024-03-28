@@ -12,8 +12,9 @@ private _registerVicAction = [
 		// Condition code here
 		private _atBase = _target call SupportFramework_fnc_isAtBase;
 		private _not_registered = !(_target getVariable ["isRegistered", false]);
+		private _isArty = _target getVariable ["isArtillery", false];
 		// show if:
-		_atBase && _not_registered
+		(_atBase || _isArty) && _not_registered
 	}
 ] call ace_interact_menu_fnc_createAction;
 
@@ -30,8 +31,9 @@ private _unregisterVicAction = [
 		// Condition code here
 		private _atBase = _target call SupportFramework_fnc_isAtBase;
 		private _registered = _target getVariable ["isRegistered", false];
+		private _isArty = _target getVariable ["isArtillery", false];
 		// show if:
-		_atBase && _registered
+		(_atBase || _isArty) && _registered
 	}
 ] call ace_interact_menu_fnc_createAction;
 

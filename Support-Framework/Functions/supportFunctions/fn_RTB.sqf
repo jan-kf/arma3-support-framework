@@ -2,6 +2,7 @@ params ["_vic"];
 // vic is currently making it's way back to (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG")
 
 // check if there are any issues
+[_vic] call SupportFramework_fnc_checkPulse;
 
 private _destination = _vic getVariable "destination";
 
@@ -15,3 +16,5 @@ if (_vic distance2D _locationPOS < 100 && unitReady _vic) then {
 	_vic land "LAND";
 	_vic setVariable ["currentTask", "landingAtBase", true];
 };
+
+

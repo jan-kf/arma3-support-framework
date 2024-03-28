@@ -36,6 +36,9 @@ class CfgFunctions {
             class baseHeartbeat {
                 description = "Function to monitor and manage base status updates";
             };
+            class checkPulse {
+                description = "Function to reapply waypoint if vehicle gets lost";
+            };
             class findRendezvousPoint {
                 description = "Function to locate a meeting point";
             };
@@ -50,6 +53,9 @@ class CfgFunctions {
             };
             class getLocation {
                 description = "Function to get the CAS vehicle actions";
+            };
+            class getLoiterActions {
+                description = "Function to get the Loiter actions";
             };
             class getNearestLocationParams {
                 description = "Function to get the CAS vehicle actions";
@@ -83,6 +89,9 @@ class CfgFunctions {
             };
             class landingAtObjective {
                 description = "Function to manage landing procedures at an objective";
+            };
+            class loiter {
+                description = "Function to loiter the vehicle";
             };
             class onMission {
                 description = "Function to check or set mission status";
@@ -186,6 +195,13 @@ class CfgVehicles {
                 tooltip = "Comma-separated list of prefixes that are searched for viable landing zones. Case Insensitive.";
                 typeName = "STRING"; // Value type
                 defaultValue = """LZ, HLS"""; // Default value
+            };
+            class LoiterPrefixes: Edit {
+                property = "SupportFramework_HomeBase_Module_LoiterPrefixes";
+                displayName = "Prefixes for loiter zone markers";
+                tooltip = "(Applies to CAS too) Comma-separated list of prefixes that the vehicle can be ordered to loiter at. Case Insensitive.";
+                typeName = "STRING"; // Value type
+                defaultValue = """Loiter, Hold"""; // Default value
             };
             class Hush: Checkbox {
                 property = "SupportFramework_HomeBase_Module_Hush";

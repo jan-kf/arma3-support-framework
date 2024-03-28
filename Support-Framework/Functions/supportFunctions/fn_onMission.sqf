@@ -1,6 +1,8 @@
 params ["_vic"];
 // vic is currently making its way to the redeploy LZ
+
 // check if there are any issues
+[_vic] call SupportFramework_fnc_checkPulse;
 
 private _destination = _vic getVariable "destination";
 

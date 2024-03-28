@@ -115,6 +115,10 @@ while {_vic getVariable ["isRegistered", false]} do {
 
 			[_vic] call SupportFramework_fnc_landingAtBase;
 		};
+		case "loiter": {
+
+			[_vic] call SupportFramework_fnc_loiter;
+		};
 		case "awaitOrders": {
 			// vic was called in to land, awaiting explicit orders to RTB
 			// no code, leader will set the current task manually

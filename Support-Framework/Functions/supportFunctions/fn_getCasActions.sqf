@@ -17,7 +17,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 		if (_requested) then {
 			_color = "#5EC445";
 		};
-		if (_task == "awaitOrders") then {
+		if (_task == "awaitOrders" || _task == "loiter") then {
 			_color = "#f7e76a";
 		};
 		private _vicAction = [
@@ -75,8 +75,9 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						// // Condition code here
 						private _isPerformingDuties = _vic getVariable ["isPerformingDuties", false];
 						private _task = _vic getVariable ["currentTask", "waiting"];
+						private _isLoitering = _task == "loiter";
 						private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert", "awaitOrders"]);
-						_isPerformingDuties && _notOnRestrictedTask
+						(_isPerformingDuties || _isLoitering) && _notOnRestrictedTask
 					},
 					{}, // 5: Insert children code <CODE> (Optional)
 					_vehicle // 6: Action parameters <ANY> (Optional)
@@ -117,6 +118,10 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 				} else {
 					_casPrefixes = ["target ", "firemission "]; // default value -- hard fallback
 				};
+
+				private _loiterActions = [_vehicle, _target] call SupportFramework_fnc_getLoiterActions;
+
+				_actions = _actions + _loiterActions;
 
 				{ // add all valid markers as valid locations
 					
@@ -167,8 +172,10 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 				} forEach allMapMarkers;
 
 				_actions pushBack [_vicRTBAction, [], _target];
+
+				
 					
-				_actions
+				_actions + _loiterActions
 			},
 			_vehicle, // 6: Action parameters <ANY> (Optional)
 			"", // 7: Position (Position array, Position code or Selection Name) <ARRAY>, <CODE> or <STRING> (Optional)

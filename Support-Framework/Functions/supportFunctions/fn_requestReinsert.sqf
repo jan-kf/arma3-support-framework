@@ -1,6 +1,9 @@
 params ["_vic", "_location"];
 // vic was told to begin it's mission, perform startup
 
+private _currentTask = _vic getVariable ["currentTask", "waiting"];
+private _isLoitering = _currentTask == "loiter";
+
 private _locationData = [_location] call SupportFramework_fnc_getLocation;
 private _locationName = _locationData select 0;
 private _locationPOS = _locationData select 1;
@@ -33,7 +36,7 @@ if (isNil "_groupLeader") exitWith {
 private _groupLeaderGroup = group _groupLeader;
 private _groupLeaderCallsign = groupId _groupLeaderGroup;
 
-if (!_straightFromTop) then {
+if (!_straightFromTop || !_isLoitering) then {
 	if (isNil "_locationPOS") then {
 		private _locationPOS = [_vic, _groupLeader, true] call SupportFramework_fnc_findRendezvousPoint;
 		private _gl_message = "%3, this is %1, requesting redeployment from %2, over";
@@ -65,7 +68,7 @@ if (isNil "_locationPOS") exitWith {
 };
 
 
-if (!_straightFromTop) then {
+if (!_straightFromTop || !_isLoitering) then {
 	private _base_message = "Roger %1, beginning redeployment, out.";
 	if (!_fullRun) then{
 		_base_message = "Roger %1, dispatching %2, out.";
@@ -97,24 +100,29 @@ _base_wp setWaypointType "MOVE";
 _grp setCurrentWaypoint _base_wp;
 
 private _gridRef = [_locationPOS] call SupportFramework_fnc_posToGrid;
-if ((isTouchingGround _vic) && (speed _vic < 1)) then {
-	// get gridRef if message has format specifier.
-	// msg that driver sends once destination grid is recieved 
-	private _base_to_vic_msg = "Over to you %1, you are cleared for departure to %2, over.";
-	if (_straightFromTop) then {
-		_base_to_vic_msg = "%1, you are cleared for departure to %2, over.";
+if (!_isLoitering) then {
+	if ((isTouchingGround _vic) && (speed _vic < 1)) then {
+		// get gridRef if message has format specifier.
+		// msg that driver sends once destination grid is recieved 
+		private _base_to_vic_msg = "Over to you %1, you are cleared for departure to %2, over.";
+		if (_straightFromTop) then {
+			_base_to_vic_msg = "%1, you are cleared for departure to %2, over.";
+		};
+		[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call SupportFramework_fnc_sideChatter;
+		sleep 3;
+		[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] call SupportFramework_fnc_sideChatter;
+	}else{
+		private _base_to_vic_msg = "Over to you %1, you are cleared for approach to %2, over.";
+		if (_straightFromTop) then {
+			_base_to_vic_msg = "%1, you are cleared for approach to %2, over.";
+		};
+		[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call SupportFramework_fnc_sideChatter;
+		sleep 3;
+		[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] call SupportFramework_fnc_sideChatter;
 	};
-	[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call SupportFramework_fnc_sideChatter;
-	sleep 3;
-	[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] call SupportFramework_fnc_sideChatter;
-}else{
-	private _base_to_vic_msg = "Over to you %1, you are cleared for approach to %2, over.";
-	if (_straightFromTop) then {
-		_base_to_vic_msg = "%1, you are cleared for approach to %2, over.";
-	};
-	[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call SupportFramework_fnc_sideChatter;
-	sleep 3;
-	[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] call SupportFramework_fnc_sideChatter;
+} else {
+	private _gl_message = "%2, this is %1, proceed to %3, over";
+	[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _locationName]] call SupportFramework_fnc_sideChatter;
 };
 
 // vic is leaving base, release base pad reservation
