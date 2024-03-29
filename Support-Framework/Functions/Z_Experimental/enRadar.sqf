@@ -1,7 +1,7 @@
 params ["_uav"];
 
 _detectionRange = 1000; 
-_markerUpdateInterval = 0.5; 
+_markerUpdateInterval = 5; 
 _markers = []; 
 
 private _group = group _uav;
@@ -10,7 +10,8 @@ _getReadableName = {
 params ["_className"];
  
     private _config = configFile >> "CfgVehicles" >> _className; 
-    private _displayName = getText(_config >> "displayName"); 
+    private _displayName = getText(_config >> "displayName");
+	 
     _displayName 
 };
 
@@ -40,7 +41,9 @@ while {alive _uav} do {
 	_all_units = _uav nearEntities [["Man", "Car", "Tank", "Ship", "Air", "Motorcycle"], _detectionRange];
 	_filteredTargets = [];
 	{
-		_filteredTargets pushBack _x;
+		if ([_uav, _x, 360] call _canSee) then {
+			_filteredTargets pushBack _x;
+		};
 	} forEach _all_units;
 
 
@@ -50,12 +53,10 @@ while {alive _uav} do {
 
     {
         _target = _x;
-        _position = getPos _target;
         _type = typeOf _target;
-		_object = _target;
 		_side = side _x;
 
-        _markerName = format ["_USER_DEFINED marker_%1_%2_%3", _position select 0, _type, round random 1000000];
+        _markerName = format ["_USER_DEFINED marker_%1_%2", _type, round random 1000000];
         _markers pushBack _markerName; 
 
 		_color = "ColorUNKNOWN";
@@ -67,7 +68,7 @@ while {alive _uav} do {
 		
 
 
-        _marker = createMarker [_markerName, _position];
+        _marker = createMarker [_markerName, _target, 1, _uav];
         _marker setMarkerShape "ICON";
         _marker setMarkerType "mil_dot";
         _marker setMarkerColor _color;
@@ -84,16 +85,3 @@ while {alive _uav} do {
 {
     deleteMarker _x;
 } forEach _markers;
-
-
-
-
-
-
-_uav = _this; 
-_detectionRange = 1000; 
-
-_detectedTargets = _uav nearTargets _detectionRange;
-
-
-hint str(_filteredTargets);
