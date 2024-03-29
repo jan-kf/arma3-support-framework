@@ -47,10 +47,21 @@ if (_CasConfigured) then {
 private _artyConfig = missionNamespace getVariable ["YOSHI_SUPPORT_ARTILLERY_CONFIG", nil];
 private _artyConfigured = !(isNil "_artyConfig");
 if (_artyConfigured) then {
-	private _syncedCasObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG");
+	private _syncedArtyObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG");
 	{
 		_x setVariable ["isRegistered", true, true];
-	} forEach _syncedCasObjects;
+		_x setVariable ["isArtillery", true, true];
+	} forEach _syncedArtyObjects;
+};
+
+private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
+private _reconConfigured = !(isNil "_reconConfig");
+if (_reconConfigured) then {
+	private _syncedReconObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG");
+	{
+		_x setVariable ["isRegistered", true, true];
+		_x setVariable ["isRecon", true, true];
+	} forEach _syncedReconObjects;
 };
 
 //// //// ////////////////////////////////////////////////////////////////////////////////

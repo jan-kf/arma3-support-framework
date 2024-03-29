@@ -61,7 +61,7 @@ if (_artyPrefixStr != "") then {
 								{
 									params ["_targetMarker", "_caller", "_vehicle"];
 									// Condition code here
-									true
+									alive _vehicle
 								},
 								{ // 5: Insert children code <CODE> (Optional)
 									params ["_targetMarker", "_caller", "_vehicle"];

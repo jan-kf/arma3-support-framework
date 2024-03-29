@@ -1,13 +1,26 @@
 params ["_uav"];
 
-_detectionRange = 1000; 
-_markerUpdateInterval = 5; 
-_markers = []; 
+if (!isServer) exitWith {};
+
+private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
+private _ReconConfigured = !(isNil "_reconConfig");
+private _timeLimit = 300;
+if (_ReconConfigured) then {
+	_timeLimit = _reconConfig getVariable ["TaskTime", 300];
+};
+
+private _detectionRange = 1000; 
+private _markerUpdateInterval = _reconConfig getVariable ["Interval", 5]; 
+private _markers = []; 
+
+
+private _showNames = _reconConfig getVariable ["ShowNames", true]; 
+private _hasHyperSpectralSensors = _reconConfig getVariable ["HasHyperSpectralSensors", false]; 
 
 private _group = group _uav;
 
-_getReadableName = { 
-params ["_className"];
+private _getReadableName = { 
+	params ["_className"];
  
     private _config = configFile >> "CfgVehicles" >> _className; 
     private _displayName = getText(_config >> "displayName");
@@ -15,7 +28,7 @@ params ["_className"];
     _displayName 
 };
 
-_canSee = {
+private _canSee = {
 	params [
 		["_looker",objNull,[objNull]],
 		["_target",objNull,[objNull]],
@@ -29,9 +42,10 @@ _canSee = {
 	};
 };
 
+private _start = _uav getVariable "taskStartTime";
+private _elapsedTime = serverTime - _start;
 
-
-while {alive _uav} do {
+while {(alive _uav) && _elapsedTime < _timeLimit} do {
 	_cwp = currentWaypoint _group;
 	_wpp = waypointPosition [_group, _cwp];
 
@@ -41,7 +55,7 @@ while {alive _uav} do {
 	_all_units = _uav nearEntities [["Man", "Car", "Tank", "Ship", "Air", "Motorcycle"], _detectionRange];
 	_filteredTargets = [];
 	{
-		if ([_uav, _x, 360] call _canSee) then {
+		if (_hasHyperSpectralSensors || ([_uav, _x, 360] call _canSee)) then {
 			_filteredTargets pushBack _x;
 		};
 	} forEach _all_units;
@@ -72,13 +86,15 @@ while {alive _uav} do {
         _marker setMarkerShape "ICON";
         _marker setMarkerType "mil_dot";
         _marker setMarkerColor _color;
-        _marker setMarkerText ([_type] call _getReadableName);
+		if (_showNames) then {
+        	_marker setMarkerText ([_type] call _getReadableName);
+		};
 
     } forEach _filteredTargets;
 
 	sleep _markerUpdateInterval;
 
-     
+	_elapsedTime = serverTime - _start;
 };
 
 

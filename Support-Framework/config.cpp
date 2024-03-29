@@ -30,6 +30,9 @@ class CfgFunctions {
             class setArtillery {
                 description = "Function to set the Artillery variables.";
             };
+            class setRecon {
+                description = "Function to set the Recon variables.";
+            };
         };
         class SupportFunctions {
             file = "\Support-Framework\Functions\supportFunctions";
@@ -38,6 +41,9 @@ class CfgFunctions {
             };
             class checkPulse {
                 description = "Function to reapply waypoint if vehicle gets lost";
+            };
+            class doRecon {
+                description = "Function to perform recon duties";
             };
             class findRendezvousPoint {
                 description = "Function to locate a meeting point";
@@ -58,16 +64,19 @@ class CfgFunctions {
                 description = "Function to get the Loiter actions";
             };
             class getNearestLocationParams {
-                description = "Function to get the CAS vehicle actions";
+                description = "Function to get the params for the function to get nearest location";
             };
             class getNearestLocationText {
-                description = "Function to get the CAS vehicle actions";
+                description = "Function to get the text of the nearest location";
             };
             class getPadsNearBase {
                 description = "Function to find pads in proximity to the base";
             };
             class getPadsNearTarget {
                 description = "Function to find pads close to a target location";
+            };
+            class getReconActions {
+                description = "Function to get the recon vehicle actions";
             };
             class getRedeployActions {
                 description = "Function to get the redeploy vehicle actions";
@@ -99,6 +108,9 @@ class CfgFunctions {
             class performingCAS {
                 description = "Function to manage or check Close Air Support operations";
             };
+            class performingRecon {
+                description = "Function to manage or check Recon operations";
+            };
             class posToGrid {
                 description = "Function to convert position to grid coordinates";
             };
@@ -113,6 +125,9 @@ class CfgFunctions {
             };
             class requestCas {
                 description = "Function to request close air support";
+            };
+            class requestRecon {
+                description = "Function to request recon support";
             };
             class requestReinsert {
                 description = "Function to begin redeploy procedures";
@@ -186,22 +201,22 @@ class CfgVehicles {
                 property = "SupportFramework_HomeBase_Module_RequiredItems";
                 displayName = "Required item to call in support(s)";
                 tooltip = "Comma-separated list of item classes required for redeploy. If empty, hgun_esd_01_F (spectrum device) will be used.";
-                typeName = "STRING"; // Value type
-                defaultValue = """hgun_esd_01_F"""; // Default value
+                typeName = "STRING"; 
+                defaultValue = """hgun_esd_01_F"""; 
             };
             class LzPrefixes: Edit {
                 property = "SupportFramework_HomeBase_Module_LzPrefixes";
                 displayName = "Prefixes for landing zone markers";
                 tooltip = "Comma-separated list of prefixes that are searched for viable landing zones. Case Insensitive.";
-                typeName = "STRING"; // Value type
-                defaultValue = """LZ, HLS"""; // Default value
+                typeName = "STRING"; 
+                defaultValue = """LZ, HLS"""; 
             };
             class LoiterPrefixes: Edit {
                 property = "SupportFramework_HomeBase_Module_LoiterPrefixes";
                 displayName = "Prefixes for loiter zone markers";
                 tooltip = "(Applies to CAS too) Comma-separated list of prefixes that the vehicle can be ordered to loiter at. Case Insensitive.";
-                typeName = "STRING"; // Value type
-                defaultValue = """Loiter, Hold"""; // Default value
+                typeName = "STRING"; 
+                defaultValue = """Loiter, Hold"""; 
             };
             class Hush: Checkbox {
                 property = "SupportFramework_HomeBase_Module_Hush";
@@ -246,15 +261,15 @@ class CfgVehicles {
                 property = "SupportFramework_CAS_Module_RequiredItems";
                 displayName = "Required item to call in support(s)";
                 tooltip = "Comma-separated list of item classes required for CAS support. If empty, hgun_esd_01_F (spectrum device) will be used.";
-                typeName = "STRING"; // Value type
-                defaultValue = """hgun_esd_01_F"""; // Default value
+                typeName = "STRING"; 
+                defaultValue = """hgun_esd_01_F"""; 
             };
             class CasPrefixes: Edit {
                 property = "SupportFramework_HomeBase_Module_CasPrefixes";
                 displayName = "Prefixes for CAS markers";
                 tooltip = "Comma-separated list of prefixes that are searched for CAS missions. Case Insensitive.";
-                typeName = "STRING"; // Value type
-                defaultValue = """Target, Firemission"""; // Default value
+                typeName = "STRING"; 
+                defaultValue = """Target, Firemission"""; 
             };
             class ModuleDescription: ModuleDescription{}; // Module description should be shown last
         };
@@ -272,7 +287,7 @@ class CfgVehicles {
                 "",
                 "Any markers placed that begin with the prefixes defined above, will be added to the list of available support locations. Capitilization is ignored. EX: a prefix of 'Firemission' will register 'firemission Hammer' as a valid location"
             };
-            sync[] = {"Helicopter"}; // only able to sync units and helicopters
+            sync[] = {"Helicopter"}; 
         };
     };
 
@@ -293,8 +308,8 @@ class CfgVehicles {
                 property = "SupportFramework_HomeBase_Module_BaseSide";
                 displayName = "Base's Side";
                 tooltip = "The choices are: west, east, guer, civ -- [BLUFOR, OPFOR, Independent and Civilian, respectively]. Default is west (blufor)";
-                typeName = "STRING"; // Value type
-                defaultValue = "west"; // Default value
+                typeName = "STRING"; 
+                defaultValue = "west"; 
                 // Listbox items
 				class Values
 				{
@@ -308,15 +323,15 @@ class CfgVehicles {
                 property = "SupportFramework_Artillery_Module_RequiredItems";
                 displayName = "Required item to call in support(s)";
                 tooltip = "Comma-separated list of item classes required for Artillery support. If empty, hgun_esd_01_F (spectrum device) will be used.";
-                typeName = "STRING"; // Value type
-                defaultValue = """hgun_esd_01_F"""; // Default value
+                typeName = "STRING"; 
+                defaultValue = """hgun_esd_01_F"""; 
             };
             class ArtilleryPrefixes: Edit {
                 property = "SupportFramework_HomeBase_Module_ArtilleryPrefixes";
                 displayName = "Prefixes for Artillery markers";
                 tooltip = "Comma-separated list of prefixes that are searched for Artillery missions. Case Insensitive.";
-                typeName = "STRING"; // Value type
-                defaultValue = """Target, Firemission"""; // Default value
+                typeName = "STRING"; 
+                defaultValue = """Target, Firemission"""; 
             };
             class ModuleDescription: ModuleDescription{}; // Module description should be shown last
         };
@@ -334,7 +349,90 @@ class CfgVehicles {
                 "",
                 "Any markers placed that begin with the prefixes defined above, will be added to the list of available support locations. Capitilization is ignored. EX: a prefix of 'Firemission' will register 'firemission Hammer' as a valid location"
             };
-            sync[] = {"Helicopter"}; // only able to sync units and helicopters
+            sync[] = {}; 
+        };
+    };
+
+    class SupportFramework_Recon_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Recon Module";
+        icon = "\Support-Framework\UI\recon.paa"
+        function = "SupportFramework_fnc_setRecon";
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};
+            class RequiredItems: Edit {
+                property = "SupportFramework_Recon_Module_RequiredItems";
+                displayName = "Required item to call in support(s)";
+                tooltip = "Comma-separated list of item classes required for Recon support. If empty, hgun_esd_01_F (spectrum device) will be used.";
+                typeName = "STRING"; 
+                defaultValue = """hgun_esd_01_F"""; 
+            };
+            class ReconPrefixes: Edit {
+                property = "SupportFramework_HomeBase_Module_ReconPrefixes";
+                displayName = "Prefixes for Recon markers";
+                tooltip = "Comma-separated list of prefixes that are searched for Recon missions. Case Insensitive.";
+                typeName = "STRING"; 
+                defaultValue = """Recon, RP, Watch"""; 
+            };
+            class TaskTime: Edit {
+                property = "SupportFramework_Recon_Module_TaskTime";
+                displayName = "Time for recon mission";
+                tooltip = "Time (in seconds) that the recon unit will loiter in the area. Default is 300 seconds (5 minutes)";
+                typeName = "NUMBER"; 
+                defaultValue = "300"; 
+            };
+            class Interval: Edit {
+                property = "SupportFramework_Recon_Module_Interval";
+                displayName = "Time in between each scan";
+                tooltip = "Time (in seconds) between each scan. If hyperspectral sensors are not enabled, then setting something really low like 0 it might take a performance hit!";
+                typeName = "NUMBER"; 
+                defaultValue = "5"; 
+            };
+            class ShowNames: Checkbox {
+                property = "SupportFramework_Recon_Module_ShowNames";
+                displayName = "Show names on markers";
+                tooltip = "By default, the markers that the recon mission generates will contain the description of the unit marked (e.g: 'Team Lead', 'Medic', 'Offroad (HMG)', etc) ... disable this to only use dots and no description";
+                typeName = "BOOLEAN";
+                defaultValue = "true"; 
+            };
+            // class HasSat: Checkbox {
+            //     property = "SupportFramework_Recon_Module_HasSat";
+            //     displayName = "Include satellite support";
+            //     tooltip = "Enabling this will add a satellite option to the list of actions, this can be considered an immediate recon solution at the mission area.";
+            //     typeName = "BOOLEAN";
+            //     defaultValue = "false"; 
+            // };
+            class HasHyperSpectralSensors: Checkbox {
+                property = "SupportFramework_Recon_Module_HasHyperSpectralSensors";
+                displayName = "Use hyperspectral sensors";
+                tooltip = "Enabling this will allow recon units to use the latest and greatest in hyperspectral sensors. (This basically gives units omniscience, i.e: seeing though walls)";
+                typeName = "BOOLEAN";
+                defaultValue = "false"; 
+            };
+            
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Home Base Module TO FUNCTION!",
+                "",
+                "[Experimental module, use at your own risk]",
+                "",
+                "Place this module to set up the ability to use Recon",
+                "",
+                "Location of module is meaningless.",
+                "",
+                "Any synced units will be automatically registered as Recon at the start of the mission. No need to sync to the Home Base Module (or any other module)",
+                "",
+                "Any markers placed that begin with the prefixes defined above, will be added to the list of available support locations. Capitilization is ignored. EX: a prefix of 'Recon' will register 'recon Hammer' as a valid location"
+            };
+            sync[] = {};
         };
     };
 };

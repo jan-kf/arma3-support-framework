@@ -41,6 +41,7 @@ while {true} do {
 	// Iterate through each vehicle
 	{
 		private _vehicle = _x;
+		private _isAlive = alive _vehicle;
 		
 		private _checkHeli = _vehicle getVariable "isHeli";
 		if (_vehicle isKindOf "Helicopter" && isNil "_checkHeli") then {
@@ -48,7 +49,7 @@ while {true} do {
 		};
 		private _vicIsRegistered = _vehicle getVariable ["isRegistered", false];
 		private _watchdog = _vehicle getVariable ["watchdog", false];
-		if (_vicIsRegistered && [_watchdog] call _safeIsNull) then {
+		if (_isAlive && _vicIsRegistered && [_watchdog] call _safeIsNull) then {
 			// check if watchdog is running, if not, start it
 			// [format ["kicking off wd for: %1 ... ", _vehicle]] remoteExec ["systemChat"];
 

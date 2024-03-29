@@ -4,7 +4,7 @@ private _actions = [];
 private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 {
 	private _vehicle = _x;
-	if (!(_vehicle getVariable ["isArtillery", false]) && !(_vehicle getVariable ["isCAS", false])) then {
+	if (!(_vehicle getVariable ["isArtillery", false]) && !(_vehicle getVariable ["isCAS", false]) && !(_vehicle getVariable ["isRecon", false])) then {
 		private _vehicleClass = typeOf _vehicle;
 		private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
 		private _color = "#FFFFFF";
@@ -58,7 +58,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 				params ["_target", "_caller", "_vic"];
 				// Condition code here
 				private _registered = _vic getVariable ["isRegistered", false];
-				_registered
+				_registered && alive _vic
 			},
 			{ // 5: Insert children code <CODE> (Optional)
 				params ["_target", "_caller", "_params"];

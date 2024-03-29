@@ -4,7 +4,7 @@ private _actions = [];
 private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 {
 	private _vehicle = _x;
-	if (!(_vehicle getVariable ["isArtillery", false]) && _vehicle getVariable ["isCAS", false]) then {
+	if (!(_vehicle getVariable ["isArtillery", false]) && _vehicle getVariable ["isRecon", false]) then {
 		private _vehicleClass = typeOf _vehicle;
 		private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
 		private _color = "#FFFFFF";
@@ -28,15 +28,15 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 				private _task = _vic getVariable ["currentTask", "waiting"];
 				if (_task == "waiting") then {
 					
-					private _casPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_CAS_CONFIG") getVariable ["CasPrefixes", ""];
-					private _casPrefixes = [];
-					if (_casPrefixStr != "") then {
-						_casPrefixes = _casPrefixStr splitString ", ";
+					private _reconPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["ReconPrefixes", ""];
+					private _reconPrefixes = [];
+					if (_reconPrefixStr != "") then {
+						_reconPrefixes = _reconPrefixStr splitString ", ";
 					} else {
-						_casPrefixes = ["target ", "firemission "]; // default value -- hard fallback
+						_reconPrefixes = ["recon ", "rp ", "watch "]; // default value -- hard fallback
 					};
 
-					hint format["%1 is awaiting orders, searching for markers prefixed with %2...", groupId group _vic, _casPrefixes];
+					hint format["%1 is awaiting orders, searching for markers prefixed with %2...", groupId group _vic, _reconPrefixes];
 
 				} else {
 					// Display the vic's current task
@@ -47,7 +47,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 				params ["_target", "_caller", "_vic"];
 				// Condition code here
 				private _registered = _vic getVariable ["isRegistered", false];
-				_registered
+				_registered && alive _vic
 			},
 			{ // 5: Insert children code <CODE> (Optional)
 				params ["_target", "_caller", "_params"];
@@ -66,7 +66,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
 						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
-							hint "Waving off CAS...";
+							hint "Waving off RECON...";
 						};
 						[_vic] remoteExec ["SupportFramework_fnc_waveOff", 2];
 					}, 
@@ -95,7 +95,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						private _groupLeaderCallsign = groupId _groupLeaderGroup;
 						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call SupportFramework_fnc_sideChatter;
 						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
-							hint "CAS returning to base...";
+							hint "RECON returning to base...";
 						}
 					}, 
 					{
@@ -110,13 +110,13 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 					_vehicle // 6: Action parameters <ANY> (Optional)
 				] call ace_interact_menu_fnc_createAction;
 
-				// CAS search details
-				private _casPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_CAS_CONFIG") getVariable ["CasPrefixes", ""];
-				private _casPrefixes = [];
-				if (_casPrefixStr != "") then {
-					_casPrefixes = _casPrefixStr splitString ", ";
+				// RECON search details
+				private _reconPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["ReconPrefixes", ""];
+				private _reconPrefixes = [];
+				if (_reconPrefixStr != "") then {
+					_reconPrefixes = _reconPrefixStr splitString ", ";
 				} else {
-					_casPrefixes = ["target ", "firemission "]; // default value -- hard fallback
+					_reconPrefixes = ["recon ", "rp ", "watch "]; // default value -- hard fallback
 				};
 
 				private _loiterActions = [_vehicle, _target] call SupportFramework_fnc_getLoiterActions;
@@ -134,40 +134,40 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						private _prefix = toLower _x;
 						if (_displayName find _prefix == 0) then {
 							private _vicRequestToLZAction = [
-								format["%1-casTo-%2", netId _vehicle, _marker], format["<t color='%1'>Request Firemission at %2</t>", _color, _markerName], "",
+								format["%1-reconTo-%2", netId _vehicle, _marker], format["<t color='%1'>Request Recon at %2</t>", _color, _markerName], "",
 								{
 									// statement 
 									params ["_target", "_caller", "_args"];
 									private _vic = _args select 0;
 									private _marker = _args select 1;
 									_vic setVariable ["targetGroupLeader", _caller, true];
-									_vic setVariable ["currentTask", "requestCas", true];
+									_vic setVariable ["currentTask", "requestRecon", true];
 									_vic setVariable ["fullRun", false, true];
 									if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
-										hint "Calling in CAS...";
+										hint "Calling in RECON...";
 									};
-									[_vic, getMarkerPos _marker] remoteExec ["SupportFramework_fnc_requestCas", 2];
+									[_vic, getMarkerPos _marker] remoteExec ["SupportFramework_fnc_requestRecon", 2];
 								}, 
 								{
 									params ["_target", "_caller", "_args"];
 									private _vic = _args select 0;
 									private _marker = _args select 1;
 									// // Condition code here
-									private _casConfig = missionNamespace getVariable ["YOSHI_SUPPORT_CAS_CONFIG", nil];
-									private _CasConfigured = !(isNil "_casConfig");
-									private _isCAS = _target getVariable ["isCAS", false];
+									private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
+									private _ReconConfigured = !(isNil "_reconConfig");
+									private _isRecon = _target getVariable ["isRecon", false];
 									private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 									private _task = _vic getVariable ["currentTask", "waiting"];
 									private _notOnRestrictedTask = !(_task in ["landingAtObjective","landingAtBase", "requestBaseLZ", "requestReinsert"]);
 									private _notAtLZ = (_vic distance2D getMarkerPos _marker) > 100;
-									_CasConfigured && alive _vic && _isCAS && _notReinserting && _notOnRestrictedTask && _notAtLZ
+									_ReconConfigured && _isRecon && _notReinserting && _notOnRestrictedTask && _notAtLZ
 								},
 								{}, // 5: Insert children code <CODE> (Optional)
 								[_vehicle, _marker] // 6: Action parameters <ANY> (Optional)
 							] call ace_interact_menu_fnc_createAction;
 							_actions pushBack [_vicRequestToLZAction, [], _target];
 						};
-					} forEach _casPrefixes;
+					} forEach _reconPrefixes;
 
 				} forEach allMapMarkers;
 

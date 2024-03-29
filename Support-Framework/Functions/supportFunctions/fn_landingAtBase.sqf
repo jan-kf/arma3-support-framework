@@ -1,5 +1,6 @@
 params ["_vic"];
 // vic is performing it's landing procedures at the base
+_vic setCaptive false; // catch for certain situations where I needed the vic to be incognito
 
 if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 	// always release parking request 

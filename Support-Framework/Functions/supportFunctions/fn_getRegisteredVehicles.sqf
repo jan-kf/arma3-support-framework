@@ -4,7 +4,7 @@ private _registeredVehicles = [];
 // Iterate over all vehicles
 {
     // Check if the vehicle is registered
-    if (_x getVariable ["isRegistered", false]) then {
+    if (alive _x && _x getVariable ["isRegistered", false]) then {
         // Add the registered vehicle to the array
         _registeredVehicles pushBack _x;
     };

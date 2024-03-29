@@ -129,6 +129,43 @@ private _casActions = [
 	}
 ] call ace_interact_menu_fnc_createAction;
 
+private _reconActions = [
+	"ReconActions", "Recon Support", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		true
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Condition code here
+		// Retrieve the custom argument value
+		private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
+		private _ReconConfigured = !(isNil "_reconConfig");
+
+		if (_ReconConfigured) then {
+			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["RequiredItems", ""];
+			private _requiredItems = [];
+			if (_requiredItemsStr != "") then {
+				_requiredItems = _requiredItemsStr splitString ", ";
+			} else {
+				_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
+			};
+			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
+
+			_hasItem
+		} else {
+			false
+		};
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		private _actions = [_target, _caller, _params] call SupportFramework_fnc_getReconActions;
+		_actions 
+
+	}
+] call ace_interact_menu_fnc_createAction;
+
 private _artilleryActions = [
 	"ArtilleryActions", "Artillery", "",
 	{
@@ -183,6 +220,7 @@ private _artilleryActions = [
 [player, 1, ["ACE_SelfActions"], _redeploymentActions] call ace_interact_menu_fnc_addActionToObject;
 [player, 1, ["ACE_SelfActions"], _casActions] call ace_interact_menu_fnc_addActionToObject;
 [player, 1, ["ACE_SelfActions"], _artilleryActions] call ace_interact_menu_fnc_addActionToObject;
+[player, 1, ["ACE_SelfActions"], _reconActions] call ace_interact_menu_fnc_addActionToObject;
 
 
 private _heliActions = [
