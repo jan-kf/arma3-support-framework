@@ -1,4 +1,7 @@
 params ["_vic"];
+
+[_vic] call SupportFramework_fnc_checkPulse;
+
 // vic is performing close air support at the location
 private _start = _vic getVariable "taskStartTime";
 private _elapsedTime = serverTime - _start;

@@ -42,6 +42,9 @@ class CfgFunctions {
             class checkPulse {
                 description = "Function to reapply waypoint if vehicle gets lost";
             };
+            class doFieldRecon {
+                description = "Function to perform ad-Hoc recon duties";
+            };
             class doRecon {
                 description = "Function to perform recon duties";
             };
@@ -125,6 +128,9 @@ class CfgFunctions {
             };
             class requestCas {
                 description = "Function to request close air support";
+            };
+            class requestFieldRecon {
+                description = "Function to request field recon support";
             };
             class requestRecon {
                 description = "Function to request recon support";
