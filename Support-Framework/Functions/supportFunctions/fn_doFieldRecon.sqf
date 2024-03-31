@@ -1,20 +1,22 @@
 params ["_uav", "_location", "_caller"];
 
-if (!isServer) exitWith {};
-
 private _locationData = [_location] call SupportFramework_fnc_getLocation;
 private _locationName = _locationData select 0;
 private _locationPOS = _locationData select 1;
 
 _uav setVariable ["destination", _locationPOS, true];
-	
-private _currentPos = getPos _uav;
 
-// set waypoint
 private _grp = group _uav;
+for "_i" from (count waypoints _grp - 1) to 0 step -1 do
+{
+	deleteWaypoint [_grp, _i];
+};
+
 private _base_wp = _grp addWaypoint [_locationPOS, 0];
 _base_wp setWaypointType "LOITER";
 _grp setCurrentWaypoint _base_wp;
+
+
 _uav setVariable ["taskStartTime", serverTime, true];
 
 private _start = _uav getVariable "taskStartTime";
@@ -26,6 +28,7 @@ private _timeLimit = 300;
 if (_ReconConfigured) then {
 	_timeLimit = _reconConfig getVariable ["TaskTime", 300];
 };
+private _markerUpdateInterval = _reconConfig getVariable ["Interval", 5]; 
 
 private _safeIsNull = {
 	params ["_var"];
@@ -39,9 +42,9 @@ private _safeIsNull = {
 
 private _reconTask = _uav getVariable ["reconTask", false];
 
-_uav setCaptive true;
+[_uav, true] remoteExec ["setCaptive", 0];
 
-while {(_elapsedTime < _timeLimit)} do { 
+while {(alive _uav) && (_elapsedTime < (_timeLimit + (_markerUpdateInterval * 2)))} do { 
 
 	[_uav, "LOITER"] call SupportFramework_fnc_checkPulse;
 
@@ -60,17 +63,12 @@ while {(_elapsedTime < _timeLimit)} do {
 	_elapsedTime = serverTime - _start;
 };
 
-// set behavior to ignore enemies when flying away
-{
-	_x disableAI "all";
-	_x enableAI "ANIM";
-	_x enableAI "MOVE";
-	_x enableAI "PATH";
-} forEach (units _grp);
-_grp setCombatMode "BLUE";
-_grp setBehaviourStrong "SAFE";
-
 private _lz = getPos _caller;
+
+for "_i" from (count waypoints _grp - 1) to 0 step -1 do
+{
+	deleteWaypoint [_grp, _i];
+};
 
 _uav setVariable ["destination", _lz, true];
 private _return_wp = _grp addWaypoint [_lz, 0];
@@ -81,14 +79,21 @@ terminate _reconTask;
 
 "Drone has completed recon, returning to you" remoteExec ["hint", _caller];
 
-while {(_uav distance2D _caller > 50) && !(unitReady _uav)} do {
+while {(_uav distance2D _caller > 50) || !(unitReady _uav)} do {
 	[_uav] call SupportFramework_fnc_checkPulse;
 };
 
-_uav setCaptive false;
+[_uav, false] remoteExec ["setCaptive", 0];
 
 createVehicle ["Land_HelipadEmpty_F", getPos _caller, [], 0];
 
-sleep 1;
-// set task to land at objective
+sleep 3;
+
 _uav land "LAND";
+
+
+while {!(isTouchingGround _uav) || ((speed _uav) > 1)} do {
+	sleep 5;
+	[_uav, "LAND"] remoteExec ["land"];
+};
+

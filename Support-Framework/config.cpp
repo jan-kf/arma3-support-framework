@@ -96,6 +96,9 @@ class CfgFunctions {
             class isAtBase {
                 description = "Function to determine if at base location";
             };
+            class isZeus {
+                description = "Function to determine if player is Zeus";
+            };
             class landingAtBase {
                 description = "Function to manage landing procedures at base";
             };

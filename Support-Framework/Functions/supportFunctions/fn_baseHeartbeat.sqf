@@ -25,68 +25,6 @@ private _isArtilleryCapable = {
 };
 
 
-private _uavAction = [
-	"UAV_field_task", // Action ID
-	"Field Actions", // Title
-	"", // Icon (leave blank for no icon or specify a path)
-	{}, // Code executed when the action is used
-	{ true }, // Condition for the action to be available
-	{
-		params ["_vic", "_caller", "_params"];
-		// RECON search details
-		private _actions = [];
-
-		private _reconPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["ReconPrefixes", ""];
-		private _reconPrefixes = [];
-		if (_reconPrefixStr != "") then {
-			_reconPrefixes = _reconPrefixStr splitString ", ";
-		} else {
-			_reconPrefixes = ["recon ", "rp ", "watch "]; // default value -- hard fallback
-		};
-
-		{ // add all valid markers as valid locations
-			
-			// marker details
-			private _marker = _x;
-			private _markerName = markerText _marker;
-			private _displayName = toLower _markerName;
-			
-			{
-				private _prefix = toLower _x;
-				if (_displayName find _prefix == 0) then {
-					private _uavFieldAction = [
-						format["reconTo-%2", _marker], format["Request Recon at %1", _markerName], "",
-						{
-							// statement 
-							params ["_target", "_caller", "_args"];
-							private _vic = _args select 0;
-							private _marker = _args select 1;
-
-							[_vic, getMarkerPos _marker, _caller] remoteExec ["SupportFramework_fnc_requestFieldRecon", 2];
-						}, 
-						{
-							params ["_target", "_caller", "_args"];
-							private _vic = _args select 0;
-							// // Condition code here
-							private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
-							private _ReconConfigured = !(isNil "_reconConfig");
-							private _isUAV = unitIsUAV _vic;
-							_ReconConfigured && _isUAV
-						},
-						{}, // 5: Insert children code <CODE> (Optional)
-						[_vic, _marker] // 6: Action parameters <ANY> (Optional)
-					] call ace_interact_menu_fnc_createAction;
-					_actions pushBack [_uavFieldAction, [], _vic];
-				};
-			} forEach _reconPrefixes;
-
-		} forEach allMapMarkers;		
-			
-		_actions
-	}
-] call ace_interact_menu_fnc_createAction;
-
-
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
 while {true} do {
 	
@@ -175,16 +113,6 @@ while {true} do {
 
 		} forEach (vehicles select {(toLower str(side _x)) isEqualTo _baseSide});
 	};
-
-
-	
-	{
-		private _uav = _x;
-		if (!(_uav getVariable ["hasFieldActions", false])) then {
-			[_uav, 0, ["ACE_MainActions"], _uavAction] call ace_interact_menu_fnc_addActionToObject;
-			_uav setVariable ["hasFieldActions", true, true];
-		}
-	} forEach allUnitsUAV;
 	
     sleep 3; 
 };

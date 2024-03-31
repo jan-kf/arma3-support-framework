@@ -1,7 +1,5 @@
 params ["_uav"];
 
-if (!isServer) exitWith {};
-
 private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
 private _ReconConfigured = !(isNil "_reconConfig");
 private _timeLimit = 300;
@@ -12,7 +10,6 @@ if (_ReconConfigured) then {
 private _detectionRange = 1000; 
 private _markerUpdateInterval = _reconConfig getVariable ["Interval", 5]; 
 private _markers = []; 
-
 
 private _showNames = _reconConfig getVariable ["ShowNames", true]; 
 private _hasHyperSpectralSensors = _reconConfig getVariable ["HasHyperSpectralSensors", false]; 
@@ -42,10 +39,12 @@ private _canSee = {
 	};
 };
 
+_uav setVariable ["taskStartTime", serverTime, true];
+
 private _start = _uav getVariable "taskStartTime";
 private _elapsedTime = serverTime - _start;
 
-while {(alive _uav) && _elapsedTime < _timeLimit} do {
+while {(alive _uav) && (_elapsedTime < _timeLimit)} do {
 	_cwp = currentWaypoint _group;
 	_wpp = waypointPosition [_group, _cwp];
 
@@ -80,15 +79,13 @@ while {(alive _uav) && _elapsedTime < _timeLimit} do {
 		if (_side == resistance) then {_color = "ColorGUER"}; 
 		if (_side == civilian) then {_color = "ColorCIV"};
 		
-
-
-        _marker = createMarker [_markerName, _target, 1, _uav];
-        _marker setMarkerShape "ICON";
-        _marker setMarkerType "mil_dot";
-        _marker setMarkerColor _color;
+        _marker = createMarkerLocal [_markerName, _target];
+        _marker setMarkerShapeLocal "ICON";
+        _marker setMarkerTypeLocal "mil_dot";
 		if (_showNames) then {
-        	_marker setMarkerText ([_type] call _getReadableName);
+        	_marker setMarkerTextLocal ([_type] call _getReadableName);
 		};
+        _marker setMarkerColor _color;
 
     } forEach _filteredTargets;
 
@@ -96,7 +93,6 @@ while {(alive _uav) && _elapsedTime < _timeLimit} do {
 
 	_elapsedTime = serverTime - _start;
 };
-
 
 {
     deleteMarker _x;

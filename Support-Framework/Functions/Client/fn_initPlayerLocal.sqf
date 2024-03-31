@@ -72,6 +72,9 @@ private _redeploymentActions = [
 		private _homeBaseConfigured = !(isNil "_homeBase");
 
 		if (_homeBaseConfigured) then {
+			
+			private _isZeus = [_caller] call SupportFramework_fnc_isZeus;
+
 			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
@@ -81,7 +84,7 @@ private _redeploymentActions = [
 			};
 			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
 			
-		 	_hasItem
+		 	_hasItem || _isZeus
 		} else {
 			false
 		};
@@ -107,6 +110,9 @@ private _casActions = [
 		private _CasConfigured = !(isNil "_casConfig");
 
 		if (_CasConfigured) then {
+
+			private _isZeus = [_caller] call SupportFramework_fnc_isZeus;
+
 			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_CAS_CONFIG") getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
@@ -116,7 +122,7 @@ private _casActions = [
 			};
 			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
 
-			_hasItem
+			_hasItem || _isZeus
 		} else {
 			false
 		};
@@ -144,6 +150,9 @@ private _reconActions = [
 		private _ReconConfigured = !(isNil "_reconConfig");
 
 		if (_ReconConfigured) then {
+
+			private _isZeus = [_caller] call SupportFramework_fnc_isZeus;
+
 			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
@@ -153,7 +162,7 @@ private _reconActions = [
 			};
 			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
 
-			_hasItem
+			_hasItem || _isZeus
 		} else {
 			false
 		};
@@ -192,6 +201,8 @@ private _artilleryActions = [
 
 		if (_artyConfigured) then {
 
+			private _isZeus = [_caller] call SupportFramework_fnc_isZeus;
+
 			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
@@ -202,7 +213,7 @@ private _artilleryActions = [
 
 			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
 			
-			_hasItem
+			_hasItem || _isZeus
 
 		} else {
 			false
@@ -222,6 +233,77 @@ private _artilleryActions = [
 [player, 1, ["ACE_SelfActions"], _artilleryActions] call ace_interact_menu_fnc_addActionToObject;
 [player, 1, ["ACE_SelfActions"], _reconActions] call ace_interact_menu_fnc_addActionToObject;
 
+[["ACE_ZeusActions"], _redeploymentActions] call ace_interact_menu_fnc_addActionToZeus;
+[["ACE_ZeusActions"], _casActions] call ace_interact_menu_fnc_addActionToZeus;
+[["ACE_ZeusActions"], _artilleryActions] call ace_interact_menu_fnc_addActionToZeus;
+[["ACE_ZeusActions"], _reconActions] call ace_interact_menu_fnc_addActionToZeus;
+
+private _uavAction = [
+	"UAV_field_task", // Action ID
+	"Field Actions", // Title
+	"", // Icon (leave blank for no icon or specify a path)
+	{}, // Code executed when the action is used
+	{ // Condition for the action to be available
+		params ["_vic", "_caller", "_params"];
+
+		unitIsUAV _vic
+	}, 
+	{
+		params ["_vic", "_caller", "_params"];
+		// RECON search details
+		private _actions = [];
+
+		private _reconPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["ReconPrefixes", ""];
+		private _reconPrefixes = [];
+		if (_reconPrefixStr != "") then {
+			_reconPrefixes = _reconPrefixStr splitString ", ";
+		} else {
+			_reconPrefixes = ["recon ", "rp ", "watch "]; // default value -- hard fallback
+		};
+
+		{ // add all valid markers as valid locations
+			
+			// marker details
+			private _marker = _x;
+			private _markerName = markerText _marker;
+			private _displayName = toLower _markerName;
+			
+			{
+				private _prefix = toLower _x;
+				if (_displayName find _prefix == 0) then {
+					private _uavFieldAction = [
+						format["reconTo-%2", _marker], format["Request Recon at %1", _markerName], "",
+						{
+							// statement 
+							params ["_target", "_caller", "_args"];
+							private _vic = _args select 0;
+							private _marker = _args select 1;
+
+							[_vic, getMarkerPos _marker, _caller] remoteExec ["SupportFramework_fnc_requestFieldRecon", 2];
+						}, 
+						{
+							params ["_target", "_caller", "_args"];
+							private _vic = _args select 0;
+							// // Condition code here
+							private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
+							private _ReconConfigured = !(isNil "_reconConfig");
+							private _isUAV = unitIsUAV _vic;
+							_ReconConfigured && _isUAV
+						},
+						{}, // 5: Insert children code <CODE> (Optional)
+						[_vic, _marker] // 6: Action parameters <ANY> (Optional)
+					] call ace_interact_menu_fnc_createAction;
+					_actions pushBack [_uavFieldAction, [], _vic];
+				};
+			} forEach _reconPrefixes;
+
+		} forEach allMapMarkers;		
+			
+		_actions
+	}
+] call ace_interact_menu_fnc_createAction;
+
+["AllVehicles", 0, ["ACE_MainActions"], _uavAction, true] call ace_interact_menu_fnc_addActionToClass;
 
 private _heliActions = [
 	"HelicopterActions", "Support Actions", "",
