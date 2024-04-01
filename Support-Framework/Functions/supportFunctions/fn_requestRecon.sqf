@@ -1,7 +1,7 @@
 params ["_vic", "_location"];
 // vic was told to begin it's cas mission, perform startup
 
-private _locationData = [_location] call SupportFramework_fnc_getLocation;
+private _locationData = [_location, false] call SupportFramework_fnc_getLocation;
 private _locationName = _locationData select 0;
 private _locationPOS = _locationData select 1;
 

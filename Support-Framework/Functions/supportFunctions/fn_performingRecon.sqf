@@ -1,8 +1,5 @@
 params ["_vic"];
 
-[_vic, "LOITER"] call SupportFramework_fnc_checkPulse;
-
-
 // vic is performing close air support at the location
 private _start = _vic getVariable "taskStartTime";
 private _elapsedTime = serverTime - _start;
@@ -53,6 +50,8 @@ if (_elapsedTime > _timeLimit) then {
 	_vic setVariable ["currentTask", "requestBaseLZ", true];
 
 	terminate _reconTask;
+} else {
+	[_vic, "LOITER"] call SupportFramework_fnc_checkPulse;
 };
 
 // should listen if it gets an early wave-off, 

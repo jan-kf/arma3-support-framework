@@ -1,7 +1,5 @@
 params ["_vic"];
 
-[_vic] call SupportFramework_fnc_checkPulse;
-
 // vic is performing close air support at the location
 private _start = _vic getVariable "taskStartTime";
 private _elapsedTime = serverTime - _start;
@@ -22,6 +20,8 @@ if (_elapsedTime > 210) then { // 3 minutes, 30 seconds
 	[driver _vic, format ["Attack complete, returning to base."]] call SupportFramework_fnc_sideChatter;
 	// requestLZ at base, and RTB
 	_vic setVariable ["currentTask", "requestBaseLZ", true];
+} else {
+	[_vic] call SupportFramework_fnc_checkPulse;
 };
 
 // should listen if it gets an early wave-off, 

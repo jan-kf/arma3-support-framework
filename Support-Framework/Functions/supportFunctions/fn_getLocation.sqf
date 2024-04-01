@@ -1,4 +1,4 @@
-params ["_location"];
+params ["_location", ["_makeLZ", true]];
 private _locationName = "";
 private _pos = [0,0,0];
 
@@ -18,10 +18,12 @@ if (typeName _location == "OBJECT") then {
     _locationName = [_pos] call SupportFramework_fnc_getNearestLocationText;
 };
 
-private _landingPadsNearby = nearestObjects [_pos, ["Land_HelipadEmpty_F"], 10];
-if (count _landingPadsNearby == 0) then {
-    // No landing pad nearby, spawn one
-    private _landingPad = createVehicle ["Land_HelipadEmpty_F", _pos, [], 0, "CAN_COLLIDE"];
+if (_makeLZ) then {
+    private _landingPadsNearby = nearestObjects [_pos, ["Land_HelipadEmpty_F"], 10];
+    if (count _landingPadsNearby == 0) then {
+        // No landing pad nearby, spawn one
+        private _landingPad = createVehicle ["Land_HelipadEmpty_F", _pos, [], 0, "CAN_COLLIDE"];
+    };
 };
 
 // Return the results

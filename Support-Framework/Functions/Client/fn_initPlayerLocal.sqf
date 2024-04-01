@@ -72,9 +72,6 @@ private _redeploymentActions = [
 		private _homeBaseConfigured = !(isNil "_homeBase");
 
 		if (_homeBaseConfigured) then {
-			
-			private _isZeus = [_caller] call SupportFramework_fnc_isZeus;
-
 			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
@@ -84,7 +81,7 @@ private _redeploymentActions = [
 			};
 			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
 			
-		 	_hasItem || _isZeus
+		 	_hasItem
 		} else {
 			false
 		};
@@ -111,8 +108,6 @@ private _casActions = [
 
 		if (_CasConfigured) then {
 
-			private _isZeus = [_caller] call SupportFramework_fnc_isZeus;
-
 			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_CAS_CONFIG") getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
@@ -122,7 +117,7 @@ private _casActions = [
 			};
 			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
 
-			_hasItem || _isZeus
+			_hasItem 
 		} else {
 			false
 		};
@@ -151,8 +146,6 @@ private _reconActions = [
 
 		if (_ReconConfigured) then {
 
-			private _isZeus = [_caller] call SupportFramework_fnc_isZeus;
-
 			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
@@ -162,7 +155,7 @@ private _reconActions = [
 			};
 			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
 
-			_hasItem || _isZeus
+			_hasItem
 		} else {
 			false
 		};
@@ -200,9 +193,6 @@ private _artilleryActions = [
 		private _artyConfigured = !(isNil "_artyConfig");
 
 		if (_artyConfigured) then {
-
-			private _isZeus = [_caller] call SupportFramework_fnc_isZeus;
-
 			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
@@ -213,7 +203,7 @@ private _artilleryActions = [
 
 			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
 			
-			_hasItem || _isZeus
+			_hasItem
 
 		} else {
 			false
@@ -233,10 +223,92 @@ private _artilleryActions = [
 [player, 1, ["ACE_SelfActions"], _artilleryActions] call ace_interact_menu_fnc_addActionToObject;
 [player, 1, ["ACE_SelfActions"], _reconActions] call ace_interact_menu_fnc_addActionToObject;
 
-[["ACE_ZeusActions"], _redeploymentActions] call ace_interact_menu_fnc_addActionToZeus;
-[["ACE_ZeusActions"], _casActions] call ace_interact_menu_fnc_addActionToZeus;
-[["ACE_ZeusActions"], _artilleryActions] call ace_interact_menu_fnc_addActionToZeus;
-[["ACE_ZeusActions"], _reconActions] call ace_interact_menu_fnc_addActionToZeus;
+private _redeploymentActionsZeus = [
+	"RedeploymentActions", "Redeployment", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		true
+	}, 
+	{
+		true
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		[_target, _caller, _params] call SupportFramework_fnc_getRedeployActions;
+	}
+] call ace_interact_menu_fnc_createAction;
+
+private _casActionsZeus = [
+	"CasActions", "CAS Support", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		true
+	}, 
+	{
+		true
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		private _actions = [_target, _caller, _params] call SupportFramework_fnc_getCasActions;
+		_actions 
+
+	}
+] call ace_interact_menu_fnc_createAction;
+
+private _reconActionsZeus = [
+	"ReconActions", "Recon Support", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		true
+	}, 
+	{
+		true
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		private _actions = [_target, _caller, _params] call SupportFramework_fnc_getReconActions;
+		_actions 
+
+	}
+] call ace_interact_menu_fnc_createAction;
+
+private _artilleryActionsZeus = [
+	"ArtilleryActions", "Artillery", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		private _artyPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["ArtilleryPrefixes", ""];
+		private _artyPrefixes = [];
+		if (_artyPrefixStr != "") then {
+			_artyPrefixes = _artyPrefixStr splitString ", ";
+		} else {
+			_artyPrefixes = ["target ", "firemission "]; // default value -- hard fallback
+		};
+
+		hint format["Awaiting orders, searching for markers prefixed with %1...", _artyPrefixes];
+
+		true
+	}, 
+	{
+		true
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		[_target, _caller, _params] call SupportFramework_fnc_getArtyTargetActions;
+	},
+	"", // 7: Position (Position array, Position code or Selection Name) <ARRAY>, <CODE> or <STRING> (Optional)
+	4, // 8: Distance <NUMBER>
+	[false, false, false, true, false] // 9: Other parameters [showDisabled,enableInside,canCollapse,runOnHover,doNotCheckLOS] <ARRAY> (Optional)
+] call ace_interact_menu_fnc_createAction;
+
+
+[["ACE_ZeusActions"], _redeploymentActionsZeus] call ace_interact_menu_fnc_addActionToZeus;
+[["ACE_ZeusActions"], _casActionsZeus] call ace_interact_menu_fnc_addActionToZeus;
+[["ACE_ZeusActions"], _artilleryActionsZeus] call ace_interact_menu_fnc_addActionToZeus;
+[["ACE_ZeusActions"], _reconActionsZeus] call ace_interact_menu_fnc_addActionToZeus;
 
 private _uavAction = [
 	"UAV_field_task", // Action ID

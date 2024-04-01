@@ -9,7 +9,8 @@ private _groupLeader = _vic getVariable "targetGroupLeader";
 private _groupLeaderGroup = group _groupLeader;
 private _groupLeaderCallsign = groupId _groupLeaderGroup;
 
-_vic land "NONE"; // cancel landing 
+_vic land "NONE"; // cancel landing
+[_vic, "NONE"] remoteExec ["land"]; 
 
 private _vicGroup = group _vic;
 {

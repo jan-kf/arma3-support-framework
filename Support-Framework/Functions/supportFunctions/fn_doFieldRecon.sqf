@@ -1,6 +1,6 @@
 params ["_uav", "_location", "_caller"];
 
-private _locationData = [_location] call SupportFramework_fnc_getLocation;
+private _locationData = [_location, false] call SupportFramework_fnc_getLocation;
 private _locationName = _locationData select 0;
 private _locationPOS = _locationData select 1;
 
