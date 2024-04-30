@@ -4,6 +4,7 @@ params ["_vic", "_touchdownMessage"];
 if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 	_vic engineOn false;
 	[driver _vic, _touchdownMessage] call SupportFramework_fnc_sideChatter;
+	[_vic, _touchdownMessage] call SupportFramework_fnc_vehicleChatter;
 
 	// wait after touchdown
 	sleep 10;
@@ -12,7 +13,7 @@ if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 	if (_fullRun) then {
 		_vic setVariable ["currentTask", "requestBaseLZ", true];
 	} else {
-		[driver _vic, format ["%1 on standby, awaiting orders.", groupId group _vic]] call SupportFramework_fnc_sideChatter;
+		[_vic, format ["%1 on standby, awaiting orders.", groupId group _vic]] call SupportFramework_fnc_sideChatter;
 		_vic setVariable ["currentTask", "awaitOrders", true];
 	};
 };

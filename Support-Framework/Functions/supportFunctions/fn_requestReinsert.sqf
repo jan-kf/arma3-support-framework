@@ -120,6 +120,8 @@ if (!_isLoitering) then {
 		sleep 3;
 		[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] call SupportFramework_fnc_sideChatter;
 	};
+	sleep 1;
+	[_vic, format ["Tasking received, heading out to %1.", _gridRef]] call SupportFramework_fnc_vehicleChatter;
 } else {
 	private _gl_message = "%2, this is %1, proceed to %3, over";
 	[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _locationName]] call SupportFramework_fnc_sideChatter;

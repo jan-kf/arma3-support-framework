@@ -65,7 +65,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						// statement 
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
-						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
 							hint "Waving off CAS...";
 						};
 						[_vic] remoteExec ["SupportFramework_fnc_waveOff", 2];
@@ -94,7 +94,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						private _groupLeaderGroup = group _caller;
 						private _groupLeaderCallsign = groupId _groupLeaderGroup;
 						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call SupportFramework_fnc_sideChatter;
-						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
 							hint "CAS returning to base...";
 						}
 					}, 
@@ -143,7 +143,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 									_vic setVariable ["targetGroupLeader", _caller, true];
 									_vic setVariable ["currentTask", "requestCas", true];
 									_vic setVariable ["fullRun", false, true];
-									if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+									if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
 										hint "Calling in CAS...";
 									};
 									[_vic, getMarkerPos _marker] remoteExec ["SupportFramework_fnc_requestCas", 2];

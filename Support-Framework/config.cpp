@@ -144,6 +144,9 @@ class CfgFunctions {
             class sideChatter {
                 description = "Function to handle side channel communications";
             };
+            class vehicleChatter {
+                description = "Function to handle vehicle channel communications";
+            };
             class vehicleWatchdog {
                 description = "Function to monitor and manage vehicle status";
             };
@@ -224,10 +227,17 @@ class CfgVehicles {
                 typeName = "STRING"; 
                 defaultValue = """Loiter, Hold"""; 
             };
-            class Hush: Checkbox {
-                property = "SupportFramework_HomeBase_Module_Hush";
-                displayName = "Disable Radio Chatter";
-                tooltip = "By default, the mod will have radio chatter play in side chat that simulates actually calling in the supports, this allows you to disable all chats (will keep hints)";
+            class SideHush: Checkbox {
+                property = "SupportFramework_HomeBase_Module_SideHush";
+                displayName = "Disable Side Radio Chatter";
+                tooltip = "By default, the mod will have radio chatter play in side chat that simulates actually calling in the supports, this allows you to disable all side radio chats (will keep hints)";
+                typeName = "BOOLEAN";
+                defaultValue = "false"; 
+            };
+            class VicHush: Checkbox {
+                property = "SupportFramework_HomeBase_Module_VicHush";
+                displayName = "Disable Vehicle Radio Chatter";
+                tooltip = "By default, the mod will have radio chatter play in vehicle chat that simulates pilot/driver communicating with passengers/crew, this allows you to disable vehicle chats";
                 typeName = "BOOLEAN";
                 defaultValue = "false"; 
             };

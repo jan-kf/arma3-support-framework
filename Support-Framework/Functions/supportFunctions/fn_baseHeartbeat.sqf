@@ -47,6 +47,7 @@ while {true} do {
 		};
 		private _vicIsRegistered = _vehicle getVariable ["isRegistered", false];
 		private _watchdog = _vehicle getVariable ["watchdog", false];
+		private _getInIndex = _vehicle getVariable ["get_in_EH_index", false];
 		if (_isAlive && _vicIsRegistered && [_watchdog] call _safeIsNull) then {
 			// check if watchdog is running, if not, start it
 			// [format ["kicking off wd for: %1 ... ", _vehicle]] remoteExec ["systemChat"];
@@ -54,12 +55,37 @@ while {true} do {
 			_watchdog = [_vehicle] spawn SupportFramework_fnc_vehicleWatchdog;
 			sleep 2;
 			_vehicle setVariable ["watchdog", _watchdog, true];
+			if (_getInIndex isEqualTo false) then {
+				_getInIndex = _vehicle addEventHandler ["GetIn", {
+					params ["_vehicle", "_role", "_unit", "_turret"];
+					private _msgArray = [
+						"Hello %1, make yourself comfortable as we prepare for departure.",
+						"Greetings %1, your seat awaits you. Please buckle up as we get ready to move.",
+						"%1 has joined us. Welcome! Please ensure your belongings are securely stowed.",
+						"Good to have you with us, %1. We'll be on our way shortly.",
+						"Ah, %1! We've been expecting you. Please find a seat and relax.",
+						"Welcome %1! Sit back and enjoy the ride.",
+						"It's a pleasure to see you, %1. I hope you find your journey comfortable.",
+						"%1 is now on board. We can begin our journey together.",
+						"Attention everyone, %1 has just boarded. Let’s extend a warm welcome.",
+						"%1, welcome aboard! We trust you'll have a pleasant experience with us today."
+					];
+					private _hello = _msgArray select (floor (random (count _msgArray)));
+					private _msg = format [_hello, name _unit];
+					[_vehicle, _msg] call SupportFramework_fnc_vehicleChatter;
+				}];
+				_vehicle setVariable ["get_in_EH_index", _getInIndex, true];
+			};
 		};
 		if (!_vicIsRegistered && !isNil "_watchdog" && (_watchdog isNotEqualTo false)) then {
 			// if not registered, and a watchdog exists, kill it.
 			// [format ["terminating wd for: %1 ... ", _vehicle]] remoteExec ["systemChat"];
 			terminate _watchdog;
 			_vehicle setVariable ["watchdog", nil, true];
+			if (_getInIndex isNotEqualTo false) then {
+				_vehicle removeEventHandler ["GetIn", _getInIndex];
+				_vehicle setVariable ["get_in_EH_index", false, true];
+			};
 		};
 
 	} forEach _vehiclesNearBase;

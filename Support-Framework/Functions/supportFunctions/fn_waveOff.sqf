@@ -34,3 +34,4 @@ _vic setVariable ["currentTask", "requestBaseLZ", true];
 sleep 2;
 [driver _vic, format ["Roger that %1, Waving off, out.", _groupLeaderCallsign]] call SupportFramework_fnc_sideChatter;
 sleep 1;
+[_vic, "We are waving off."] call SupportFramework_fnc_vehicleChatter;

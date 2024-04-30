@@ -186,7 +186,7 @@ if (_isAlive) then {
 	];
 	private _farewell = _array2 select (floor (random (count _array2)));
 
-	private _shutIt = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false];
+	private _shutIt = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false];
 	if (!_shutIt) then {
 		[format[_farewell, groupId group _vic, 'systemChat']] remoteExec ['systemChat'];
 	}

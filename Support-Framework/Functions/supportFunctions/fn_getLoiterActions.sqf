@@ -33,7 +33,7 @@ if (_loiterPrefixStr != "") then {
 					_vic setVariable ["fullRun", false, true];
 					_vic setVariable ["destination", getMarkerPos _marker, true];
 					_vic setVariable ["isPerformingDuties", false, true];
-					if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["Hush", false]) then {
+					if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
 						hint "Moving to loiter point...";
 					} else {
 						private _groupLeaderGroup = group _caller;
@@ -45,6 +45,7 @@ if (_loiterPrefixStr != "") then {
 							[_vehicle, _response] call SupportFramework_fnc_sideChatter;
 						};
 					};
+					[_vic, format["Moving to hold at %1", markerText _marker]] call SupportFramework_fnc_vehicleChatter;
 					private _group = group _vic;
 					// delete waypoints 
 					for "_i" from (count waypoints _group - 1) to 0 step -1 do
