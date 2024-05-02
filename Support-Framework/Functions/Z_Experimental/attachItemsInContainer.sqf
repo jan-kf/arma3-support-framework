@@ -90,7 +90,19 @@ while {true} do {
 // private _array = [];
 // {_array pushBack [_x, ]} forEach _objectsNearby;
 // hint str(_array);
+((getPosASL _x) select 2) >= ((_center select 2) - (_height/2)) &&
+		((getPosASL _x) select 2) <= ((_center select 2) + (_height/2))
 
+
+private _orange = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
+    _orange enableSimulation false;
+	_orange setPosASL _center;
+	private _top = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
+    _top enableSimulation false;
+	_top setPosASL [_center select 0, _center select 1, (_center select 2) + (_heightDimension/2)];
+	private _bottom = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
+    _bottom enableSimulation false;
+	_bottom setPosASL [_center select 0, _center select 1, (_center select 2) - (_heightDimension/2)];
 
 // Function to compute dynamic area parameters based on object orientation
 getDynamicAreaParameters = {
@@ -127,18 +139,75 @@ getDynamicAreaParameters = {
             _b = _height / 2;
         }
     };
-	private _orange = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
-    _orange enableSimulation false;
-	_orange setPosASL _center;
-	private _top = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
-    _top enableSimulation false;
-	_top setPosASL [_center select 0, _center select 1, (_center select 2) + (_heightDimension/2)];
-	private _bottom = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
-    _bottom enableSimulation false;
-	_bottom setPosASL [_center select 0, _center select 1, (_center select 2) - (_heightDimension/2)];
+	
 
     [_center, _a, _b, _angle, _heightDimension]
 };
 
-private _areaParams = [_this] call getDynamicAreaParameters;
-hint format ["Center: %1, a (half-width): %2, b (half-length): %3, Angle: %4, Height: %5", _areaParams select 0, _areaParams select 1, _areaParams select 2, _areaParams select 3, _areaParams select 4];
+
+attachItemsToContainer = {
+	params ["_container"];
+
+	private _objectsNearby = nearestObjects [_container, [], 10];
+	private _areaParams = [_container] call getDynamicAreaParameters;
+
+	private _center =  _areaParams select 0;
+	private _a = _areaParams select 1;
+	private _b = _areaParams select 2;
+	private _angle = _areaParams select 3;
+	private _height = _areaParams select 4;
+
+
+	private _objectsToAttach = _objectsNearby select {
+		!(_x isKindOf "Man") && 
+		( getMass _x < 18000) && 
+		( getMass _x > 0) && 
+		(_x != _container) && 
+		((getPosATL _x) inArea [_center, _a, _b, _angle, true])
+		
+	};
+
+
+	{
+		private _isCar = _x isKindOf "Car";
+		if (!(_x in (attachedObjects _container)) && (isNull attachedTo _x) && (!_isCar || (_isCar && !(isEngineOn _x)))) then {
+
+			private _objectToAttach = _x; 
+			private _targetObject = _container; 
+			private _dirObjectToAttach = vectorDir _objectToAttach;
+			private _dirTargetObject = vectorDir _targetObject;
+			private _relativeDir = _dirObjectToAttach vectorDiff _dirTargetObject;
+			private _upObjectToAttach = vectorUp _objectToAttach;
+			private _upTargetObject = vectorUp _targetObject;
+			private _relativeUp = _upObjectToAttach vectorDiff _upTargetObject;
+			_objectToAttach attachTo [_targetObject];
+			_objectToAttach setVectorDirAndUp [_dirObjectToAttach, _upObjectToAttach];
+		};
+		if (_isCar && (isEngineOn _x)) then {
+			detach _x;
+		}
+	} forEach _objectsToAttach;
+
+	{
+		if (!(_x in _objectsToAttach)) then {
+			detach _x;
+		}
+	} forEach (attachedObjects _container);
+
+	hint format["%1 | height: %3 | %2 | %4 - %5 | %6", time, (attachedObjects _container), _height, ((_center select 2) - (_height/2)), ((_center select 2) + (_height/2)), _center];
+};
+
+_this call attachItemsToContainer;
+[_this, 0] call ace_cargo_fnc_setSpace;
+
+// private _areaParams = [_this] call getDynamicAreaParameters;
+// hint format ["Center: %1, a (half-width): %2, b (half-length): %3, Angle: %4, Height: %5", _areaParams select 0, _areaParams select 1, _areaParams select 2, _areaParams select 3, _areaParams select 4];
+
+
+// private _objectToAttach = _x; 
+// private _targetObject = _container; 
+// private _dirObjectToAttach = getDir _objectToAttach;
+// private _dirTargetObject = getDir _targetObject;
+// private _relativeDir = _dirObjectToAttach - _dirTargetObject;
+// _objectToAttach attachTo [_targetObject];
+// _objectToAttach setDir ( _dirObjectToAttach - _dirTargetObject);

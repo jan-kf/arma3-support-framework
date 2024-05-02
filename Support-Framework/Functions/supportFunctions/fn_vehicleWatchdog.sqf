@@ -155,7 +155,6 @@ if (_isAlive) then {
 	private _array = [
 		"And so, this is where my story ends, but yours... yours is just beginning.",
 		"Tell them I stood my ground until the very end.",
-		"Tell them I stood my ground until the very end.",
 		"Promise me you'll never forget the lessons we learned together.",
 		"In the end, it's not the years in your life that count, but the life in your years.",
 		"I finally see the light on the other side. It's beautiful...",
