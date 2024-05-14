@@ -33,9 +33,18 @@ class CfgFunctions {
             class setRecon {
                 description = "Function to set the Recon variables.";
             };
+            class setVirtualStorage {
+                description = "Function to set the Virtual Storage variables.";
+            };
+            class setFabricator {
+                description = "Function to set the Fabricator variables.";
+            };
         };
         class SupportFunctions {
             file = "\Support-Framework\Functions\supportFunctions";
+            class addItemsToFabricator {
+                description = "Function to add items to the fabricator";
+            };
             class baseHeartbeat {
                 description = "Function to monitor and manage base status updates";
             };
@@ -447,6 +456,70 @@ class CfgVehicles {
                 "Any synced units will be automatically registered as Recon at the start of the mission. No need to sync to the Home Base Module (or any other module)",
                 "",
                 "Any markers placed that begin with the prefixes defined above, will be added to the list of available support locations. Capitilization is ignored. EX: a prefix of 'Recon' will register 'recon Hammer' as a valid location"
+            };
+            sync[] = {};
+        };
+    };
+
+    class SupportFramework_Virtual_Storage_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Virtual Storage Module";
+        icon = "\Support-Framework\UI\virtualStorage.paa"
+        function = "SupportFramework_fnc_setVirtualStorage";
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};            
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Home Base Module and Fabricator Module TO FUNCTION!",
+                "",
+                "[Experimental module, use at your own risk]",
+                "",
+                "Place this module to set up the ability to use Virtual Storage",
+                "",
+                "Location of module is meaningless.",
+                "",
+                "Any synced items will be available to Fabricators as an option to spawn a copy in. No need to sync to the Home Base Module (or any other module)"
+            };
+            sync[] = {};
+        };
+    };
+
+    class SupportFramework_Fabricator_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Fabricator Module";
+        icon = "\Support-Framework\UI\fabricator.paa"
+        function = "SupportFramework_fnc_setFabricator";
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};            
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Home Base Module and Virtual Storage Module TO FUNCTION!",
+                "",
+                "[Experimental module, use at your own risk]",
+                "",
+                "Place this module to set up the ability to use Fabricators",
+                "",
+                "Location of module is meaningless.",
+                "",
+                "Any synced items will be considered Fabricators, they will have ace interact options to spawn in any items synced with the Virtual Storage Module.", 
+                "",
+                "No need to sync to the Home Base Module (or any other module)"
             };
             sync[] = {};
         };
