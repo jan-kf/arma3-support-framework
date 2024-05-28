@@ -525,3 +525,28 @@ class CfgVehicles {
         };
     };
 };
+
+class CfgSounds {
+    sounds[] = {};
+
+    class CautionCaution {
+        name = "CautionCaution";
+        sound[] = {"\Support-Framework\Sounds\caution.ogg", 1, 1};
+        titles[] = {};
+    };
+    class WarningWarning {
+        name = "WarningWarning";
+        sound[] = {"\Support-Framework\Sounds\warning.ogg", 1, 1};
+        titles[] = {};
+    };
+    class MasterCaution {
+        name = "CautionCaution";
+        sound[] = {"\Support-Framework\Sounds\masterCaution.ogg", 1, 1};
+        titles[] = {};
+    };
+    class IncomingKlaxon {
+        name = "IncomingKlaxon";
+        sound[] = {"\Support-Framework\Sounds\incoming.ogg", 1, 1};
+        titles[] = {};
+    };
+};
