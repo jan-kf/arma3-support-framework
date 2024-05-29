@@ -39,6 +39,9 @@ class CfgFunctions {
             class setFabricator {
                 description = "Function to set the Fabricator variables.";
             };
+            class setCBR {
+                description = "Function to set the CBR variables.";
+            };
         };
         class SupportFunctions {
             file = "\Support-Framework\Functions\supportFunctions";
@@ -518,6 +521,67 @@ class CfgVehicles {
                 "Location of module is meaningless.",
                 "",
                 "Any synced items will be considered Fabricators, they will have ace interact options to spawn in any items synced with the Virtual Storage Module.", 
+                "",
+                "No need to sync to the Home Base Module (or any other module)"
+            };
+            sync[] = {};
+        };
+    };
+
+    class SupportFramework_CBR_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Counter Barrage Radar Module";
+        icon = "\Support-Framework\UI\fabricator.paa"
+        function = "SupportFramework_fnc_setCBR";
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};            
+            class DetectionRange: Edit {
+                property = "SupportFramework_CBR_Module_DetectionRange";
+                displayName = "Detection Range";
+                tooltip = "Radius in meters for the overall detection range of the radar, will beep when projectile is detected";
+                typeName = "NUMBER"; 
+                defaultValue = "5000"; 
+            };
+            class CautionRange: Edit {
+                property = "SupportFramework_CBR_Module_CautionRange";
+                displayName = "Caution Range";
+                tooltip = "Radius in meters when the CAUTION alarm will sound (set to 0 to disable)";
+                typeName = "NUMBER"; 
+                defaultValue = "4000"; 
+            };
+            class WarningRange: Edit {
+                property = "SupportFramework_CBR_Module_WarningRange";
+                displayName = "Warning Range";
+                tooltip = "Radius in meters when the WARNING alarm will sound (set to 0 to disable)";
+                typeName = "NUMBER"; 
+                defaultValue = "2000"; 
+            };
+            class IncomingRange: Edit {
+                property = "SupportFramework_CBR_Module_IncomingRange";
+                displayName = "Incoming Range";
+                tooltip = "Radius in meters when the Incoming alarm will sound (set to 0 to disable)";
+                typeName = "NUMBER"; 
+                defaultValue = "500"; 
+            };
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Home Base Module TO FUNCTION!",
+                "",
+                "[Experimental module, use at your own risk]",
+                "",
+                "Place this module to set up the ability to use Counter Barrage Radar",
+                "",
+                "Location of module is meaningless.",
+                "",
+                "Any synced items will be considered CBR(s), they will have ace interact options to enable/disable their radar", 
                 "",
                 "No need to sync to the Home Base Module (or any other module)"
             };

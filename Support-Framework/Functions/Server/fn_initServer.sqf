@@ -64,6 +64,15 @@ if (_reconConfigured) then {
 	} forEach _syncedReconObjects;
 };
 
+private _cbrConfig = missionNamespace getVariable ["YOSHI_CBR", nil];
+private _cbrConfigured = !(isNil "_cbrConfig");
+if (_cbrConfigured) then {
+	private _syncedCBRObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_CBR");
+	{
+		_x setVariable ["canCBR", true, true];
+	} forEach _syncedCBRObjects;
+};
+
 private _virtualStorageConfig = missionNamespace getVariable ["YOSHI_VIRTUAL_STORAGE", nil];
 private _virtualStorageConfigured = !(isNil "_virtualStorageConfig");
 private _fabricatorConfig = missionNamespace getVariable ["YOSHI_FABRICATOR", nil];

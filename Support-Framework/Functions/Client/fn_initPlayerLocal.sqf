@@ -439,3 +439,64 @@ private _artilleryVicActions = [
 // Add the actions to the classes that might have arty support
 ["LandVehicle", 0, ["ACE_MainActions"], _artilleryVicActions, true] call ace_interact_menu_fnc_addActionToClass;
 ["Ship", 0, ["ACE_MainActions"], _artilleryVicActions, true] call ace_interact_menu_fnc_addActionToClass;
+
+private _CBREnableVicAction = [
+	"CBREnableVicAction", "Enable Counter Barrage Radar", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		_target setVariable ["radarEnabled", true, true];
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Condition code here
+		private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
+		private _homeBaseConfigured = !(isNil "_homeBase");
+
+		private _cbrConfig = missionNamespace getVariable ["YOSHI_CBR", nil];
+		private _cbrConfigured = !(isNil "_cbrConfig");
+
+		private _canCBR = _target getVariable ["canCBR", false];
+
+		if (_homeBaseConfigured && _cbrConfigured && _canCBR) then {
+			private _cbrEnabled = _target getVariable ["radarEnabled", false];
+			!_cbrEnabled
+		} else {
+			false
+		};
+
+	}
+] call ace_interact_menu_fnc_createAction;
+private _CBRDisableVicAction = [
+	"CBRDisableVicAction", "Disable Counter Barrage Radar", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		_target setVariable ["radarEnabled", false, true];
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Condition code here
+		private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
+		private _homeBaseConfigured = !(isNil "_homeBase");
+
+		private _cbrConfig = missionNamespace getVariable ["YOSHI_CBR", nil];
+		private _cbrConfigured = !(isNil "_cbrConfig");
+
+		private _canCBR = _target getVariable ["canCBR", false];
+
+		if (_homeBaseConfigured && _cbrConfigured && _canCBR) then {
+			private _cbrEnabled = _target getVariable ["radarEnabled", false];
+			_cbrEnabled
+		} else {
+			false
+		};
+
+	}
+] call ace_interact_menu_fnc_createAction;
+
+// Add the actions to the classes that might have arty support
+["LandVehicle", 0, ["ACE_MainActions"], _CBREnableVicAction, true] call ace_interact_menu_fnc_addActionToClass;
+["LandVehicle", 0, ["ACE_MainActions"], _CBRDisableVicAction, true] call ace_interact_menu_fnc_addActionToClass;
+
+execVM "\Support-Framework\Functions\Client\counterBarrageRadar.sqf";
