@@ -7,10 +7,23 @@ YOSHI_projectileCautionRange = (missionNamespace getVariable "YOSHI_CBR") getVar
 YOSHI_projectileWarningRange = (missionNamespace getVariable "YOSHI_CBR") getVariable ["WarningRange", 2000];
 YOSHI_projectileIncomingRange = (missionNamespace getVariable "YOSHI_CBR") getVariable ["IncomingRange", 500];
 
-YOSHI_detectionError = 0;
 YOSHI_mapProjectilesDrawTimeout = 15;
 YOSHI_markerCounter = 0;
 YOSHI_markerPrefix = "_USER_DEFINED YOSHI_markerNo";
+
+// YOSHI_canSee = {
+// 	params [
+// 		["_looker",objNull,[objNull]],
+// 		["_target",objNull,[objNull]],
+// 		["_FOV",70,[0]]
+// 	];
+// 	if ([position _looker, getdir _looker, _FOV, position _target] call BIS_fnc_inAngleSector) then {
+// 		if (count (lineIntersectsSurfaces [(AGLtoASL (_looker modelToWorldVisual (_looker selectionPosition "pilot"))), getPosASL _target, _target, _looker, true, 1,"GEOM","NONE"]) > 0) exitWith {false};
+// 		true
+// 	} else {
+// 		false
+// 	};
+// };
 
 YOSHI_detectIncomingProjectiles = {
 	params ["_radarVic"];
@@ -19,8 +32,7 @@ YOSHI_detectIncomingProjectiles = {
 	_projectileClasses = [
 		"ShellBase", 
 		"RocketBase", 
-		"MissileBase", 
-		"BulletBase" 
+		"MissileBase"
 	];
 	
 	
@@ -32,20 +44,22 @@ YOSHI_detectIncomingProjectiles = {
 		private _type = typeOf _projectile;
 		private _isClassAllowedAmmo = false;
 		{
-			if(_type isKindOf [_x,configFile >> "CfgAmmo"]) exitWith {
+			if(_type isKindOf [_x, configFile >> "CfgAmmo"]) exitWith {
 				_isClassAllowedAmmo = true;
 			};
 		} foreach _projectileClasses;		
 		
 
-		if(speed _projectile < 40) then {
+		if(speed _projectile < 100) then {
 			continueWith false;
 		};
 		
-		private _isVisible = [_radarVic, "FIRE"] checkVisibility [getPosWorld _radarVic, getPosWorld _projectile] > 0;
-		if(!(_isVisible)) then {
-			continueWith false;
-		};
+		// private _isVisible = [_radarVic, _projectile, 360] call YOSHI_canSee;
+		// if(!(_isVisible)) then {
+		// 	continueWith false;
+		// };
+
+		if (_type find "ace_frag" != -1) exitWith {false};
 
 		true;
 	};
@@ -122,7 +136,7 @@ YOSHI_triggerRadarScan = {
 				_x reveal _projectile;
 			};		
 			
-			private _projectilePosWithError = _projectile getRelPos [random YOSHI_detectionError, random 360];		
+			private _projectilePos = getPos _projectile;		
 			private _projectileHeight = (getPos _projectile) select 2;		
 			private _projectileImpactETA = _projectile call YOSHI_predictFallTime;
 			private _projectileImpactPosition = _projectile call YOSHI_predictFallPos;
@@ -142,17 +156,17 @@ YOSHI_triggerRadarScan = {
 				_currentProjectileData set [5, serverTime];
 				_currentKnownProjectiles set [_projectileIndex, _currentProjectileData];
 			} else {		
-				private _projectileReportData  = [_projectileId, _projectilePosWithError, getPos _projectile, _projectileImpactPosition, _projectileImpactETA, serverTime];
+				private _projectileReportData  = [_projectileId, _projectilePos, getPos _projectile, _projectileImpactPosition, _projectileImpactETA, serverTime];
 				_currentKnownProjectiles pushBack _projectileReportData;			
 
-				private _markerName = format["%1_%2",YOSHI_markerPrefix,YOSHI_markerCounter];
-				private _detectionMarker = createMarkerLocal [_markerName, _projectilePosWithError];
-				_detectionMarker setMarkerShapeLocal "ICON";
-				_detectionMarker setMarkerTypeLocal "mil_circle_noShadow";
-				_detectionMarker setMarkerTextLocal format["Projectile %1 H: %2m",YOSHI_markerCounter, _projectileHeight];
-				_detectionMarker setMarkerColorLocal "ColorRed";
-				_detectionMarker setMarkerAlphaLocal 0.5;
-				// playSound3D ["A3\Sounds_F\vehicles\air\noises\alarm_locked_by_missile_2.wss", player, false, getPosASL player, 0.5, 2, 0];
+				// private _markerName = format["%1_%2",YOSHI_markerPrefix,YOSHI_markerCounter];
+				// private _detectionMarker = createMarkerLocal [_markerName, _projectilePos];
+				// _detectionMarker setMarkerShapeLocal "ICON";
+				// _detectionMarker setMarkerTypeLocal "mil_circle_noShadow";
+				// _detectionMarker setMarkerTextLocal format["Projectile %1 H: %2m",YOSHI_markerCounter, _projectileHeight];
+				// _detectionMarker setMarkerColorLocal "ColorRed";
+				// _detectionMarker setMarkerAlphaLocal 0.5;
+
 			};	
 			_distanceFromVic = _vehicle distance2D _projectileImpactPosition;
 
@@ -202,14 +216,14 @@ YOSHI_triggerRadarScan = {
 				_projectileThreat = 10;
 				_playedSound = true;
 			};
-			if (!_playedSound && YOSHI_projectileDetectionRange > 0 && _distanceFromVic <= YOSHI_projectileDetectionRange && _projectileThreat < 0) then {
+			if (!_playedSound && YOSHI_projectileDetectionRange > 0 && _distanceFromVic <= YOSHI_projectileDetectionRange && _projectileThreat < 1) then {
 				_oldThread = _vehicle getVariable "YOSHI_projectile_thread";
 				terminate _oldThread;
 
 				_thread = [_vehicle, _projectile, "MasterCaution", 1.4] call _spawnSound;
 				_projectile setVariable["YOSHI_projectile_thread", _thread];
-				_vehicle setVariable["YOSHI_projectile_threat", 0];
-				_projectileThreat = 0;
+				_vehicle setVariable["YOSHI_projectile_threat", 1];
+				_projectileThreat = 1;
 				_playedSound = true;
 			};
 

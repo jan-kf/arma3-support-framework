@@ -531,7 +531,7 @@ class CfgVehicles {
     class SupportFramework_CBR_Module: Module_F {
         author = "Yoshi";
         category = "SupportFramework_Category";
-        displayName = "Counter Barrage Radar Module";
+        displayName = "Counter Battery Radar Module";
         icon = "\Support-Framework\UI\fabricator.paa"
         function = "SupportFramework_fnc_setCBR";
         functionPriority = 1; // Execution priority, lower numbers are executed first
@@ -577,7 +577,7 @@ class CfgVehicles {
                 "",
                 "[Experimental module, use at your own risk]",
                 "",
-                "Place this module to set up the ability to use Counter Barrage Radar",
+                "Place this module to set up the ability to use Counter Battery Radar",
                 "",
                 "Location of module is meaningless.",
                 "",

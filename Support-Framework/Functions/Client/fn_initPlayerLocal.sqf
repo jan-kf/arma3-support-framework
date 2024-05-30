@@ -441,7 +441,7 @@ private _artilleryVicActions = [
 ["Ship", 0, ["ACE_MainActions"], _artilleryVicActions, true] call ace_interact_menu_fnc_addActionToClass;
 
 private _CBREnableVicAction = [
-	"CBREnableVicAction", "Enable Counter Barrage Radar", "",
+	"CBREnableVicAction", "Enable Counter Battery Radar", "",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -468,7 +468,7 @@ private _CBREnableVicAction = [
 	}
 ] call ace_interact_menu_fnc_createAction;
 private _CBRDisableVicAction = [
-	"CBRDisableVicAction", "Disable Counter Barrage Radar", "",
+	"CBRDisableVicAction", "Disable Counter Battery Radar", "",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -499,4 +499,4 @@ private _CBRDisableVicAction = [
 ["LandVehicle", 0, ["ACE_MainActions"], _CBREnableVicAction, true] call ace_interact_menu_fnc_addActionToClass;
 ["LandVehicle", 0, ["ACE_MainActions"], _CBRDisableVicAction, true] call ace_interact_menu_fnc_addActionToClass;
 
-execVM "\Support-Framework\Functions\Client\counterBarrageRadar.sqf";
+execVM "\Support-Framework\Functions\Client\counterBatteryRadar.sqf";
