@@ -11,34 +11,26 @@ YOSHI_mapProjectilesDrawTimeout = 15;
 YOSHI_markerCounter = 0;
 YOSHI_markerPrefix = "_USER_DEFINED YOSHI_markerNo";
 
-// YOSHI_canSee = {
-// 	params [
-// 		["_looker",objNull,[objNull]],
-// 		["_target",objNull,[objNull]],
-// 		["_FOV",70,[0]]
-// 	];
-// 	if ([position _looker, getdir _looker, _FOV, position _target] call BIS_fnc_inAngleSector) then {
-// 		if (count (lineIntersectsSurfaces [(AGLtoASL (_looker modelToWorldVisual (_looker selectionPosition "pilot"))), getPosASL _target, _target, _looker, true, 1,"GEOM","NONE"]) > 0) exitWith {false};
-// 		true
-// 	} else {
-// 		false
-// 	};
-// };
 
 YOSHI_detectIncomingProjectiles = {
 	params ["_radarVic"];
 	
 	private _detectedProjectiles = [];
 	_projectileClasses = [
-		"ShellBase", 
-		"RocketBase", 
-		"MissileBase"
+		"ShellCore",
+		"Shell",
+		"MissileCore",
+		"Missile",
+		"BombCore",
+		"SubmunitionCore",
+		"R_min_rf_122mm_Grad",
+		"R_min_rf_122mm_Grad_fly"
 	];
 	
 	
 	private _projectiles = _radarVic nearObjects ["Default", YOSHI_projectileDetectionRange]; 
 
-	_incomingProjectile = _projectiles select {
+	_incomingProjectiles = _projectiles select {
 		private _projectile = _x;
 
 		private _type = typeOf _projectile;
@@ -50,23 +42,16 @@ YOSHI_detectIncomingProjectiles = {
 		} foreach _projectileClasses;		
 		
 
-		if(speed _projectile < 100) then {
-			continueWith false;
+		if (_isClassAllowedAmmo && (_type find "ace_frag" == -1)) then {
+			true;
+		} else {
+			false;
 		};
-		
-		// private _isVisible = [_radarVic, _projectile, 360] call YOSHI_canSee;
-		// if(!(_isVisible)) then {
-		// 	continueWith false;
-		// };
-
-		if (_type find "ace_frag" != -1) exitWith {false};
-
-		true;
 	};
 	
 	{
 		_detectedProjectiles pushBack _x;
-	} forEach _projectiles;
+	} forEach _incomingProjectiles;
 		
 
 	_detectedProjectiles
@@ -242,11 +227,11 @@ YOSHI_drawTarget = {
 		continue;
 	};
 
-	if(_projectilePos distance2d _projectileImpactPosition < 100) then {		
+	if(_projectilePos distance2d _projectileImpactPosition < 10) then {		
 		continue;
 	};
 
-	_mapCtrl drawLine [_projectileFiringPos, _projectilePos, [1,0,0,1] ];	
+	// _mapCtrl drawLine [_projectileFiringPos, _projectilePos, [1,0,0,1] ];	
 	_mapCtrl drawIcon [
 		"\A3\ui_f\data\map\markers\military\triangle_CA.paa", 
 		[1,0,0,1],
@@ -279,8 +264,6 @@ YOSHI_drawTarget = {
 
 YOSHI_mapDrawEH = {
 	params["_mapCtrl"];
-
-	// if(!("ItemGPS" in (assignedItems player))) exitWith {};
 	
 	YOSHI_detectedTargets apply {
 		
@@ -313,7 +296,7 @@ if(hasInterface) then {
 				if(!(YOSHI_mapDrawingEnabled)) exitWith {};
 				call YOSHI_monitorLoop;
 			}, 
-			0.25
+			0.5
 		] call CBA_fnc_addPerFrameHandler;
 		diag_log format[_fName + "YOSHI_perFrameEH_handle: %1", YOSHI_perFrameEH_handle];
 
@@ -328,23 +311,3 @@ if(hasInterface) then {
 
 	};
 };
-
-// con = [] spawn {
-	
-
-//     while {true} do {
-//         private _projectiles = call _detectProjectiles;
-        
-// 		if (count _projectiles > 0) then {
-// 			{
-// 				radar sideChat format ["Detected projectile: %1 at position %2", typeOf _x, getPos _x];
-// 			} forEach _projectiles;
-
-// 			radar say3D ["IncomingKlaxon", 200, 1];
-// 			sleep 7.4;
-// 		} else {
-// 			sleep 1;
-// 		};
-//     };
-// };
-
