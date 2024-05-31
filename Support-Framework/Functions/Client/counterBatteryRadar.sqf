@@ -169,6 +169,12 @@ YOSHI_triggerRadarScan = {
 				_thread
 			};
 
+			private _projectileBeeped = _projectile getVariable ["YOSHI_projectileBeeped", false];
+			if (!_projectileBeeped) then {
+				_vehicle say3D ["beepDetect", 200, 1];
+				_projectile setVariable ["YOSHI_projectileBeeped", true];
+			};
+
 			_playedSound = false;
 
 			if (!_playedSound && YOSHI_projectileIncomingRange > 0 && _distanceFromVic <= YOSHI_projectileIncomingRange && _projectileThreat < 100) then {
@@ -205,11 +211,12 @@ YOSHI_triggerRadarScan = {
 				_oldThread = _vehicle getVariable "YOSHI_projectile_thread";
 				terminate _oldThread;
 
-				_thread = [_vehicle, _projectile, "MasterCaution", 1.4] call _spawnSound;
-				_projectile setVariable["YOSHI_projectile_thread", _thread];
-				_vehicle setVariable["YOSHI_projectile_threat", 1];
-				_projectileThreat = 1;
-				_playedSound = true;
+				// too low of a threat to keep beeping
+				// _thread = [_vehicle, _projectile, "MasterCaution", 1.4] call _spawnSound;
+				// _projectile setVariable["YOSHI_projectile_thread", _thread];
+				// _vehicle setVariable["YOSHI_projectile_threat", 1];
+				// _projectileThreat = 1;
+				// _playedSound = true;
 			};
 
 			YOSHI_detectedTargets = _currentKnownProjectiles;
@@ -238,8 +245,8 @@ YOSHI_drawTarget = {
 		_projectilePos,
 		24,
 		24,
-		0,
-		format["PROJECTILE #%1, ETA: %2s", _projectileId, _projectileImpactETA ],
+		_projectilePos getDir _projectileImpactPosition,
+		format["PROJECTILE #%1", _projectileId, _projectileImpactETA ],
 		0,
 		-1,
 		"RobotoCondensed",

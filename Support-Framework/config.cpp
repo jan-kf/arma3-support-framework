@@ -613,4 +613,24 @@ class CfgSounds {
         sound[] = {"\Support-Framework\Sounds\incoming.ogg", 1, 1};
         titles[] = {};
     };
+    class beepDetect {
+        name = "beepDetect";
+        sound[] = {"\Support-Framework\Sounds\beepDetect.ogg", 1, 1};
+        titles[] = {};
+    };
+    class beepIdle {
+        name = "beepIdle";
+        sound[] = {"\Support-Framework\Sounds\beepIdle.ogg", 1, 1};
+        titles[] = {};
+    };
+    class turnOn {
+        name = "turnOn";
+        sound[] = {"\Support-Framework\Sounds\turnOn.ogg", 1, 1};
+        titles[] = {};
+    };
+    class turnOff {
+        name = "turnOff";
+        sound[] = {"\Support-Framework\Sounds\turnOff.ogg", 1, 1};
+        titles[] = {};
+    };
 };
