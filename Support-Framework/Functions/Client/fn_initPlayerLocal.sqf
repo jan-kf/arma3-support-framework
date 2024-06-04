@@ -446,7 +446,7 @@ private _CBREnableVicAction = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
 		_target setVariable ["radarEnabled", true, true];
-		_target say3D ["turnOn", 200, 1];
+		[_target, ["turnOn", 200, 1]] remoteExec ["say3D"];
 		[_target, "beepIdle", 5] spawn {
 			params ["_vehicle", "_soundName", "_sleepTime"];
 			while {(_vehicle getVariable ["radarEnabled", false])} do {
@@ -482,7 +482,7 @@ private _CBRDisableVicAction = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
 		_target setVariable ["radarEnabled", false, true];
-		_target say3D ["turnOff", 200, 1];
+		[_target, ["turnOff", 200, 1]] remoteExec ["say3D"];
 	}, 
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];

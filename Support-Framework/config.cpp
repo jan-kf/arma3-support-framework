@@ -532,7 +532,7 @@ class CfgVehicles {
         author = "Yoshi";
         category = "SupportFramework_Category";
         displayName = "Counter Battery Radar Module";
-        icon = "\Support-Framework\UI\fabricator.paa"
+        icon = "\Support-Framework\UI\cbr.paa"
         function = "SupportFramework_fnc_setCBR";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
@@ -553,21 +553,21 @@ class CfgVehicles {
                 displayName = "Caution Range";
                 tooltip = "Radius in meters when the CAUTION alarm will sound (set to 0 to disable)";
                 typeName = "NUMBER"; 
-                defaultValue = "4000"; 
+                defaultValue = "1000"; 
             };
             class WarningRange: Edit {
                 property = "SupportFramework_CBR_Module_WarningRange";
                 displayName = "Warning Range";
                 tooltip = "Radius in meters when the WARNING alarm will sound (set to 0 to disable)";
                 typeName = "NUMBER"; 
-                defaultValue = "2000"; 
+                defaultValue = "500"; 
             };
             class IncomingRange: Edit {
                 property = "SupportFramework_CBR_Module_IncomingRange";
                 displayName = "Incoming Range";
                 tooltip = "Radius in meters when the Incoming alarm will sound (set to 0 to disable)";
                 typeName = "NUMBER"; 
-                defaultValue = "500"; 
+                defaultValue = "200"; 
             };
             class ModuleDescription: ModuleDescription{}; // Module description should be shown last
         };

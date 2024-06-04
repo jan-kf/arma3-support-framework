@@ -7,7 +7,7 @@ YOSHI_projectileCautionRange = (missionNamespace getVariable "YOSHI_CBR") getVar
 YOSHI_projectileWarningRange = (missionNamespace getVariable "YOSHI_CBR") getVariable ["WarningRange", 2000];
 YOSHI_projectileIncomingRange = (missionNamespace getVariable "YOSHI_CBR") getVariable ["IncomingRange", 500];
 
-YOSHI_mapProjectilesDrawTimeout = 15;
+YOSHI_mapProjectilesDrawTimeout = 5;
 YOSHI_markerCounter = 0;
 YOSHI_markerPrefix = "_USER_DEFINED YOSHI_markerNo";
 
@@ -212,6 +212,7 @@ YOSHI_triggerRadarScan = {
 					_vehicle setVariable ["YOSHI_vicCounted", false];
 					_vehicle setVariable ["YOSHI_vicCounting", false];
 					_vehicle setVariable ["YOSHI_statedProjectileCount", 0];
+					YOSHI_detectedTargets = []; // clear out history of targets
 				};
 			};
 		};
@@ -254,15 +255,6 @@ YOSHI_triggerRadarScan = {
 			} else {		
 				private _projectileReportData  = [_projectileId, _projectilePos, getPos _projectile, _projectileImpactPosition, _projectileImpactETA, serverTime];
 				_currentKnownProjectiles pushBack _projectileReportData;			
-
-				// private _markerName = format["%1_%2",YOSHI_markerPrefix,YOSHI_markerCounter];
-				// private _detectionMarker = createMarkerLocal [_markerName, _projectilePos];
-				// _detectionMarker setMarkerShapeLocal "ICON";
-				// _detectionMarker setMarkerTypeLocal "mil_circle_noShadow";
-				// _detectionMarker setMarkerTextLocal format["Projectile %1 H: %2m",YOSHI_markerCounter, _projectileHeight];
-				// _detectionMarker setMarkerColorLocal "ColorRed";
-				// _detectionMarker setMarkerAlphaLocal 0.5;
-
 			};	
 			_distanceFromVic = _vehicle distance2D _projectileImpactPosition;
 
@@ -335,13 +327,6 @@ YOSHI_triggerRadarScan = {
 						_vehicle setVariable ["YOSHI_vicCounted", false];
 					};
 				};
-
-				// too low of a threat to keep beeping
-				// _thread = [_vehicle, _projectile, "MasterCaution", 1.4] call _spawnSound;
-				// _projectile setVariable["YOSHI_projectile_thread", _thread];
-				// _vehicle setVariable["YOSHI_projectile_threat", 1];
-				// _projectileThreat = 1;
-				// _playedSound = true;
 			};
 			if (_projectileBeeped && (!_projectileCounted || (_statedProjectileCount < (count _incomingProjectiles))) && !_projectileBeeping && !_projectileCounting) then {
 				_vehicle setVariable ["YOSHI_vicCounting", true];
@@ -370,8 +355,57 @@ YOSHI_triggerRadarScan = {
 
 };
 
+// future plan: combine nearby targets to a single area, maybe have a size limit on the shape?
+YOSHI_drawBoundingBox = { 
+    params["_projectiles"];
+
+	_targetLocations = [];
+	{
+		_x params ["_projectileId", "_projectileFiringPos", "_projectilePos", "_projectileImpactPosition", "_projectileImpactETA", "_projectileLastReportAt"];
+		
+		_targetLocations pushBack _projectileImpactPosition;
+
+	} forEach _projectiles;
+
+
+ 
+    if (count _targetLocations == 0) exitWith {}; 
+ 
+    private _minX = (_targetLocations select 0) select 0; 
+    private _minY = (_targetLocations select 0) select 1; 
+    private _maxX = _minX; 
+    private _maxY = _minY; 
+ 
+    { 
+        private _posX = _x select 0; 
+        private _posY = _x select 1; 
+ 
+        if (_posX < _minX) then { 
+            _minX = _posX; 
+        }; 
+        if (_posX > _maxX) then { 
+            _maxX = _posX; 
+        }; 
+        if (_posY < _minY) then { 
+            _minY = _posY; 
+        }; 
+        if (_posY > _maxY) then { 
+            _maxY = _posY; 
+        };
+     } forEach _targetLocations; 
+ 
+     
+    private _marker = createMarker ["_USER_DEFINED BoundingBoxMarker2", [(_minX + _maxX) / 2, (_minY + _maxY) / 2]]; 
+    _marker setMarkerShape "ELLIPSE"; 
+    _marker setMarkerSize [(_maxX - _minX) / 2, (_maxY - _minY) / 2]; 
+    _marker setMarkerColor "ColorRed"; 
+    _marker setMarkerAlpha 0.5; 
+    _marker setMarkerText "Covered Area"; 
+};
+
+
 YOSHI_drawTarget = {
-	params["_mapCtrl","_targetData"];
+	params["_targetData"];
 	_targetData params ["_projectileId", "_projectileFiringPos", "_projectilePos", "_projectileImpactPosition", "_projectileImpactETA", "_projectileLastReportAt"];
 
 	if(serverTime - _projectileLastReportAt > YOSHI_mapProjectilesDrawTimeout) then {		
@@ -382,45 +416,26 @@ YOSHI_drawTarget = {
 		continue;
 	};
 
-	// _mapCtrl drawLine [_projectileFiringPos, _projectilePos, [1,0,0,1] ];	
-	_mapCtrl drawIcon [
-		"\A3\ui_f\data\map\markers\military\triangle_CA.paa", 
-		[1,0,0,1],
-		_projectilePos,
-		24,
-		24,
-		_projectilePos getDir _projectileImpactPosition,
-		// format["PROJECTILE #%1", _projectileId, _projectileImpactETA ],
-		"",
-		0,
-		-1,
-		"RobotoCondensed",
-		"right"
-	];
+	// projectile marker
 
-	_mapCtrl drawIcon [
-		"\A3\ui_f\data\map\markers\military\destroy_CA.paa", 
-		[1,0,0,1],
-		_projectileImpactPosition,
-		24,
-		24,
-		0,
-		format["ETA: %2s", _projectileId, _projectileImpactETA ],
-		0,
-		-1,
-		"RobotoCondensed",
-		"right"
-	];
+	_projectileMarkerName = format ["_USER_DEFINED YoshiCounterBatteryRadar projectile-marker_%1_%2", _projectileId, round random 1000000];
 
-};
+	_projectileMarker = createMarkerLocal [_projectileMarkerName, _projectilePos];
+	_projectileMarker setMarkerShapeLocal "ICON";
+    _projectileMarker setMarkerTypeLocal "mil_triangle";
+	_projectileMarker setMarkerDirLocal (_projectilePos getDir _projectileImpactPosition);
+	_projectileMarker setMarkerColor "ColorRed";
 
-YOSHI_mapDrawEH = {
-	params["_mapCtrl"];
-	
-	YOSHI_detectedTargets apply {
-		
-		[_mapCtrl, _x] call YOSHI_drawTarget;
-	};
+	// target marker
+
+	_targetMarkerName = format ["_USER_DEFINED YoshiCounterBatteryRadar target-marker_%1_%2", _projectileId, round random 1000000];
+
+	_targetMarker = createMarkerLocal [_targetMarkerName, _projectileImpactPosition];
+	_targetMarker setMarkerShapeLocal "ICON";
+    _targetMarker setMarkerTypeLocal "mil_destroy";
+	_targetMarker setMarkerTextLocal format["ETA: %1s", _projectileImpactETA ];
+	_targetMarker setMarkerColor "ColorRed";
+
 };
 
 YOSHI_monitorLoop = {
@@ -428,6 +443,23 @@ YOSHI_monitorLoop = {
 
 	_syncedRadars apply {
 		_x call YOSHI_triggerRadarScan;
+	};
+
+	if(YOSHI_mapDrawingEnabled) then {
+		{
+			private _marker = _x;
+
+			if (_marker find "_USER_DEFINED YoshiCounterBatteryRadar" == 0) then {
+				deleteMarker _marker;
+			};
+		} forEach allMapMarkers;
+		
+		// [YOSHI_detectedTargets] call YOSHI_drawBoundingBox;
+
+		YOSHI_detectedTargets apply {
+			
+			[_x] call YOSHI_drawTarget;
+		};
 	};
 };
 
@@ -451,13 +483,6 @@ if(hasInterface) then {
 			1
 		] call CBA_fnc_addPerFrameHandler;
 		diag_log format[_fName + "YOSHI_perFrameEH_handle: %1", YOSHI_perFrameEH_handle];
-
-
-		YOSHI_mapDrawEH_handle = ((findDisplay 12) displayCtrl 51) ctrlAddEventHandler ["Draw", {
-			if(!(YOSHI_mapDrawingEnabled)) exitWith {};
-			[_this select 0] call YOSHI_mapDrawEH;
-		}];		
-		diag_log format[_fName + "YOSHI_mapDrawEH_handle: %1", YOSHI_mapDrawEH_handle];
 
 		diag_log format[_fName + "exit"];
 
