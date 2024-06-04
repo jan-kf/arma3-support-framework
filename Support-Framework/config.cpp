@@ -595,27 +595,22 @@ class CfgSounds {
 
     class CautionCaution {
         name = "CautionCaution";
-        sound[] = {"\Support-Framework\Sounds\caution.ogg", 1, 1};
+        sound[] = {"\Support-Framework\Sounds\warnAlert.ogg", 1, 1};
         titles[] = {};
     };
     class WarningWarning {
         name = "WarningWarning";
-        sound[] = {"\Support-Framework\Sounds\warning.ogg", 1, 1};
-        titles[] = {};
-    };
-    class MasterCaution {
-        name = "CautionCaution";
-        sound[] = {"\Support-Framework\Sounds\masterCaution.ogg", 1, 1};
+        sound[] = {"\Support-Framework\Sounds\sirenWarning.ogg", 1, 1};
         titles[] = {};
     };
     class IncomingKlaxon {
         name = "IncomingKlaxon";
-        sound[] = {"\Support-Framework\Sounds\incoming.ogg", 1, 1};
+        sound[] = {"\Support-Framework\Sounds\alarmDanger.ogg", 1, 1};
         titles[] = {};
     };
-    class beepDetect {
-        name = "beepDetect";
-        sound[] = {"\Support-Framework\Sounds\beepDetect.ogg", 1, 1};
+    class launchDetected {
+        name = "launchDetected";
+        sound[] = {"\Support-Framework\Sounds\launchDetected.ogg", 1, 1};
         titles[] = {};
     };
     class beepIdle {
@@ -633,4 +628,204 @@ class CfgSounds {
         sound[] = {"\Support-Framework\Sounds\turnOff.ogg", 1, 1};
         titles[] = {};
     };
+    class sector {
+        name = "sector";
+        sound[] = {"\Support-Framework\Sounds\sector.ogg", 1, 1};
+        titles[] = {};
+    };
+    class clear {
+        name = "clear";
+        sound[] = {"\Support-Framework\Sounds\clear.ogg", 1, 1};
+        titles[] = {};
+    };
+    class targets {
+        name = "targets";
+        sound[] = {"\Support-Framework\Sounds\targets.ogg", 1, 1};
+        titles[] = {};
+    };
+    class detected {
+        name = "detected";
+        sound[] = {"\Support-Framework\Sounds\detected.ogg", 1, 1};
+        titles[] = {};
+    };
+    class one {
+        name = "one";
+        sound[] = {"\Support-Framework\Sounds\numbers\one.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class two {
+        name = "two";
+        sound[] = {"\Support-Framework\Sounds\numbers\two.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class three {
+        name = "three";
+        sound[] = {"\Support-Framework\Sounds\numbers\three.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class four {
+        name = "four";
+        sound[] = {"\Support-Framework\Sounds\numbers\four.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class five {
+        name = "five";
+        sound[] = {"\Support-Framework\Sounds\numbers\five.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class six {
+        name = "six";
+        sound[] = {"\Support-Framework\Sounds\numbers\six.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class seven {
+        name = "seven";
+        sound[] = {"\Support-Framework\Sounds\numbers\seven.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class eight {
+        name = "eight";
+        sound[] = {"\Support-Framework\Sounds\numbers\eight.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class nine {
+        name = "nine";
+        sound[] = {"\Support-Framework\Sounds\numbers\nine.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class eleven {
+        name = "eleven";
+        sound[] = {"\Support-Framework\Sounds\numbers\eleven.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class twelve {
+        name = "twelve";
+        sound[] = {"\Support-Framework\Sounds\numbers\twelve.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class thirteen {
+        name = "thirteen";
+        sound[] = {"\Support-Framework\Sounds\numbers\thirteen.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class fourteen {
+        name = "fourteen";
+        sound[] = {"\Support-Framework\Sounds\numbers\fourteen.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class fifteen {
+        name = "fifteen";
+        sound[] = {"\Support-Framework\Sounds\numbers\fifteen.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class sixteen {
+        name = "sixteen";
+        sound[] = {"\Support-Framework\Sounds\numbers\sixteen.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class seventeen {
+        name = "seventeen";
+        sound[] = {"\Support-Framework\Sounds\numbers\seventeen.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class eighteen {
+        name = "eighteen";
+        sound[] = {"\Support-Framework\Sounds\numbers\eighteen.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class nineteen {
+        name = "nineteen";
+        sound[] = {"\Support-Framework\Sounds\numbers\nineteen.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class ten {
+        name = "ten";
+        sound[] = {"\Support-Framework\Sounds\numbers\ten.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class twenty {
+        name = "twenty";
+        sound[] = {"\Support-Framework\Sounds\numbers\twenty.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class thirty {
+        name = "thirty";
+        sound[] = {"\Support-Framework\Sounds\numbers\thirty.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class fourty {
+        name = "fourty";
+        sound[] = {"\Support-Framework\Sounds\numbers\fourty.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class fifty {
+        name = "fifty";
+        sound[] = {"\Support-Framework\Sounds\numbers\fifty.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class sixty {
+        name = "sixty";
+        sound[] = {"\Support-Framework\Sounds\numbers\sixty.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class seventy {
+        name = "seventy";
+        sound[] = {"\Support-Framework\Sounds\numbers\seventy.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class eighty {
+        name = "eighty";
+        sound[] = {"\Support-Framework\Sounds\numbers\eighty.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class ninety {
+        name = "ninety";
+        sound[] = {"\Support-Framework\Sounds\numbers\ninety.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class hundred {
+        name = "hundred";
+        sound[] = {"\Support-Framework\Sounds\numbers\hundred.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class thousand {
+        name = "thousand";
+        sound[] = {"\Support-Framework\Sounds\numbers\thousand.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class million {
+        name = "million";
+        sound[] = {"\Support-Framework\Sounds\numbers\million.ogg", 1, 1};
+        titles[] = {};
+    };
+
 };
