@@ -593,6 +593,11 @@ class CfgVehicles {
 class CfgSounds {
     sounds[] = {};
 
+    class ApsHit {
+        name = "apsHit";
+        sound[] = {"\Support-Framework\Sounds\apsHit.ogg", 1, 1};
+        titles[] = {};
+    };
     class CautionCaution {
         name = "CautionCaution";
         sound[] = {"\Support-Framework\Sounds\warnAlert.ogg", 1, 1};

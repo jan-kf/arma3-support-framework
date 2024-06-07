@@ -140,3 +140,38 @@ hint format["%1 | %2 | %3 | %4 | %5", time, (attachedObjects _container), _vecto
 // private _array = [];
 // {_array pushBack [_x, ]} forEach _objectsNearby;
 // hint str(_array);
+
+
+private _vehicle = _this;
+private _interval = 0.01; 
+ 
+private _detectRockets = { 
+    params ["_vehicle", "_interval", ["_charges", 50]]; 
+	_boundingBox = boundingBoxReal _vehicle;
+	_radius = (_boundingBox select 0) distance2D (_boundingBox select 1);
+
+	_chargesRemaining = _charges;
+    
+	while {(alive _vehicle) && (_chargesRemaining > 0)} do { 
+        private _projectiles = nearestObjects [_vehicle, ["MissileBase", "RocketBase"], _radius]; 
+        { 
+			private _pos = getPosATL _x;
+			private _vicPos = getPosATL _vehicle;
+
+			private _vectorDir = _vicPos vectorFromTo _pos; 
+			private _vectorUp = vectorUp _x;
+
+			deleteVehicle _x;
+			_grenade = createVehicle ["ModuleExplosive_Claymore_F", _pos, [], 0, "CAN_COLLIDE"];
+			_grenade setVectorDirAndUp [_vectorDir, _vectorUp];
+			_grenade setDamage 1;
+			_chargesRemaining = _chargesRemaining - 1;
+			[format ["%1 Charges Remaining | %2m Protection", _chargesRemaining, _radius]] remoteExec ["hint"];
+			sleep 0.1;
+
+        } forEach _projectiles; 
+        sleep _interval; 
+    }; 
+}; 
+ 
+beans = [_vehicle, _interval] spawn _detectRockets; 
