@@ -24,6 +24,9 @@ private _isArtilleryCapable = {
     _canDoArtilleryFire // Return true if capable, false otherwise
 };
 
+private _artyConfig = missionNamespace getVariable ["YOSHI_SUPPORT_ARTILLERY_CONFIG", nil];
+private _artyConfigured = !(isNil "_artyConfig");
+
 
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
 while {true} do {
@@ -122,9 +125,11 @@ while {true} do {
         };
     } forEach allMapMarkers;
 
-	private _baseSide = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["BaseSide", "west"];
-	if ((typeName _baseSide) != "STRING") then {
-		_baseSide = toLower str(_baseSide)
+	if (_artyConfigured) then {
+		private _baseSide = _artyConfig getVariable ["BaseSide", "west"];
+		if ((typeName _baseSide) != "STRING") then {
+			_baseSide = toLower str(_baseSide)
+		};
 	};
 
 	if (!isNil "_baseSide") then {

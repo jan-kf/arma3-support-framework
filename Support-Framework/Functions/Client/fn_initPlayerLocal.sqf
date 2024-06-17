@@ -450,7 +450,7 @@ private _CBREnableVicAction = [
 		[_target, "beepIdle", 5] spawn {
 			params ["_vehicle", "_soundName", "_sleepTime"];
 			while {(_vehicle getVariable ["radarEnabled", false])} do {
-				_vehicle say3D [_soundName, 100, 1];
+				[_vehicle, [_soundName, 100, 1]] remoteExec ["say3D"];
 				sleep _sleepTime;
 			};
 		};

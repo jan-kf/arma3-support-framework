@@ -166,7 +166,8 @@ if (_isAlive) then {
 		"Free at last...",
 		"Tell them to make it count.",
 		"I'll see you again in the halls of Vallhalla",
-		"Don't cry for me. For when the choirs of angels sing, will I not be among them?"
+		"Don't cry for me. For when the choirs of angels sing, will I not be among them?",
+		"Change the world. My final message. Goodbye."
 	];
 	private _goodbye = _array select (floor (random (count _array)));
 	[driver _vic, _goodbye] call SupportFramework_fnc_sideChatter;

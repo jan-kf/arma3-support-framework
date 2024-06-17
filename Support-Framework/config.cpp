@@ -42,6 +42,9 @@ class CfgFunctions {
             class setCBR {
                 description = "Function to set the CBR variables.";
             };
+            class setAPS {
+                description = "Function to enable the APS on synced objects.";
+            };
         };
         class SupportFunctions {
             file = "\Support-Framework\Functions\supportFunctions";
@@ -582,6 +585,68 @@ class CfgVehicles {
                 "Location of module is meaningless.",
                 "",
                 "Any synced items will be considered CBR(s), they will have ace interact options to enable/disable their radar", 
+                "",
+                "No need to sync to the Home Base Module (or any other module)"
+            };
+            sync[] = {};
+        };
+    };
+    class SupportFramework_APS_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Active Protection System Module (APS)";
+        icon = "\Support-Framework\UI\aps.paa"
+        function = "SupportFramework_fnc_setAPS";
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 2; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};            
+            class ChargeCount: Edit {
+                property = "SupportFramework_APS_Module_ChargeCount";
+                displayName = "Charge Count";
+                tooltip = "Number of incoming targets that the APS can counter. Once the charges are empty, the APS no longer provides protection.";
+                typeName = "NUMBER"; 
+                defaultValue = "40"; 
+            };
+            class Range: Edit {
+                property = "SupportFramework_APS_Module_Range";
+                displayName = "Range";
+                tooltip = "Radius in meters for the action range of the APS. Set to -1 to allow an automatic size calculation to be performed (recommended)";
+                typeName = "NUMBER"; 
+                defaultValue = "-1"; 
+            };
+            class Interval: Edit {
+                property = "SupportFramework_APS_Module_Interval";
+                displayName = "Interval";
+                tooltip = "Time in seconds that the object checks for incoming targets. Default is 0.05 seconds => 50ms";
+                typeName = "NUMBER"; 
+                defaultValue = "0.05"; 
+            };
+            class Cooldown: Edit {
+                property = "SupportFramework_APS_Module_Cooldown";
+                displayName = "Cooldown";
+                tooltip = "Time in seconds that the object waits before targeting another incoming attack. Used for balancing purposes. Default is 0.1 seconds => 100ms";
+                typeName = "NUMBER"; 
+                defaultValue = "0.1"; 
+            };
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "[Experimental module, use at your own risk]",
+                "",
+                "Place this module to set up an Active Protection System (APS)",
+                "",
+                "Location of module is meaningless.",
+                "",
+                "MULTIPLE MODULES ARE SUPPORTED: If you want different configs for different purposes,",
+                "then you can place down multiple APS modules and configure them differently.",
+                "All objects synced to the same module will have the same shared config.",
+                "",
+                "Any synced items will have an APS set up according to the configuration of the module.", 
                 "",
                 "No need to sync to the Home Base Module (or any other module)"
             };
