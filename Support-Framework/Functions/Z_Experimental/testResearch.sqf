@@ -556,3 +556,67 @@ if (!hasInterface) exitWith {};
  sleep 0.5;    
  deleteVehicle _e_static    
 };
+
+
+///// rapid laser beam between 2 points 
+
+[] spawn {     
+if (!hasInterface) exitWith {};  
+
+private _getPosTop = {  
+	params ["_obj"];  
+	
+	_loc = getPosASL _obj;  
+	
+	_locAbove = _loc vectorAdd [0,0,10];  
+	
+	_hits = lineIntersectsSurfaces [_locAbove, _loc, objNull, objNull, true, 10, "FIRE", "GEOM"];  
+	if ((count _hits) > 0) then {  
+	_hit = _hits select 0;  
+	_dist = (_hit select 0) select 2;  
+	_loc = (_hit select 0);  
+	};  
+	_loc  
+};
+     
+ _source = cone2;     
+ private _pos = getPosASL _source;    
+ private _vicPos = [cone3] call _getPosTop;
+ [str(_vicPos)] remoteExec ['hint'];
+
+ private _vecDistance = (_vicPos vectorDiff _pos ) vectorMultiply 0.5; 
+ private _distance = _vicPos vectorDistance _pos;
+    
+ private _vectorDir = _vicPos vectorFromTo _pos;      
+ _velocity = (_vicPos vectorDiff _pos) vectorMultiply 20;    
+ 
+ _e_static = "#particlesource" createVehicleLocal (getPosATL _source);      
+        
+ _e_static setParticleParams [["\A3\data_f\laserBeam", 1, 1, 1], "", "SpaceObject", 1, 0.05, _vecDistance, [0,0,0], 0, 1.1475, 0.9,0, [_distance], [[255, 0, 0, 1], [255, 0, 0, 1]], [1], 0, 0, "", "", "no_object",0,false, -1, [[0,30,30,0]], _vectorDir];      
+ _e_static setDropInterval 0.1;     
+ sleep 0.25;     
+ deleteVehicle _e_static     
+};
+
+
+/////// GET THE TOP OF AN OBJECT: (IS IN ASL)
+
+private _getPosTop = {  
+ params ["_obj"];  
+  
+ _loc = getPosASL _obj;  
+  
+ _locAbove = _loc vectorAdd [0,0,10];  
+  
+ _hits = lineIntersectsSurfaces [_locAbove, _loc, objNull, objNull, true, 10, "FIRE", "GEOM"];  
+ hint str([_hits, _loc]); 
+ if ((count _hits) > 0) then {  
+  _hit = _hits select 0;  
+  _dist = (_hit select 0) select 2;  
+  _loc = (_hit select 0);  
+ };  
+ _loc  
+};
+
+_top = [_this] call _getPosTop;
+
