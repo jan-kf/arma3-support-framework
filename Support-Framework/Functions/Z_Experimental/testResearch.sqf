@@ -238,9 +238,24 @@ YOSHI_beamA2B = {
 	_e_static = "#particlesource" createVehicleLocal _toPos;      
 			
 	_e_static setParticleParams [["\A3\data_f\laserBeam", 1, 1, 1], "", "SpaceObject", 1, 0.05, _vecDistance, [0,0,0], 0, 1.1475, 0.9,0, [_distance], [[255, 0, 0, 1], [255, 0, 0, 1]], [1], 0, 0, "", "", "no_object",0,false, -1, [[0,30,30,0]], _vectorDir];      
-	_e_static setDropInterval 0.1;     
-	sleep 0.25;     
+	_e_static setDropInterval 0.06;     
+	sleep 0.06;     
 	deleteVehicle _e_static;
+};
+
+YOSHI_beamVic2Pos = {
+	params ["_vic", "_pos"];
+
+
+	_count = 3;
+
+	while {(alive _vic) && (_count > 0)} do {
+		_topOfVic = ASLToATL ([_vic] call YOSHI_getPosTop); 
+		[_topOfVic, _pos] call YOSHI_beamA2B;
+		sleep 0.05;
+		_count = _count - 1;
+	};
+
 };
 
 
@@ -260,12 +275,9 @@ YOSHI_detectRockets = {
         { 
 			private _pos = getPosATL _x;
 
-			deleteVehicle _x;
-			
-			_topOfVic = ASLToATL ([_vehicle] call YOSHI_getPosTop);
-
-
-			[[_topOfVic, _pos], YOSHI_beamA2B] remoteExec ["spawn"];
+			deleteVehicle _x;			
+ 
+			[[_vehicle, _pos], YOSHI_beamVic2Pos] remoteExec ["spawn"];
 
 
 			_orange = createVehicle ["ModuleAPERSMineDispenser_Mine_F", _pos, [], 0, "CAN_COLLIDE"];
@@ -666,3 +678,62 @@ private _getPosTop = {
 
 _top = [_this] call _getPosTop;
 
+//////////////////
+
+
+
+YOSHI_getPosTop = {   
+ params ["_obj"];   
+  
+ _loc = getPosASL _obj;   
+  
+ _locAbove = _loc vectorAdd [0,0,10];   
+  
+ _hits = lineIntersectsSurfaces [_locAbove, _loc, objNull, objNull, true, 10, "FIRE", "GEOM"];   
+ if ((count _hits) > 0) then {   
+ _hit = _hits select 0;   
+ _dist = (_hit select 0) select 2;   
+ _loc = (_hit select 0);   
+ };   
+ _loc   
+}; 
+ 
+YOSHI_beamA2B = { 
+ params ["_posA", "_posB"]; 
+     
+ private _fromPos = _posA; 
+ private _toPos = _posB;     
+ 
+ private _vecDistance = (_fromPos vectorDiff _toPos ) vectorMultiply 0.5;  
+ private _distance = _fromPos vectorDistance _toPos; 
+   
+ private _vectorDir = _fromPos vectorFromTo _toPos;       
+ _velocity = (_fromPos vectorDiff _toPos) vectorMultiply 20;     
+  
+ _e_static = "#particlesource" createVehicleLocal _toPos;       
+    
+ _e_static setParticleParams [["\A3\data_f\laserBeam", 1, 1, 1], "", "SpaceObject", 1, 0.05, _vecDistance, [0,0,0], 0, 1.1475, 0.9,0, [_distance], [[255, 0, 0, 1], [255, 0, 0, 1]], [1], 0, 0, "", "", "no_object",0,false, -1, [[0,30,30,0]], _vectorDir];       
+ _e_static setDropInterval 0.05;      
+ sleep 0.05;      
+ deleteVehicle _e_static; 
+};
+
+YOSHI_beamVic2Pos = {
+	params ["_vic", "_pos"];
+
+
+	_count = 3;
+
+	while {(alive _vic) && (_count > 0)} do {
+		hint "beep";
+		_topOfVic = ASLToATL ([_vic] call YOSHI_getPosTop); 
+		[_topOfVic, _pos] call YOSHI_beamA2B;
+		sleep 0.3;
+		_count = _count - 1;
+	};
+
+};
+
+ 
+ 
+[[_this, (getPosATL cone)], YOSHI_beamVic2Pos] remoteExec ["spawn"];
