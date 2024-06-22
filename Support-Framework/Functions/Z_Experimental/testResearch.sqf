@@ -737,3 +737,38 @@ YOSHI_beamVic2Pos = {
  
  
 [[_this, (getPosATL cone)], YOSHI_beamVic2Pos] remoteExec ["spawn"];
+
+
+
+///////////// Universal APS Code:
+
+
+_this addEventHandler ["Fired", {
+	params ["_unit", "_weapon", "_muzzle", "_mode", "_ammo", "_magazine", "_projectile"];
+	if (_projectile isKindOf "MissileBase" || _projectile isKindOf "RocketBase") then {
+		hint format ["Missile or rocket fired"];
+		[_projectile] spawn {
+			params ["_proj"];
+			while {(alive _proj)} do {
+				{
+					if ((_proj distance _x) < 15) exitWith {
+						private _pos = getPosASL _proj;
+						deleteVehicle _proj;
+						_orange = createVehicle ["ModuleAPERSMineDispenser_Mine_F", _pos, [], 0, "CAN_COLLIDE"];	
+						_orange setDamage 1;
+					};
+				} forEach (missionNamespace getVariable ["APS_objects", []]);
+			};
+		};
+	};
+}];
+
+/// TODO: look into:
+
+["CAManBase", "init", {
+    params ["_unit"];
+    _unit addEventHandler ["Fired", {
+        params ["_unit", "_weapon", "_muzzle", "_mode", "_ammo", "_magazine", "_projectile"];
+        /// ... 
+    }];
+}] call CBA_fnc_addClassEventHandler;
