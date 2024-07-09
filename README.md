@@ -1,8 +1,10 @@
 # Yoshi's Support Framework
 
+[Steam Workshop Page](https://steamcommunity.com/sharedfiles/filedetails/?id=3119475113)
+
 **This is a simple and easy to use system for implementing AI-driven deployments.**
 
-Disclaimer: This is my first ever attempt at creating a mod, so I by no means am considering myself an expert. If you find any issues, I appreciate if you could kindly report them in the comments and I will do my best to try and take a look.
+Disclaimer: This is my first ever attempt at creating a mod, so I by no means am considering myself an expert. If you find any issues, I appreciate if you could kindly report them in the [comments](https://steamcommunity.com/sharedfiles/filedetails/?id=3119475113) and I will do my best to try and take a look.
 
 ## Contents
 
