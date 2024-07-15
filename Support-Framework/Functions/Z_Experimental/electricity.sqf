@@ -15,7 +15,7 @@ _myFunction = {
     _center = [(_bl_corner select 0)+500,(_bl_corner select 1)+500, 0];
 
     _objectsArray = nearestTerrainObjects [_center, ["Building", "Power Lines", "Hide", "Transmitter", "Powersolar", "Powerwind", "Powerwave"], 750]; 
-
+    _objectsArray append (nearestObjects [_center, [], 750]);
     _filteredArray = _objectsArray inAreaArray [_center, 500, 500, 0, true];
     { 
         _obj = _x;
@@ -32,6 +32,7 @@ _myFunction = {
             _marker setMarkerShapeLocal "ICON";
             _marker setMarkerTypeLocal "mil_dot";
             _marker setMarkerColor "ColorRed"; 
+            _marker setMarkerShadow false;
             globalMarkersArray pushBack _marker;
             _marked = true; 
         };  
@@ -47,6 +48,7 @@ _myFunction = {
                 _marker setMarkerShapeLocal "ICON"; 
                 _marker setMarkerTypeLocal "mil_dot";  
                 _marker setMarkerColor "ColorBlue";  
+                _marker setMarkerShadow false;
                 globalMarkersArray pushBack _marker;
                 _marked = true; 
             };
@@ -57,6 +59,7 @@ _myFunction = {
                     _marker setMarkerShapeLocal "ICON"; 
                     _marker setMarkerTypeLocal "mil_dot";  
                     _marker setMarkerColor "ColorOrange";  
+                    _marker setMarkerShadow false;
                     globalMarkersArray pushBack _marker;
                     _marked = true; 
                 } else {
@@ -65,9 +68,43 @@ _myFunction = {
                     _marker setMarkerShapeLocal "ICON"; 
                     _marker setMarkerTypeLocal "mil_dot";  
                     _marker setMarkerColor "ColorCIV";  
+                    _marker setMarkerShadow false;
                     globalMarkersArray pushBack _marker;
                     _marked = true; 
                 };
+            };
+            if (!_marked && _modelPath find "highvoltage" >= 0) then {
+                if (!_marked && _modelPath find "tower" >= 0) then {
+                    _markerName = format ["_USER_DEFINED PurpleMarker_%1", _obj];
+                    _marker = createMarkerLocal [_markerName, _obj]; 
+                    _marker setMarkerShapeLocal "ICON"; 
+                    _marker setMarkerTypeLocal "mil_dot";  
+                    _marker setMarkerColor "ColorCIV";  
+                    _marker setMarkerShadow false;
+                    globalMarkersArray pushBack _marker;
+                    _marked = true;
+                };
+                if (!_marked && _modelPath find "wire" >= 0) then {
+                    _markerName = format ["_USER_DEFINED OrangeMarker_%1", _obj];
+                    _marker = createMarkerLocal [_markerName, _obj]; 
+                    _marker setMarkerShapeLocal "ICON"; 
+                    _marker setMarkerTypeLocal "mil_dot";  
+                    _marker setMarkerColor "ColorOrange";
+                    _marker setMarkerShadow false;  
+                    globalMarkersArray pushBack _marker;
+                    _marked = true;  
+                };
+                if (!_marked) then {
+                    _markerName = format ["_USER_DEFINED UnknownMarker_%1", _obj];
+                    _marker = createMarkerLocal [_markerName, _obj]; 
+                    _marker setMarkerShapeLocal "ICON"; 
+                    _marker setMarkerTypeLocal "mil_dot";  
+                    _marker setMarkerColor "ColorYellow";  
+                    _marker setMarkerShadow false;
+                    _marker setMarkerTextLocal format ["%1", _modelPath];
+                    globalMarkersArray pushBack _marker;
+                    _marked = true;
+                }; 
             };
             if (!_marked && _modelPath find "power" >= 0) then {
                 if (!_marked && ((_modelPath find "pole" >= 0) || (_modelPath find "con" >= 0) || (_modelPath find "wood" >= 0))) then {
@@ -75,7 +112,8 @@ _myFunction = {
                     _marker = createMarkerLocal [_markerName, _obj]; 
                     _marker setMarkerShapeLocal "ICON"; 
                     _marker setMarkerTypeLocal "mil_dot";  
-                    _marker setMarkerColor "ColorGreen";  
+                    _marker setMarkerColor "ColorGreen";
+                    _marker setMarkerShadow false;  
                     globalMarkersArray pushBack _marker;
                     _marked = true; 
                 };
@@ -84,7 +122,8 @@ _myFunction = {
                     _marker = createMarkerLocal [_markerName, _obj]; 
                     _marker setMarkerShapeLocal "ICON"; 
                     _marker setMarkerTypeLocal "mil_dot";  
-                    _marker setMarkerColor "ColorOrange";  
+                    _marker setMarkerColor "ColorOrange";
+                    _marker setMarkerShadow false;  
                     globalMarkersArray pushBack _marker;
                     _marked = true; 
                 };
@@ -93,7 +132,8 @@ _myFunction = {
                     _marker = createMarkerLocal [_markerName, _obj]; 
                     _marker setMarkerShapeLocal "ICON"; 
                     _marker setMarkerTypeLocal "mil_dot";  
-                    _marker setMarkerColor "ColorWhite";  
+                    _marker setMarkerColor "ColorWhite";
+                    _marker setMarkerShadow false;  
                     globalMarkersArray pushBack _marker;
                     _marked = true;
                 };
@@ -104,6 +144,7 @@ _myFunction = {
                 _marker setMarkerShapeLocal "ICON"; 
                 _marker setMarkerTypeLocal "mil_dot";  
                 _marker setMarkerColor "ColorGUER";  
+                _marker setMarkerShadow false;
                 globalMarkersArray pushBack _marker;
                 _marked = true; 
             };
@@ -115,7 +156,8 @@ _myFunction = {
             _marker = createMarkerLocal [_markerName, _obj];
             _marker setMarkerShapeLocal "ICON";
             _marker setMarkerTypeLocal "mil_dot"; 
-            _marker setMarkerColor "ColorPink"; 
+            _marker setMarkerColor "ColorPink";
+            _marker setMarkerShadow false; 
             globalMarkersArray pushBack _marker; 
         };
     } forEach _filteredArray; 
@@ -178,3 +220,15 @@ if (isServer) then {
         [_x] call _drawBldgs;
     } forEach ["construct", "base_area"]; 
 };
+
+/////////////
+
+
+private _allTerrainObjects = nearestObjects 
+ [ 
+  _this, 
+  [], 
+  1000 
+ ]; 
+ _allTerrainObjects append (nearestObjects [_this, [], 1000]);
+ { _x switchLight "OFF" } forEach _allTerrainObjects;
