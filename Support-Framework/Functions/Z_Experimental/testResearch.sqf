@@ -749,15 +749,18 @@ _this addEventHandler ["Fired", {
 		hint format ["Missile or rocket fired"];
 		[_projectile] spawn {
 			params ["_proj"];
+			hint format ["Spawned at : %1", serverTime];
 			while {(alive _proj)} do {
 				{
-					if ((_proj distance _x) < 15) exitWith {
-						private _pos = getPosASL _proj;
+					if ((_proj distance _x) < 30) exitWith {
+						private _pos = getPosATL _proj;
 						deleteVehicle _proj;
 						_orange = createVehicle ["ModuleAPERSMineDispenser_Mine_F", _pos, [], 0, "CAN_COLLIDE"];	
 						_orange setDamage 1;
+						hint format ["Detected at : %1", serverTime];
 					};
 				} forEach (missionNamespace getVariable ["APS_objects", []]);
+				sleep 0.05;
 			};
 		};
 	};
@@ -772,3 +775,25 @@ _this addEventHandler ["Fired", {
         /// ... 
     }];
 }] call CBA_fnc_addClassEventHandler;
+
+
+_count = 0;
+{
+	_this setObjectMaterialGlobal [_count, "A3\Structures_F\Data\Windows\window_set.rvmat"];
+	_count = _count + 1;
+} forEach (getObjectTextures _this);
+
+
+/////
+
+
+private _trigger = createTrigger ["EmptyDetector", (getPos _this), true];  
+_trigger setTriggerArea [5, 5, 0, false];   
+_trigger setTriggerActivation ["ANY", "PRESENT", true];   
+_trigger setTriggerStatements [  
+    "{if ((_x isKindOf 'Man') && (vehicle _x == _x)) exitWith {true};} forEach thisList;",  
+    "{if ((_x isKindOf 'Man') && (vehicle _x == _x)) then {hint format['A %1 on foot has entered the trigger area. %2', _x, serverTime];};} forEach thisList;",  
+    "hint 'A Man on foot has left the trigger area.';"  
+];
+
+// also add trigger for fired to temporarily hide the object attached

@@ -73,18 +73,6 @@ if (_cbrConfigured) then {
 	} forEach _syncedCBRObjects;
 };
 
-private _virtualStorageConfig = missionNamespace getVariable ["YOSHI_VIRTUAL_STORAGE", nil];
-private _virtualStorageConfigured = !(isNil "_virtualStorageConfig");
-private _fabricatorConfig = missionNamespace getVariable ["YOSHI_FABRICATOR", nil];
-private _fabricatorConfigured = !(isNil "_fabricatorConfig");
-if (_virtualStorageConfigured && _fabricatorConfigured) then {
-	private _syncedVirtualStorageObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_VIRTUAL_STORAGE");
-	private _syncedFabricatorObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_FABRICATOR");
-	{
-		[_x, _syncedVirtualStorageObjects] remoteExec ["SupportFramework_fnc_addItemsToFabricator", -2, true];
-	} forEach _syncedFabricatorObjects;
-};
-
 //// //// ////////////////////////////////////////////////////////////////////////////////
 
 

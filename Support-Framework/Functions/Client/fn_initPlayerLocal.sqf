@@ -510,3 +510,16 @@ private _CBRDisableVicAction = [
 ["LandVehicle", 0, ["ACE_MainActions"], _CBRDisableVicAction, true] call ace_interact_menu_fnc_addActionToClass;
 
 execVM "\Support-Framework\Functions\Client\counterBatteryRadar.sqf";
+
+
+private _virtualStorageConfig = missionNamespace getVariable ["YOSHI_VIRTUAL_STORAGE", nil];
+private _virtualStorageConfigured = !(isNil "_virtualStorageConfig");
+private _fabricatorConfig = missionNamespace getVariable ["YOSHI_FABRICATOR", nil];
+private _fabricatorConfigured = !(isNil "_fabricatorConfig");
+if (_virtualStorageConfigured && _fabricatorConfigured) then {
+	private _syncedVirtualStorageObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_VIRTUAL_STORAGE");
+	private _syncedFabricatorObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_FABRICATOR");
+	{
+		[_x, _syncedVirtualStorageObjects] call SupportFramework_fnc_addItemsToFabricator;
+	} forEach _syncedFabricatorObjects;
+};

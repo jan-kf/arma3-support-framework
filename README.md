@@ -15,8 +15,10 @@ Disclaimer: This is my first ever attempt at creating a mod, so I by no means am
 5. Artillery
 6. Recon
 7. Counter Battery Radar (CBR)
-8. Fun Facts
-9. Special Thanks
+8. Fabricator
+9. Active Protection System (APS) "Trophy System"
+10. Fun Facts
+11. Special Thanks
 
 ## 1. Future Plans / Backlog
 
@@ -111,7 +113,38 @@ This radar will mark on the map any projectile that it detects, and will also ca
 
 In the settings of the module, you will have the ability to set zones of alarm, ranging from basic detection, caution, warning, and incoming. I think the default values for the ranges are quite nice, but feel free to modify them, or set them to 0 if you would like to disable a particular alarm. Each alarm will trigger if a projectile is detected to have an impact within the relevant range that was configured, with each tier taking higher precedence than the last, to prevent overlapping alarms.
 
-## 8. Fun Facts
+## 8. How to use: Fabricator (EXPERIMENTAL)
+
+**Module does not need to be synced to any other module, and the Module's location is irreverent.**
+
+The fabricator module has a twin module called the "Virtual Storage Module"
+
+All you need to set up a fabricator is to place down the virtual storage module, sync anything you want to it (My group uses pre-filled boxes of supplies) and then sync the fabricator module to any object in the game.
+
+Once in game, the object that the fabricator is synced to will be ace-interactive and provide options to spawn the items you've synced to the virtual storage.
+
+## 9. How to use: Active Protection System (APS) "Trophy System" (EXPERIMENTAL)
+
+This is actually one of the few modules that does not require the home base module, so it works completely independently from the other modules.
+
+The quick description for this feature is that it mimics a real-life APS, in so that it is capable of "shooting down" incoming rockets and missiles.
+
+**Module does not need to be synced to any other module, and the Module's location is irreverent.**
+
+You may also have multiple of this module if you'd like to configure different APS systems for different vehicles and objects. Simply sync the objects to the corresponding module that has the config you want.
+
+There are a few settings to configure:
+
+- Charge Count:
+  - This is the amount of charges that the APS has, which roughly corresponds to how many projectiles it can shoot down before it can't defend anymore.
+- Range:
+  - This is the radius (in meters) that the APS defends, if you set it to be -1, then the script will try and find a safe size for the object that will be defended. Manually setting the value is useful if you would like to create an APS on something that's not a vehicle, and need it to cover a large enough area.
+- Interval:
+  - This is the time in seconds that the APS checks if there is a rocket/missile in it's protection sphere. This can be useful for balancing the system if you think it's overpowered. I strongly recommend NOT setting this to 0 seconds since then it'll attempt to calculate every frame which can be extremely resource intensive.
+- Cool down:
+  - This is time in seconds that the APS "waits" between takedowns of projectiles. This can be useful for balancing the system if you think it's overpowered, such as giving a window of opportunity to sneak a rocket right after one was shot down.
+
+## 10. Fun Facts
 
 By default, the built in game's "Base" gets used as the ATC side communication, but you can sync any unit to the module and that unit's call-sign will be used instead.
 
@@ -123,7 +156,7 @@ if your mission includes a Zeus, the Game master will be able to place down addi
 
 Zeus will also automatically have access to any and all actions regardless of if they have a required equipment on their character or not. However, this will only be if they self-interact within the game master interface.
 
-## 9. Special Thanks
+## 11. Special Thanks
 
 - Bull (Moppy), the man who inspired the Mod
 
