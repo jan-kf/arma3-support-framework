@@ -1,5 +1,5 @@
 params ["_vehicle"];
-private _basePads = call SupportFramework_fnc_getPadsNearBase;
+private _basePads = call YOSHI_fnc_getPadsNearBase;
 // Vehicle netId to check against
 private _vehicleNetId = netId _vehicle;
 

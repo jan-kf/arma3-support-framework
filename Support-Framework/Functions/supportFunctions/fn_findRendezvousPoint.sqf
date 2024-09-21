@@ -2,8 +2,8 @@ params ["_vic", "_target", ["_checkOccupied", false], ["_goHome", false]];
 private _dropOffPoint = nil;
 
 if (_vic getVariable ["isHeli", false]) then {
-	private _padsNearBase = call SupportFramework_fnc_getPadsNearBase;
-	private _padsNearTarget = [_target] call SupportFramework_fnc_getPadsNearTarget;
+	private _padsNearBase = call YOSHI_fnc_getPadsNearBase;
+	private _padsNearTarget = [_target] call YOSHI_fnc_getPadsNearTarget;
 	private _landingPadClasses = ["Land_HelipadEmpty_F", "Land_HelipadCircle_F", "Land_HelipadCivil_F", "Land_HelipadRescue_F", "Land_HelipadSquare_F", "Land_JumpTarget_F"];
 
 	private _nearestLandingPads = _padsNearBase;

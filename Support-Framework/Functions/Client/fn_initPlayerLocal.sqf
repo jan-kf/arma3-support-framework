@@ -27,7 +27,7 @@
 // 	];
 
 // 	// Get the position of YOSHI_HOME_BASE_CONFIG
-// 	private _homeBasePos = getPos (missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", objNull]);
+// 	private _homeBasePos = getPos YOSHI_HOME_BASE_CONFIG;
 
 // 	// Find all landing pads on the map
 // 	private _allLandingPads = [];
@@ -39,7 +39,7 @@
 // 	private _validLandingPads = [];
 // 	{
 // 		private _landingPadPos = getPos _x;
-// 		if (_landingPadPos call call SupportFramework_fnc_isAtBase) then {
+// 		if (_landingPadPos call call YOSHI_fnc_isAtBase) then {
 // 			private _nearbyLocations = nearestLocations [_landingPadPos, _locationTypes, 50];
 // 			if (count _nearbyLocations > 0) then {
 // 				private _nearestLocation = _nearbyLocations select 0;
@@ -68,18 +68,17 @@ private _redeploymentActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
-		private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
-		private _homeBaseConfigured = !(isNil "_homeBase");
+		private _homeBaseConfigured = !(isNil "YOSHI_HOME_BASE_CONFIG");
 
 		if (_homeBaseConfigured) then {
-			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["RequiredItems", ""];
+			private _requiredItemsStr = YOSHI_HOME_BASE_CONFIG getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
 				_requiredItems = _requiredItemsStr splitString ", ";
 			} else {
 				_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
 			};
-			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
+			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
 			
 		 	_hasItem
 		} else {
@@ -88,7 +87,7 @@ private _redeploymentActions = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		[_target, _caller, _params] call SupportFramework_fnc_getRedeployActions;
+		[_target, _caller, _params] call YOSHI_fnc_getRedeployActions;
 	}
 ] call ace_interact_menu_fnc_createAction;
 
@@ -103,19 +102,18 @@ private _casActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
-		private _casConfig = missionNamespace getVariable ["YOSHI_SUPPORT_CAS_CONFIG", nil];
-		private _CasConfigured = !(isNil "_casConfig");
+		private _CasConfigured = !(isNil "YOSHI_SUPPORT_CAS_CONFIG");
 
 		if (_CasConfigured) then {
 
-			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_CAS_CONFIG") getVariable ["RequiredItems", ""];
+			private _requiredItemsStr = YOSHI_SUPPORT_CAS_CONFIG getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
 				_requiredItems = _requiredItemsStr splitString ", ";
 			} else {
 				_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
 			};
-			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
+			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
 
 			_hasItem 
 		} else {
@@ -124,7 +122,7 @@ private _casActions = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		private _actions = [_target, _caller, _params] call SupportFramework_fnc_getCasActions;
+		private _actions = [_target, _caller, _params] call YOSHI_fnc_getCasActions;
 		_actions 
 
 	}
@@ -141,19 +139,18 @@ private _reconActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
-		private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
-		private _ReconConfigured = !(isNil "_reconConfig");
+		private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
 
 		if (_ReconConfigured) then {
 
-			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["RequiredItems", ""];
+			private _requiredItemsStr = YOSHI_SUPPORT_RECON_CONFIG getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
 				_requiredItems = _requiredItemsStr splitString ", ";
 			} else {
 				_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
 			};
-			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
+			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
 
 			_hasItem
 		} else {
@@ -162,7 +159,7 @@ private _reconActions = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		private _actions = [_target, _caller, _params] call SupportFramework_fnc_getReconActions;
+		private _actions = [_target, _caller, _params] call YOSHI_fnc_getReconActions;
 		_actions 
 
 	}
@@ -173,7 +170,7 @@ private _artilleryActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
-		private _artyPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["ArtilleryPrefixes", ""];
+		private _artyPrefixStr = YOSHI_SUPPORT_ARTILLERY_CONFIG getVariable ["ArtilleryPrefixes", ""];
 		private _artyPrefixes = [];
 		if (_artyPrefixStr != "") then {
 			_artyPrefixes = _artyPrefixStr splitString ", ";
@@ -189,11 +186,10 @@ private _artilleryActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
-		private _artyConfig = missionNamespace getVariable ["YOSHI_SUPPORT_ARTILLERY_CONFIG", nil];
-		private _artyConfigured = !(isNil "_artyConfig");
+		private _artyConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
 
 		if (_artyConfigured) then {
-			private _requiredItemsStr = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["RequiredItems", ""];
+			private _requiredItemsStr = YOSHI_SUPPORT_ARTILLERY_CONFIG getVariable ["RequiredItems", ""];
 			private _requiredItems = [];
 			if (_requiredItemsStr != "") then {
 				_requiredItems = _requiredItemsStr splitString ", ";
@@ -201,7 +197,7 @@ private _artilleryActions = [
 				_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
 			};
 
-			private _hasItem = [_requiredItems, _caller] call SupportFramework_fnc_hasItems;
+			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
 			
 			_hasItem
 
@@ -211,7 +207,7 @@ private _artilleryActions = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		[_target, _caller, _params] call SupportFramework_fnc_getArtyTargetActions;
+		[_target, _caller, _params] call YOSHI_fnc_getArtyTargetActions;
 	},
 	"", // 7: Position (Position array, Position code or Selection Name) <ARRAY>, <CODE> or <STRING> (Optional)
 	4, // 8: Distance <NUMBER>
@@ -235,7 +231,7 @@ private _redeploymentActionsZeus = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		[_target, _caller, _params] call SupportFramework_fnc_getRedeployActions;
+		[_target, _caller, _params] call YOSHI_fnc_getRedeployActions;
 	}
 ] call ace_interact_menu_fnc_createAction;
 
@@ -251,7 +247,7 @@ private _casActionsZeus = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		private _actions = [_target, _caller, _params] call SupportFramework_fnc_getCasActions;
+		private _actions = [_target, _caller, _params] call YOSHI_fnc_getCasActions;
 		_actions 
 
 	}
@@ -269,7 +265,7 @@ private _reconActionsZeus = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		private _actions = [_target, _caller, _params] call SupportFramework_fnc_getReconActions;
+		private _actions = [_target, _caller, _params] call YOSHI_fnc_getReconActions;
 		_actions 
 
 	}
@@ -280,7 +276,7 @@ private _artilleryActionsZeus = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
-		private _artyPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["ArtilleryPrefixes", ""];
+		private _artyPrefixStr = YOSHI_SUPPORT_ARTILLERY_CONFIG getVariable ["ArtilleryPrefixes", ""];
 		private _artyPrefixes = [];
 		if (_artyPrefixStr != "") then {
 			_artyPrefixes = _artyPrefixStr splitString ", ";
@@ -297,7 +293,7 @@ private _artilleryActionsZeus = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		[_target, _caller, _params] call SupportFramework_fnc_getArtyTargetActions;
+		[_target, _caller, _params] call YOSHI_fnc_getArtyTargetActions;
 	},
 	"", // 7: Position (Position array, Position code or Selection Name) <ARRAY>, <CODE> or <STRING> (Optional)
 	4, // 8: Distance <NUMBER>
@@ -325,7 +321,7 @@ private _uavAction = [
 		// RECON search details
 		private _actions = [];
 
-		private _reconPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["ReconPrefixes", ""];
+		private _reconPrefixStr = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ReconPrefixes", ""];
 		private _reconPrefixes = [];
 		if (_reconPrefixStr != "") then {
 			_reconPrefixes = _reconPrefixStr splitString ", ";
@@ -351,14 +347,13 @@ private _uavAction = [
 							private _vic = _args select 0;
 							private _marker = _args select 1;
 
-							[_vic, getMarkerPos _marker, _caller] remoteExec ["SupportFramework_fnc_requestFieldRecon", 2];
+							[_vic, getMarkerPos _marker, _caller] remoteExec ["YOSHI_fnc_requestFieldRecon", 2];
 						}, 
 						{
 							params ["_target", "_caller", "_args"];
 							private _vic = _args select 0;
 							// // Condition code here
-							private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
-							private _ReconConfigured = !(isNil "_reconConfig");
+							private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
 							private _isUAV = unitIsUAV _vic;
 							_ReconConfigured && _isUAV
 						},
@@ -387,10 +382,9 @@ private _heliActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
-		private _homeBaseConfigured = !(isNil "_homeBase");
+		private _homeBaseConfigured = !(isNil "YOSHI_HOME_BASE_CONFIG");
 		if (_homeBaseConfigured) then {
-			private _atBase = _target call SupportFramework_fnc_isAtBase;
+			private _atBase = _target call YOSHI_fnc_isAtBase;
 			_atBase
 		} else {
 			false
@@ -398,7 +392,7 @@ private _heliActions = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		[_target, _caller, _params] call SupportFramework_fnc_getVicActions;
+		[_target, _caller, _params] call YOSHI_fnc_getVicActions;
 	}
 ] call ace_interact_menu_fnc_createAction;
 
@@ -416,11 +410,8 @@ private _artilleryVicActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
-		private _homeBaseConfigured = !(isNil "_homeBase");
-
-		private _artilleryConfig = missionNamespace getVariable ["YOSHI_SUPPORT_ARTILLERY_CONFIG", nil];
-		private _artilleryConfigured = !(isNil "_artilleryConfig");
+		private _homeBaseConfigured = !(isNil "YOSHI_HOME_BASE_CONFIG");
+		private _artilleryConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
 
 		if (_homeBaseConfigured && _artilleryConfigured) then {
 			private _canDoArtilleryFire = _target getVariable ["isArtillery", false];
@@ -432,7 +423,7 @@ private _artilleryVicActions = [
 	},
 	{
 		params ["_target", "_caller", "_params"];
-		[_target, _caller, _params] call SupportFramework_fnc_getVicActions;
+		[_target, _caller, _params] call YOSHI_fnc_getVicActions;
 	}
 ] call ace_interact_menu_fnc_createAction;
 
@@ -459,11 +450,9 @@ private _CBREnableVicAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
-		private _homeBaseConfigured = !(isNil "_homeBase");
+		private _homeBaseConfigured = !(isNil "YOSHI_HOME_BASE_CONFIG");
 
-		private _cbrConfig = missionNamespace getVariable ["YOSHI_CBR", nil];
-		private _cbrConfigured = !(isNil "_cbrConfig");
+		private _cbrConfigured = !(isNil "YOSHI_CBR");
 
 		private _canCBR = _target getVariable ["canCBR", false];
 
@@ -487,11 +476,9 @@ private _CBRDisableVicAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
-		private _homeBaseConfigured = !(isNil "_homeBase");
+		private _homeBaseConfigured = !(isNil "YOSHI_HOME_BASE_CONFIG");
 
-		private _cbrConfig = missionNamespace getVariable ["YOSHI_CBR", nil];
-		private _cbrConfigured = !(isNil "_cbrConfig");
+		private _cbrConfigured = !(isNil "YOSHI_CBR");
 
 		private _canCBR = _target getVariable ["canCBR", false];
 
@@ -512,14 +499,13 @@ private _CBRDisableVicAction = [
 execVM "\Support-Framework\Functions\Client\counterBatteryRadar.sqf";
 
 
-private _virtualStorageConfig = missionNamespace getVariable ["YOSHI_VIRTUAL_STORAGE", nil];
-private _virtualStorageConfigured = !(isNil "_virtualStorageConfig");
-private _fabricatorConfig = missionNamespace getVariable ["YOSHI_FABRICATOR", nil];
-private _fabricatorConfigured = !(isNil "_fabricatorConfig");
+
+private _virtualStorageConfigured = !(isNil "YOSHI_VIRTUAL_STORAGE");
+private _fabricatorConfigured = !(isNil "YOSHI_FABRICATOR");
 if (_virtualStorageConfigured && _fabricatorConfigured) then {
-	private _syncedVirtualStorageObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_VIRTUAL_STORAGE");
-	private _syncedFabricatorObjects = synchronizedObjects (missionNamespace getVariable "YOSHI_FABRICATOR");
+	private _syncedVirtualStorageObjects = synchronizedObjects YOSHI_VIRTUAL_STORAGE;
+	private _syncedFabricatorObjects = synchronizedObjects YOSHI_FABRICATOR;
 	{
-		[_x, _syncedVirtualStorageObjects] call SupportFramework_fnc_addItemsToFabricator;
+		[_x, _syncedVirtualStorageObjects] call YOSHI_fnc_addItemsToFabricator;
 	} forEach _syncedFabricatorObjects;
 };

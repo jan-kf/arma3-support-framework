@@ -1,7 +1,7 @@
 params ["_target", "_caller", "_params"];
 	
 private _actions = [];
-private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
+private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 {
 	private _vehicle = _x;
 	if (!(_vehicle getVariable ["isArtillery", false]) && !(_vehicle getVariable ["isCAS", false]) && !(_vehicle getVariable ["isRecon", false])) then {
@@ -35,7 +35,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						_names pushBack (name _x);
 					} forEach _allInVehicle;
 
-					private _lzPrefixStr = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["LzPrefixes", ""];
+					private _lzPrefixStr = YOSHI_HOME_BASE_CONFIG getVariable ["LzPrefixes", ""];
 					private _lzPrefixes = [];
 					if (_lzPrefixStr != "") then {
 						_lzPrefixes = _lzPrefixStr splitString ", ";
@@ -97,10 +97,10 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						// statement 
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
-						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+						if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 							hint "Waving off transport...";
 						};
-						[_vic] remoteExec ["SupportFramework_fnc_waveOff", 2];
+						[_vic] remoteExec ["YOSHI_fnc_waveOff", 2];
 					}, 
 					{
 						params ["_target", "_caller", "_vic"];
@@ -146,9 +146,9 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						_vic setVariable ["currentTask", "requestBaseLZ", true];
 						private _groupLeaderGroup = group _caller;
 						private _groupLeaderCallsign = groupId _groupLeaderGroup;
-						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call SupportFramework_fnc_sideChatter;
-						[_vic, format["Moving to RTB"]] call SupportFramework_fnc_vehicleChatter;
-						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call YOSHI_fnc_sideChatter;
+						[_vic, format["Moving to RTB"]] call YOSHI_fnc_vehicleChatter;
+						if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 							hint "Transport returning to base...";
 						}
 					}, 
@@ -166,7 +166,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 
 				
 				// LZ search details
-				private _lzPrefixStr = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["LzPrefixes", ""];
+				private _lzPrefixStr = YOSHI_HOME_BASE_CONFIG getVariable ["LzPrefixes", ""];
 				private _lzPrefixes = [];
 				if (_lzPrefixStr != "") then {
 					_lzPrefixes = _lzPrefixStr splitString ", ";
@@ -196,10 +196,10 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 									_vic setVariable ["targetGroupLeader", _caller, true];
 									_vic setVariable ["currentTask", "requestReinsert", true];
 									_vic setVariable ["fullRun", false, true];
-									if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+									if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 										hint "Requesting transport...";
 									};
-									[_vic, getMarkerPos _marker] remoteExec ["SupportFramework_fnc_requestReinsert", 2];
+									[_vic, getMarkerPos _marker] remoteExec ["YOSHI_fnc_requestReinsert", 2];
 								}, 
 								{
 									params ["_target", "_caller", "_args"];
@@ -222,7 +222,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 
 				} forEach allMapMarkers;
 
-				private _loiterActions = [_vehicle, _target] call SupportFramework_fnc_getLoiterActions;
+				private _loiterActions = [_vehicle, _target] call YOSHI_fnc_getLoiterActions;
 
 				_actions pushBack [_vicRTBAction, [], _target];
 					

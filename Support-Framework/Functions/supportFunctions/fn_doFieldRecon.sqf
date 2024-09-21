@@ -1,6 +1,6 @@
 params ["_uav", "_location", "_caller"];
 
-private _locationData = [_location, false] call SupportFramework_fnc_getLocation;
+private _locationData = [_location, false] call YOSHI_fnc_getLocation;
 private _locationName = _locationData select 0;
 private _locationPOS = _locationData select 1;
 
@@ -22,13 +22,12 @@ _uav setVariable ["taskStartTime", serverTime, true];
 private _start = _uav getVariable "taskStartTime";
 private _elapsedTime = serverTime - _start;
 
-private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
-private _ReconConfigured = !(isNil "_reconConfig");
+private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
 private _timeLimit = 300;
 if (_ReconConfigured) then {
-	_timeLimit = _reconConfig getVariable ["TaskTime", 300];
+	_timeLimit = YOSHI_SUPPORT_RECON_CONFIG getVariable ["TaskTime", 300];
 };
-private _markerUpdateInterval = _reconConfig getVariable ["Interval", 5]; 
+private _markerUpdateInterval = YOSHI_SUPPORT_RECON_CONFIG getVariable ["Interval", 5]; 
 
 private _safeIsNull = {
 	params ["_var"];
@@ -46,7 +45,7 @@ private _reconTask = _uav getVariable ["reconTask", false];
 
 while {(alive _uav) && (_elapsedTime < (_timeLimit + (_markerUpdateInterval * 2)))} do { 
 
-	[_uav, "LOITER"] call SupportFramework_fnc_checkPulse;
+	[_uav, "LOITER"] call YOSHI_fnc_checkPulse;
 
 	_reconTask = _uav getVariable ["reconTask", false];
 
@@ -54,7 +53,7 @@ while {(alive _uav) && (_elapsedTime < (_timeLimit + (_markerUpdateInterval * 2)
 
 	if (_hasNoReconTaskRunning) then {
 		
-		_reconTask = [_uav] spawn SupportFramework_fnc_doRecon;
+		_reconTask = [_uav] spawn YOSHI_fnc_doRecon;
 		_uav setVariable ["reconTask", _reconTask, true];
 	};
 
@@ -80,7 +79,7 @@ terminate _reconTask;
 "Drone has completed recon, returning to you" remoteExec ["hint", _caller];
 
 while {(_uav distance2D _caller > 50) || !(unitReady _uav)} do {
-	[_uav] call SupportFramework_fnc_checkPulse;
+	[_uav] call YOSHI_fnc_checkPulse;
 };
 
 [_uav, false] remoteExec ["setCaptive", 0];

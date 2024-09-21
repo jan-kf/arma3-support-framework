@@ -26,7 +26,7 @@ if (_anyDisabled) then {
 if (_isCAS || _isRecon) then {
 	private _destination = _vic getVariable "destination";
 
-	private _locationData = [_destination, false] call SupportFramework_fnc_getLocation;
+	private _locationData = [_destination, false] call YOSHI_fnc_getLocation;
 	private _locationName = _locationData select 0;
 	private _locationPOS = _locationData select 1;
 	if (_isCAS) then {
@@ -37,10 +37,10 @@ if (_isCAS || _isRecon) then {
 			_vic setVariable ["taskStartTime", serverTime, true];
 			//set task to CAS duties
 			_vic setVariable ["currentTask", "performingCAS", true];
-			[driver _vic, format ["Beginning my attack..."]] call SupportFramework_fnc_sideChatter;
+			[driver _vic, format ["Beginning my attack..."]] call YOSHI_fnc_sideChatter;
 		} else {
 			// check if there are any issues
-			[_vic] call SupportFramework_fnc_checkPulse;
+			[_vic] call YOSHI_fnc_checkPulse;
 		};
 	} else {
 		// isRecon
@@ -50,16 +50,16 @@ if (_isCAS || _isRecon) then {
 			_vic setVariable ["taskStartTime", serverTime, true];
 			//set task to Recon duties
 			_vic setVariable ["currentTask", "performingRecon", true];
-			[driver _vic, format ["Beginning Recon..."]] call SupportFramework_fnc_sideChatter;
+			[driver _vic, format ["Beginning Recon..."]] call YOSHI_fnc_sideChatter;
 		} else {
 			// check if there are any issues
-			[_vic, "LOITER"] call SupportFramework_fnc_checkPulse;
+			[_vic, "LOITER"] call YOSHI_fnc_checkPulse;
 		};
 	};
 }else{
 	private _destination = _vic getVariable "destination";
 
-	private _locationData = [_destination] call SupportFramework_fnc_getLocation;
+	private _locationData = [_destination] call YOSHI_fnc_getLocation;
 	private _locationName = _locationData select 0;
 	private _locationPOS = _locationData select 1;
 	// check the vic is near the objective, and ready to land 
@@ -70,6 +70,6 @@ if (_isCAS || _isRecon) then {
 		_vic setVariable ["currentTask", "landingAtObjective", true];
 	} else {
 		// check if there are any issues
-		[_vic] call SupportFramework_fnc_checkPulse;
+		[_vic] call YOSHI_fnc_checkPulse;
 	};
 };

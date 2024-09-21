@@ -1,18 +1,17 @@
 params ["_uav"];
 
-private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
-private _ReconConfigured = !(isNil "_reconConfig");
+private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
 private _timeLimit = 300;
 if (_ReconConfigured) then {
-	_timeLimit = _reconConfig getVariable ["TaskTime", 300];
+	_timeLimit = YOSHI_SUPPORT_RECON_CONFIG getVariable ["TaskTime", 300];
 };
 
 private _detectionRange = 1000; 
-private _markerUpdateInterval = _reconConfig getVariable ["Interval", 5]; 
+private _markerUpdateInterval = YOSHI_SUPPORT_RECON_CONFIG getVariable ["Interval", 5]; 
 private _markers = []; 
 
-private _showNames = _reconConfig getVariable ["ShowNames", true]; 
-private _hasHyperSpectralSensors = _reconConfig getVariable ["HasHyperSpectralSensors", false]; 
+private _showNames = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ShowNames", true]; 
+private _hasHyperSpectralSensors = YOSHI_SUPPORT_RECON_CONFIG getVariable ["HasHyperSpectralSensors", false]; 
 
 private _group = group _uav;
 

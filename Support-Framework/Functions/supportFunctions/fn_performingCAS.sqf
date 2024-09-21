@@ -17,11 +17,11 @@ if (_elapsedTime > 210) then { // 3 minutes, 30 seconds
 	_vicGroup setCombatMode "BLUE";
 	_vicGroup setBehaviourStrong "SAFE";
 
-	[driver _vic, format ["Attack complete, returning to base."]] call SupportFramework_fnc_sideChatter;
+	[driver _vic, format ["Attack complete, returning to base."]] call YOSHI_fnc_sideChatter;
 	// requestLZ at base, and RTB
 	_vic setVariable ["currentTask", "requestBaseLZ", true];
 } else {
-	[_vic] call SupportFramework_fnc_checkPulse;
+	[_vic] call YOSHI_fnc_checkPulse;
 };
 
 // should listen if it gets an early wave-off, 

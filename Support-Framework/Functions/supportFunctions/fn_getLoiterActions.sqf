@@ -3,7 +3,7 @@ params ["_vehicle", "_target"];
 private _actions = [];
 
 // Loiter search details
-private _loiterPrefixStr = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["LoiterPrefixes", ""];
+private _loiterPrefixStr = YOSHI_HOME_BASE_CONFIG getVariable ["LoiterPrefixes", ""];
 private _loiterPrefixes = [];
 if (_loiterPrefixStr != "") then {
 	_loiterPrefixes = _loiterPrefixStr splitString ", ";
@@ -33,26 +33,26 @@ if (_loiterPrefixStr != "") then {
 					_vic setVariable ["fullRun", false, true];
 					_vic setVariable ["destination", getMarkerPos _marker, true];
 					_vic setVariable ["isPerformingDuties", false, true];
-					if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+					if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 						hint "Moving to loiter point...";
 					} else {
 						private _groupLeaderGroup = group _caller;
 						private _groupLeaderCallsign = groupId _groupLeaderGroup;
-						[_caller, format ["%2, this is %1, loiter at %3, over.", _groupLeaderCallsign, groupId group _vic, markerText _marker]] call SupportFramework_fnc_sideChatter;
+						[_caller, format ["%2, this is %1, loiter at %3, over.", _groupLeaderCallsign, groupId group _vic, markerText _marker]] call YOSHI_fnc_sideChatter;
 						[_vic, format ["%1, this is %2, moving to loiter at %3, out.", _groupLeaderCallsign, groupId group _vic, markerText _marker]] spawn  {
 							params ["_vehicle", "_response"];
 							sleep 3;
-							[_vehicle, _response] call SupportFramework_fnc_sideChatter;
+							[_vehicle, _response] call YOSHI_fnc_sideChatter;
 						};
 					};
-					[_vic, format["Moving to hold at %1", markerText _marker]] call SupportFramework_fnc_vehicleChatter;
+					[_vic, format["Moving to hold at %1", markerText _marker]] call YOSHI_fnc_vehicleChatter;
 					private _group = group _vic;
 					// delete waypoints 
 					for "_i" from (count waypoints _group - 1) to 0 step -1 do
 					{
 						deleteWaypoint [_group, _i];
 					};
-					[_vic] remoteExec ["SupportFramework_fnc_loiter", 2];
+					[_vic] remoteExec ["YOSHI_fnc_loiter", 2];
 				}, 
 				{
 					params ["_target", "_caller", "_args"];

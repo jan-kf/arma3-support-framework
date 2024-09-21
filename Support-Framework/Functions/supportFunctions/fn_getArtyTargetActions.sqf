@@ -3,7 +3,7 @@ params ["_target", "_caller", "_params"];
 private _targetActions = [];
 
 // Artillery search details
-private _artyPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG") getVariable ["ArtilleryPrefixes", ""];
+private _artyPrefixStr = YOSHI_SUPPORT_ARTILLERY_CONFIG getVariable ["ArtilleryPrefixes", ""];
 private _artyPrefixes = [];
 if (_artyPrefixStr != "") then {
 	_artyPrefixes = _artyPrefixStr splitString ", ";
@@ -39,7 +39,7 @@ if (_artyPrefixStr != "") then {
 					params ["_targetMarker", "_caller", "_args"];
 					private _vehicleActions = [];
 					
-					private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
+					private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 
 					{ // for each registered vehicle
 						private _vehicle = _x;
@@ -113,15 +113,15 @@ if (_artyPrefixStr != "") then {
 
 																private _targetPos = getMarkerPos _targetMarker;
 
-																private _gridRef = [_targetPos] call SupportFramework_fnc_posToGrid;
+																private _gridRef = [_targetPos] call YOSHI_fnc_posToGrid;
 																private _ETA = _vehicle getArtilleryETA [_targetPos, _shellType];
 
 																private _groupLeaderGroup = group _caller;
 																private _groupLeaderCallsign = groupId _groupLeaderGroup;
-																[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] call SupportFramework_fnc_sideChatter;
+																[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] call YOSHI_fnc_sideChatter;
 																private _response = format ["Affirmative %1, %2 times %3 at %4. ETA: %5 seconds, Out.", _groupLeaderCallsign, _amount, _shellDescription, _gridRef, _ETA];
 																
-																if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+																if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 																	hint _response;
 																} else {
 																	[_vehicle, _response] spawn  {
@@ -129,7 +129,7 @@ if (_artyPrefixStr != "") then {
 																		
 																		sleep 3;
 
-																		[_vehicle, _response] call SupportFramework_fnc_sideChatter;
+																		[_vehicle, _response] call YOSHI_fnc_sideChatter;
 																	};
 																};
 																

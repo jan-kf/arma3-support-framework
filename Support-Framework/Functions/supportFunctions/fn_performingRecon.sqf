@@ -4,11 +4,10 @@ params ["_vic"];
 private _start = _vic getVariable "taskStartTime";
 private _elapsedTime = serverTime - _start;
 
-private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
-private _ReconConfigured = !(isNil "_reconConfig");
+private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
 private _timeLimit = 300;
 if (_ReconConfigured) then {
-	_timeLimit = _reconConfig getVariable ["TaskTime", 300];
+	_timeLimit = YOSHI_SUPPORT_RECON_CONFIG getVariable ["TaskTime", 300];
 };
 
 private _safeIsNull = {
@@ -27,7 +26,7 @@ private _hasNoReconTaskRunning = [_reconTask] call _safeIsNull;
 
 if (_hasNoReconTaskRunning) then {
 	 
-	_reconTask = [_vic] spawn SupportFramework_fnc_doRecon;
+	_reconTask = [_vic] spawn YOSHI_fnc_doRecon;
 	_vic setVariable ["reconTask", _reconTask, true];
 };
 
@@ -45,13 +44,13 @@ if (_elapsedTime > _timeLimit) then {
 	_vicGroup setCombatMode "BLUE";
 	_vicGroup setBehaviourStrong "SAFE";
 
-	[driver _vic, format ["Recon complete, returning to base."]] call SupportFramework_fnc_sideChatter;
+	[driver _vic, format ["Recon complete, returning to base."]] call YOSHI_fnc_sideChatter;
 	// requestLZ at base, and RTB
 	_vic setVariable ["currentTask", "requestBaseLZ", true];
 
 	terminate _reconTask;
 } else {
-	[_vic, "LOITER"] call SupportFramework_fnc_checkPulse;
+	[_vic, "LOITER"] call YOSHI_fnc_checkPulse;
 };
 
 // should listen if it gets an early wave-off, 

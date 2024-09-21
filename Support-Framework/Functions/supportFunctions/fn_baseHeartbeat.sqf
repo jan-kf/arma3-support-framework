@@ -24,20 +24,18 @@ private _isArtilleryCapable = {
     _canDoArtilleryFire // Return true if capable, false otherwise
 };
 
-private _artyConfig = missionNamespace getVariable ["YOSHI_SUPPORT_ARTILLERY_CONFIG", nil];
-private _artyConfigured = !(isNil "_artyConfig");
+private _artyConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
 
 
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
 while {true} do {
 	
-	private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
 
-	if (isNil "_homeBase") exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG is not set, terminating process";};
+	if (isNil "YOSHI_HOME_BASE_CONFIG") exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG is not set, terminating process";};
 	
 	diag_log "[SUPPORT] base heartbeat, bu bum...";
-	// Find all vehicles within a certain radius of _homeBase
-	private _vehiclesNearBase = vehicles select {(_x call SupportFramework_fnc_isAtBase) && (_x isKindOf "Helicopter")}; 
+	// Find all vehicles within a certain radius of YOSHI_HOME_BASE_CONFIG
+	private _vehiclesNearBase = vehicles select {(_x call YOSHI_fnc_isAtBase) && (_x isKindOf "Helicopter")}; 
 
 	// Iterate through each vehicle
 	{
@@ -55,7 +53,7 @@ while {true} do {
 			// check if watchdog is running, if not, start it
 			// [format ["kicking off wd for: %1 ... ", _vehicle]] remoteExec ["systemChat"];
 
-			_watchdog = [_vehicle] spawn SupportFramework_fnc_vehicleWatchdog;
+			_watchdog = [_vehicle] spawn YOSHI_fnc_vehicleWatchdog;
 			sleep 2;
 			_vehicle setVariable ["watchdog", _watchdog, true];
 			if (_getInIndex isEqualTo false) then {
@@ -75,7 +73,7 @@ while {true} do {
 					];
 					private _hello = _msgArray select (floor (random (count _msgArray)));
 					private _msg = format [_hello, name _unit];
-					[_vehicle, _msg] call SupportFramework_fnc_vehicleChatter;
+					[_vehicle, _msg] call YOSHI_fnc_vehicleChatter;
 				}];
 				_vehicle setVariable ["get_in_EH_index", _getInIndex, true];
 			};
@@ -94,7 +92,7 @@ while {true} do {
 	} forEach _vehiclesNearBase;
 
 	// Function to get markers and spawn landing pads if necessary
-	private _lzPrefixStr = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["LzPrefixes", ""];
+	private _lzPrefixStr = YOSHI_HOME_BASE_CONFIG getVariable ["LzPrefixes", ""];
 	private _lzPrefixes = [];
 	if (_lzPrefixStr != "") then {
 		_lzPrefixes = _lzPrefixStr splitString ", ";
@@ -117,7 +115,7 @@ while {true} do {
         if (_lzMatch) then {
             private _markerPos = getMarkerPos _markerName;
             // Check for existing landing pads
-            private _landingPadsNearby = nearestObjects [_markerPos, ["Land_HelipadEmpty_F"], 10];
+            private _landingPadsNearby = [_markerPos, 10] call YOSHI_fnc_getPadsNearTarget;
             if (count _landingPadsNearby == 0) then {
                 // No landing pad nearby, spawn one
                 private _landingPad = createVehicle ["Land_HelipadEmpty_F", _markerPos, [], 0, "CAN_COLLIDE"];
@@ -126,7 +124,7 @@ while {true} do {
     } forEach allMapMarkers;
 
 	if (_artyConfigured) then {
-		private _baseSide = _artyConfig getVariable ["BaseSide", "west"];
+		private _baseSide = YOSHI_SUPPORT_ARTILLERY_CONFIG getVariable ["BaseSide", "west"];
 		if ((typeName _baseSide) != "STRING") then {
 			_baseSide = toLower str(_baseSide)
 		};

@@ -10,7 +10,7 @@ private _registerVicAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _atBase = _target call SupportFramework_fnc_isAtBase;
+		private _atBase = _target call YOSHI_fnc_isAtBase;
 		private _not_registered = !(_target getVariable ["isRegistered", false]);
 		private _isArty = _target getVariable ["isArtillery", false];
 		// show if:
@@ -29,7 +29,7 @@ private _unregisterVicAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _atBase = _target call SupportFramework_fnc_isAtBase;
+		private _atBase = _target call YOSHI_fnc_isAtBase;
 		private _registered = _target getVariable ["isRegistered", false];
 		private _isArty = _target getVariable ["isArtillery", false];
 		// show if:
@@ -43,14 +43,14 @@ private _assignCasVicAction = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code here
 		_target setVariable ["isCAS", true, true];
-		[_target, format ["%1 is ready for tasking... ",groupId group _target]] call SupportFramework_fnc_sideChatter;
+		[_target, format ["%1 is ready for tasking... ",groupId group _target]] call YOSHI_fnc_sideChatter;
 	}, 
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _casConfig = missionNamespace getVariable ["YOSHI_SUPPORT_CAS_CONFIG", nil];
-		private _CasConfigured = !(isNil "_casConfig");
-		private _atBase = _target call SupportFramework_fnc_isAtBase;
+
+		private _CasConfigured = !(isNil "YOSHI_SUPPORT_CAS_CONFIG");
+		private _atBase = _target call YOSHI_fnc_isAtBase;
 		private _registered = _target getVariable ["isRegistered", false];
 		private _isCAS = _target getVariable ["isCAS", false];
 		private _isArty = _target getVariable ["isArtillery", false];
@@ -83,9 +83,8 @@ private _unassignCasVicAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _casConfig = missionNamespace getVariable ["YOSHI_SUPPORT_CAS_CONFIG", nil];
-		private _CasConfigured = !(isNil "_casConfig");
-		private _atBase = _target call SupportFramework_fnc_isAtBase;
+		private _CasConfigured = !(isNil "YOSHI_SUPPORT_CAS_CONFIG");
+		private _atBase = _target call YOSHI_fnc_isAtBase;
 		private _registered = _target getVariable ["isRegistered", false];
 		private _isCAS = _target getVariable ["isCAS", false];
 
@@ -101,13 +100,12 @@ private _assignArtyVicAction = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code here
 		_target setVariable ["isArtillery", true, true];
-		[_target, format ["%1 is ready for tasking... ",groupId group _target]] call SupportFramework_fnc_sideChatter;
+		[_target, format ["%1 is ready for tasking... ",groupId group _target]] call YOSHI_fnc_sideChatter;
 	}, 
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _artilleryConfig = missionNamespace getVariable ["YOSHI_SUPPORT_ARTILLERY_CONFIG", nil];
-		private _artilleryConfigured = !(isNil "_artilleryConfig");
+		private _artilleryConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
 		
 		private _registered = _target getVariable ["isRegistered", false];
 		
@@ -128,8 +126,7 @@ private _unassignArtyVicAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _artilleryConfig = missionNamespace getVariable ["YOSHI_SUPPORT_ARTILLERY_CONFIG", nil];
-		private _artilleryConfigured = !(isNil "_artilleryConfig");
+		private _artilleryConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
 		
 		private _registered = _target getVariable ["isRegistered", false];
 		
@@ -151,7 +148,7 @@ private _requestVicRedeployAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _atBase = _target call SupportFramework_fnc_isAtBase;
+		private _atBase = _target call YOSHI_fnc_isAtBase;
 		private _registered = _target getVariable ["isRegistered", false];
 		private _notRequested = !(_target getVariable ["requestingRedeploy", false]);
 		private _isCAS = _target getVariable ["isCAS", false];
@@ -173,7 +170,7 @@ private _cancelVicRedeployAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _atBase = _target call SupportFramework_fnc_isAtBase;
+		private _atBase = _target call YOSHI_fnc_isAtBase;
 		private _registered = _target getVariable ["isRegistered", false];
 		private _requested = _target getVariable ["requestingRedeploy", false];
 		private _isCAS = _target getVariable ["isCAS", false];

@@ -10,7 +10,7 @@ class CfgPatches {
 };
 
 class CfgFunctions {
-    class SupportFramework {
+    class YOSHI {
         class Server {
             file = "\Support-Framework\Functions\Server";
             class initServer { postInit = 1; }; 
@@ -111,6 +111,9 @@ class CfgFunctions {
             class isAtBase {
                 description = "Function to determine if at base location";
             };
+            class isHeliPad {
+                description = "Function to determine object is a helipad";
+            };
             class landingAtBase {
                 description = "Function to manage landing procedures at base";
             };
@@ -200,7 +203,7 @@ class CfgVehicles {
         category = "SupportFramework_Category";
         displayName = "Home Base Module [REQUIRED]";
         icon = "\Support-Framework\UI\tower.paa"
-        function = "SupportFramework_fnc_setHomeBase";
+        function = "YOSHI_fnc_setHomeBase";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -280,7 +283,7 @@ class CfgVehicles {
         category = "SupportFramework_Category";
         displayName = "CAS Module";
         icon = "\Support-Framework\UI\cas.paa"
-        function = "SupportFramework_fnc_setCAS";
+        function = "YOSHI_fnc_setCAS";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -327,7 +330,7 @@ class CfgVehicles {
         category = "SupportFramework_Category";
         displayName = "Artillery Module";
         icon = "\Support-Framework\UI\artillery.paa"
-        function = "SupportFramework_fnc_setArtillery";
+        function = "YOSHI_fnc_setArtillery";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -389,7 +392,7 @@ class CfgVehicles {
         category = "SupportFramework_Category";
         displayName = "Recon Module";
         icon = "\Support-Framework\UI\recon.paa"
-        function = "SupportFramework_fnc_setRecon";
+        function = "YOSHI_fnc_setRecon";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -472,7 +475,7 @@ class CfgVehicles {
         category = "SupportFramework_Category";
         displayName = "Virtual Storage Module";
         icon = "\Support-Framework\UI\virtualStorage.paa"
-        function = "SupportFramework_fnc_setVirtualStorage";
+        function = "YOSHI_fnc_setVirtualStorage";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -503,7 +506,7 @@ class CfgVehicles {
         category = "SupportFramework_Category";
         displayName = "Fabricator Module";
         icon = "\Support-Framework\UI\fabricator.paa"
-        function = "SupportFramework_fnc_setFabricator";
+        function = "YOSHI_fnc_setFabricator";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -536,7 +539,7 @@ class CfgVehicles {
         category = "SupportFramework_Category";
         displayName = "Counter Battery Radar Module";
         icon = "\Support-Framework\UI\cbr.paa"
-        function = "SupportFramework_fnc_setCBR";
+        function = "YOSHI_fnc_setCBR";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -596,7 +599,7 @@ class CfgVehicles {
         category = "SupportFramework_Category";
         displayName = "Active Protection System Module (APS)";
         icon = "\Support-Framework\UI\aps.paa"
-        function = "SupportFramework_fnc_setAPS";
+        function = "YOSHI_fnc_setAPS";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 2; // Effect is local (0 for local only, 1 for global, 2 for persistent)

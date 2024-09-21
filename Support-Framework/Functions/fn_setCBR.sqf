@@ -1,3 +1,4 @@
 params ["_logic", "_id", "_params"];
 
-missionNamespace setVariable ["YOSHI_CBR", _logic, true];
+YOSHI_CBR =  _logic;
+publicVariable "YOSHI_CBR";

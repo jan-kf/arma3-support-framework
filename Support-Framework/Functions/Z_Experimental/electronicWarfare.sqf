@@ -122,7 +122,7 @@ beans = [] spawn {
 	};
 
 	while {_count > 0} do {
-		private _objects = nearestObjects [_player, ["All"], _range];
+		private _objects = nearestObjects [_player, ["LandVehicle", "Air", "Ship"], _range];
 		hint str([_count, _objects]);
 		private _valuesArray = [];
 
@@ -199,7 +199,7 @@ beans = [] spawn {
 
 				};
 
-				{_valuesArray pushBack [_x, _strengthValue];} forEach _frequencies;
+				{_valuesArray pushBack _x; _valuesArray pushBack _strengthValue} forEach _frequencies;
 				
 			};
 		} forEach _objects;

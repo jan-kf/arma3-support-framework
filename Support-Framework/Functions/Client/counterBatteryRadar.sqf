@@ -2,10 +2,10 @@ YOSHI_mapDrawingEnabled = true;
 YOSHI_projectileIdCounter = 0;
 YOSHI_detectedTargets = [];
 
-YOSHI_projectileDetectionRange = (missionNamespace getVariable "YOSHI_CBR") getVariable ["DetectionRange", 5000];
-YOSHI_projectileCautionRange = (missionNamespace getVariable "YOSHI_CBR") getVariable ["CautionRange", 4000];
-YOSHI_projectileWarningRange = (missionNamespace getVariable "YOSHI_CBR") getVariable ["WarningRange", 2000];
-YOSHI_projectileIncomingRange = (missionNamespace getVariable "YOSHI_CBR") getVariable ["IncomingRange", 500];
+YOSHI_projectileDetectionRange = YOSHI_CBR getVariable ["DetectionRange", 5000];
+YOSHI_projectileCautionRange = YOSHI_CBR getVariable ["CautionRange", 4000];
+YOSHI_projectileWarningRange = YOSHI_CBR getVariable ["WarningRange", 2000];
+YOSHI_projectileIncomingRange = YOSHI_CBR getVariable ["IncomingRange", 500];
 
 YOSHI_mapProjectilesDrawTimeout = 5;
 YOSHI_markerCounter = 0;
@@ -439,7 +439,7 @@ YOSHI_drawTarget = {
 };
 
 YOSHI_monitorLoop = {
-	private _syncedRadars = synchronizedObjects (missionNamespace getVariable "YOSHI_CBR");
+	private _syncedRadars = synchronizedObjects YOSHI_CBR;
 
 	_syncedRadars apply {
 		_x call YOSHI_triggerRadarScan;

@@ -1,7 +1,7 @@
 params ["_target", "_caller", "_params"];
 	
 private _actions = [];
-private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
+private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 {
 	private _vehicle = _x;
 	if (!(_vehicle getVariable ["isArtillery", false]) && _vehicle getVariable ["isRecon", false]) then {
@@ -28,7 +28,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 				private _task = _vic getVariable ["currentTask", "waiting"];
 				if (_task == "waiting") then {
 					
-					private _reconPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["ReconPrefixes", ""];
+					private _reconPrefixStr = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ReconPrefixes", ""];
 					private _reconPrefixes = [];
 					if (_reconPrefixStr != "") then {
 						_reconPrefixes = _reconPrefixStr splitString ", ";
@@ -65,10 +65,10 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						// statement 
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
-						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+						if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 							hint "Waving off RECON...";
 						};
-						[_vic] remoteExec ["SupportFramework_fnc_waveOff", 2];
+						[_vic] remoteExec ["YOSHI_fnc_waveOff", 2];
 					}, 
 					{
 						params ["_target", "_caller", "_vic"];
@@ -93,8 +93,8 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						_vic setVariable ["currentTask", "requestBaseLZ", true];
 						private _groupLeaderGroup = group _caller;
 						private _groupLeaderCallsign = groupId _groupLeaderGroup;
-						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call SupportFramework_fnc_sideChatter;
-						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call YOSHI_fnc_sideChatter;
+						if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 							hint "RECON returning to base...";
 						}
 					}, 
@@ -111,7 +111,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 				] call ace_interact_menu_fnc_createAction;
 
 				// RECON search details
-				private _reconPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_RECON_CONFIG") getVariable ["ReconPrefixes", ""];
+				private _reconPrefixStr = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ReconPrefixes", ""];
 				private _reconPrefixes = [];
 				if (_reconPrefixStr != "") then {
 					_reconPrefixes = _reconPrefixStr splitString ", ";
@@ -119,7 +119,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 					_reconPrefixes = ["recon ", "rp ", "watch "]; // default value -- hard fallback
 				};
 
-				private _loiterActions = [_vehicle, _target] call SupportFramework_fnc_getLoiterActions;
+				private _loiterActions = [_vehicle, _target] call YOSHI_fnc_getLoiterActions;
 
 				_actions = _actions + _loiterActions;
 
@@ -143,18 +143,17 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 									_vic setVariable ["targetGroupLeader", _caller, true];
 									_vic setVariable ["currentTask", "requestRecon", true];
 									_vic setVariable ["fullRun", false, true];
-									if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+									if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 										hint "Calling in RECON...";
 									};
-									[_vic, getMarkerPos _marker] remoteExec ["SupportFramework_fnc_requestRecon", 2];
+									[_vic, getMarkerPos _marker] remoteExec ["YOSHI_fnc_requestRecon", 2];
 								}, 
 								{
 									params ["_target", "_caller", "_args"];
 									private _vic = _args select 0;
 									private _marker = _args select 1;
 									// // Condition code here
-									private _reconConfig = missionNamespace getVariable ["YOSHI_SUPPORT_RECON_CONFIG", nil];
-									private _ReconConfigured = !(isNil "_reconConfig");
+									private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
 									private _isRecon = _target getVariable ["isRecon", false];
 									private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 									private _task = _vic getVariable ["currentTask", "waiting"];

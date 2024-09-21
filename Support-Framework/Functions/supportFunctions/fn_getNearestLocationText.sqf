@@ -1,6 +1,6 @@
 params ["_pos"];
 
-private _locationParams = [_pos] call SupportFramework_fnc_getNearestLocationParams;
+private _locationParams = [_pos] call YOSHI_fnc_getNearestLocationParams;
 
 private _distance = _locationParams select 0;
 private _direction = _locationParams select 1;

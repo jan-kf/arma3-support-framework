@@ -1,8 +1,6 @@
 if (!isServer) exitWith {};
 
-private _homeBase = missionNamespace getVariable ["YOSHI_HOME_BASE_CONFIG", nil];
-
-if (isNil "_homeBase") exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG is not set, terminating process";};
+if (isNil "YOSHI_HOME_BASE_CONFIG") exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG is not set, terminating process";};
 
 private _vic = _this select 0;
 
@@ -43,7 +41,7 @@ if (_isRecon) then {
 	_helloMsg = "Recon asset, %1 On Station...";
 };
 
-[driver _vic, format[_helloMsg, groupId group _vic]] call SupportFramework_fnc_sideChatter;
+[driver _vic, format[_helloMsg, groupId group _vic]] call YOSHI_fnc_sideChatter;
 
 while {_vic getVariable ["isRegistered", false] && alive _vic} do {
 	// run while the vic is registered
@@ -67,7 +65,7 @@ while {_vic getVariable ["isRegistered", false] && alive _vic} do {
 
 	// [format["%1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time]] remoteExec ["systemChat"];
 
-	// [driver _vic, format["%1 -> current task: %2", _vehicleDisplayName, _task]] call SupportFramework_fnc_sideChatter;
+	// [driver _vic, format["%1 -> current task: %2", _vehicleDisplayName, _task]] call YOSHI_fnc_sideChatter;
 	diag_log format["[SUPPORT] %1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time];
 
 
@@ -85,48 +83,48 @@ while {_vic getVariable ["isRegistered", false] && alive _vic} do {
 		// case "requestReinsert": { // called directly
 		// 	// vic was told to begin it's mission, perform startup
 
-		// 	[_vic] call SupportFramework_fnc_requestReinsert;
+		// 	[_vic] call YOSHI_fnc_requestReinsert;
 		// };
 		// case "requestCas": {
 		// 	// vic was told to begin it's cas mission, perform startup
 			
-		// 	[_vic] call SupportFramework_fnc_requestCas;
+		// 	[_vic] call YOSHI_fnc_requestCas;
 		// };
 		case "onMission": {
 			// vic is currently making its way to the redeploy LZ
 			
-			[_vic] call SupportFramework_fnc_onMission;
+			[_vic] call YOSHI_fnc_onMission;
 		};
 		case "RTB": {
 			
-			[_vic] call SupportFramework_fnc_RTB;
+			[_vic] call YOSHI_fnc_RTB;
 		};
 		case "performingCAS": {
 
-			[_vic] call SupportFramework_fnc_performingCAS;
+			[_vic] call YOSHI_fnc_performingCAS;
 		};
 		case "performingRecon": {
 
-			[_vic] call SupportFramework_fnc_performingRecon;
+			[_vic] call YOSHI_fnc_performingRecon;
 		};
 		case "landingAtObjective": {
-			[_vic, _touchdownMessage] call SupportFramework_fnc_landingAtObjective;
+			[_vic, _touchdownMessage] call YOSHI_fnc_landingAtObjective;
 		};
 		case "requestBaseLZ": {
 			
-			[_vic] call SupportFramework_fnc_requestBaseLZ;
+			[_vic] call YOSHI_fnc_requestBaseLZ;
 		};
 		// case "waveOff": {
 
-		// 	[_vic] call SupportFramework_fnc_waveOff;
+		// 	[_vic] call YOSHI_fnc_waveOff;
 		// };
 		case "landingAtBase": {
 
-			[_vic] call SupportFramework_fnc_landingAtBase;
+			[_vic] call YOSHI_fnc_landingAtBase;
 		};
 		case "loiter": {
 
-			[_vic] call SupportFramework_fnc_loiter;
+			[_vic] call YOSHI_fnc_loiter;
 		};
 		case "awaitOrders": {
 			// vic was called in to land, awaiting explicit orders to RTB
@@ -150,7 +148,7 @@ while {_vic getVariable ["isRegistered", false] && alive _vic} do {
 private _isAlive = alive _vic;
 
 if (_isAlive) then {
-	[driver _vic, format["%1 Off Station...", groupId group _vic]] call SupportFramework_fnc_sideChatter;
+	[driver _vic, format["%1 Off Station...", groupId group _vic]] call YOSHI_fnc_sideChatter;
 } else {
 	private _array = [
 		"And so, this is where my story ends, but yours... yours is just beginning.",
@@ -170,7 +168,7 @@ if (_isAlive) then {
 		"Change the world. My final message. Goodbye."
 	];
 	private _goodbye = _array select (floor (random (count _array)));
-	[driver _vic, _goodbye] call SupportFramework_fnc_sideChatter;
+	[driver _vic, _goodbye] call YOSHI_fnc_sideChatter;
 	sleep 3;
 	private _array2 = [
 		"And with that, %1's journey reached its end, a final breath marking the close of an unforgettable saga.",
@@ -186,7 +184,7 @@ if (_isAlive) then {
 	];
 	private _farewell = _array2 select (floor (random (count _array2)));
 
-	private _shutIt = (missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false];
+	private _shutIt = YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false];
 	if (!_shutIt) then {
 		[format[_farewell, groupId group _vic, 'systemChat']] remoteExec ['systemChat'];
 	}

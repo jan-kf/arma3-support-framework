@@ -1,3 +1,4 @@
 params ["_logic", "_id", "_params"];
 
-missionNamespace setVariable ["YOSHI_VIRTUAL_STORAGE", _logic, true];
+YOSHI_VIRTUAL_STORAGE = _logic;
+publicVariable "YOSHI_VIRTUAL_STORAGE";

@@ -1,7 +1,7 @@
 params ["_target", "_caller", "_params"];
 	
 private _actions = [];
-private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
+private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 {
 	private _vehicle = _x;
 	if (!(_vehicle getVariable ["isArtillery", false]) && _vehicle getVariable ["isCAS", false]) then {
@@ -28,7 +28,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 				private _task = _vic getVariable ["currentTask", "waiting"];
 				if (_task == "waiting") then {
 					
-					private _casPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_CAS_CONFIG") getVariable ["CasPrefixes", ""];
+					private _casPrefixStr = YOSHI_SUPPORT_CAS_CONFIG getVariable ["CasPrefixes", ""];
 					private _casPrefixes = [];
 					if (_casPrefixStr != "") then {
 						_casPrefixes = _casPrefixStr splitString ", ";
@@ -65,10 +65,10 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						// statement 
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
-						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+						if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 							hint "Waving off CAS...";
 						};
-						[_vic] remoteExec ["SupportFramework_fnc_waveOff", 2];
+						[_vic] remoteExec ["YOSHI_fnc_waveOff", 2];
 					}, 
 					{
 						params ["_target", "_caller", "_vic"];
@@ -93,8 +93,8 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 						_vic setVariable ["currentTask", "requestBaseLZ", true];
 						private _groupLeaderGroup = group _caller;
 						private _groupLeaderCallsign = groupId _groupLeaderGroup;
-						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call SupportFramework_fnc_sideChatter;
-						if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call YOSHI_fnc_sideChatter;
+						if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 							hint "CAS returning to base...";
 						}
 					}, 
@@ -111,7 +111,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 				] call ace_interact_menu_fnc_createAction;
 
 				// CAS search details
-				private _casPrefixStr = (missionNamespace getVariable "YOSHI_SUPPORT_CAS_CONFIG") getVariable ["CasPrefixes", ""];
+				private _casPrefixStr = YOSHI_SUPPORT_CAS_CONFIG getVariable ["CasPrefixes", ""];
 				private _casPrefixes = [];
 				if (_casPrefixStr != "") then {
 					_casPrefixes = _casPrefixStr splitString ", ";
@@ -119,7 +119,7 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 					_casPrefixes = ["target ", "firemission "]; // default value -- hard fallback
 				};
 
-				private _loiterActions = [_vehicle, _target] call SupportFramework_fnc_getLoiterActions;
+				private _loiterActions = [_vehicle, _target] call YOSHI_fnc_getLoiterActions;
 
 				_actions = _actions + _loiterActions;
 
@@ -143,18 +143,17 @@ private _registeredVehicles = call SupportFramework_fnc_getRegisteredVehicles;
 									_vic setVariable ["targetGroupLeader", _caller, true];
 									_vic setVariable ["currentTask", "requestCas", true];
 									_vic setVariable ["fullRun", false, true];
-									if ((missionNamespace getVariable "YOSHI_HOME_BASE_CONFIG") getVariable ["SideHush", false]) then {
+									if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 										hint "Calling in CAS...";
 									};
-									[_vic, getMarkerPos _marker] remoteExec ["SupportFramework_fnc_requestCas", 2];
+									[_vic, getMarkerPos _marker] remoteExec ["YOSHI_fnc_requestCas", 2];
 								}, 
 								{
 									params ["_target", "_caller", "_args"];
 									private _vic = _args select 0;
 									private _marker = _args select 1;
 									// // Condition code here
-									private _casConfig = missionNamespace getVariable ["YOSHI_SUPPORT_CAS_CONFIG", nil];
-									private _CasConfigured = !(isNil "_casConfig");
+									private _CasConfigured = !(isNil "YOSHI_SUPPORT_CAS_CONFIG");
 									private _isCAS = _target getVariable ["isCAS", false];
 									private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 									private _task = _vic getVariable ["currentTask", "waiting"];
