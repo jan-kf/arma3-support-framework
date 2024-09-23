@@ -19,6 +19,10 @@ class CfgFunctions {
             file = "\Support-Framework\Functions\Client";
             class initPlayerLocal { postInit = 1; };
         };
+        class Prelude {
+            file = "\Support-Framework\Functions\Prelude";
+            class initCore { preInit = 1; };
+        };
         class Modules {
             file = "\Support-Framework\Functions";
             class setHomeBase {
