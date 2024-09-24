@@ -5,6 +5,6 @@ private _nearbyHelipads = [];
     if ((_x distance _target) <= _distance) then {
         _nearbyHelipads pushBack _x;
     };
-} forEach HELIPAD_INDEX;
+} forEach YOSHI_HELIPAD_INDEX;
 
 _nearbyHelipads

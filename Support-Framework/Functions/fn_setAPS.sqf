@@ -23,32 +23,17 @@ YOSHI_getPosTop = {
 	_loc  
 };
 
-// look into: drawLine3D
+// 2.18: set the width of the beam to be easier to see
 YOSHI_beamA2B = {
 	params ["_posA", "_posB"];
     
-	private _fromPos = _posA;
-	private _toPos = _posB;    
-
-	private _vecDistance = (_fromPos vectorDiff _toPos ) vectorMultiply 0.5; 
-	private _distance = _fromPos vectorDistance _toPos;
-		
-	private _vectorDir = _fromPos vectorFromTo _toPos;      
-	_velocity = (_fromPos vectorDiff _toPos) vectorMultiply 20;    
-	
-	_e_static = "#particlesource" createVehicleLocal _toPos;      
-			
-	_e_static setParticleParams [["\A3\data_f\laserBeam", 1, 1, 1], "", "SpaceObject", 1, 0.05, _vecDistance, [0,0,0], 0, 1.1475, 0.9,0, [_distance], [[255, 0, 0, 1], [255, 0, 0, 1]], [1], 0, 0, "", "", "no_object",0,false, -1, [[0,30,30,0]], _vectorDir];      
-	_e_static setDropInterval 0.06;     
-	sleep 0.06;     
-	deleteVehicle _e_static;
+	drawLine3D [_posA, _posB, [1, 0, 0, 1]];
 };
 
 YOSHI_beamVic2Pos = {
 	params ["_vic", "_pos"];
 
-
-	_count = 3;
+	_count = 5;
 
 	while {(alive _vic) && (_count > 0)} do {
 		_topOfVic = ASLToATL ([_vic] call YOSHI_getPosTop); 
@@ -80,8 +65,8 @@ YOSHI_detectRockets = {
 			[[_vehicle, _pos], YOSHI_beamVic2Pos] remoteExec ["spawn"];
 
 
-			_orange = createVehicle ["ModuleAPERSMineDispenser_Mine_F", _pos, [], 0, "CAN_COLLIDE"];
-			_orange setDamage 1;
+			_charge = createVehicle ["ModuleAPERSMineDispenser_Mine_F", _pos, [], 0, "CAN_COLLIDE"];
+			_charge setDamage 1;
 			
 			_chargesRemaining = _vehicle getVariable ["APS_Charges", 0];
 			_vehicle setVariable ["APS_Charges", _chargesRemaining - 1, true];

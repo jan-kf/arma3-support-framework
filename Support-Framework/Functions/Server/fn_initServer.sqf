@@ -73,10 +73,10 @@ if (_cbrConfigured) then {
 
 {
     if ([_x] call YOSHI_fnc_isHeliPad) then {
-        HELIPAD_INDEX pushBack _x;
+        YOSHI_HELIPAD_INDEX pushBack _x;
     };
-} forEach allMissionObjects "";
-publicVariable "HELIPAD_INDEX";
+} forEach allMissionObjects "all";
+publicVariable "YOSHI_HELIPAD_INDEX";
 
 //// //// ////////////////////////////////////////////////////////////////////////////////
 
