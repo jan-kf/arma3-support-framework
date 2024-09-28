@@ -368,7 +368,7 @@ _lightningEffect = {
 	_spark_type = ["white","orange"] call BIS_fnc_selectRandom;
 
 	_drop = 0.001+(random 0.05);
-	_midPoint = getPos cone1;
+	_midPoint = getPosWorld cone1;
 	_scantei_spark = "#particlesource" createVehicle _midPoint;
 
 	if (_spark_type=="orange") then {
@@ -389,8 +389,8 @@ _lightningEffect = {
 };
 
 
-_startPos = getPos cone1;
-_endPos = getPos cone2;
+_startPos = getPosWorld cone1;
+_endPos = getPosWorld cone2;
 
 [_startPos, _endPos] call _lightningEffect;
 
@@ -787,7 +787,7 @@ _count = 0;
 /////
 
 
-private _trigger = createTrigger ["EmptyDetector", (getPos _this), true];  
+private _trigger = createTrigger ["EmptyDetector", (getPosWorld _this), true];  
 _trigger setTriggerArea [5, 5, 0, false];   
 _trigger setTriggerActivation ["ANY", "PRESENT", true];   
 _trigger setTriggerStatements [  

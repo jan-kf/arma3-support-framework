@@ -14,7 +14,7 @@ if (typeName _location == "STRING" && {getMarkerPos _location distance [0,0,0] >
 };
 // Check if _location is an object or unit
 if (typeName _location == "OBJECT") then {
-    _pos = getPos _location;
+    _pos = getPosWorld _location;
     _locationName = [_pos] call YOSHI_fnc_getNearestLocationText;
 };
 

@@ -233,8 +233,8 @@ YOSHI_triggerRadarScan = {
 				_x reveal _projectile;
 			};		
 			
-			private _projectilePos = getPos _projectile;		
-			private _projectileHeight = (getPos _projectile) select 2;		
+			private _projectilePos = getPosWorld _projectile;		
+			private _projectileHeight = (getPosWorld _projectile) select 2;		
 			private _projectileImpactETA = _projectile call YOSHI_predictFallTime;
 			private _projectileImpactPosition = _projectile call YOSHI_predictFallPos;
 
@@ -247,13 +247,13 @@ YOSHI_triggerRadarScan = {
 			if(_projectileIndex != -1) then {
 				private _currentProjectileData = _currentKnownProjectiles select _projectileIndex;
 
-				_currentProjectileData set [2, getPos _projectile];
+				_currentProjectileData set [2, getPosWorld _projectile];
 				_currentProjectileData set [3, _projectileImpactPosition];
 				_currentProjectileData set [4, _projectileImpactETA];
 				_currentProjectileData set [5, serverTime];
 				_currentKnownProjectiles set [_projectileIndex, _currentProjectileData];
 			} else {		
-				private _projectileReportData  = [_projectileId, _projectilePos, getPos _projectile, _projectileImpactPosition, _projectileImpactETA, serverTime];
+				private _projectileReportData  = [_projectileId, _projectilePos, getPosWorld _projectile, _projectileImpactPosition, _projectileImpactETA, serverTime];
 				_currentKnownProjectiles pushBack _projectileReportData;			
 			};	
 			_distanceFromVic = _vehicle distance2D _projectileImpactPosition;

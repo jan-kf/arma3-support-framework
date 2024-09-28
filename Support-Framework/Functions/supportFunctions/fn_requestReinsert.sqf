@@ -28,7 +28,7 @@ if (_baseIsNotVirtual && (typeName _baseCallsign != "ARRAY")) then{
 private _fullRun = _vic getVariable ["fullRun", true];
 
 if (isNil "_groupLeader") exitWith {
-	[driver _vic, "No group leader was assigned, Staying Put."] call YOSHI_fnc_sideChatter;
+	[driver _vic, "No group leader was assigned, Staying Put."] call YOSHI_fnc_sendSideText;
 	_vic setVariable ["currentTask", "waiting", true];
 	_vic setVariable ["isPerformingDuties", false, true];
 };
@@ -43,10 +43,10 @@ if (!_straightFromTop || !_isLoitering) then {
 		if (!_fullRun) then{
 			_gl_message = "%3, this is %1, requesting %2 on my position, over";
 		};
-		[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName]] call YOSHI_fnc_sideChatter;
+		[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName]] call YOSHI_fnc_sendSideText;
 	}else{
 		private _gl_message = "%4, this is %1, requesting %2 at %3, over";
-		[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _locationName, _baseName]] call YOSHI_fnc_sideChatter;
+		[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _locationName, _baseName]] call YOSHI_fnc_sendSideText;
 	};
 	sleep 3;
 };
@@ -57,9 +57,9 @@ if (!_straightFromTop || !_isLoitering) then {
 if (isNil "_locationPOS") exitWith {
 	if (!_straightFromTop) then {
 		if (_vic getVariable ["isHeli", false]) then {
-			[_baseCallsign, format ["%1, we have no available LZ for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] call YOSHI_fnc_sideChatter;
+			[_baseCallsign, format ["%1, we have no available LZ for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] call YOSHI_fnc_sendSideText;
 		} else {
-			[_baseCallsign, format ["%1, we have no available RP for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] call YOSHI_fnc_sideChatter;
+			[_baseCallsign, format ["%1, we have no available RP for %2 near your location, out.", _groupLeaderCallsign, groupId group _vic]] call YOSHI_fnc_sendSideText;
 		};
 		sleep 3;
 	};
@@ -73,19 +73,19 @@ if (!_straightFromTop || !_isLoitering) then {
 	if (!_fullRun) then{
 		_base_message = "Roger %1, dispatching %2, out.";
 	};
-	[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] call YOSHI_fnc_sideChatter;
+	[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] call YOSHI_fnc_sendSideText;
 	sleep 3;
 };
 
 
 _vic setVariable ["destination", _locationPOS, true];
 	
-private _currentPos = getPos _vic;
+private _currentPos = getPosWorld _vic;
 
 // logic to check if Vic is already at location
 if (_vic distance2D _locationPOS < 100) exitWith {
 	[_vic] call YOSHI_fnc_removeVehicleFromPadRegistry;
-	[driver _vic, "Already at location, wait one..."] call YOSHI_fnc_sideChatter;
+	[driver _vic, "Already at location, wait one..."] call YOSHI_fnc_sendSideText;
 	if (_fullRun) then {
 		_vic setVariable ["currentTask", "requestBaseLZ", true];
 	} else {
@@ -94,37 +94,34 @@ if (_vic distance2D _locationPOS < 100) exitWith {
 };
 
 // set waypoint
-private _grp = group _vic;
-private _base_wp = _grp addWaypoint [_locationPOS, 0];
-_base_wp setWaypointType "MOVE";
-_grp setCurrentWaypoint _base_wp;
+[_vic, _locationPOS] call YOSHI_fnc_setWaypoint;
 
 private _gridRef = [_locationPOS] call YOSHI_fnc_posToGrid;
 if (!_isLoitering) then {
-	if ((isTouchingGround _vic) && (speed _vic < 1)) then {
+	if ([_vic] call YOSHI_fnc_hasLanded) then {
 		// get gridRef if message has format specifier.
 		// msg that driver sends once destination grid is recieved 
 		private _base_to_vic_msg = "Over to you %1, you are cleared for departure to %2, over.";
 		if (_straightFromTop) then {
 			_base_to_vic_msg = "%1, you are cleared for departure to %2, over.";
 		};
-		[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call YOSHI_fnc_sideChatter;
+		[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call YOSHI_fnc_sendSideText;
 		sleep 3;
-		[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] call YOSHI_fnc_sideChatter;
+		[driver _vic, format ["Cleared for departure to %1, %2 out.", _gridRef, groupId group _vic]] call YOSHI_fnc_sendSideText;
 	}else{
 		private _base_to_vic_msg = "Over to you %1, you are cleared for approach to %2, over.";
 		if (_straightFromTop) then {
 			_base_to_vic_msg = "%1, you are cleared for approach to %2, over.";
 		};
-		[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call YOSHI_fnc_sideChatter;
+		[_baseCallsign, format [_base_to_vic_msg, groupId group _vic, _gridRef]] call YOSHI_fnc_sendSideText;
 		sleep 3;
-		[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] call YOSHI_fnc_sideChatter;
+		[driver _vic, format ["Cleared for approach to %1, %2 out.", _gridRef, groupId group _vic]] call YOSHI_fnc_sendSideText;
 	};
 	sleep 1;
 	[_vic, format ["Tasking received, heading out to %1.", _gridRef]] call YOSHI_fnc_vehicleChatter;
 } else {
 	private _gl_message = "%2, this is %1, proceed to %3, over";
-	[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _locationName]] call YOSHI_fnc_sideChatter;
+	[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _locationName]] call YOSHI_fnc_sendSideText;
 };
 
 // vic is leaving base, release base pad reservation

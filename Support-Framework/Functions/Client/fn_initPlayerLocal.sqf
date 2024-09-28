@@ -27,7 +27,7 @@
 // 	];
 
 // 	// Get the position of YOSHI_HOME_BASE_CONFIG
-// 	private _homeBasePos = getPos YOSHI_HOME_BASE_CONFIG;
+// 	private _homeBasePos = getPosWorld YOSHI_HOME_BASE_CONFIG;
 
 // 	// Find all landing pads on the map
 // 	private _allLandingPads = [];
@@ -38,7 +38,7 @@
 // 	// Filter landing pads and check for nearby locations
 // 	private _validLandingPads = [];
 // 	{
-// 		private _landingPadPos = getPos _x;
+// 		private _landingPadPos = getPosWorld _x;
 // 		if (_landingPadPos call call YOSHI_fnc_isAtBase) then {
 // 			private _nearbyLocations = nearestLocations [_landingPadPos, _locationTypes, 50];
 // 			if (count _nearbyLocations > 0) then {

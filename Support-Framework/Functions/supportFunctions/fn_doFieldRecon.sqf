@@ -12,10 +12,7 @@ for "_i" from (count waypoints _grp - 1) to 0 step -1 do
 	deleteWaypoint [_grp, _i];
 };
 
-private _base_wp = _grp addWaypoint [_locationPOS, 0];
-_base_wp setWaypointType "LOITER";
-_grp setCurrentWaypoint _base_wp;
-
+[_uav, _locationPOS, "LOITER"] call YOSHI_fnc_setWaypoint;
 
 _uav setVariable ["taskStartTime", serverTime, true];
 
@@ -62,7 +59,7 @@ while {(alive _uav) && (_elapsedTime < (_timeLimit + (_markerUpdateInterval * 2)
 	_elapsedTime = serverTime - _start;
 };
 
-private _lz = getPos _caller;
+private _lz = getPosWorld _caller;
 
 for "_i" from (count waypoints _grp - 1) to 0 step -1 do
 {
@@ -70,9 +67,8 @@ for "_i" from (count waypoints _grp - 1) to 0 step -1 do
 };
 
 _uav setVariable ["destination", _lz, true];
-private _return_wp = _grp addWaypoint [_lz, 0];
-_return_wp setWaypointType "MOVE";
-_grp setCurrentWaypoint _return_wp;
+
+[_uav, _lz] call YOSHI_fnc_setWaypoint;
 
 terminate _reconTask;
 
@@ -84,14 +80,14 @@ while {(_uav distance2D _caller > 50) || !(unitReady _uav)} do {
 
 [_uav, false] remoteExec ["setCaptive", 0];
 
-createVehicle ["Land_HelipadEmpty_F", getPos _caller, [], 0];
+createVehicle ["Land_HelipadEmpty_F", getPosWorld _caller, [], 0];
 
 sleep 3;
 
 _uav land "LAND";
 
 
-while {!(isTouchingGround _uav) || ((speed _uav) > 1)} do {
+while {!([_uav] call YOSHI_fnc_hasLanded)} do {
 	sleep 5;
 	[_uav, "LAND"] remoteExec ["land"];
 };

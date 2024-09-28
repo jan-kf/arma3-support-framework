@@ -118,7 +118,7 @@ if (_artyPrefixStr != "") then {
 
 																private _groupLeaderGroup = group _caller;
 																private _groupLeaderCallsign = groupId _groupLeaderGroup;
-																[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] call YOSHI_fnc_sideChatter;
+																[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] call YOSHI_fnc_sendSideText;
 																private _response = format ["Affirmative %1, %2 times %3 at %4. ETA: %5 seconds, Out.", _groupLeaderCallsign, _amount, _shellDescription, _gridRef, _ETA];
 																
 																if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
@@ -129,7 +129,7 @@ if (_artyPrefixStr != "") then {
 																		
 																		sleep 3;
 
-																		[_vehicle, _response] call YOSHI_fnc_sideChatter;
+																		[_vehicle, _response] call YOSHI_fnc_sendSideText;
 																	};
 																};
 																

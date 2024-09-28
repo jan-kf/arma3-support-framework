@@ -41,7 +41,7 @@ if (_isRecon) then {
 	_helloMsg = "Recon asset, %1 On Station...";
 };
 
-[driver _vic, format[_helloMsg, groupId group _vic]] call YOSHI_fnc_sideChatter;
+[driver _vic, format[_helloMsg, groupId group _vic]] call YOSHI_fnc_sendSideText;
 
 while {_vic getVariable ["isRegistered", false] && alive _vic} do {
 	// run while the vic is registered
@@ -65,7 +65,7 @@ while {_vic getVariable ["isRegistered", false] && alive _vic} do {
 
 	// [format["%1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time]] remoteExec ["systemChat"];
 
-	// [driver _vic, format["%1 -> current task: %2", _vehicleDisplayName, _task]] call YOSHI_fnc_sideChatter;
+	// [driver _vic, format["%1 -> current task: %2", _vehicleDisplayName, _task]] call YOSHI_fnc_sendSideText;
 	diag_log format["[SUPPORT] %1 watchdog loop: %2 | %3", _vehicleDisplayName, _task, time];
 
 
@@ -148,7 +148,7 @@ while {_vic getVariable ["isRegistered", false] && alive _vic} do {
 private _isAlive = alive _vic;
 
 if (_isAlive) then {
-	[driver _vic, format["%1 Off Station...", groupId group _vic]] call YOSHI_fnc_sideChatter;
+	[driver _vic, format["%1 Off Station...", groupId group _vic]] call YOSHI_fnc_sendSideText;
 } else {
 	private _array = [
 		"And so, this is where my story ends, but yours... yours is just beginning.",
@@ -168,7 +168,7 @@ if (_isAlive) then {
 		"Change the world. My final message. Goodbye."
 	];
 	private _goodbye = _array select (floor (random (count _array)));
-	[driver _vic, _goodbye] call YOSHI_fnc_sideChatter;
+	[driver _vic, _goodbye] call YOSHI_fnc_sendSideText;
 	sleep 3;
 	private _array2 = [
 		"And with that, %1's journey reached its end, a final breath marking the close of an unforgettable saga.",

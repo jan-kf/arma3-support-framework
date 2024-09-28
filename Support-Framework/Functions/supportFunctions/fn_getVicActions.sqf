@@ -43,7 +43,7 @@ private _assignCasVicAction = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code here
 		_target setVariable ["isCAS", true, true];
-		[_target, format ["%1 is ready for tasking... ",groupId group _target]] call YOSHI_fnc_sideChatter;
+		[_target, format ["%1 is ready for tasking... ",groupId group _target]] call YOSHI_fnc_sendSideText;
 	}, 
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
@@ -100,7 +100,7 @@ private _assignArtyVicAction = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code here
 		_target setVariable ["isArtillery", true, true];
-		[_target, format ["%1 is ready for tasking... ",groupId group _target]] call YOSHI_fnc_sideChatter;
+		[_target, format ["%1 is ready for tasking... ",groupId group _target]] call YOSHI_fnc_sendSideText;
 	}, 
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];

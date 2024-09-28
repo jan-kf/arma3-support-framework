@@ -26,8 +26,6 @@ if (_isInactive && !_isPerformingRestrictedTask) then {
 	private _locationPOS = _locationData select 1;
 
 	// set waypoint
-	private _wp = _group addWaypoint [_locationPOS, 0];
-	_wp setWaypointType _waypointType; 
-	_group setCurrentWaypoint _wp;
+	[_vic, _locationPOS, _waypointType] call YOSHI_fnc_setWaypoint;
 }
 

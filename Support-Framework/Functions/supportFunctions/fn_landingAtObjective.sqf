@@ -1,9 +1,9 @@
 params ["_vic", "_touchdownMessage"];
 // vic is performing it's landing procedures at the location
 
-if ((isTouchingGround _vic) && (speed _vic < 1)) then {
+if ([_vic] call YOSHI_fnc_hasLanded) then {
 	_vic engineOn false;
-	[driver _vic, _touchdownMessage] call YOSHI_fnc_sideChatter;
+	[driver _vic, _touchdownMessage] call YOSHI_fnc_sendSideText;
 	[_vic, _touchdownMessage] call YOSHI_fnc_vehicleChatter;
 
 	// wait after touchdown
@@ -13,7 +13,7 @@ if ((isTouchingGround _vic) && (speed _vic < 1)) then {
 	if (_fullRun) then {
 		_vic setVariable ["currentTask", "requestBaseLZ", true];
 	} else {
-		[_vic, format ["%1 on standby, awaiting orders.", groupId group _vic]] call YOSHI_fnc_sideChatter;
+		[_vic, format ["%1 on standby, awaiting orders.", groupId group _vic]] call YOSHI_fnc_sendSideText;
 		_vic setVariable ["currentTask", "awaitOrders", true];
 	};
 };

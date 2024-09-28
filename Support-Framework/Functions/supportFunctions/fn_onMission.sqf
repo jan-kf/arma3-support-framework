@@ -37,7 +37,7 @@ if (_isCAS || _isRecon) then {
 			_vic setVariable ["taskStartTime", serverTime, true];
 			//set task to CAS duties
 			_vic setVariable ["currentTask", "performingCAS", true];
-			[driver _vic, format ["Beginning my attack..."]] call YOSHI_fnc_sideChatter;
+			[driver _vic, format ["Beginning my attack..."]] call YOSHI_fnc_sendSideText;
 		} else {
 			// check if there are any issues
 			[_vic] call YOSHI_fnc_checkPulse;
@@ -50,7 +50,7 @@ if (_isCAS || _isRecon) then {
 			_vic setVariable ["taskStartTime", serverTime, true];
 			//set task to Recon duties
 			_vic setVariable ["currentTask", "performingRecon", true];
-			[driver _vic, format ["Beginning Recon..."]] call YOSHI_fnc_sideChatter;
+			[driver _vic, format ["Beginning Recon..."]] call YOSHI_fnc_sendSideText;
 		} else {
 			// check if there are any issues
 			[_vic, "LOITER"] call YOSHI_fnc_checkPulse;

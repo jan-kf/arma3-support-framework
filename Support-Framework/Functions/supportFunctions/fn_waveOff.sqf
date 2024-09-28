@@ -30,8 +30,8 @@ for "_i" from (count waypoints _group - 1) to 0 step -1 do
 };
 _vic setVariable ["currentTask", "requestBaseLZ", true];
 
-[_groupLeader, format ["%1, this is %2, Wave off, over.",groupId group _vic, _groupLeaderCallsign]] call YOSHI_fnc_sideChatter;
+[_groupLeader, format ["%1, this is %2, Wave off, over.",groupId group _vic, _groupLeaderCallsign]] call YOSHI_fnc_sendSideText;
 sleep 2;
-[driver _vic, format ["Roger that %1, Waving off, out.", _groupLeaderCallsign]] call YOSHI_fnc_sideChatter;
+[driver _vic, format ["Roger that %1, Waving off, out.", _groupLeaderCallsign]] call YOSHI_fnc_sendSideText;
 sleep 1;
 [_vic, "We are waving off."] call YOSHI_fnc_vehicleChatter;

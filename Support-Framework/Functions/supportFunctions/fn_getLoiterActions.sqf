@@ -38,11 +38,11 @@ if (_loiterPrefixStr != "") then {
 					} else {
 						private _groupLeaderGroup = group _caller;
 						private _groupLeaderCallsign = groupId _groupLeaderGroup;
-						[_caller, format ["%2, this is %1, loiter at %3, over.", _groupLeaderCallsign, groupId group _vic, markerText _marker]] call YOSHI_fnc_sideChatter;
+						[_caller, format ["%2, this is %1, loiter at %3, over.", _groupLeaderCallsign, groupId group _vic, markerText _marker]] call YOSHI_fnc_sendSideText;
 						[_vic, format ["%1, this is %2, moving to loiter at %3, out.", _groupLeaderCallsign, groupId group _vic, markerText _marker]] spawn  {
 							params ["_vehicle", "_response"];
 							sleep 3;
-							[_vehicle, _response] call YOSHI_fnc_sideChatter;
+							[_vehicle, _response] call YOSHI_fnc_sendSideText;
 						};
 					};
 					[_vic, format["Moving to hold at %1", markerText _marker]] call YOSHI_fnc_vehicleChatter;

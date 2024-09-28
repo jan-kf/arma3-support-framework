@@ -44,7 +44,7 @@ if (_elapsedTime > _timeLimit) then {
 	_vicGroup setCombatMode "BLUE";
 	_vicGroup setBehaviourStrong "SAFE";
 
-	[driver _vic, format ["Recon complete, returning to base."]] call YOSHI_fnc_sideChatter;
+	[driver _vic, format ["Recon complete, returning to base."]] call YOSHI_fnc_sendSideText;
 	// requestLZ at base, and RTB
 	_vic setVariable ["currentTask", "requestBaseLZ", true];
 

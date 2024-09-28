@@ -112,6 +112,9 @@ class CfgFunctions {
             class hasItems {
                 description = "Function to check if items are present";
             };
+            class hasLanded {
+                description = "Function to check if unit is touching ground and speed is zero";
+            };
             class isAtBase {
                 description = "Function to determine if at base location";
             };
@@ -163,8 +166,11 @@ class CfgFunctions {
             class RTB {
                 description = "Function to manage Return To Base procedures";
             };
-            class sideChatter {
-                description = "Function to handle side channel communications";
+            class sendSideText {
+                description = "Function to handle side channel text communications";
+            };
+            class setWaypoint {
+                description = "Function to set the waypoint for a given unit.";
             };
             class vehicleChatter {
                 description = "Function to handle vehicle channel communications";
