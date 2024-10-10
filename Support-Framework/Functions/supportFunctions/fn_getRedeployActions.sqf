@@ -148,6 +148,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 						private _groupLeaderCallsign = groupId _groupLeaderGroup;
 						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call YOSHI_fnc_sendSideText;
 						[_vic, format["Moving to RTB"]] call YOSHI_fnc_vehicleChatter;
+						[_vic, "YOSHI_TransportLeave"] call YOSHI_fnc_playVehicleRadio;
 						if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
 							hint "Transport returning to base...";
 						}

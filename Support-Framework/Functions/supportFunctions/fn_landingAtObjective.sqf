@@ -5,6 +5,7 @@ if ([_vic] call YOSHI_fnc_hasLanded) then {
 	_vic engineOn false;
 	[driver _vic, _touchdownMessage] call YOSHI_fnc_sendSideText;
 	[_vic, _touchdownMessage] call YOSHI_fnc_vehicleChatter;
+	[_vic, "YOSHI_TransportComplete"] call YOSHI_fnc_playVehicleRadio;
 
 	// wait after touchdown
 	sleep 10;

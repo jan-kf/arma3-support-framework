@@ -3,16 +3,9 @@ YOSHI_projectileIdCounter = 0;
 YOSHI_detectedTargets = [];
 YOSHI_CBRMarkersArray = [];
 
-YOSHI_projectileDetectionRange = YOSHI_CBR getVariable ["DetectionRange", 5000];
-YOSHI_projectileCautionRange = YOSHI_CBR getVariable ["CautionRange", 4000];
-YOSHI_projectileWarningRange = YOSHI_CBR getVariable ["WarningRange", 2000];
-YOSHI_projectileIncomingRange = YOSHI_CBR getVariable ["IncomingRange", 500];
-
 YOSHI_mapProjectilesDrawTimeout = 5;
 YOSHI_markerCounter = 0;
 YOSHI_markerPrefix = "_USER_DEFINED YOSHI_markerNo";
-
-
 
 YOSHI_numToTextArray = {
     params ["_number"];
@@ -95,52 +88,6 @@ YOSHI_numToTextArray = {
     _result
 };
 
-
-YOSHI_detectIncomingProjectiles = {
-	params ["_radarVic"];
-	
-	private _detectedProjectiles = [];
-	_projectileClasses = [
-		"ShellCore",
-		"Shell",
-		"MissileCore",
-		"Missile",
-		"BombCore",
-		"SubmunitionCore",
-		"R_min_rf_122mm_Grad",
-		"R_min_rf_122mm_Grad_fly"
-	];
-	
-	
-	private _projectiles = _radarVic nearObjects ["Default", YOSHI_projectileDetectionRange]; 
-
-	_incomingProjectiles = _projectiles select {
-		private _projectile = _x;
-
-		private _type = typeOf _projectile;
-		private _isClassAllowedAmmo = false;
-		{
-			if(_type isKindOf [_x, configFile >> "CfgAmmo"]) exitWith {
-				_isClassAllowedAmmo = true;
-			};
-		} foreach _projectileClasses;		
-		
-
-		if (_isClassAllowedAmmo && (_type find "ace_frag" == -1)) then {
-			true;
-		} else {
-			false;
-		};
-	};
-	
-	{
-		_detectedProjectiles pushBack _x;
-	} forEach _incomingProjectiles;
-		
-
-	_detectedProjectiles
-};
-
 YOSHI_predictFallTime = {
 	params["_projectile"];
 
@@ -188,174 +135,6 @@ YOSHI_safeIsNull = {
     } else {
         isNull _var; // The variable is defined, check if it's a null object
     };
-};
-
-YOSHI_triggerRadarScan = {
-	params["_vehicle"];
-
-	private _radarEnabled = _vehicle getVariable ["radarEnabled", false];
-	
-	if (alive _vehicle && _radarEnabled) then {
-
-		private _incomingProjectiles = _vehicle call YOSHI_detectIncomingProjectiles;
-		private _clearStated = _vehicle getVariable ["YOSHI_clearStated", true];
-		if(count _incomingProjectiles <= 0) exitWith {
-			// all clear
-			if (!_clearStated) then {
-				_vehicle setVariable ["YOSHI_clearStated", true];
-				[_vehicle] spawn {
-					params ["_vehicle"];
-					sleep 2;
-					_vehicle say3D ["sector", 200, 1];
-					sleep 0.6;
-					_vehicle say3D ["clear", 200, 1];
-					sleep 0.4;
-					_vehicle setVariable ["YOSHI_vicBeeped", false];
-					_vehicle setVariable ["YOSHI_vicBeeping", false];
-					_vehicle setVariable ["YOSHI_vicCounted", false];
-					_vehicle setVariable ["YOSHI_vicCounting", false];
-					_vehicle setVariable ["YOSHI_statedProjectileCount", 0];
-					YOSHI_detectedTargets = []; // clear out history of targets
-				};
-			};
-		};
-
-		_vehicle setVariable ["YOSHI_clearStated", false];
-		_incomingProjectiles apply {
-			private _currentId = _x getVariable["YOSHI_projectileId", -1];
-			if(_currentId == -1) then {
-				_x setVariable ["YOSHI_projectileId", YOSHI_projectileIdCounter];
-				YOSHI_projectileIdCounter = YOSHI_projectileIdCounter + 1;
-			};
-		};
-
-		_incomingProjectiles apply {
-			private _projectile = _x;
-			private _allSideUnits = units (side player);
-			_allSideUnits apply {
-				_x reveal _projectile;
-			};		
-			
-			private _projectilePos = getPosWorld _projectile;		
-			private _projectileHeight = (getPosWorld _projectile) select 2;		
-			private _projectileImpactETA = _projectile call YOSHI_predictFallTime;
-			private _projectileImpactPosition = _projectile call YOSHI_predictFallPos;
-
-			private _currentKnownProjectiles = YOSHI_detectedTargets;
-			private _projectileId = _projectile getVariable["YOSHI_projectileId", -1];
-			private _projectileIndex = _currentKnownProjectiles findIf {
-				(_x select 0) isEqualTo _projectileId;
-			};
-
-			if(_projectileIndex != -1) then {
-				private _currentProjectileData = _currentKnownProjectiles select _projectileIndex;
-
-				_currentProjectileData set [2, getPosWorld _projectile];
-				_currentProjectileData set [3, _projectileImpactPosition];
-				_currentProjectileData set [4, _projectileImpactETA];
-				_currentProjectileData set [5, serverTime];
-				_currentKnownProjectiles set [_projectileIndex, _currentProjectileData];
-			} else {		
-				private _projectileReportData  = [_projectileId, _projectilePos, getPosWorld _projectile, _projectileImpactPosition, _projectileImpactETA, serverTime];
-				_currentKnownProjectiles pushBack _projectileReportData;			
-			};	
-			_distanceFromVic = _vehicle distance2D _projectileImpactPosition;
-
-			_projectileThreat = _vehicle getVariable["YOSHI_projectile_threat", 0];
-			_spawnSound = {
-				params ["_vehicle", "_projectile", "_soundName", "_sleepTime"];
-				_thread = [_vehicle, _projectile, _soundName, _sleepTime] spawn {
-					params ["_vehicle", "_projectile", "_soundName", "_sleepTime"];
-					while {alive _projectile} do {
-						_vehicle say3D [_soundName, 200, 1];
-						sleep _sleepTime;
-					};
-					_vehicle setVariable["YOSHI_projectile_threat", 0];
-				};
-				_thread
-			};
-
-			_playedSound = false;
-
-			if (!_playedSound && YOSHI_projectileIncomingRange > 0 && _distanceFromVic <= YOSHI_projectileIncomingRange && _projectileThreat < 100) then {
-				_oldThread = _vehicle getVariable "YOSHI_projectile_thread";
-				terminate _oldThread;
-
-				_thread = [_vehicle, _projectile, "IncomingKlaxon", 5] call _spawnSound;
-				_vehicle setVariable["YOSHI_projectile_thread", _thread];
-				_vehicle setVariable["YOSHI_projectile_threat", 100];
-				_projectileThreat = 100;
-				_playedSound = true;
-			};
-			if (!_playedSound && YOSHI_projectileWarningRange > 0 && _distanceFromVic <= YOSHI_projectileWarningRange && _projectileThreat < 50) then {
-				_oldThread = _vehicle getVariable "YOSHI_projectile_thread";
-				terminate _oldThread;
-
-				_thread = [_vehicle, _projectile, "WarningWarning", 5] call _spawnSound;
-				_vehicle setVariable["YOSHI_projectile_thread", _thread];
-				_vehicle setVariable["YOSHI_projectile_threat", 50];
-				_projectileThreat = 50;
-				_playedSound = true;
-			};
-			if (!_playedSound && YOSHI_projectileCautionRange > 0 && _distanceFromVic <= YOSHI_projectileCautionRange && _projectileThreat < 10) then {
-				_oldThread = _vehicle getVariable "YOSHI_projectile_thread";
-				terminate _oldThread;
-
-				_thread = [_vehicle, _projectile, "CautionCaution", 3] call _spawnSound;
-				_vehicle setVariable["YOSHI_projectile_thread", _thread];
-				_vehicle setVariable["YOSHI_projectile_threat", 10];
-				_projectileThreat = 10;
-				_playedSound = true;
-			};
-			private _projectileBeeped = _vehicle getVariable ["YOSHI_vicBeeped", false];
-			private _projectileBeepedTime = _vehicle getVariable ["YOSHI_vicBeepedTime", 0];
-			private _projectileBeeping = _vehicle getVariable ["YOSHI_vicBeeping", false];
-			private _projectileCounted = _vehicle getVariable ["YOSHI_vicCounted", false];
-			private _projectileCounting = _vehicle getVariable ["YOSHI_vicCounting", false];
-			private _statedProjectileCount = _vehicle getVariable ["YOSHI_statedProjectileCount", 0];
-			if (!_playedSound && !_projectileBeeped && YOSHI_projectileDetectionRange > 0 && _distanceFromVic <= YOSHI_projectileDetectionRange && _projectileThreat < 1) then {
-				_oldThread = _vehicle getVariable "YOSHI_projectile_thread";
-				terminate _oldThread;
-
-				// beep once while detected targets, but are not in caution/warn/danger area
-				if ((!_projectileBeeped || ((_statedProjectileCount < (count _incomingProjectiles)) && ((serverTime - _projectileBeepedTime) > 10))) && !_projectileBeeping) then {
-					_vehicle setVariable ["YOSHI_vicBeeping", true];
-					[_vehicle] spawn {
-						params ["_vehicle"];
-						_vehicle say3D ["launchDetected", 200, 1];
-						sleep 5;
-						_vehicle setVariable ["YOSHI_vicBeeping", false];
-						_vehicle setVariable ["YOSHI_vicBeeped", true];
-						_vehicle setVariable ["YOSHI_vicBeepedTime", serverTime];
-						_vehicle setVariable ["YOSHI_vicCounted", false];
-					};
-				};
-			};
-			if (_projectileBeeped && (!_projectileCounted || (_statedProjectileCount < (count _incomingProjectiles))) && !_projectileBeeping && !_projectileCounting) then {
-				_vehicle setVariable ["YOSHI_vicCounting", true];
-				[_vehicle, count _incomingProjectiles] spawn {
-					params ["_vehicle", "_countProjectiles"];
-					_projectileCount = [_countProjectiles ] call YOSHI_numToTextArray;
-					{
-						_vehicle say3D [_x, 200, 1];
-						sleep 0.6;
-					} forEach _projectileCount;
-					_vehicle say3D ["targets", 200, 1];
-					sleep 0.7;
-					_vehicle say3D ["detected", 200, 1];
-					sleep 2;
-					_vehicle setVariable ["YOSHI_vicCounting", false];
-					_vehicle setVariable ["YOSHI_vicCounted", true];
-					_vehicle setVariable ["YOSHI_statedProjectileCount", _countProjectiles];
-				};
-
-			};
-
-			YOSHI_detectedTargets = _currentKnownProjectiles;
-					
-		};
-	};
-
 };
 
 // future plan: combine nearby targets to a single area, maybe have a size limit on the shape?
@@ -406,60 +185,65 @@ YOSHI_drawBoundingBox = {
     _marker setMarkerText "Covered Area"; 
 };
 
-
-YOSHI_drawTarget = {
-	params["_targetData"];
-	_targetData params ["_projectileId", "_projectileFiringPos", "_projectilePos", "_projectileImpactPosition", "_projectileImpactETA", "_projectileLastReportAt"];
-
-	if(serverTime - _projectileLastReportAt > YOSHI_mapProjectilesDrawTimeout) then {		
-		continue;
-	};
-
-	if(_projectilePos distance2d _projectileImpactPosition < 10) then {		
-		continue;
-	};
-
-	// projectile marker
-
-	_projectileMarkerName = format ["_USER_DEFINED YoshiCounterBatteryRadar projectile-marker_%1_%2", _projectileId, round random 1000000];
-
-	_projectileMarker = createMarkerLocal [_projectileMarkerName, _projectilePos];
-	_projectileMarker setMarkerShapeLocal "ICON";
-    _projectileMarker setMarkerTypeLocal "mil_triangle";
-	_projectileMarker setMarkerDirLocal (_projectilePos getDir _projectileImpactPosition);
-	_projectileMarker setMarkerColor "ColorRed";
-
-	// target marker
-
-	_targetMarkerName = format ["_USER_DEFINED YoshiCounterBatteryRadar target-marker_%1_%2", _projectileId, round random 1000000];
-
-	_targetMarker = createMarkerLocal [_targetMarkerName, _projectileImpactPosition];
-	_targetMarker setMarkerShapeLocal "ICON";
-    _targetMarker setMarkerTypeLocal "mil_destroy";
-	_targetMarker setMarkerTextLocal format["ETA: %1s", _projectileImpactETA ];
-	_targetMarker setMarkerColor "ColorRed";
-
+YOSHI_areAllProjectilesDead = {
+	params ["_arrayOfArrays"];
+	_isClear = true;
+	{
+		private _object = _x select 1; 
+		if (alive _object) then {_isClear = false}; 
+	} forEach _arrayOfArrays;
+	_isClear
 };
 
+YOSHI_baseMessageTime = 0;
 
-addMissionEventHandler ["ArtilleryShellFired", {
-	params ["_vehicle", "_weapon", "_ammo", "_gunner", "_instigator", "_artilleryTarget", "_targetPosition", "_shell"];
+YOSHI_handleArtilleryFire = {
+	params ["_vehicle", "_targetPosition", "_shell"];
 
 	YOSHI_detectedTargets pushBack [_targetPosition, _shell, _vehicle];
-	publicVariable "YOSHI_detectedTargets";
 
-	[_targetPosition, _shell, getPosASL _vehicle] spawn {
-		params ["_targetPosition", "_shell", "_originPosition"];
+	[_shell, getPosASL _vehicle] spawn {
+		// code that runs on each shell individually
+		params ["_shell", "_originPosition"];
 		while {alive _shell} do {
-			_targetMarker = [_targetPosition, "ColorRed", "mil_destroy"] call YOSHI_fnc_addMarker;
-			_shellMarker = [_shell, "ColorRed", "mil_triangle"] call YOSHI_fnc_addMarker;
-			_shellMarker setMarkerDirLocal ((getPosASL _shell) getDir _targetPosition);
-			_originMarker = [_originPosition] call YOSHI_fnc_addMarker;
-			sleep 1;
-			deleteMarkerLocal _targetMarker;
-			deleteMarkerLocal _shellMarker;
-			deleteMarkerLocal _originMarker;
-		};
-	}
+			private _projectileImpactETA = _shell call YOSHI_predictFallTime;
+			private _projectileImpactPosition = _shell call YOSHI_predictFallPos;
 
-}];
+			private _targetMarker = [_projectileImpactPosition, format["ETA: %1s", _projectileImpactETA], "ColorRed", "mil_destroy"] call YOSHI_fnc_addMarker;
+			private _shellMarker = [_shell, "", "ColorRed", "mil_triangle"] call YOSHI_fnc_addMarker;
+			_shellMarker setMarkerDir ((getPosASL _shell) getDir _projectileImpactPosition);
+			private _originMarker = [_originPosition] call YOSHI_fnc_addMarker;
+
+
+			sleep 1;
+			deleteMarker _targetMarker;
+			deleteMarker _shellMarker;
+			deleteMarker _originMarker;
+		};
+		
+		private _result = [YOSHI_detectedTargets] call YOSHI_areAllProjectilesDead;
+		if (_result) then {
+			private _baseParams = call YOSHI_fnc_getBaseCallsign;
+			private _baseCallsign = _baseParams select 0;
+			private _baseName = _baseParams select 1;
+			[_baseCallsign, "YOSHI_SectorClear"] call YOSHI_fnc_playSideRadio;
+			YOSHI_detectedTargets=[];
+		};
+	};
+
+	if ((serverTime - YOSHI_baseMessageTime) > 10) then {
+		private _baseParams = call YOSHI_fnc_getBaseCallsign;
+		private _baseCallsign = _baseParams select 0;
+		private _baseName = _baseParams select 1;
+		[_baseCallsign, "YOSHI_LaunchDetected"] call YOSHI_fnc_playSideRadio;
+		YOSHI_baseMessageTime = serverTime;
+	};
+};
+
+if(!hasInterface) then {
+	addMissionEventHandler ["ArtilleryShellFired", {
+		params ["_vehicle", "_weapon", "_ammo", "_gunner", "_instigator", "_artilleryTarget", "_targetPosition", "_shell"];
+
+		[_vehicle, _targetPosition, _shell] call YOSHI_handleArtilleryFire;
+	}];
+};

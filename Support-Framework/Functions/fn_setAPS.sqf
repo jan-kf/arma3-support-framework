@@ -23,11 +23,10 @@ YOSHI_getPosTop = {
 	_loc  
 };
 
-// 2.18: set the width of the beam to be easier to see
 YOSHI_beamA2B = {
 	params ["_posA", "_posB"];
     
-	drawLine3D [_posA, _posB, [1, 0, 0, 1], 6];
+	drawLine3D [_posA, _posB, [1, 0, 0, 1], 20];
 };
 
 YOSHI_beamVic2Pos = {
@@ -44,6 +43,18 @@ YOSHI_beamVic2Pos = {
 
 };
 
+YOSHI_getFrontPosition = {
+    params ["_projectile", "_distanceAhead"];
+
+    private _currentPos = getPosATL _projectile; 
+    private _velocity = velocity _projectile;
+    private _directionNormalized = vectorNormalized _velocity; 
+
+    private _frontPos = _currentPos vectorAdd (_directionNormalized vectorMultiply _distanceAhead);
+
+    _frontPos
+};
+
 
 YOSHI_detectRockets = { 
     params ["_vehicle", ["_charges", 40], ["_range", -1], ["_interval", 0.05], ["_cooldown", 0.1]];
@@ -58,18 +69,19 @@ YOSHI_detectRockets = {
 	while {(alive _vehicle) && ((_vehicle getVariable ["APS_Charges", 0]) > 0)} do { 
         private _projectiles = nearestObjects [_vehicle, ["MissileBase", "RocketBase"], _range]; 
         { 
-			private _pos = getPosATL _x;
-
-			deleteVehicle _x;			
+			_stop = [_x, 1] call YOSHI_getFrontPosition;
+			_charge = createVehicle ["Land_Orange_01_F", _stop, [], 0, "CAN_COLLIDE"];	
+					
  
+			private _pos = getPosATL _x;
 			[[_vehicle, _pos], YOSHI_beamVic2Pos] remoteExec ["spawn"];
-
-			// consider destroying the rocket, since only one exists...
-			_charge = createVehicle ["ModuleAPERSMineDispenser_Mine_F", _pos, [], 0, "CAN_COLLIDE"];
-			_charge setDamage 1;
+			_vehicle say3D ["ApsHit", 200, 1];
 			
 			_chargesRemaining = _vehicle getVariable ["APS_Charges", 0];
 			_vehicle setVariable ["APS_Charges", _chargesRemaining - 1, true];
+			sleep 0.01;
+			deleteVehicle _x;
+			deleteVehicle _charge;
 
 			sleep _cooldown;
 			

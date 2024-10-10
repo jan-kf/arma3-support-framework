@@ -130,6 +130,8 @@ if (_artyPrefixStr != "") then {
 																		sleep 3;
 
 																		[_vehicle, _response] call YOSHI_fnc_sendSideText;
+																		[_vehicle, "YOSHI_ArtilleryAck"] call YOSHI_fnc_playSideRadio;
+																		
 																	};
 																};
 																

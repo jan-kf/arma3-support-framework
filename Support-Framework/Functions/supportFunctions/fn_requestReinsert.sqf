@@ -119,6 +119,7 @@ if (!_isLoitering) then {
 	};
 	sleep 1;
 	[_vic, format ["Tasking received, heading out to %1.", _gridRef]] call YOSHI_fnc_vehicleChatter;
+	[_vic, "YOSHI_TransportRequested"] call YOSHI_fnc_playVehicleRadio;
 } else {
 	private _gl_message = "%2, this is %1, proceed to %3, over";
 	[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _locationName]] call YOSHI_fnc_sendSideText;

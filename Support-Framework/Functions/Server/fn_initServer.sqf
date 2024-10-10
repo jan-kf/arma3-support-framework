@@ -61,13 +61,7 @@ if (_reconConfigured) then {
 	} forEach _syncedReconObjects;
 };
 
-private _cbrConfigured = !(isNil "YOSHI_CBR");
-if (_cbrConfigured) then {
-	private _syncedCBRObjects = synchronizedObjects YOSHI_CBR;
-	{
-		_x setVariable ["canCBR", true, true];
-	} forEach _syncedCBRObjects;
-};
+execVM "\Support-Framework\Functions\Client\counterBatteryRadar.sqf";
 
 ///////////////////////////////////////////////////
 

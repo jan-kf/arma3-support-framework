@@ -142,6 +142,12 @@ class CfgFunctions {
             class performingRecon {
                 description = "Function to manage or check Recon operations";
             };
+            class playSideRadio {
+                description = "Function to play a radio message to the side";
+            };
+            class playVehicleRadio {
+                description = "Function to play a radio message in the vehicle";
+            };
             class posToGrid {
                 description = "Function to convert position to grid coordinates";
             };
@@ -560,34 +566,6 @@ class CfgVehicles {
         isDisposable = 0;
         class Attributes: AttributesBase {
             class Units: Units {};            
-            class DetectionRange: Edit {
-                property = "SupportFramework_CBR_Module_DetectionRange";
-                displayName = "Detection Range";
-                tooltip = "Radius in meters for the overall detection range of the radar, will beep when projectile is detected";
-                typeName = "NUMBER"; 
-                defaultValue = "5000"; 
-            };
-            class CautionRange: Edit {
-                property = "SupportFramework_CBR_Module_CautionRange";
-                displayName = "Caution Range";
-                tooltip = "Radius in meters when the CAUTION alarm will sound (set to 0 to disable)";
-                typeName = "NUMBER"; 
-                defaultValue = "1000"; 
-            };
-            class WarningRange: Edit {
-                property = "SupportFramework_CBR_Module_WarningRange";
-                displayName = "Warning Range";
-                tooltip = "Radius in meters when the WARNING alarm will sound (set to 0 to disable)";
-                typeName = "NUMBER"; 
-                defaultValue = "500"; 
-            };
-            class IncomingRange: Edit {
-                property = "SupportFramework_CBR_Module_IncomingRange";
-                displayName = "Incoming Range";
-                tooltip = "Radius in meters when the Incoming alarm will sound (set to 0 to disable)";
-                typeName = "NUMBER"; 
-                defaultValue = "200"; 
-            };
             class ModuleDescription: ModuleDescription{}; // Module description should be shown last
         };
         class ModuleDescription: ModuleDescription {
@@ -600,7 +578,7 @@ class CfgVehicles {
                 "",
                 "Location of module is meaningless.",
                 "",
-                "Any synced items will be considered CBR(s), they will have ace interact options to enable/disable their radar", 
+                "This is a passive module, simply having it placed down will provide intel on artillery fire.",
                 "",
                 "No need to sync to the Home Base Module (or any other module)"
             };
@@ -671,6 +649,52 @@ class CfgVehicles {
     };
 };
 
+class CfgRadio
+{
+	sounds[] = {};
+	class YOSHI_SectorClear
+	{
+		name	= "Sector Clear";
+		sound[]	= { "\Support-Framework\Sounds\support\sector_clear.ogg", 1, 1 };
+		title	= "Sector is Clear";
+	};
+
+	class YOSHI_LaunchDetected
+	{
+		name	= "Launch Detected";
+		sound[]	= { "\Support-Framework\Sounds\support\launch_detected.ogg", 1, 1 };
+		title	= "Be advised, launch detected";
+	};
+
+    class YOSHI_TransportRequested
+	{
+		name	= "Transport Requested";
+		sound[]	= { "\Support-Framework\Sounds\support\transport_lz_selected.ogg", 1, 1 };
+		title	= "";
+	};
+
+    class YOSHI_TransportComplete
+	{
+		name	= "Transport Complete";
+		sound[]	= { "\Support-Framework\Sounds\support\transport_accomplished.ogg", 1, 1 };
+		title	= "";
+	};
+
+    class YOSHI_TransportLeave
+	{
+		name	= "Transport Leave";
+		sound[]	= { "\Support-Framework\Sounds\support\transport_welcome.ogg", 1, 1 };
+		title	= "";
+	};
+
+    class YOSHI_ArtilleryAck
+	{
+		name	= "ArtilleryAck";
+		sound[]	= { "\Support-Framework\Sounds\support\artillery_acknowledged.ogg", 1, 1 };
+		title	= "";
+	};
+};
+
 class CfgSounds {
     sounds[] = {};
 
@@ -697,6 +721,11 @@ class CfgSounds {
     class launchDetected {
         name = "launchDetected";
         sound[] = {"\Support-Framework\Sounds\launchDetected.ogg", 1, 1};
+        titles[] = {};
+    };
+    class sectorClear {
+        name = "sectorClear";
+        sound[] = {"\Support-Framework\Sounds\sectorClear.ogg", 1, 1};
         titles[] = {};
     };
     class beepIdle {
