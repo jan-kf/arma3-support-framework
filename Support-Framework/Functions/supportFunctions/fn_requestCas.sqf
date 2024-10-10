@@ -45,6 +45,7 @@ private _gridRef = [_locationPOS] call YOSHI_fnc_posToGrid;
 if (!_straightFromTop) then {
 	private _gl_message = "%3, this is %1, requesting immediate fire support from %2 at %4, over";
 	[_groupLeader, format [_gl_message, _groupLeaderCallsign, groupId group _vic, _baseName, _gridRef]] call YOSHI_fnc_sendSideText;
+	[_groupLeader, "YOSHI_CASRequest"] call YOSHI_fnc_playSideRadio;
 	sleep 3;
 };
 
@@ -74,6 +75,7 @@ if ([_vic] call YOSHI_fnc_hasLanded) then {
 	sleep 3;
 	[driver _vic, format ["Cleared for firemission at %1, %2 out.", _gridRef, groupId group _vic]] call YOSHI_fnc_sendSideText;
 };
+[_vic, "YOSHI_CASAck"] call YOSHI_fnc_playSideRadio;
 
 // vic is leaving base, release base pad reservation
 [_vic] call YOSHI_fnc_removeVehicleFromPadRegistry;

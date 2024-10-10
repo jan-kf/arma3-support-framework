@@ -658,39 +658,58 @@ class CfgRadio
 		sound[]	= { "\Support-Framework\Sounds\support\sector_clear.ogg", 1, 1 };
 		title	= "Sector is Clear";
 	};
-
 	class YOSHI_LaunchDetected
 	{
 		name	= "Launch Detected";
 		sound[]	= { "\Support-Framework\Sounds\support\launch_detected.ogg", 1, 1 };
 		title	= "Be advised, launch detected";
 	};
-
-    class YOSHI_TransportRequested
+    class YOSHI_TransportTaskRecieved
 	{
 		name	= "Transport Requested";
 		sound[]	= { "\Support-Framework\Sounds\support\transport_lz_selected.ogg", 1, 1 };
 		title	= "";
 	};
-
+    class YOSHI_TransportRequested
+	{
+		name	= "Transport Requested";
+		sound[]	= { "\Support-Framework\Sounds\support\transport_request.ogg", 1, 1 };
+		title	= "";
+	};
     class YOSHI_TransportComplete
 	{
 		name	= "Transport Complete";
 		sound[]	= { "\Support-Framework\Sounds\support\transport_accomplished.ogg", 1, 1 };
 		title	= "";
 	};
-
     class YOSHI_TransportLeave
 	{
 		name	= "Transport Leave";
 		sound[]	= { "\Support-Framework\Sounds\support\transport_welcome.ogg", 1, 1 };
 		title	= "";
 	};
-
     class YOSHI_ArtilleryAck
 	{
 		name	= "ArtilleryAck";
 		sound[]	= { "\Support-Framework\Sounds\support\artillery_acknowledged.ogg", 1, 1 };
+		title	= "";
+	};
+    class YOSHI_CASRequest
+	{
+		name	= "CASRequest";
+		sound[]	= { "\Support-Framework\Sounds\support\cas_heli_request.ogg", 1, 1 };
+		title	= "";
+	};
+    class YOSHI_CASAck
+	{
+		name	= "CASAck";
+		sound[]	= { "\Support-Framework\Sounds\support\cas_heli_acknowledged.ogg", 1, 1 };
+		title	= "";
+	};
+    class YOSHI_CASDone
+	{
+		name	= "CASDone";
+		sound[]	= { "\Support-Framework\Sounds\support\cas_heli_accomplished.ogg", 1, 1 };
 		title	= "";
 	};
 };

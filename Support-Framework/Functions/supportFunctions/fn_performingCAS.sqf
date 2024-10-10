@@ -18,6 +18,7 @@ if (_elapsedTime > 210) then { // 3 minutes, 30 seconds
 	_vicGroup setBehaviourStrong "SAFE";
 
 	[driver _vic, format ["Attack complete, returning to base."]] call YOSHI_fnc_sendSideText;
+	[_vic, "YOSHI_CASDone"] call YOSHI_fnc_playSideRadio;
 	// requestLZ at base, and RTB
 	_vic setVariable ["currentTask", "requestBaseLZ", true];
 } else {

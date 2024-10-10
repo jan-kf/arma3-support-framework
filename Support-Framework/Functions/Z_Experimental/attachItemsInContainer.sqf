@@ -211,3 +211,68 @@ _this call attachItemsToContainer;
 // private _relativeDir = _dirObjectToAttach - _dirTargetObject;
 // _objectToAttach attachTo [_targetObject];
 // _objectToAttach setDir ( _dirObjectToAttach - _dirTargetObject);
+
+
+
+YOSHI_getTopSurface = {
+	params ["_obj"];
+	_loc = getPosASL _obj;
+	_locBelow = _loc vectorAdd [0,0,-2];
+
+	_hits = lineIntersectsSurfaces [_loc, _locBelow, _obj, objNull, true, 10, "FIRE", "GEOM"];
+
+	_hitPos = ((_hits select 0) select 0);
+	_hitObj = ((_hits select 0) select 2);
+	_or = createVehicle ["Land_Orange_01_NoPop_F", _hitPos, [], 0, "CAN_COLLIDE"];
+	_or enableSimulation false; 
+	_or setPosASL _hitPos;
+
+	if (!(isTouchingGround _or)) then {
+		private _objectToAttach = _obj; 
+		private _targetObject = _hitObj; 
+		private _dirObjectToAttach = getDir _objectToAttach;
+		private _dirTargetObject = getDir _targetObject;
+		private _relativeDir = _dirObjectToAttach - _dirTargetObject;
+		_objectToAttach attachTo [_targetObject];
+		_objectToAttach setDir ( _dirObjectToAttach - _dirTargetObject);
+	};
+	deleteVehicle _or;
+};
+
+
+YOSHI_getTopSurface = { 
+	params ["_obj"]; 
+	_loc = getPosASL _obj; 
+	_locBelow = _loc vectorAdd [0,0,-2]; 
+
+	_hits = lineIntersectsSurfaces [_loc, _locBelow, _obj, objNull, true, 10, "FIRE", "GEOM"]; 
+
+	_hitPos = ((_hits select 0) select 0); 
+	_hitObj = ((_hits select 0) select 2); 
+
+	if (!(_hitObj isEqualTo objNull)) then {
+		private _objectToAttach = _obj; 
+		private _targetObject = _hitObj; 
+		private _dirObjectToAttach = getDir _objectToAttach;
+		private _dirTargetObject = getDir _targetObject;
+		private _relativeDir = _dirObjectToAttach - _dirTargetObject;
+		_objectToAttach attachTo [_targetObject];
+		_objectToAttach setPosASL _hitPos;
+		_objectToAttach setDir ( _dirObjectToAttach - _dirTargetObject);
+	}; 
+};
+
+_this addEventHandler ["EpeContactStart", {
+	params ["_object1", "_object2", "_selection1", "_selection2", "_force", "_reactForce", "_worldPos"];
+	_object1 call YOSHI_getTopSurface;
+}];
+
+isAceCarryable = {
+    params ["_object"];
+    getNumber (configFile >> "CfgVehicles" >> typeOf _object >> "ace_dragging_canCarry") == 1
+};
+
+isAceDragable = {
+    params ["_object"];
+    getNumber (configFile >> "CfgVehicles" >> typeOf _object >> "ace_dragging_canDrag") == 1
+};
