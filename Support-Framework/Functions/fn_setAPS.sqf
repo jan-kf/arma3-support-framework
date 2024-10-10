@@ -27,7 +27,7 @@ YOSHI_getPosTop = {
 YOSHI_beamA2B = {
 	params ["_posA", "_posB"];
     
-	drawLine3D [_posA, _posB, [1, 0, 0, 1]];
+	drawLine3D [_posA, _posB, [1, 0, 0, 1], 6];
 };
 
 YOSHI_beamVic2Pos = {
@@ -64,7 +64,7 @@ YOSHI_detectRockets = {
  
 			[[_vehicle, _pos], YOSHI_beamVic2Pos] remoteExec ["spawn"];
 
-
+			// consider destroying the rocket, since only one exists...
 			_charge = createVehicle ["ModuleAPERSMineDispenser_Mine_F", _pos, [], 0, "CAN_COLLIDE"];
 			_charge setDamage 1;
 			

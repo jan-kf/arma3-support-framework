@@ -58,7 +58,7 @@ hint str(_timeOfFlight);
 /////////////////////////
 
 
-_nearbyObjects = nearestObjects [getPosWorld _this, [], 1];
+_nearbyObjects = nearestObjects [getPosATL _this, [], 1];
 
 [_nearbyObjects] spawn {
 	params ["_nearbyObjects"];

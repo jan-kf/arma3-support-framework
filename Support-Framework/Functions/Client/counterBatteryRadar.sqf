@@ -1,6 +1,7 @@
 YOSHI_mapDrawingEnabled = true;
 YOSHI_projectileIdCounter = 0;
 YOSHI_detectedTargets = [];
+YOSHI_CBRMarkersArray = [];
 
 YOSHI_projectileDetectionRange = YOSHI_CBR getVariable ["DetectionRange", 5000];
 YOSHI_projectileCautionRange = YOSHI_CBR getVariable ["CautionRange", 4000];
@@ -10,6 +11,8 @@ YOSHI_projectileIncomingRange = YOSHI_CBR getVariable ["IncomingRange", 500];
 YOSHI_mapProjectilesDrawTimeout = 5;
 YOSHI_markerCounter = 0;
 YOSHI_markerPrefix = "_USER_DEFINED YOSHI_markerNo";
+
+
 
 YOSHI_numToTextArray = {
     params ["_number"];
@@ -438,53 +441,25 @@ YOSHI_drawTarget = {
 
 };
 
-YOSHI_monitorLoop = {
-	private _syncedRadars = synchronizedObjects YOSHI_CBR;
 
-	_syncedRadars apply {
-		_x call YOSHI_triggerRadarScan;
-	};
+addMissionEventHandler ["ArtilleryShellFired", {
+	params ["_vehicle", "_weapon", "_ammo", "_gunner", "_instigator", "_artilleryTarget", "_targetPosition", "_shell"];
 
-	if(YOSHI_mapDrawingEnabled) then {
-		{
-			private _marker = _x;
+	YOSHI_detectedTargets pushBack [_targetPosition, _shell, _vehicle];
+	publicVariable "YOSHI_detectedTargets";
 
-			if (_marker find "_USER_DEFINED YoshiCounterBatteryRadar" == 0) then {
-				deleteMarker _marker;
-			};
-		} forEach allMapMarkers;
-		
-		// [YOSHI_detectedTargets] call YOSHI_drawBoundingBox;
-
-		YOSHI_detectedTargets apply {
-			
-			[_x] call YOSHI_drawTarget;
+	[_targetPosition, _shell, getPosASL _vehicle] spawn {
+		params ["_targetPosition", "_shell", "_originPosition"];
+		while {alive _shell} do {
+			_targetMarker = [_targetPosition, "ColorRed", "mil_destroy"] call YOSHI_fnc_addMarker;
+			_shellMarker = [_shell, "ColorRed", "mil_triangle"] call YOSHI_fnc_addMarker;
+			_shellMarker setMarkerDirLocal ((getPosASL _shell) getDir _targetPosition);
+			_originMarker = [_originPosition] call YOSHI_fnc_addMarker;
+			sleep 1;
+			deleteMarkerLocal _targetMarker;
+			deleteMarkerLocal _shellMarker;
+			deleteMarkerLocal _originMarker;
 		};
-	};
-};
+	}
 
-
-if(hasInterface) then {
-	[] spawn {
-		private _fName = "YOSHI_initThread: ";
-		diag_log format[_fName + "enter"];
-		
-		waitUntil{
-			sleep 3;
-			diag_log format[_fName + "waiting till client is loaded.."];		
-			!isNull findDisplay 46 && !(getPlayerUID player isEqualTo '');
-		};
-
-		YOSHI_perFrameEH_handle = [
-			{		
-				if(!(YOSHI_mapDrawingEnabled)) exitWith {};
-				call YOSHI_monitorLoop;
-			}, 
-			1
-		] call CBA_fnc_addPerFrameHandler;
-		diag_log format[_fName + "YOSHI_perFrameEH_handle: %1", YOSHI_perFrameEH_handle];
-
-		diag_log format[_fName + "exit"];
-
-	};
-};
+}];

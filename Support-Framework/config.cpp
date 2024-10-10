@@ -55,6 +55,9 @@ class CfgFunctions {
             class addItemsToFabricator {
                 description = "Function to add items to the fabricator";
             };
+            class addMarker {
+                description = "Function to add marker to the map";
+            };
             class baseHeartbeat {
                 description = "Function to monitor and manage base status updates";
             };
