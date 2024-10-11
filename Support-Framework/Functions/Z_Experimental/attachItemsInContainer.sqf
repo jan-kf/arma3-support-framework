@@ -276,3 +276,6 @@ isAceDragable = {
     params ["_object"];
     getNumber (configFile >> "CfgVehicles" >> typeOf _object >> "ace_dragging_canDrag") == 1
 };
+
+// add box to vehicle:
+// setVehicleCargo
