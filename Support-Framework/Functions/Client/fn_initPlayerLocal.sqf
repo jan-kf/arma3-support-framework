@@ -364,7 +364,56 @@ private _uavAction = [
 				};
 			} forEach _reconPrefixes;
 
-		} forEach allMapMarkers;		
+		} forEach allMapMarkers;
+
+		// Add more field actions:
+		private _uavFieldActionIED = [
+			"uavIED-action", "Attach IED", "",
+			{
+				// statement 
+				params ["_target", "_caller", "_args"];
+				private _vic = _args select 0;
+				// attach the ied to the drone here
+
+				_vic say3D ["DufflebagShuffle", 100, 1];
+				_explosive = createVehicle ["ModuleExplosive_SatchelCharge_F", [0,0,0], [], 0, "CAN_COLLIDE"];
+				_explosive attachTo [_vic, [0,0,0.1]];
+
+				_boom = [ 
+					"MyVehicleAction",  
+					"Detonate",  
+					"",  
+					{ 
+						params ["_target", "_caller", "_args"];
+						private _vic = _args select 0;
+						private _explosive = _args select 1;
+						_explosive setDamage 1;
+					},  
+					{ 
+						true 
+					}, {}, [_vic, _explosive] 
+				] call ace_interact_menu_fnc_createAction; 
+				
+				[_vic, 1, ["ACE_SelfActions"], _boom] call ace_interact_menu_fnc_addActionToObject;
+
+				_vic addEventHandler ["Killed", {
+					params ["_unit", "_killer", "_instigator", "_useEffects"];
+					{_x setDamage 1;} forEach (attachedObjects _unit);
+				}];
+
+			}, 
+			{
+				params ["_target", "_caller", "_args"];
+				private _vic = _args select 0;
+				// Condition code here
+				private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+				private _isUAV = unitIsUAV _vic;
+				_ReconConfigured && _isUAV
+			},
+			{}, // 5: Insert children code <CODE> (Optional)
+			[_vic] // 6: Action parameters <ANY> (Optional)
+		] call ace_interact_menu_fnc_createAction;
+		_actions pushBack [_uavFieldActionIED, [], _vic];
 			
 		_actions
 	}

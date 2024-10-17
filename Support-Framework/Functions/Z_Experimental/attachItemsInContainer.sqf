@@ -240,7 +240,7 @@ YOSHI_getTopSurface = {
 };
 
 
-YOSHI_getTopSurface = { 
+YOSHI_attachToBelow = { 
 	params ["_obj"]; 
 	_loc = getPosASL _obj; 
 	_locBelow = _loc vectorAdd [0,0,-2]; 
@@ -264,7 +264,7 @@ YOSHI_getTopSurface = {
 
 _this addEventHandler ["EpeContactStart", {
 	params ["_object1", "_object2", "_selection1", "_selection2", "_force", "_reactForce", "_worldPos"];
-	_object1 call YOSHI_getTopSurface;
+	_object1 call YOSHI_attachToBelow;
 }];
 
 isAceCarryable = {

@@ -722,6 +722,11 @@ class CfgSounds {
         sound[] = {"\Support-Framework\Sounds\apsHit.ogg", 1, 1};
         titles[] = {};
     };
+    class DufflebagShuffle {
+        name = "dufflebagShuffle";
+        sound[] = {"\Support-Framework\Sounds\dufflebagShuffle.ogg", 1, 1};
+        titles[] = {};
+    };
     class CautionCaution {
         name = "CautionCaution";
         sound[] = {"\Support-Framework\Sounds\warnAlert.ogg", 1, 1};
