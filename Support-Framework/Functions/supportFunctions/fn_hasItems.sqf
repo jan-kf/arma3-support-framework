@@ -14,6 +14,11 @@ private _hasItem = false;
 		_hasItem = true;
 	};
 
+	// Check weapons
+	if (_x in (weapons _unit)) exitWith {
+		_hasItem = true;
+	};
+
 	// Check uniform, vest, and backpack items
 	if (_x in (uniformItems _unit) || _x in (vestItems _unit) || _x in (backpackItems _unit)) exitWith {
 		_hasItem = true;
