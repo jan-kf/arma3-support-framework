@@ -64,6 +64,15 @@ class CfgFunctions {
             class checkPulse {
                 description = "Function to reapply waypoint if vehicle gets lost";
             };
+            class createTargetActions {
+                description = "Function to create artillery target actions";
+            };
+            class createTargetsFromMarkers {
+                description = "Function to create artillery target actions from Markers";
+            };
+            class createTargetsFromLasers {
+                description = "Function to create artillery target actions from Lasers";
+            };
             class doFieldRecon {
                 description = "Function to perform ad-Hoc recon duties";
             };
