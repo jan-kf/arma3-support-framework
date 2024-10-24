@@ -221,14 +221,14 @@ YOSHI_handleArtilleryFire = {
 			deleteMarker _originMarker;
 		};
 		
-		private _result = [YOSHI_detectedTargets] call YOSHI_areAllProjectilesDead;
-		if (_result) then {
-			private _baseParams = call YOSHI_fnc_getBaseCallsign;
-			private _baseCallsign = _baseParams select 0;
-			private _baseName = _baseParams select 1;
-			[_baseCallsign, "YOSHI_SectorClear"] call YOSHI_fnc_playSideRadio;
-			YOSHI_detectedTargets=[];
-		};
+		// private _result = [YOSHI_detectedTargets] call YOSHI_areAllProjectilesDead;
+		// if (_result) then {
+		// 	private _baseParams = call YOSHI_fnc_getBaseCallsign;
+		// 	private _baseCallsign = _baseParams select 0;
+		// 	private _baseName = _baseParams select 1;
+		// 	[_baseCallsign, "YOSHI_SectorClear"] call YOSHI_fnc_playSideRadio;
+		// 	YOSHI_detectedTargets=[];
+		// };
 	};
 
 	if ((serverTime - YOSHI_baseMessageTime) > 10) then {
