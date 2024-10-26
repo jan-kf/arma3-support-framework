@@ -1,4 +1,41 @@
-// ropes need local coordinates, but line intersect needs ASL, need to be able to convert!
+_realToLocal = {
+	params ["_nexus", "_coordinates"];
+
+	_localCoordinates = [];
+
+	{
+		_localCoordinates pushBack (_x vectorDiff _nexus);
+	} forEach _coordinates;
+
+	_localCoordinates
+
+};
+
+_localToReal = {
+	params ["_nexus", "_coordinates"];
+
+	_realCoordinates = [];
+
+	{
+		_realCoordinates pushBack (_nexus vectorAdd _x);
+	} forEach _coordinates;
+
+	_realCoordinates
+};
+
+connectObjectWithRopes = { 
+    params ["_object1", "_object2", "_points"]; 
+    private _corners = _points; 
+    private _attachmentPoint = "slingload0"; 
+    private _ropes = []; 
+ 
+    { 
+        private _rope = ropeCreate [_object1, _attachmentPoint, _object2, _x, 20]; 
+        _ropes pushBack _rope; 
+    } forEach _corners; 
+ 
+    _ropes 
+};
 
 
 _object = _this;
@@ -31,6 +68,19 @@ _getCorners = {
 	];
 
 	_corners
+};
+
+private _deg = -(getDir _object);   
+
+_rotateZ = {
+    params ["_point", "_angle"];
+    private _x = (_point select 0);
+    private _y = (_point select 1);
+    
+    private _newX = (_x * (cos _angle)) - (_y * (sin _angle));
+    private _newY = (_x * (sin _angle)) + (_y * (cos _angle));
+    
+    [_newX, _newY, _point select 2]
 };
 
 _center = getPosWorld _object;
@@ -110,32 +160,50 @@ _intersects = [_landContantMax, _landContantMin];
 
 } forEach _cornerPairs;
 
-private _corners = [_intersects] call _getCorners;
+private _tempCorners = [_intersects] call _getCorners;
+
+_tempCorners2 = [_center, _tempCorners] call _realToLocal;
+
+_preCorners = [];
+{
+	_preCorners pushBack ([_x, _deg] call _rotateZ);
+} forEach _tempCorners2;
+
+_corners = [_center, _preCorners] call _localToReal;
+
+
+private _centerX = (((_corners select 0) select 0) + ((_corners select 1) select 0) + ((_corners select 2) select 0) + ((_corners select 3) select 0)) / 4;
+private _centerY = (((_corners select 0) select 1) + ((_corners select 1) select 1) + ((_corners select 2) select 1) + ((_corners select 3) select 1)) / 4;
+ 
+private _raisedCenter = [_centerX, _centerY, (_center select 2) *1.1];
 
 _mountingPoints = [];
-{ 
-	_intersect_temp = lineIntersectsSurfaces [_center, _x, objNull, objNull, true, 5, "FIRE", "GEOM"];
-	{
-		if (!((_x select 2) isEqualTo objNull)) exitWith {
-			_mountingPoints pushBack (_x select 0);
-		}
-	} forEach _intersect_temp;
+
+_tempCorners3 = [_center, _corners] call _realToLocal;
+
+_localMountingPoints = [];
+{
+	_localMountingPoints pushBack ([_x, -_deg] call _rotateZ);
+} forEach _tempCorners3;
+
+_corners pushBack _raisedCenter;
+
+{
+
+	private _orange = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
+	_orange enableSimulation false;
+	_orange setPosASL _x;
 
 } forEach _corners;
 
+{
 
-connectObjectWithRopes = { 
-    params ["_object1", "_object2", "_points"]; 
-    private _corners = _points; 
-    private _attachmentPoint = "slingload0"; 
-    private _ropes = []; 
- 
-    { 
-        private _rope = ropeCreate [_object1, _attachmentPoint, _object2, _x, 20]; 
-        _ropes pushBack _rope; 
-    } forEach _corners; 
- 
-    _ropes 
-};
-hint str(_corners);
-[heli, _object, _mountingPoints] call connectObjectWithRopes;
+	private _orange = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
+	_orange enableSimulation false;
+	_orange attachTo [_object, _x];
+
+} forEach _localMountingPoints;
+
+hint str(_localMountingPoints);
+
+[heli, _object, _localMountingPoints] call connectObjectWithRopes;
