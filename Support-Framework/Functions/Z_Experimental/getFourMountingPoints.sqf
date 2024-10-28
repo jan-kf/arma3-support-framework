@@ -30,7 +30,7 @@ connectObjectWithRopes = {
     private _ropes = []; 
  
     { 
-        private _rope = ropeCreate [_object1, _attachmentPoint, _object2, _x, 20]; 
+        private _rope = ropeCreate [_object1, _attachmentPoint, _object2, [_x select 0, _x select 1, (_x select 2) + 0.15], 20, [], ["RopeEnd", [0, 0, -1]]]; 
         _ropes pushBack _rope; 
     } forEach _corners; 
  
@@ -87,8 +87,13 @@ _center = getPosWorld _object;
 _boundingBox = boundingBoxReal _object;
 _bBoxMin = _boundingBox select 0;
 _bBoxMax = _boundingBox select 1;
+_bBoxHeight = _bBoxMax select 2;
 
 _cornerPairs = [
+	[
+		_center vectorAdd (_bBoxMax vectorMultiply [0,0,1]),
+		_center vectorAdd (_bBoxMin vectorMultiply [0,0,1])
+	],
 	[
 		_center vectorAdd _bBoxMax,
 		_center vectorAdd _bBoxMin
@@ -104,6 +109,58 @@ _cornerPairs = [
 	[
 		_center vectorAdd (((_bBoxMax vectorMultiply [0,0,1]) vectorAdd (_bBoxMin vectorMultiply [1,1,0])) vectorMultiply 0.8),
 		_center vectorAdd (((_bBoxMax vectorMultiply [1,1,0]) vectorAdd (_bBoxMin vectorMultiply [0,0,1])) vectorMultiply 0.8)
+	],
+
+	[
+		_center vectorAdd ((_bBoxMax vectorMultiply [1,1,0]) vectorMultiply 0.8),
+		_center vectorAdd ((_bBoxMin vectorMultiply [1,1,0]) vectorMultiply 0.8)
+	],
+	[
+		_center vectorAdd ((_bBoxMax vectorMultiply [1,0,0]) vectorMultiply 0.8),
+		_center vectorAdd ((_bBoxMin vectorMultiply [1,0,0]) vectorMultiply 0.8)
+	],
+	[
+		_center vectorAdd ((_bBoxMax vectorMultiply [0,1,0]) vectorMultiply 0.8),
+		_center vectorAdd ((_bBoxMin vectorMultiply [0,1,0]) vectorMultiply 0.8)
+	],
+
+	[
+		_center vectorAdd ((_bBoxMax vectorMultiply [1,1,0.5]) vectorMultiply 0.8),
+		_center vectorAdd ((_bBoxMin vectorMultiply [1,1,-0.5]) vectorMultiply 0.8)
+	],
+	[
+		_center vectorAdd ((_bBoxMax vectorMultiply [1,0,0.5]) vectorMultiply 0.8),
+		_center vectorAdd ((_bBoxMin vectorMultiply [1,0,-0.5]) vectorMultiply 0.8)
+	],
+	[
+		_center vectorAdd ((_bBoxMax vectorMultiply [0,1,0.5]) vectorMultiply 0.8),
+		_center vectorAdd ((_bBoxMin vectorMultiply [0,1,-0.5]) vectorMultiply 0.8)
+	],
+
+	[
+		_center vectorAdd ((_bBoxMax vectorMultiply [1,1,-0.5]) vectorMultiply 0.8),
+		_center vectorAdd ((_bBoxMin vectorMultiply [1,1,0.5]) vectorMultiply 0.8)
+	],
+	[
+		_center vectorAdd ((_bBoxMax vectorMultiply [1,0,-0.5]) vectorMultiply 0.8),
+		_center vectorAdd ((_bBoxMin vectorMultiply [1,0,0.5]) vectorMultiply 0.8)
+	],
+	[
+		_center vectorAdd ((_bBoxMax vectorMultiply [0,1,-0.5]) vectorMultiply 0.8),
+		_center vectorAdd ((_bBoxMin vectorMultiply [0,1,0.5]) vectorMultiply 0.8)
+	],
+
+	[
+		_center vectorAdd (((_bBoxMax vectorMultiply [1,1,0]) vectorAdd [0,0, (_bBoxHeight * -0.75)]) vectorMultiply 0.8),
+		_center vectorAdd (((_bBoxMin vectorMultiply [1,1,0]) vectorAdd [0,0, (_bBoxHeight * -0.75)]) vectorMultiply 0.8)
+	],
+	[
+		_center vectorAdd (((_bBoxMax vectorMultiply [1,0,0]) vectorAdd [0,0, (_bBoxHeight * -0.75)]) vectorMultiply 0.8),
+		_center vectorAdd (((_bBoxMin vectorMultiply [1,0,0]) vectorAdd [0,0, (_bBoxHeight * -0.75)]) vectorMultiply 0.8)
+	],
+	[
+		_center vectorAdd (((_bBoxMax vectorMultiply [0,1,0]) vectorAdd [0,0, (_bBoxHeight * -0.75)]) vectorMultiply 0.8),
+		_center vectorAdd (((_bBoxMin vectorMultiply [0,1,0]) vectorAdd [0,0, (_bBoxHeight * -0.75)]) vectorMultiply 0.8)
 	],
 
 	[
@@ -175,35 +232,35 @@ _corners = [_center, _preCorners] call _localToReal;
 private _centerX = (((_corners select 0) select 0) + ((_corners select 1) select 0) + ((_corners select 2) select 0) + ((_corners select 3) select 0)) / 4;
 private _centerY = (((_corners select 0) select 1) + ((_corners select 1) select 1) + ((_corners select 2) select 1) + ((_corners select 3) select 1)) / 4;
  
-private _raisedCenter = [_centerX, _centerY, (_center select 2) *1.1];
+private _raisedCenter = [_centerX, _centerY, (_center select 2) *1.5];
 
 _mountingPoints = [];
 
-_tempCorners3 = [_center, _corners] call _realToLocal;
+{
+	_intersect_temp = lineIntersectsSurfaces [ _raisedCenter, _x, objNull, objNull, true, 5, "FIRE", "GEOM"];
+
+	{
+		if (!((_x select 2) isEqualTo objNull)) exitWith {
+			_mountingPoints pushBack (_x select 0);
+		}
+	} forEach _intersect_temp;
+
+} forEach _corners;
+
+_middleMounts = lineIntersectsSurfaces [ _raisedCenter, (_raisedCenter vectorMultiply [1,1,0]), objNull, objNull, true, 5, "FIRE", "GEOM"];
+
+{
+	if (!((_x select 2) isEqualTo objNull)) exitWith {
+		_mountingPoints pushBack (_x select 0);
+	}
+} forEach _middleMounts;
+
+_tempCorners3 = [_center, _mountingPoints] call _realToLocal;
 
 _localMountingPoints = [];
 {
 	_localMountingPoints pushBack ([_x, -_deg] call _rotateZ);
 } forEach _tempCorners3;
 
-_corners pushBack _raisedCenter;
-
-{
-
-	private _orange = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
-	_orange enableSimulation false;
-	_orange setPosASL _x;
-
-} forEach _corners;
-
-{
-
-	private _orange = "Land_Orange_01_NoPop_F" createVehicle [0,0,0];
-	_orange enableSimulation false;
-	_orange attachTo [_object, _x];
-
-} forEach _localMountingPoints;
-
-hint str(_localMountingPoints);
 
 [heli, _object, _localMountingPoints] call connectObjectWithRopes;
