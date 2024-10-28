@@ -19,7 +19,7 @@ _myFunction = {
     _filteredArray = _objectsArray inAreaArray [_center, 500, 500, 0, true];
     { 
         _obj = _x;
-        _markerPos = getPosWorld _obj; 
+        _markerPos = getPosATL _obj; 
         _marked = false;
 
         _lightStat = (lightIsOn _obj);

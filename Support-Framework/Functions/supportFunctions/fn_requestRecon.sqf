@@ -34,7 +34,7 @@ private _groupLeaderCallsign = groupId _groupLeaderGroup;
 
 _vic setVariable ["destination", _locationPOS, true];
 	
-private _currentPos = getPosWorld _vic;
+private _currentPos = getPosATL _vic;
 
 // set waypoint
 [_vic, _locationPOS, "LOITER"] call YOSHI_fnc_setWaypoint;

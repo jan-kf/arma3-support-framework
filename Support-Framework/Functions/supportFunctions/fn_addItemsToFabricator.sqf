@@ -27,7 +27,7 @@ params ["_fabricator", "_itemsToAdd"];
 			params ["_target", "_caller", "_params"];
 			private _fabricator = _params select 0;
 			private _itemToAdd = _params select 1;
-			private _originalPos = getPosWorld _fabricator; 
+			private _originalPos = getPosATL _fabricator; 
 			private _newObject = createVehicle [typeOf _itemToAdd, _originalPos, [], 0, "NONE"]; 
 			
 			clearWeaponCargoGlobal _newObject; 

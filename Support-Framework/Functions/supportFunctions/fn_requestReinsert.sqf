@@ -81,7 +81,7 @@ if (!_straightFromTop || !_isLoitering) then {
 
 _vic setVariable ["destination", _locationPOS, true];
 	
-private _currentPos = getPosWorld _vic;
+private _currentPos = getPosATL _vic;
 
 // logic to check if Vic is already at location
 if (_vic distance2D _locationPOS < 100) exitWith {
