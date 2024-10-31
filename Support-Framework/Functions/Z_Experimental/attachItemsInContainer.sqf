@@ -245,7 +245,7 @@ YOSHI_attachToBelow = {
 	_loc = getPosASL _obj; 
 	_locBelow = _loc vectorAdd [0,0,-2]; 
 
-	_hits = lineIntersectsSurfaces [_loc, _locBelow, _obj, objNull, true, 10, "FIRE", "GEOM"]; 
+	_hits = lineIntersectsSurfaces [_loc, _locBelow, _obj, objNull, true, 1, "FIRE", "GEOM"]; 
 
 	_hitPos = ((_hits select 0) select 0); 
 	_hitObj = ((_hits select 0) select 2); 
@@ -261,6 +261,8 @@ YOSHI_attachToBelow = {
 		_objectToAttach setDir ( _dirObjectToAttach - _dirTargetObject);
 	}; 
 };
+
+[_this, -1] call ace_cargo_fnc_setSize;
 
 _this addEventHandler ["EpeContactStart", {
 	params ["_object1", "_object2", "_selection1", "_selection2", "_force", "_reactForce", "_worldPos"];
@@ -279,3 +281,9 @@ isAceDragable = {
 
 // add box to vehicle:
 // setVehicleCargo
+
+// get all supply boxes:
+// entities "ReammoBox_F"
+
+// all pick-up-able-things?
+// entities "ThingX"
