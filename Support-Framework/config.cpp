@@ -187,6 +187,9 @@ class CfgFunctions {
             class sendSideText {
                 description = "Function to handle side channel text communications";
             };
+            class setObjectLoadHandling {
+                description = "Function to handle object's loading handling";
+            };
             class setWaypoint {
                 description = "Function to set the waypoint for a given unit.";
             };

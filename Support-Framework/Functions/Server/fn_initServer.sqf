@@ -69,8 +69,14 @@ execVM "\Support-Framework\Functions\Client\counterBatteryRadar.sqf";
     if ([_x] call YOSHI_fnc_isHeliPad) then {
         YOSHI_HELIPAD_INDEX pushBack _x;
     };
-} forEach allMissionObjects "all";
+} forEach allMissionObjects "HeliH";
 publicVariable "YOSHI_HELIPAD_INDEX";
+
+//////////////////////////////////////////////////
+
+{
+    [_x] call YOSHI_fnc_setObjectLoadHandling;
+} forEach entities "ReammoBox_F";
 
 //// //// ////////////////////////////////////////////////////////////////////////////////
 
