@@ -118,6 +118,9 @@ class CfgFunctions {
             class getRegisteredVehicles {
                 description = "Function to retrieve a list of registered vehicles";
             };
+            class getSuppliesActions {
+                description = "Function to get the actions for supplies";
+            };
             class getVicActions {
                 description = "Function to get the vehicle actions";
             };

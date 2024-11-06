@@ -593,3 +593,25 @@ if (_virtualStorageConfigured && _fabricatorConfigured) then {
 		[_x, _syncedVirtualStorageObjects] call YOSHI_fnc_addItemsToFabricator;
 	} forEach _syncedFabricatorObjects;
 };
+
+
+private _logiActions = [
+	"logiActions", "Logistics", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		true
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Conditional Code
+		(attachedTo _target) isEqualTo objNull
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		
+		[_target, _caller, _params] call YOSHI_fnc_getSuppliesActions;
+	}
+] call ace_interact_menu_fnc_createAction;
+
+["ReammoBox_F", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
