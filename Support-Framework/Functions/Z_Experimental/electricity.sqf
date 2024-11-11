@@ -108,6 +108,7 @@ _myFunction = {
             };
             if (!_marked && _modelPath find "power" >= 0) then {
                 if (!_marked && ((_modelPath find "pole" >= 0) || (_modelPath find "con" >= 0) || (_modelPath find "wood" >= 0))) then {
+                    globalPowerlinesArray pushBack _obj;
                     _markerName = format ["_USER_DEFINED GreenMarker_%1", _obj];
                     _marker = createMarkerLocal [_markerName, _obj]; 
                     _marker setMarkerShapeLocal "ICON"; 
@@ -166,6 +167,7 @@ _myFunction = {
 
 globalMarkersArray apply {deleteMarker _x};
 globalMarkersArray = [];
+globalPowerlinesArray = [];
 
 _mapSize = worldSize;
 

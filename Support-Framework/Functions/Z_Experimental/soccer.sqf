@@ -10,7 +10,6 @@ YOSHI_soccer_thread = [_this] spawn {
 				private _kickVector = _direction vectorMultiply (abs ((speed _x)/2)); 
 				private _ballVelocity = velocity _ball;
 				_ball setVelocity (_ballVelocity vectorAdd _kickVector); 
-				hint str(abs ((speed _x)/2));
 			}; 
 		} forEach allPlayers; 
 	

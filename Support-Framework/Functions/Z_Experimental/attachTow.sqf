@@ -1,3 +1,36 @@
+params ["_towVic", "_cargo"];
+
+// needs more work
+YOSHI_getTowLocation = {
+	params ["_object", ["_isTowing", true]];
+
+	_modifier = -1;
+	if (_isTowing) then {_modifier = 1};
+
+	_corners = boundingBoxReal _object;
+	_center = ([_object] call YOSHI_getCenterOfMass) select 0;
+	_dir = vectorDir _object;
+	_xdir = (_corners select 0) select 0;
+	_ydir = ((_corners select 0) select 1);
+	_magnitude = sqrt ((_xdir ^ 2) + (_ydir ^ 2));
+	_vector = _dir vectorMultiply (_magnitude * _modifier);
+	_checkLoc = _center vectorAdd _vector;
+
+	_intersects = lineIntersectsSurfaces [_checkLoc, _center, objNull, objNull, true, 5, "FIRE", "GEOM"];
+	if ((count _intersects) > 0) then {
+		(_intersects select 0) select 0
+	} else {
+		_checkLoc
+	};
+};
+
+
+_cargoFront = ([getPosWorld _cargo, [[_cargo, false] call YOSHI_getTowLocation]] call YOSHI_realToLocal) select 0;
+_towRear = ([getPosWorld _towVic, [[_towVic, true] call YOSHI_getTowLocation]] call YOSHI_realToLocal) select 0;
+
+// ropeCreate needs coords that are relative to local getPosWorld coords
+ropeCreate [_towVic, _towRear, _cargo, _cargoFront, 5, ["RopeEnd", [0, 0, -1]], ["RopeEnd", [0, 0, -1]]];
+
 connectObjectWithRopes = { 
     params ["_object1", "_object2", "_points"]; 
     private _corners = _points; 
@@ -11,45 +44,6 @@ connectObjectWithRopes = {
  
     _ropes 
 };
-
-
-_object = _this;
-
-_getCorners = {
-	params ["_coordinates"];
-	private _minX = (_coordinates select 0) select 0;
-	private _minY = (_coordinates select 0) select 1;
-	private _minZ = (_coordinates select 0) select 2;
-	private _maxX = _minX;
-	private _maxY = _minY;
-	private _maxZ = _minZ;
-
-	{
-		_minX = (_x select 0) min _minX;
-		_minY = (_x select 1) min _minY;
-		_minZ =( _x select 2) min _minZ;
-		
-		_maxX = (_x select 0) max _maxX;
-		_maxY = (_x select 1) max _maxY;
-		_maxZ = (_x select 2) max _maxZ;
-	} forEach _coordinates;
-
-
-	private _corners = [
-		[_minX, _minY, _minZ],
-		[_maxX, _minY, _minZ], 
-		[_minX, _maxY, _minZ],
-		[_maxX, _maxY, _minZ]
-	];
-
-	_corners
-};
-
-private _deg = -(getDir _object);   
-
-_center = getPosWorld _object;
-
-_corners = [_object, false] call YOSHI_fnc_getSlimBoundingBox;
 
 
 private _centerX = (((_corners select 0) select 0) + ((_corners select 1) select 0) + ((_corners select 2) select 0) + ((_corners select 3) select 0)) / 4;

@@ -1,11 +1,11 @@
-private _downloadAction = ["StartDownload", "Start Download", "",  
+private _downloadAction = ["StartDownload", "Start Upload", "",  
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 
 		_downloadHandle = [_target] spawn {
 			params ["_target"];
 			_progress = 0;
-			_progress_speed = 1;
+			_progress_speed = 0.5;
 			_interrupt = false;
 			_downloadComplete = false;
 
@@ -14,20 +14,20 @@ private _downloadAction = ["StartDownload", "Start Download", "",
 				"Server Timeout: Connection to server was lost.",
 				"Data Corruption Detected: Verifying integrity of downloaded files.",
 				"Signal Interference: Connection stability compromised due to local electromagnetic interference.",
-				"Download Overload: Too many concurrent connections, bandwidth limit reached.",
+				"Upload Overload: Too many concurrent connections, bandwidth limit reached.",
 				"Authentication Failed: User credentials have expired.",
 				"Hardware Malfunction: Router overheating, cooling down to continue. Please retry later.",
 				"Unexpected Error: Protocol mismatch detected in the current session.",
 				"Server Maintenance: Remote server undergoing unplanned maintenance.",
 				"Power Fluctuation: Voltage drop detected, stabilizing connection.",
 				"Firewall Block: Security protocols triggered, temporarily halting data transfer.",
-				"Disk Full: Insufficient storage to complete download. Free up space and retry.",
+				"Disk Full: Insufficient storage to complete upload. Free up space and retry.",
 				"Checksum Error: Data integrity verification failed, re-downloading corrupted segments.",
 				"Local Network Congestion: High traffic detected on the network. Please retry later.",
 				"Software Update Required: System firmware out of date, update pending.",
 				"Signal Jamming: Hostile electronic warfare detected, attempting to bypass interference.",
-				"Memory Leak: System resources exhausted, clearing cache and restarting download.",
-				"Protocol Update: Download protocol outdated, updating to the latest version.",
+				"Memory Leak: System resources exhausted, clearing cache and restarting upload.",
+				"Protocol Update: Upload protocol outdated, updating to the latest version.",
 				"Environmental Disruption: Severe weather affecting satellite communications.",
 				"Cable Disconnect: Physical connection lost, checking hardware status."
 			];
@@ -47,27 +47,27 @@ private _downloadAction = ["StartDownload", "Start Download", "",
 				if ((count _enemiesNear) > 0) then {
 					_interrupt = true;
 					_target setVariable ["shouldKick", true, true];
-					["Download Interrupted! Clear any nearby hostiles!"] remoteExec ["systemChat"];
+					["Upload Interrupted! Clear any nearby hostiles!"] remoteExec ["systemChat"];
 				}; 
 				if ((count _playersNear) == 0) then {
 					_interrupt = true;
 					_target setVariable ["shouldKick", true, true];
-					["Download Interrupted! Get closer to the terminal!"] remoteExec ["systemChat"];
+					["Upload Interrupted! Get closer to the terminal!"] remoteExec ["systemChat"];
 				};
 
 				if (!_interrupt) then {
 					_progress = _progress + _progress_speed;
-					_message = format ["Download Progress: %1/100", _progress];
+					_message = format ["Upload Progress: %1/100", _progress];
 
 					[_message] remoteExec ["systemChat"];
 
 					if (_progress >= 100) then {
 						_downloadComplete = true;
 						
-						["Download Complete!"] remoteExec ["systemChat"];
+						["Upload Complete!"] remoteExec ["systemChat"];
 						_target setVariable ["isDownloading", false, true];
 					};
-					if ((random 100 < 10)) then {
+					if ((random 100 < 20)) then {
 						_interrupt = true;
 						_lastKick = time;
 						_target setVariable ["shouldKick", true, true];
