@@ -579,8 +579,29 @@ private _artilleryVicActions = [
 	}
 ] call ace_interact_menu_fnc_createAction;
 
+private _TowActions = [
+	"TowActions", "Towing", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		true
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Condition code here
+		true
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		private _actions = [_target, _caller, _params] call YOSHI_towRopeActions;
+		_actions 
+
+	}
+] call ace_interact_menu_fnc_createAction;
+
 // Add the actions to the classes that might have arty support
 ["LandVehicle", 0, ["ACE_MainActions"], _artilleryVicActions, true] call ace_interact_menu_fnc_addActionToClass;
+["LandVehicle", 0, ["ACE_MainActions"], _TowActions, true] call ace_interact_menu_fnc_addActionToClass;
 ["Ship", 0, ["ACE_MainActions"], _artilleryVicActions, true] call ace_interact_menu_fnc_addActionToClass;
 
 

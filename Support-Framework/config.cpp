@@ -7,6 +7,24 @@ class CfgPatches {
         author = "Yoshi";
         authorUrl = "https://github.com/jan-kf/arma3-support-framework";
     };
+
+    class SF_SpectrumAnalyzer
+	{
+		addonRootClass="A3_Weapons_F_Enoch";
+		requiredAddons[]=
+		{
+			"A3_Weapons_F_Enoch"
+		};
+		requiredVersion=0.1;
+		units[]={};
+		weapons[]=
+		{
+			"ysf_hgun_esd_01_F",
+			"ysf_hgun_esd_01_antenna_01_F",
+			"ysf_hgun_esd_01_antenna_02_F",
+			"ysf_hgun_esd_01_antenna_03_F"
+		};
+	};
 };
 
 class CfgFunctions {
@@ -22,6 +40,8 @@ class CfgFunctions {
         class Prelude {
             file = "\Support-Framework\Functions\Prelude";
             class initCore { preInit = 1; };
+            class initGeometry { preInit = 1; };
+            class initRopes { preInit = 1; };
         };
         class Modules {
             file = "\Support-Framework\Functions";
@@ -117,6 +137,9 @@ class CfgFunctions {
             };
             class getRegisteredVehicles {
                 description = "Function to retrieve a list of registered vehicles";
+            };
+            class getSlimBoundingBox {
+                description = "Function to retrieve the 4 or 8 verticies of an object's slimmer bounding box";
             };
             class getSuppliesActions {
                 description = "Function to get the actions for supplies";
@@ -982,4 +1005,315 @@ class CfgSounds {
         titles[] = {};
     };
 
+};
+
+
+class Mode_SemiAuto;
+class MuzzleSlot;
+class PointerSlot;
+class ESD_PointerSlot: PointerSlot
+{
+	class compatibleItems
+	{
+		acc_esd_01_flashlight=1;
+	};
+};
+class CfgWeapons
+{
+	class Pistol;
+	class Pistol_Base_F: Pistol
+	{
+		class WeaponSlotsInfo;
+	};
+	class hgun_esd_01_base_F: Pistol_Base_F
+	{
+		scope=1;
+		DLC="Enoch";
+		inertia=1;
+		reloadAction="";
+		weaponInfoType="RscWeaponSpectrumAnalyzerGeneric";
+		magazines[]={};
+		picture="\a3\Weapons_F_Enoch\Pistols\ESD_01\data\ui\gear_ESD_01_CA.paa";
+		class Library
+		{
+			libTextDesc="A device used to send and recieve EM signals";
+		};
+		modes[]=
+		{
+			"Single"
+		};
+		class Single: Mode_SemiAuto
+		{
+			sounds[]={};
+			minRange=1;
+			minRangeProbab=0.0099999998;
+			midRange=2;
+			midRangeProbab=0.0099999998;
+			maxRange=3;
+			maxRangeProbab=0.0099999998;
+		};
+		muzzles[]=
+		{
+			"this",
+			"Muzzle_1",
+			"Muzzle_2",
+			"Muzzle_3",
+			"Muzzle_4",
+			"Muzzle_5",
+			"Muzzle_6",
+			"Muzzle_7",
+			"Muzzle_8",
+			"Muzzle_9",
+			"Muzzle_10"
+		};
+		class Muzzle_base: Pistol_Base_F
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_1"
+			};
+			showToPlayer=0;
+		};
+		class Muzzle_1: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_1"
+			};
+		};
+		class Muzzle_2: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_2"
+			};
+		};
+		class Muzzle_3: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_3"
+			};
+		};
+		class Muzzle_4: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_4"
+			};
+		};
+		class Muzzle_5: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_5"
+			};
+		};
+		class Muzzle_6: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_6"
+			};
+		};
+		class Muzzle_7: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_7"
+			};
+		};
+		class Muzzle_8: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_8"
+			};
+		};
+		class Muzzle_9: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_9"
+			};
+		};
+		class Muzzle_10: Muzzle_base
+		{
+			magazines[]=
+			{
+				"ESD_01_DummyMagazine_10"
+			};
+		};
+		discreteDistance[]={0,1,2,3,4,5,6,7,8,9,10};
+		discreteDistanceInitIndex=5;
+		cursor="esd";
+		class WeaponSlotsInfo
+		{
+			mass=5;
+			holsterScale=0;
+			class MuzzleSlot
+			{
+				iconPosition[]={0.30000001,0.55000001};
+				iconScale=0.75;
+				iconPicture="\a3\Weapons_F_Enoch\Pistols\ESD_01\data\ui\hgun_esd_01_antenna_01_F_ca.paa";
+				iconPinpoint="Center";
+				linkProxy="\A3\data_f\proxies\weapon_slots\MUZZLE";
+				compatibleItems[]=
+				{
+					"muzzle_antenna_test_01",
+					"muzzle_antenna_01_f"
+				};
+			};
+			class MuzzleSlot2: MuzzleSlot
+			{
+				iconPosition[]={0.40000001,0.55000001};
+				iconPicture="\a3\Weapons_F_Enoch\Pistols\ESD_01\data\ui\hgun_esd_01_antenna_02_F_ca.paa";
+				compatibleItems[]=
+				{
+					"muzzle_antenna_02_f"
+				};
+			};
+			class MuzzleSlot3: MuzzleSlot
+			{
+				iconPosition[]={0.1,0.55000001};
+				iconPicture="\a3\Weapons_F_Enoch\Pistols\ESD_01\data\ui\hgun_esd_01_antenna_03_F_ca.paa";
+				compatibleItems[]=
+				{
+					"muzzle_antenna_03_f"
+				};
+			};
+			class PointerSlot: ESD_PointerSlot
+			{
+				iconPicture="\a3\Weapons_F_Enoch\Pistols\ESD_01\data\ui\hgun_esd_01_flashlight_01_F_ca.paa";
+				iconPinpoint="Center";
+				iconPosition[]={0.64999998,0.73000002};
+				iconScale=0.25;
+			};
+		};
+	};
+	class ysf_hgun_esd_01_F: hgun_esd_01_base_F
+	{
+		author="$STR_A3_Bohemia_Interactive";
+		_generalMacro="ysf_hgun_esd_01_F";
+		scope=2;
+		displayName="Yoshi's Spectrum Device";
+		model="\a3\Weapons_F_Enoch\Pistols\ESD_01\ESD_01_F";
+		baseWeapon="ysf_hgun_esd_01_F";
+	};
+	class ysf_hgun_esd_01_dummy_F: ysf_hgun_esd_01_F
+	{
+		author="$STR_A3_Bohemia_Interactive";
+		_generalMacro="ysf_hgun_esd_01_dummy_F";
+		weaponInfoType="RscWeaponZeroing";
+	};
+	class ysf_hgun_esd_01_antenna_01_F: ysf_hgun_esd_01_F
+	{
+		class LinkedItems
+		{
+			class LinkedItemsMuzzle
+			{
+				slot="MuzzleSlot";
+				item="muzzle_antenna_01_f";
+			};
+			class LinkedItemsFlashlight
+			{
+				slot="PointerSlot";
+				item="acc_esd_01_flashlight";
+			};
+		};
+	};
+	class ysf_hgun_esd_01_antenna_02_F: ysf_hgun_esd_01_F
+	{
+		class LinkedItems
+		{
+			class LinkedItemsMuzzle
+			{
+				slot="MuzzleSlot";
+				item="muzzle_antenna_02_f";
+			};
+			class LinkedItemsFlashlight
+			{
+				slot="PointerSlot";
+				item="acc_esd_01_flashlight";
+			};
+		};
+	};
+	class ysf_hgun_esd_01_antenna_03_F: ysf_hgun_esd_01_F
+	{
+		class LinkedItems
+		{
+			class LinkedItemsMuzzle
+			{
+				slot="MuzzleSlot";
+				item="muzzle_antenna_03_f";
+			};
+			class LinkedItemsFlashlight
+			{
+				slot="PointerSlot";
+				item="acc_esd_01_flashlight";
+			};
+		};
+	};
+	class ItemCore;
+	class InventoryMuzzleItem_Base_F;
+	class muzzle_antenna_base_01_F: ItemCore
+	{
+		DLC="Enoch";
+		class ItemInfo: InventoryMuzzleItem_Base_F
+		{
+			mass=6;
+			muzzlePos="usti hlavne";
+			muzzleEnd="konec hlavne";
+			alternativeFire="";
+		};
+	};
+	class muzzle_antenna_test_01: muzzle_antenna_base_01_F
+	{
+		displayName="Antenna Test 01";
+		scope=1;
+		model="\a3\Weapons_F_Enoch\Pistols\ESD_01\muzzle_antenna_01_F";
+		class EM
+		{
+			antenna="Test_Directional";
+		};
+	};
+	class muzzle_antenna_01_f: muzzle_antenna_base_01_F
+	{
+		author="$STR_A3_Bohemia_Interactive";
+		_generalMacro="muzzle_antenna_01_f";
+		scope=2;
+		displayName="Antenna (Low Hz Frequency)";
+		picture="\a3\Weapons_F_Enoch\Pistols\ESD_01\data\ui\gear_muzzle_antenna_01_ca.paa";
+		model="\a3\Weapons_F_Enoch\Pistols\ESD_01\muzzle_antenna_01_F";
+		class EM
+		{
+			antenna="Antenna_01";
+		};
+	};
+	class muzzle_antenna_02_f: muzzle_antenna_base_01_F
+	{
+		author="$STR_A3_Bohemia_Interactive";
+		_generalMacro="muzzle_antenna_02_f";
+		scope=2;
+		displayName="Antenna (Medium MHz Frequency)";
+		picture="\a3\Weapons_F_Enoch\Pistols\ESD_01\data\ui\gear_muzzle_antenna_02_ca.paa";
+		model="\a3\Weapons_F_Enoch\Pistols\ESD_01\muzzle_antenna_02_F";
+		class EM
+		{
+			antenna="Antenna_02";
+		};
+	};
+	class muzzle_antenna_03_f: muzzle_antenna_base_01_F
+	{
+		author="$STR_A3_Bohemia_Interactive";
+		_generalMacro="muzzle_antenna_03_f";
+		scope=2;
+		displayName="Antenna (High GHz Frequency)";
+		picture="\a3\Weapons_F_Enoch\Pistols\ESD_01\data\ui\gear_muzzle_antenna_03_ca.paa";
+		model="\a3\Weapons_F_Enoch\Pistols\ESD_01\muzzle_antenna_03_F";
+		class EM
+		{
+			antenna="Antenna_03";
+		};
+	};
 };
