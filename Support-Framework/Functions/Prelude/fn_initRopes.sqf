@@ -16,7 +16,7 @@ YOSHI_getVehicleInterceptPoints = {
 
 // TODO: make sure to only check intersects that are of the relevant object
 YOSHI_getTowLocation = { 
-	params ["_object", ["_isTowing", true]]; 
+	params ["_object", ["_isTowing", true], ['_otherObject', objNull]]; 
 	
 	_modifier = 1; 
 	if (_isTowing) then {_modifier = -1}; 
@@ -26,9 +26,17 @@ YOSHI_getTowLocation = {
 	_checkLoc2 = _interceptPoints select 1;
 	
 	if (_isTowing) then {
-		_intersects = lineIntersectsSurfaces [_checkLoc, _checkLoc2, objNull, objNull, true, 1, "PHYSX", "FIRE"]; 
-		if ((count _intersects) > 0) then { 
-			[(_intersects select 0) select 0]
+		_intersects = lineIntersectsSurfaces [_checkLoc, _checkLoc2, _otherObject, objNull, true, 5, "FIRE", "GEOM"];
+		_hits = [];
+		{
+			_intersected_object = _x select 2;
+			if (_intersected_object == _object) then {
+				_hits pushBack (_x select 0);
+			}
+		} forEach _intersects;
+
+		if ((count _hits) > 0) then { 
+			_hits
 		} else { 
 			[_checkLoc] 
 		};
@@ -37,14 +45,21 @@ YOSHI_getTowLocation = {
 		_checkRight = _checks select 0;
 		_checkLeft = _checks select 1;
 
-		_intersects = lineIntersectsSurfaces [_checkLoc, _checkRight, objNull, objNull, true, 1, "PHYSX", "FIRE"];
-		_intersectsLeft = lineIntersectsSurfaces [_checkLoc, _checkLeft, objNull, objNull, true, 1, "PHYSX", "FIRE"];
-
+		_intersects = lineIntersectsSurfaces [_checkLoc, _checkRight, _otherObject, objNull, true, 5, "FIRE", "GEOM"];
+		_intersectsLeft = lineIntersectsSurfaces [_checkLoc, _checkLeft, _otherObject, objNull, true, 5, "FIRE", "GEOM"];
 		_intersects append _intersectsLeft;
 
 		_hits = [];
-		if ((count _intersects) > 0) then { 
-			{_hits pushBack (_x select 0)} forEach _intersects;
+
+		{
+			_intersected_object = _x select 2;
+			if (_intersected_object == _object) then {
+				_hits pushBack (_x select 0);
+			}
+		} forEach _intersects;
+		
+
+		if ((count _hits) > 0) then { 
 			_hits
 		} else { 
 			[_checkLoc] 
@@ -58,8 +73,8 @@ YOSHI_deployTowRopes = {
 	private _towDeg = -(getDir _towVic);  
 	private _cargoDeg = -(getDir _cargo);  
 
-	_realCargoTowLocation =  [_cargo, false] call YOSHI_getTowLocation;
-	_realTowerTowLocation =  [_towVic, true] call YOSHI_getTowLocation;
+	_realTowerTowLocation =  [_towVic, true, _cargo] call YOSHI_getTowLocation;
+	_realCargoTowLocation =  [_cargo, false, _towVic] call YOSHI_getTowLocation;
 
 	_cargoFrontR = ([getPosWorld _cargo, [_realCargoTowLocation select 0]] call YOSHI_realToLocal) select 0;
 	_cargoFrontL = ([getPosWorld _cargo, [_realCargoTowLocation select 1]] call YOSHI_realToLocal) select 0; 
@@ -72,7 +87,7 @@ YOSHI_deployTowRopes = {
 	_rope2 = ropeCreate [_towVic, _rot_tr, _cargo, _rot_cfl, 5, ["RopeEnd", [0, 0, -1]], ["RopeEnd", [0, 0, -1]]];
 
 	// TODO: get this to work
-	if (!(isNull _rope)) then {
+	if (!isNull _rope) then {
 		_cargo setTowParent _towVic;
 		// TODO: add check to reset tow parent once rope no longer exists 
 	};
@@ -81,35 +96,43 @@ YOSHI_deployTowRopes = {
 YOSHI_stowTowRopes = {
 	params ["_vic"];
 
+	private _attachedObjects = ropeAttachedObjects _vic;
+
+	{ _x setTowParent objNull } forEach _attachedObjects;
+
 	private _ropes = ropes _vic;
 
 	{ ropeDestroy _x } forEach _ropes;
 
 };
 
+
+//CUP_Ridgback_Base
 YOSHI_towRopeActions = {
 	params ["_towVic", "_target", "_params"];
 
 	private _actions = [];
 
-	private _towDeg = -(getDir _towVic);
-
-	private _realTowerTowLocation =  [_towVic, true] call YOSHI_getTowLocation;
-	private _towRear = ([getPosWorld _towVic, [_realTowerTowLocation select 0]] call YOSHI_realToLocal) select 0;
-	private _rot_tr = [_towRear, -_towDeg] call YOSHI_rotateZ;
-	private _hitchLoc = ([getPosWorld _towVic, [_rot_tr]] call YOSHI_localToReal) select 0;
+	private _hitchLoc =  ([_towVic, true] call YOSHI_getTowLocation) select 0;
 
 	_interceptPoints = [_towVic] call YOSHI_getVehicleInterceptPoints;
 	_rangePoint = _interceptPoints select 0;
 
-	_vectorAB = ( _rangePoint vectorDiff _hitchLoc) vectorMultiply 2;
+	_vectorAB = ( _rangePoint vectorDiff _hitchLoc) vectorMultiply 5;
+	_aBitBack = (_hitchLoc vectorAdd _vectorAB);
+	_aBitUp = _aBitBack vectorAdd [0,0,1];
+	_aBitDown = _aBitBack vectorAdd [0,0,-1];
 
-	_intersects = lineIntersectsSurfaces [_hitchLoc, (_hitchLoc vectorAdd _vectorAB) , _towVic, objNull, true, 1, "PHYSX", "FIRE"];
+	_intersects1 = lineIntersectsSurfaces [_hitchLoc,  _aBitBack, _towVic, objNull, true, 1, "FIRE", "GEOM"];
+	_intersects2 = lineIntersectsSurfaces [_hitchLoc, _aBitUp, _towVic, objNull, true, 1, "FIRE", "GEOM"];
+	_intersects3 = lineIntersectsSurfaces [_hitchLoc, _aBitDown, _towVic, objNull, true, 1, "FIRE", "GEOM"];
 
-	if ((count _intersects) > 0) then {
-		private _cargo = (_intersects select 0) select 2;
+	_intersects = _intersects1+_intersects2+_intersects3;
 
-		if (_cargo isKindOf "AllVehicles") then {
+	{
+		private _cargo = _x select 2;
+
+		if (_cargo isKindOf "AllVehicles") exitWith {
 
 			private _vehicleClass = typeOf _cargo;
 			private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
@@ -147,7 +170,7 @@ YOSHI_towRopeActions = {
 
 			_actions pushBack [_vicDeployTowAction, [], _target];
 		};
-	};
+	} forEach _intersects;
 
 	if ((count (ropeAttachedObjects _towVic)) > 0) then {
 		private _vicStowTowAction = [
