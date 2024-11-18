@@ -42,6 +42,7 @@ class CfgFunctions {
             class initCore { preInit = 1; };
             class initGeometry { preInit = 1; };
             class initRopes { preInit = 1; };
+            class initConstants { preInit = 1; };
         };
         class Modules {
             file = "\Support-Framework\Functions";

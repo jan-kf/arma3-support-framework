@@ -73,22 +73,54 @@ YOSHI_deployTowRopes = {
 	private _towDeg = -(getDir _towVic);  
 	private _cargoDeg = -(getDir _cargo);  
 
-	_realTowerTowLocation =  [_towVic, true, _cargo] call YOSHI_getTowLocation;
-	_realCargoTowLocation =  [_cargo, false, _towVic] call YOSHI_getTowLocation;
+	_towVicLookup = [_towVic] call YOSHI_getTowingPoints;
+	_cargoLookup = [_cargo] call YOSHI_getTowingPoints;
+	_rot_tr = [0,0,0];
+	_rotatedCargoAttachPoints = [[0,0,0]];
 
-	_cargoFrontR = ([getPosWorld _cargo, [_realCargoTowLocation select 0]] call YOSHI_realToLocal) select 0;
-	_cargoFrontL = ([getPosWorld _cargo, [_realCargoTowLocation select 1]] call YOSHI_realToLocal) select 0; 
-	_towRear = ([getPosWorld _towVic, [_realTowerTowLocation select 0]] call YOSHI_realToLocal) select 0; 
-	_rot_cfr = [_cargoFrontR, -_cargoDeg] call YOSHI_rotateZ;
-	_rot_cfl = [_cargoFrontL, -_cargoDeg] call YOSHI_rotateZ;
-	_rot_tr = [_towRear, -_towDeg] call YOSHI_rotateZ;
+	if ((count _towVicLookup) > 0) then {
+		_rot_tr = (_towVicLookup select 1) select 0;
+	} else {
+		_realTowerTowLocation =  [_towVic, true, _cargo] call YOSHI_getTowLocation;
+		_towRear = ([getPosWorld _towVic, [_realTowerTowLocation select 0]] call YOSHI_realToLocal) select 0; 
+		_rot_tr = [_towRear, -_towDeg] call YOSHI_rotateZ;
+	};
 
-	_rope = ropeCreate [_towVic, _rot_tr, _cargo, _rot_cfr, 5, ["RopeEnd", [0, 0, -1]], ["RopeEnd", [0, 0, -1]]];
-	_rope2 = ropeCreate [_towVic, _rot_tr, _cargo, _rot_cfl, 5, ["RopeEnd", [0, 0, -1]], ["RopeEnd", [0, 0, -1]]];
+
+
+	if ((count _cargoLookup) > 0) then {
+		_rotatedCargoAttachPoints = _cargoLookup select 0;
+	} else {
+		_realCargoTowLocation =  [_cargo, false, _towVic] call YOSHI_getTowLocation;
+
+		_cargoFrontAttachPoints = [];
+
+		{
+			_cargoFrontAttachPoints pushBack (([getPosWorld _cargo, [_x]] call YOSHI_realToLocal) select 0);
+		} forEach _realCargoTowLocation;
+
+
+		_rotatedCargoAttachPoints = [];
+		{
+			_rotatedCargoAttachPoints pushBack ([_x, -_cargoDeg] call YOSHI_rotateZ);
+		} forEach _cargoFrontAttachPoints;
+	};
+
+	_createdRopes = [];
+	{
+		_createdRopes pushBack (ropeCreate [_towVic, _rot_tr, _cargo, _x, 5, ["RopeEnd", [0, 0, 1]], ["RopeEnd", [0, 0, 1]]]);
+	} forEach _rotatedCargoAttachPoints;
+
+	_shouldSetParent = false;
+	{
+		if (!isNull _x) then {
+			_shouldSetParent = true;
+		};
+	} forEach _createdRopes;
 
 	// TODO: get this to work
-	if (!isNull _rope) then {
-		_cargo setTowParent _towVic;
+	if (_shouldSetParent) then {
+		[_cargo, _towVic] remoteExec ["setTowParent"];
 		// TODO: add check to reset tow parent once rope no longer exists 
 	};
 };
@@ -98,7 +130,7 @@ YOSHI_stowTowRopes = {
 
 	private _attachedObjects = ropeAttachedObjects _vic;
 
-	{ _x setTowParent objNull } forEach _attachedObjects;
+	{ [_x, objNull] remoteExec ["setTowParent"] } forEach _attachedObjects;
 
 	private _ropes = ropes _vic;
 
