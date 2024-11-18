@@ -32,7 +32,7 @@ YOSHI_attachToBelow = {
 	_hitPos = ((_hits select 0) select 0); 
 	_hitObj = ((_hits select 0) select 2); 
 
-	if (!(_hitObj isEqualTo objNull)) then {
+	if (!(_hitObj isEqualTo objNull) && !(_hitObj isKindOf "Static")) then {
 		private _objectToAttach = _obj; 
 		private _targetObject = _hitObj; 
 		private _dirObjectToAttach = getDir _objectToAttach;
