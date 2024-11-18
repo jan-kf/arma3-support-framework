@@ -56,6 +56,11 @@ addMissionEventHandler ["EntityCreated", {
     if (_entity isKindOf "ReammoBox_F") then {
        [_entity] call YOSHI_fnc_setObjectLoadHandling;
     };
+
+
+    if (unitIsUAV _entity) then {
+        _entity setFuelConsumptionCoef 0.1;
+    };
 }];
 
 // at the moment, the index will not allow for deleted helipads, their last location will be considered available until this is on the main branch:
