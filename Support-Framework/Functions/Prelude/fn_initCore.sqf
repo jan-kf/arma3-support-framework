@@ -61,6 +61,14 @@ addMissionEventHandler ["EntityCreated", {
     if (unitIsUAV _entity) then {
         _entity setFuelConsumptionCoef 0.1;
     };
+
+    // if (_entity isKindOf "B_UGV_9RIFLES_F") then {
+    //     _thread = [_x] spawn YOSHI_detectRockets;
+
+    //     _x setVariable ["YOSHI_APS_Thread", _thread];
+        
+    // };
+
 }];
 
 // at the moment, the index will not allow for deleted helipads, their last location will be considered available until this is on the main branch:

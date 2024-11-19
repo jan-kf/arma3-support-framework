@@ -59,6 +59,9 @@ YOSHI_getFrontPosition = {
 YOSHI_detectRockets = { 
     params ["_vehicle", ["_charges", 40], ["_range", -1], ["_interval", 0.05], ["_cooldown", 0.1]];
 	if (isServer) exitWith {};
+	_thread = _vehicle getVariable ["YOSHI_APS_Thread", objNull];
+	if (isNull _thread) exitWith {}; // prevent multiple APS on one vehicle
+
 	if (_range == -1) then{
 		_boundingBox = boundingBoxReal _vehicle;
 		_range = ((_boundingBox select 0) distance (_boundingBox select 1)) * 2;
