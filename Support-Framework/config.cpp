@@ -43,6 +43,7 @@ class CfgFunctions {
             class initGeometry { preInit = 1; };
             class initRopes { preInit = 1; };
             class initConstants { preInit = 1; };
+            class initEasterEgg { preInit = 1; };
         };
         class Modules {
             file = "\Support-Framework\Functions";
@@ -111,6 +112,9 @@ class CfgFunctions {
             };
             class getCasActions {
                 description = "Function to get the CAS vehicle actions";
+            };
+            class getEnhancedCombatActions {
+                description = "Function to get the Enhanced Combat actions";
             };
             class getLocation {
                 description = "Function to get the CAS vehicle actions";
@@ -826,6 +830,17 @@ class CfgSounds {
         sound[] = {"\Support-Framework\Sounds\detected.ogg", 1, 1};
         titles[] = {};
     };
+    class activatingInstantKill {
+        name = "activatingInstantKill";
+        sound[] = {"\Support-Framework\Sounds\easterEgg\activateInstantKill.ogg", 1, 1};
+        titles[] = {};
+    };
+    class deactivatingInstantKill {
+        name = "deactivatingInstantKill";
+        sound[] = {"\Support-Framework\Sounds\easterEgg\deactivateInstantKill.ogg", 1, 1};
+        titles[] = {};
+    };
+
     class one {
         name = "one";
         sound[] = {"\Support-Framework\Sounds\numbers\one.ogg", 1, 1};

@@ -636,3 +636,24 @@ private _logiActions = [
 ] call ace_interact_menu_fnc_createAction;
 
 ["ReammoBox_F", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
+
+private _easterEggActions = [
+	"easterEggActions", "Enhanced Combat Settings", "",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		true
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Conditional Code
+		true
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		
+		[_target, _caller, _params] call YOSHI_fnc_getEnhancedCombatActions;
+	}
+] call ace_interact_menu_fnc_createAction;
+
+["B_UGV_9RIFLES_F", 0, ["ACE_MainActions"], _easterEggActions, true] call ace_interact_menu_fnc_addActionToClass;

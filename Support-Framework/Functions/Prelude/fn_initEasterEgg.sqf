@@ -1,27 +1,34 @@
-YOSHI_instantKill = {
+YOSHI_activateInstantKill = {
 	params ["_admin"];
 
 	YOSHI_instantKillThread = [_admin] spawn {
-		params ["__admin"];
+		params ["_adminThread"];
 
 		_radius = 100; 
 
-		while {alive __admin} do {
-			_allUnits = __admin nearEntities ["Man", _radius];
-			_allVics = __admin nearEntities ["AllVehicles", _radius];
+		[_adminThread, ["activatingInstantKill", 500, 1]] remoteExec ["say3D"];
+		sleep 1.5;
+
+		if (_adminThread isKindOf "B_UGV_9RIFLES_F") then {
+			_adminThread setObjectTexture [0, "9Rifles\Data\Vehicles\stompy_ext_instantKill.paa"];
+		};
+
+		while {alive _adminThread} do {
+			_allUnits = _adminThread nearEntities ["Man", _radius];
+			_allVics = _adminThread nearEntities ["AllVehicles", _radius];
 
 			{
 				{_allUnits pushBack _x} forEach crew _x;
 			} forEach _allVics;
 			
 			_hostiles = _allUnits select { 
-				(side _x) isNotEqualTo (side __admin) && 
+				(side _x) isNotEqualTo (side _adminThread) && 
 				(side _x) isNotEqualTo civilian && 
 				alive _x;
 			};
 
 			{ 
-				_pos = (getPosATL __admin); 
+				_pos = (getPosATL _adminThread); 
 				_gunPos = _pos vectorAdd [0,0,2]; 
 
 				_isInVic = (vehicle _x != _x);
@@ -51,6 +58,26 @@ YOSHI_instantKill = {
 	};
 
 	_admin setVariable ["YOSHI_instantKillThread", YOSHI_instantKillThread, true];
+};
+
+YOSHI_deactivateInstantKill = {
+	params ["_admin"];
+
+	[_admin] spawn {
+		params ["_adminThread"];
+
+		_thread = _adminThread getVariable ["YOSHI_instantKillThread", scriptNull];
+
+		[_adminThread, ["deactivatingInstantKill", 500, 1]] remoteExec ["say3D"];
+		sleep 1.5;
+
+		if (_adminThread isKindOf "B_UGV_9RIFLES_F") then {
+			_adminThread setObjectTexture [0, "9Rifles\Data\Vehicles\stompy_ext.paa"];
+		};
+
+		terminate _thread;
+	};
+
 };
 
 
