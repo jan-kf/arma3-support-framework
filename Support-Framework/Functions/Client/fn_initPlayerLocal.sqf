@@ -387,8 +387,7 @@ private _uavAction = [
 					{ 
 						params ["_target", "_caller", "_args"];
 						private _vic = _args select 0;
-						private _explosive = _args select 1;
-						_explosive setDamage 1;
+						_vic setDamage 1; // Trigger event handler
 					},  
 					{ 
 						true 
@@ -400,6 +399,11 @@ private _uavAction = [
 				_vic addEventHandler ["Killed", {
 					params ["_unit", "_killer", "_instigator", "_useEffects"];
 					{_x setDamage 1;} forEach (attachedObjects _unit);
+					_exploPos = getPosATL _unit;
+					if ((_exploPos select 2) < 15) then { // TODO: if it's above this height, detonate shrapnel explosives for AP/AA
+						"Bo_Mk82" createVehicle (_exploPos vectorAdd [0,0,0.1]);
+					};
+					"HelicopterExploBig" createVehicle _exploPos;
 				}];
 
 			}, 
@@ -410,7 +414,7 @@ private _uavAction = [
 				private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
 				private _isUAV = unitIsUAV _vic;
 				private _vicHasIED = _vic getVariable ["YOSHI_UavHasIED", false];
-				private _vicHasMortar = _vic getVariable ["YOSHI_UavHasMortar", false];
+				private _vicHasMortar = _vic getVariable ["YOSHI_UavOrdinanceCount", 0] > 0;
 				_ReconConfigured && _isUAV && !_vicHasIED && !_vicHasMortar
 			},
 			{}, // 5: Insert children code <CODE> (Optional)
@@ -418,42 +422,93 @@ private _uavAction = [
 		] call ace_interact_menu_fnc_createAction;
 		_actions pushBack [_uavFieldActionIED, [], _vic];
 
+		// TODO: doesn't work since shells have a time limit
+		// private _uavFieldActionDrop = [ 
+		// 	"uavIED-action", "Attach 82mm Mortar Round", "",
+		// 	{
+		// 		// statement 
+		// 		params ["_target", "_caller", "_args"];
+		// 		private _vic = _args select 0;
+		// 		// attach the ied to the drone here
+
+		// 		_vic setVariable ["YOSHI_UavHasMortar", true, true];
+		// 		_vic say3D ["DufflebagShuffle", 100, 0.75];
+		// 		_explosive = createVehicle ["Sh_82mm_AMOS", [0,0,0], [], 0, "CAN_COLLIDE"];
+		// 		_explosive attachTo [_vic, [0,0.2,0]];
+
+		// 		_boom = [ 
+		// 			"uavDetach82mm",  
+		// 			"Release 82mm",  
+		// 			"",  
+		// 			{ 
+		// 				params ["_target", "_caller", "_args"];
+		// 				private _vic = _args select 0;
+		// 				private _explosive = (attachedObjects _vic) select 0;
+		// 				detach _explosive;
+		// 			},  
+		// 			{ 
+		// 				params ["_target", "_caller", "_args"];
+		// 				private _vic = _args select 0;
+		// 				(count (attachedObjects _vic)) > 0 
+		// 			}, {}, [_vic, _explosive] 
+		// 		] call ace_interact_menu_fnc_createAction; 
+				
+		// 		[_vic, 1, ["ACE_SelfActions"], _boom] call ace_interact_menu_fnc_addActionToObject;
+
+		// 		_vic addEventHandler ["Killed", {
+		// 			params ["_unit", "_killer", "_instigator", "_useEffects"];
+		// 			{ detach _x;} forEach (attachedObjects _unit);
+		// 		}];
+
+		// 	}, 
+		// 	{
+		// 		params ["_target", "_caller", "_args"];
+		// 		private _vic = _args select 0;
+		// 		// Condition code here
+		// 		private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+		// 		private _isUAV = unitIsUAV _vic;
+		// 		private _vicHasMortar = _vic getVariable ["YOSHI_UavHasMortar", false];
+		// 		private _vicHasIED = _vic getVariable ["YOSHI_UavHasIED", false];
+		// 		_ReconConfigured && _isUAV && !_vicHasMortar && !_vicHasIED
+		// 	},
+		// 	{}, // 5: Insert children code <CODE> (Optional)
+		// 	[_vic] // 6: Action parameters <ANY> (Optional)
+		// ] call ace_interact_menu_fnc_createAction;
+		// _actions pushBack [_uavFieldActionDrop, [], _vic];
+
 		private _uavFieldActionMortar = [
-			"uavIED-action", "Attach 82mm Mortar Round", "",
+			"uavIED-action", "Attach 2 Mortar Rounds", "",
 			{
 				// statement 
 				params ["_target", "_caller", "_args"];
 				private _vic = _args select 0;
-				// attach the ied to the drone here
-
-				_vic setVariable ["YOSHI_UavHasMortar", true, true];
+				// attach the Grenade to the drone here
+				_vic setVariable ["YOSHI_UavOrdinanceCount", 2, true];
 				_vic say3D ["DufflebagShuffle", 100, 0.75];
-				_explosive = createVehicle ["Sh_82mm_AMOS", [0,0,0], [], 0, "CAN_COLLIDE"];
-				_explosive attachTo [_vic, [0,0.2,0]];
+				// _explosive = createVehicle ["ModuleExplosive_SatchelCharge_F", [0,0,0], [], 0, "CAN_COLLIDE"];
+				// _explosive attachTo [_vic, [0,0,0.1]];
 
-				_boom = [ 
+				_drop = [ 
 					"uavDetach82mm",  
-					"Release 82mm",  
+					"Release Mortar Round",  
 					"",  
 					{ 
 						params ["_target", "_caller", "_args"];
 						private _vic = _args select 0;
-						private _explosive = (attachedObjects _vic) select 0;
+						_explosive = createVehicle ["Sh_82mm_AMOS", [0,0,0]]; 
+						_explosive attachTo [_vic, [0,0.2,0]];
 						detach _explosive;
+						private _vicGrenadeCount = _vic getVariable ["YOSHI_UavOrdinanceCount", 1];
+						_vic setVariable ["YOSHI_UavOrdinanceCount", _vicGrenadeCount-1, true];
 					},  
 					{ 
 						params ["_target", "_caller", "_args"];
 						private _vic = _args select 0;
-						(count (attachedObjects _vic)) > 0 
-					}, {}, [_vic, _explosive] 
+						_vic getVariable ["YOSHI_UavOrdinanceCount", 0] > 0; 
+					}, {}, [_vic] 
 				] call ace_interact_menu_fnc_createAction; 
 				
-				[_vic, 1, ["ACE_SelfActions"], _boom] call ace_interact_menu_fnc_addActionToObject;
-
-				_vic addEventHandler ["Killed", {
-					params ["_unit", "_killer", "_instigator", "_useEffects"];
-					{ detach _x;} forEach (attachedObjects _unit);
-				}];
+				[_vic, 1, ["ACE_SelfActions"], _drop] call ace_interact_menu_fnc_addActionToObject;
 
 			}, 
 			{
@@ -462,9 +517,10 @@ private _uavAction = [
 				// Condition code here
 				private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
 				private _isUAV = unitIsUAV _vic;
-				private _vicHasMortar = _vic getVariable ["YOSHI_UavHasMortar", false];
+				private _vicHasMortar = _vic getVariable ["YOSHI_UavOrdinanceCount", 0] > 0;
+				private _vicHasGrenades = _vic getVariable ["YOSHI_UavGrenadeCount", 0] > 0;
 				private _vicHasIED = _vic getVariable ["YOSHI_UavHasIED", false];
-				_ReconConfigured && _isUAV && !_vicHasMortar && !_vicHasIED
+				_ReconConfigured && _isUAV && !_vicHasMortar && !_vicHasIED && !_vicHasGrenades
 			},
 			{}, // 5: Insert children code <CODE> (Optional)
 			[_vic] // 6: Action parameters <ANY> (Optional)
@@ -472,13 +528,13 @@ private _uavAction = [
 		_actions pushBack [_uavFieldActionMortar, [], _vic];
 
 		private _uavFieldActionGrenade = [
-			"uavGrenade-action", "Attach Grenade", "",
+			"uavGrenade-action", "Attach 4 Grenades", "",
 			{
 				// statement 
 				params ["_target", "_caller", "_args"];
 				private _vic = _args select 0;
 				// attach the Grenade to the drone here
-				_vic setVariable ["YOSHI_UavGrenadeCount", 2, true];
+				_vic setVariable ["YOSHI_UavGrenadeCount", 4, true];
 				_vic say3D ["DufflebagShuffle", 100, 2];
 				// _explosive = createVehicle ["ModuleExplosive_SatchelCharge_F", [0,0,0], [], 0, "CAN_COLLIDE"];
 				// _explosive attachTo [_vic, [0,0,0.1]];

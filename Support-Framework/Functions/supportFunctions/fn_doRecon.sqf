@@ -68,23 +68,21 @@ while {(alive _uav) && (_elapsedTime < _timeLimit)} do {
         _type = typeOf _target;
 		_side = side _x;
 
-        _markerName = format ["_USER_DEFINED marker_%1_%2", _type, round random 1000000];
-        _markers pushBack _markerName; 
-
 		_color = "ColorUNKNOWN";
-		
 		if (_side == west) then {_color = "ColorWEST"}; 
 		if (_side == east) then {_color = "ColorEAST"}; 
 		if (_side == resistance) then {_color = "ColorGUER"}; 
 		if (_side == civilian) then {_color = "ColorCIV"};
-		
-        _marker = createMarkerLocal [_markerName, _target];
-        _marker setMarkerShapeLocal "ICON";
-        _marker setMarkerTypeLocal "mil_dot";
+
+        _markerName = format ["_USER_DEFINED marker_%1_%2", _type, round random 1000000];
+
+		_text = "";
 		if (_showNames) then {
-        	_marker setMarkerTextLocal ([_type] call _getReadableName);
+        	_text = [_type] call _getReadableName;
 		};
-        _marker setMarkerColor _color;
+		
+		_marker = [_target, _text, _color] call YOSHI_fnc_addMarker;
+        _markers pushBack _marker; 
 
     } forEach _filteredTargets;
 

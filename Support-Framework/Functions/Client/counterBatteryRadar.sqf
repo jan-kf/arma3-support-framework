@@ -138,52 +138,7 @@ YOSHI_safeIsNull = {
 };
 
 // future plan: combine nearby targets to a single area, maybe have a size limit on the shape?
-YOSHI_drawBoundingBox = { 
-    params["_projectiles"];
-
-	_targetLocations = [];
-	{
-		_x params ["_projectileId", "_projectileFiringPos", "_projectilePos", "_projectileImpactPosition", "_projectileImpactETA", "_projectileLastReportAt"];
-		
-		_targetLocations pushBack _projectileImpactPosition;
-
-	} forEach _projectiles;
-
-
- 
-    if (count _targetLocations == 0) exitWith {}; 
- 
-    private _minX = (_targetLocations select 0) select 0; 
-    private _minY = (_targetLocations select 0) select 1; 
-    private _maxX = _minX; 
-    private _maxY = _minY; 
- 
-    { 
-        private _posX = _x select 0; 
-        private _posY = _x select 1; 
- 
-        if (_posX < _minX) then { 
-            _minX = _posX; 
-        }; 
-        if (_posX > _maxX) then { 
-            _maxX = _posX; 
-        }; 
-        if (_posY < _minY) then { 
-            _minY = _posY; 
-        }; 
-        if (_posY > _maxY) then { 
-            _maxY = _posY; 
-        };
-     } forEach _targetLocations; 
- 
-     
-    private _marker = createMarker ["_USER_DEFINED BoundingBoxMarker2", [(_minX + _maxX) / 2, (_minY + _maxY) / 2]]; 
-    _marker setMarkerShape "ELLIPSE"; 
-    _marker setMarkerSize [(_maxX - _minX) / 2, (_maxY - _minY) / 2]; 
-    _marker setMarkerColor "ColorRed"; 
-    _marker setMarkerAlpha 0.5; 
-    _marker setMarkerText "Covered Area"; 
-};
+// YOSHI_drawBoundingBox = {};
 
 YOSHI_areAllProjectilesDead = {
 	params ["_arrayOfArrays"];

@@ -34,13 +34,21 @@ YOSHI_beamVic2Pos = {
 
 	_count = 5;
 
-	while {(alive _vic) && (_count > 0)} do {
-		_topOfVic = ASLToATL ([_vic] call YOSHI_getPosTop); 
-		[_topOfVic, _pos] call YOSHI_beamA2B;
-		sleep 0.05;
-		_count = _count - 1;
-	};
+	// prevent drawing more than once per instance of APS trigger
+	_shouldDraw = player getVariable ["YOSHI_DRAW_DEBOUNCE", true];
 
+	if (_shouldDraw) then {
+		player setVariable ["YOSHI_DRAW_DEBOUNCE", false];
+
+		while {(alive _vic) && (_count > 0)} do {
+			_topOfVic = ASLToATL ([_vic] call YOSHI_getPosTop); 
+			[_topOfVic, _pos] call YOSHI_beamA2B;
+			sleep 0.05;
+			_count = _count - 1;
+		};
+
+		player setVariable ["YOSHI_DRAW_DEBOUNCE", true];
+	};
 };
 
 YOSHI_getFrontPosition = {
@@ -58,7 +66,7 @@ YOSHI_getFrontPosition = {
 
 YOSHI_detectRockets = { 
     params ["_vehicle", ["_charges", 40], ["_range", -1], ["_interval", 0.05], ["_cooldown", 0.1]];
-	if (isServer) exitWith {};
+	// if (isServer) exitWith {};
 	_thread = _vehicle getVariable ["YOSHI_APS_Thread", objNull];
 	if (isNull _thread) exitWith {}; // prevent multiple APS on one vehicle
 
@@ -77,7 +85,7 @@ YOSHI_detectRockets = {
 					
  
 			private _pos = getPosATL _x;
-			[[_vehicle, _pos], YOSHI_beamVic2Pos] remoteExec ["spawn"];
+			[[_vehicle, _pos], YOSHI_beamVic2Pos] remoteExec ["spawn", -2];
 			_vehicle say3D ["ApsHit", 200, 1];
 			
 			_chargesRemaining = _vehicle getVariable ["APS_Charges", 0];
