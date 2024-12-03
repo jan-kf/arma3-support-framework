@@ -23,7 +23,3 @@ while {(alive _uav) && (_elapsedTime < _timeLimit)} do {
 
 	_elapsedTime = serverTime - _start;
 };
-
-{
-	deleteMarker (_x select 0); // TODO: don't delete, update instead
-} forEach YOSHI_ReconMarkersArray;

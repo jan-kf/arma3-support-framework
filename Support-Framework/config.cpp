@@ -43,6 +43,7 @@ class CfgFunctions {
             class initGeometry { preInit = 1; };
             class initRopes { preInit = 1; };
             class initConstants { preInit = 1; };
+            class initMapTools { preInit = 1; };
             class initRecon { preInit = 1; };
             class initEasterEgg { preInit = 1; };
         };
@@ -77,9 +78,6 @@ class CfgFunctions {
             file = "\Support-Framework\Functions\supportFunctions";
             class addItemsToFabricator {
                 description = "Function to add items to the fabricator";
-            };
-            class addMarker {
-                description = "Function to add marker to the map";
             };
             class baseHeartbeat {
                 description = "Function to monitor and manage base status updates";
@@ -839,6 +837,12 @@ class CfgSounds {
     class deactivatingInstantKill {
         name = "deactivatingInstantKill";
         sound[] = {"\Support-Framework\Sounds\easterEgg\deactivateInstantKill.ogg", 1, 1};
+        titles[] = {};
+    };
+
+    class droneScan {
+        name = "droneScan";
+        sound[] = {"\Support-Framework\Sounds\recon\droneScan.ogg", 1, 1};
         titles[] = {};
     };
 

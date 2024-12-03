@@ -164,10 +164,10 @@ YOSHI_handleArtilleryFire = {
 			private _projectileImpactETA = _shell call YOSHI_predictFallTime;
 			private _projectileImpactPosition = _shell call YOSHI_predictFallPos;
 
-			private _targetMarker = [_projectileImpactPosition, format["ETA: %1s", _projectileImpactETA], "ColorRed", "mil_destroy"] call YOSHI_fnc_addMarker;
-			private _shellMarker = [_shell, "", "ColorRed", "mil_triangle"] call YOSHI_fnc_addMarker;
+			private _targetMarker = [_projectileImpactPosition, format["ETA: %1s", _projectileImpactETA], "ColorRed", "mil_destroy"] call YOSHI_addMarker;
+			private _shellMarker = [_shell, "", "ColorRed", "mil_triangle"] call YOSHI_addMarker;
 			_shellMarker setMarkerDir ((getPosASL _shell) getDir _projectileImpactPosition);
-			private _originMarker = [_originPosition] call YOSHI_fnc_addMarker;
+			private _originMarker = [_originPosition] call YOSHI_addMarker;
 
 
 			sleep 1;

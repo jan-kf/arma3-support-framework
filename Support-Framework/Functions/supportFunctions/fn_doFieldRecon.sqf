@@ -92,3 +92,4 @@ while {!([_uav] call YOSHI_fnc_hasLanded)} do {
 	[_uav, "LAND"] remoteExec ["land"];
 };
 
+[_uav, false] remoteExec ["setCaptive", 0];

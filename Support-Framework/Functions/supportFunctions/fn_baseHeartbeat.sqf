@@ -143,5 +143,24 @@ while {true} do {
 		} forEach (vehicles select {(toLower str(side _x)) isEqualTo _baseSide});
 	};
 	
+	_markersToRemove = [];
+	
+	{
+		_shouldRemove = false;
+		{
+			_marker = _x select 1;
+			_currentAlpha = markerAlpha _marker;
+			if (_currentAlpha > -1) then {
+				_marker setMarkerAlpha (_currentAlpha - 0.1);
+			} else {
+				_shouldRemove = true;
+			};
+		} forEach _y;
+
+		if (_shouldRemove) then {
+			[YOSHI_ReconMarkersMap, _x] call YOSHI_removeMarker;
+		};
+	} forEach YOSHI_ReconMarkersMap;
+	
     sleep 3; 
 };
