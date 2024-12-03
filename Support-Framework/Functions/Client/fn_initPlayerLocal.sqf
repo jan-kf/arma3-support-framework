@@ -403,17 +403,23 @@ private _uavAction = [
 					if ((_exploPos select 2) < 15) then { 
 						"Bo_Mk82" createVehicle (_exploPos vectorAdd [0,0,0.1]);
 					} else {
-						{
-							_ex = createVehicle ["ModuleExplosive_Claymore_F", _exploPos, [], 0, "CAN_COLLIDE"];
-							_ex setVectorDirAndUp [_x, [0,0,1]];
-							_ex setPosATL (_exploPos vectorAdd (vectorDir _ex));
+						_initPos = getPosASL _unit;
+						{ 
+							_ex = createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]; 
+							_ex setVectorDirAndUp [_x, [0,0,1]]; 
+							_ex setPosASL (_initPos vectorAdd (vectorDir _ex)); 
 							_ex setDamage 1;
-						} forEach [
-							[0,1,0], [0,-1,0], [1,0,0], [-1,0,0],
-							[1,1,0], [1,-1,0], [-1,1,0], [-1,-1,0],
-							[0,1,1], [0,-1,1], [1,0,1], [-1,0,1],
-							[1,1,-1], [1,-1,-1], [-1,1,-1], [-1,-1,-1],
-							[0,1,10], [0,-1,-10]
+						} forEach [ 
+							[-1,-1,-1], [-1,-1,0], [-1,-1,1], 
+							[-1,0,-1], [-1,0,0], [-1,0,1], 
+							[-1,1,-1], [-1,1,0], [-1,1,1], 
+							[0,-1,-1], [0,-1,0], [0,-1,1], 
+							[0,0,-1], [0,0,0], [0,0,1], 
+							[0,1,-1], [0,1,0], [0,1,1], 
+							[1,-1,-1], [1,-1,0], [1,-1,1], 
+							[1,0,-1], [1,0,0], [1,0,1], 
+							[1,1,-1], [1,1,0], [1,1,1],
+							[0,1,10], [0,-1,-10] 
 						];
 					};
 					"HelicopterExploBig" createVehicle _exploPos;

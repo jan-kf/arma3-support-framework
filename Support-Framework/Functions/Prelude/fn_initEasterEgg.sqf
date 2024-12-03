@@ -100,6 +100,7 @@ _ex setPosATL (_initPos vectorAdd (vectorDir _x));
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[0,-1,0], [0,0,1]]; 
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[1,0,0], [0,0,1]]; 
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,0,0], [0,0,1]];
+
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[1,1,0], [0,0,1]]; 
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[1,-1,0], [0,0,1]]; 
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,1,0], [0,0,1]]; 
@@ -109,15 +110,22 @@ _ex setPosATL (_initPos vectorAdd (vectorDir _x));
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[0,-1,1], [0,0,1]]; 
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[1,0,1], [0,0,1]]; 
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,0,1], [0,0,1]];
+(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[1,1,1], [0,0,1]]; 
+(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[1,-1,1], [0,0,1]]; 
+(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,1,1], [0,0,1]]; 
+(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,-1,1], [0,0,1]];
+
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[1,1,-1], [0,0,1]]; 
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[1,-1,-1], [0,0,1]]; 
-(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,1,-1], [0,0,1]]; 
+(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,1,-1], [0,0,1]]; //
 (createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,-1,-1], [0,0,1]];
+(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[0,1,-1], [0,0,1]]; 
+(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[0,-1,-1], [0,0,1]]; 
+(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,0,-1], [0,0,1]]; 
+(createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]) setVectorDirAndUp [[-1,0,-1], [0,0,1]];
 
 
-_obj = _this;
 
-_initPos = getPosATL _obj;
 {
     _ex = createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"];
     _ex setVectorDirAndUp [_x, [0,0,1]];
@@ -127,5 +135,27 @@ _initPos = getPosATL _obj;
     [1,1,0], [1,-1,0], [-1,1,0], [-1,-1,0],
     [0,1,1], [0,-1,1], [1,0,1], [-1,0,1],
     [1,1,-1], [1,-1,-1], [-1,1,-1], [-1,-1,-1],
-	[0,1,10], [0,-1,-10]
+	[0,1,10], [0,-1,-10], [1,1,1], [1,-1,1],
+	[-1,1,1], [-1,-1,1], [-1,0,-1], [0,-1,-1],
+	[0,1,-1] 
+];
+
+_obj = _this;
+
+_initPos = getPosASL _obj;
+{ 
+    _ex = createVehicle ["ModuleExplosive_Claymore_F", _initPos, [], 0, "CAN_COLLIDE"]; 
+    _ex setVectorDirAndUp [_x, [0,0,1]]; 
+    _ex setPosASL (_initPos vectorAdd (vectorDir _ex)); 
+} forEach [ 
+    [-1,-1,-1], [-1,-1,0], [-1,-1,1], 
+    [-1,0,-1], [-1,0,0], [-1,0,1], 
+    [-1,1,-1], [-1,1,0], [-1,1,1], 
+    [0,-1,-1], [0,-1,0], [0,-1,1], 
+    [0,0,-1], [0,0,0], [0,0,1], 
+    [0,1,-1], [0,1,0], [0,1,1], 
+    [1,-1,-1], [1,-1,0], [1,-1,1], 
+    [1,0,-1], [1,0,0], [1,0,1], 
+    [1,1,-1], [1,1,0], [1,1,1],
+	[0,1,10], [0,-1,-10] 
 ];
