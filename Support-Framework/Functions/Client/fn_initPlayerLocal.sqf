@@ -573,6 +573,8 @@ private _uavAction = [
 			[_vic] // 6: Action parameters <ANY> (Optional)
 		] call ace_interact_menu_fnc_createAction;
 		_actions pushBack [_uavFieldActionGrenade, [], _vic];
+
+
 			
 		_actions
 	}
@@ -713,3 +715,31 @@ private _easterEggActions = [
 ] call ace_interact_menu_fnc_createAction;
 
 ["B_UGV_9RIFLES_F", 0, ["ACE_MainActions"], _easterEggActions, true] call ace_interact_menu_fnc_addActionToClass;
+
+
+private _reconScan = [ 
+	"reconScan",  
+	"Perform Scan",  
+	"",  
+	{ 
+		params ["_target", "_caller", "_args"];
+		private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+		private _timeLimit = 300;
+		if (_ReconConfigured) then {
+			_timeLimit = YOSHI_SUPPORT_RECON_CONFIG getVariable ["TaskTime", 300];
+		};  
+
+		private _showNames = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ShowNames", true]; 
+		private _hasHyperSpectralSensors = YOSHI_SUPPORT_RECON_CONFIG getVariable ["HasHyperSpectralSensors", false]; 
+		
+		[_target, YOSHI_reconDetectionRange, _showNames, _hasHyperSpectralSensors] call YOSHI_PerformReconScan;
+	},  
+	{ 
+		params ["_target", "_caller", "_args"];
+		private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+
+		_ReconConfigured
+	} 
+] call ace_interact_menu_fnc_createAction; 
+
+["UAV_01_base_F", 1, ["ACE_SelfActions"], _reconScan, true] call ace_interact_menu_fnc_addActionToClass;

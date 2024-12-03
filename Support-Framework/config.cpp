@@ -43,6 +43,7 @@ class CfgFunctions {
             class initGeometry { preInit = 1; };
             class initRopes { preInit = 1; };
             class initConstants { preInit = 1; };
+            class initRecon { preInit = 1; };
             class initEasterEgg { preInit = 1; };
         };
         class Modules {

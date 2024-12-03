@@ -19,6 +19,12 @@ publicVariable "YOSHI_HELIPADS";
 YOSHI_MarkersArray = [];
 publicVariable "YOSHI_MarkersArray";
 
+YOSHI_ReconMarkersArray = [];
+publicVariable "YOSHI_ReconMarkersArray";
+
+YOSHI_ReconMarkersMap = createHashMap;
+publicVariable "YOSHI_ReconMarkersMap";
+
 YOSHI_HELIPAD_INDEX = [];
 publicVariable "YOSHI_HELIPAD_INDEX";
 
