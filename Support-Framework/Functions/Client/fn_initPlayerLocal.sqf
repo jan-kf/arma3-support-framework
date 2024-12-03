@@ -400,8 +400,21 @@ private _uavAction = [
 					params ["_unit", "_killer", "_instigator", "_useEffects"];
 					{_x setDamage 1;} forEach (attachedObjects _unit);
 					_exploPos = getPosATL _unit;
-					if ((_exploPos select 2) < 15) then { // TODO: if it's above this height, detonate shrapnel explosives for AP/AA
+					if ((_exploPos select 2) < 15) then { 
 						"Bo_Mk82" createVehicle (_exploPos vectorAdd [0,0,0.1]);
+					} else {
+						{
+							_ex = createVehicle ["ModuleExplosive_Claymore_F", _exploPos, [], 0, "CAN_COLLIDE"];
+							_ex setVectorDirAndUp [_x, [0,0,1]];
+							_ex setPosATL (_exploPos vectorAdd (vectorDir _ex));
+							_ex setDamage 1;
+						} forEach [
+							[0,1,0], [0,-1,0], [1,0,0], [-1,0,0],
+							[1,1,0], [1,-1,0], [-1,1,0], [-1,-1,0],
+							[0,1,1], [0,-1,1], [1,0,1], [-1,0,1],
+							[1,1,-1], [1,-1,-1], [-1,1,-1], [-1,-1,-1],
+							[0,1,10], [0,-1,-10]
+						];
 					};
 					"HelicopterExploBig" createVehicle _exploPos;
 				}];
