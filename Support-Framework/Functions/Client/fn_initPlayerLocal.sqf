@@ -713,6 +713,7 @@ private _logiActions = [
 ] call ace_interact_menu_fnc_createAction;
 
 ["ReammoBox_F", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
+["UAV_01_base_F", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
 
 private _easterEggActions = [
 	"easterEggActions", "Enhanced Combat Settings", "",
@@ -734,6 +735,7 @@ private _easterEggActions = [
 ] call ace_interact_menu_fnc_createAction;
 
 ["B_UGV_9RIFLES_F", 0, ["ACE_MainActions"], _easterEggActions, true] call ace_interact_menu_fnc_addActionToClass;
+["B_UGV_9RIFLES_F", 1, ["ACE_SelfActions"], _easterEggActions, true] call ace_interact_menu_fnc_addActionToClass;
 
 
 private _reconScan = [ 

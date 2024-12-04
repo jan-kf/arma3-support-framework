@@ -494,7 +494,7 @@ class CfgVehicles {
                 displayName = "Show names on markers";
                 tooltip = "By default, the markers that the recon mission generates will contain the description of the unit marked (e.g: 'Team Lead', 'Medic', 'Offroad (HMG)', etc) ... disable this to only use dots and no description";
                 typeName = "BOOLEAN";
-                defaultValue = "true"; 
+                defaultValue = "false"; 
             };
             // class HasSat: Checkbox {
             //     property = "SupportFramework_Recon_Module_HasSat";

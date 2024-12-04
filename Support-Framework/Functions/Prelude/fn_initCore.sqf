@@ -63,6 +63,14 @@ addMissionEventHandler ["EntityCreated", {
        [_entity] call YOSHI_fnc_setObjectLoadHandling;
     };
 
+    if (_entity isKindOf "UAV_01_base_F") then {
+       _entity addEventHandler ["Engine", {
+            params ["_vehicle", "_engineState"];
+            if (_engineState) then {detach _vehicle} else {_vehicle call YOSHI_attachToBelow};
+        }];
+       [_entity, true, [0,1,0]] call ace_dragging_fnc_setDraggable;
+       [_entity, true] call ace_dragging_fnc_setCarryable;
+    };
 
     if (unitIsUAV _entity) then {
         _entity setFuelConsumptionCoef 0.1;

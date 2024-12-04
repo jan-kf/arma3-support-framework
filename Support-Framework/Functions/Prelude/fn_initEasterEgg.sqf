@@ -28,7 +28,7 @@ YOSHI_activateInstantKill = {
 			};
 
 			{ 
-				_pos = (getPosATL _adminThread); 
+				_pos = (getPosASL _adminThread); 
 				_gunPos = _pos vectorAdd [0,0,2]; 
 
 				_isInVic = (vehicle _x != _x);
@@ -38,9 +38,10 @@ YOSHI_activateInstantKill = {
 					_projectile = "B_40mm_APFSDS_Tracer_Yellow";
 				};
 
-				_ex = createVehicle [_projectile, _gunPos, [], 0, "CAN_COLLIDE"]; 
+				_ex = createVehicle [_projectile, [0,0,0], [], 0, "CAN_COLLIDE"];
+				_ex setPosASL _gunPos; 
 
-				_enPos = ASLToATL(eyePos _x);
+				_enPos = eyePos _x;
 				_modifier = [0,0,0];
 			
 				

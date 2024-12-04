@@ -78,6 +78,15 @@ publicVariable "YOSHI_HELIPAD_INDEX";
     [_x] call YOSHI_fnc_setObjectLoadHandling;
 } forEach entities "ReammoBox_F";
 
+{
+	_x addEventHandler ["Engine", {
+		params ["_vehicle", "_engineState"];
+		if (_engineState) then {detach _vehicle} else {_vehicle call YOSHI_attachToBelow};
+	}];
+	[_x, true, [0,1,0]] call ace_dragging_fnc_setDraggable;
+    [_x, true] call ace_dragging_fnc_setCarryable;
+} forEach entities "UAV_01_base_F";
+
 //// //// /////////////////////////////////////
 
 {
