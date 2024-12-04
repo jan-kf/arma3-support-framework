@@ -174,6 +174,7 @@ YOSHI_PerformReconScan = {
 			if (_side == east) then {_color = "ColorEAST"}; 
 			if (_side == resistance) then {_color = "ColorGUER"}; 
 			if (_side == civilian) then {_color = "ColorCIV"};
+			if (_target == _uav) then {_color = "ColorBlack"};
 
 			_text = "";
 			if (_showNames) then {

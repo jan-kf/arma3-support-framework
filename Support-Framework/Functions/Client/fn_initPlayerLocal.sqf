@@ -347,7 +347,7 @@ private _uavAction = [
 							private _vic = _args select 0;
 							private _marker = _args select 1;
 
-							[_vic, getMarkerPos _marker, _caller] remoteExec ["YOSHI_fnc_requestFieldRecon", 2];
+							[_vic, getMarkerPos _marker, _caller] spawn YOSHI_fnc_doFieldRecon;
 						}, 
 						{
 							params ["_target", "_caller", "_args"];
