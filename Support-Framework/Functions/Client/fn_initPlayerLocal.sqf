@@ -750,7 +750,7 @@ private _reconScan = [
 			_timeLimit = YOSHI_SUPPORT_RECON_CONFIG getVariable ["TaskTime", 300];
 		};  
 
-		private _showNames = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ShowNames", true]; 
+		private _showNames = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ShowNames", false]; 
 		private _hasHyperSpectralSensors = YOSHI_SUPPORT_RECON_CONFIG getVariable ["HasHyperSpectralSensors", false]; 
 		
 		[_target, YOSHI_reconDetectionRange, _showNames, _hasHyperSpectralSensors] call YOSHI_PerformReconScan;

@@ -177,9 +177,9 @@ YOSHI_PerformReconScan = {
 			if (_target == _uav) then {_color = "ColorBlack"};
 
 			_text = "";
-			if (_showNames) then {
-				_text = [_type] call YOSHI_GetReadableName;
-			};
+			// if (_showNames) then {
+			// 	_text = [_type] call YOSHI_GetReadableName;
+			// };
 			
 			[_target, _text, _color] call YOSHI_addReconMarker;
 			sleep 0.1;
