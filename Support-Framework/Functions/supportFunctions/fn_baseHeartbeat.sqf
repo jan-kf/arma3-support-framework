@@ -143,24 +143,28 @@ while {true} do {
 		} forEach (vehicles select {(toLower str(side _x)) isEqualTo _baseSide});
 	};
 	
-	_markersToRemove = [];
-	
+	_keysToRemove = [];
 	{
-		_shouldRemove = false;
-		{
-			_marker = _x select 1;
-			_currentAlpha = markerAlpha _marker;
-			if (_currentAlpha > -1) then {
-				_marker setMarkerAlpha (_currentAlpha - 0.1);
-			} else {
-				_shouldRemove = true;
-			};
-		} forEach _y;
+		_marker = _y select 0;
+		_currentMarkerAlpha = markerAlpha _marker;
+		if (_currentMarkerAlpha > 0.1) then {
+			_marker setMarkerAlpha (_currentMarkerAlpha - 0.1);
+		}; 
 
-		if (_shouldRemove) then {
-			[YOSHI_ReconMarkersMap, _x] call YOSHI_removeMarker;
+		_trail = _y select 1;
+		_currentTrailAlpha = markerAlpha _trail;
+		if (_currentTrailAlpha > 0.1) then {
+			_trail setMarkerAlpha (_currentTrailAlpha - 0.1);
 		};
+
+		_time = _y select 3;
+
+		if ((serverTime - _time) > 30) then {
+			_keysToRemove pushBack _x;
+		}; 
+
 	} forEach YOSHI_ReconMarkersMap;
+	{[YOSHI_ReconMarkersMap, _x] call YOSHI_removeMarker} forEach _keysToRemove;
 	
     sleep 3; 
 };
