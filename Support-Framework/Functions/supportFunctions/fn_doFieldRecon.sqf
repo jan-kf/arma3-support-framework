@@ -38,7 +38,7 @@ private _safeIsNull = {
 
 private _reconTask = _uav getVariable ["reconTask", false];
 
-[_uav, true] remoteExec ["setCaptive", 0];
+[_uav, true] remoteExec ["setCaptive"];
 
 while {(alive _uav) && (_elapsedTime < (_timeLimit + (_markerUpdateInterval * 2)))} do { 
 
@@ -78,7 +78,7 @@ while {(_uav distance2D _caller > 50) || !(unitReady _uav)} do {
 	[_uav] call YOSHI_fnc_checkPulse;
 };
 
-[_uav, false] remoteExec ["setCaptive", 0];
+[_uav, false] remoteExec ["setCaptive"];
 
 createVehicle ["Land_HelipadEmpty_F", getPosATL _caller, [], 0];
 
@@ -93,3 +93,7 @@ while {!([_uav] call YOSHI_fnc_hasLanded)} do {
 };
 
 [_uav, false] remoteExec ["setCaptive", 0];
+
+// For some reason the UAV is lobotomized once it lands so this refreshes it
+deleteVehicleCrew _uav;
+createVehicleCrew _uav;

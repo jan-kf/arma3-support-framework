@@ -49,17 +49,16 @@ YOSHI_addReconMarker = {
 	if (_id in YOSHI_ReconMarkersMap) then {
 		
 		_data = YOSHI_ReconMarkersMap get _id;
-		_prevMarker = _data select 0;
+		_marker = _data select 0;
 		_trail = _data select 1;
 		_locations = _data select 2;
 		
-		hint _prevMarker;
-		_markerLoc = getMarkerPos _prevMarker;
-		deleteMarker _prevMarker;
+		_markerLoc = getMarkerPos _marker;
 
-		_marker = [_target, _text, _color, _type] call YOSHI_addMarker;
+		_marker setMarkerPos _target;
+		_marker setMarkerAlpha 1;
 
-		_deltaDistance = _marker distance2D _target;
+		_deltaDistance = _markerLoc distance2D _target;
 
 		if (_deltaDistance < 3) then {
 			_locations = [];
@@ -89,12 +88,12 @@ YOSHI_addReconMarker = {
 		YOSHI_ReconMarkersMap set [_id, [_marker, _trail, _locations, serverTime]];
 
 	} else {
-		_marker = [_target, _text, _color, _type] call YOSHI_addMarker;
+		_newMarker = [_target, _text, _color, _type] call YOSHI_addMarker;
 		_markerTrail = [_target, _text, _color, _type] call YOSHI_addMarker;
 		_markerTrail setMarkerAlpha 0;
 		_targetPos = getPosASL _target;
 		_targetPos resize 2;
-		YOSHI_ReconMarkersMap set [_id, [_marker, _markerTrail, [_targetPos], serverTime]];
+		YOSHI_ReconMarkersMap set [_id, [_newMarker, _markerTrail, [_targetPos], serverTime]];
 	};
 
 	publicVariable "YOSHI_ReconMarkersMap";
@@ -174,7 +173,10 @@ YOSHI_PerformReconScan = {
 			if (_side == east) then {_color = "ColorEAST"}; 
 			if (_side == resistance) then {_color = "ColorGUER"}; 
 			if (_side == civilian) then {_color = "ColorCIV"};
-			if (_target == _uav) then {_color = "ColorBlack"};
+			if (_target == _uav) then {
+				_color = "ColorBlack";
+				_type = "mil_box";
+			};
 
 			_text = "";
 			// if (_showNames) then {
