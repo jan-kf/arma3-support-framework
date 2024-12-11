@@ -5,6 +5,7 @@ params ["_vic"];
 private _isCAS = _vic getVariable ["isCAS", false];
 private _isRecon = _vic getVariable ["isRecon", false];
 
+_vic setCollisionLight false;
 
 private _vicGroup = group _vic;
 private _anyDisabled = false;
