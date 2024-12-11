@@ -24,10 +24,19 @@ private _homeBaseConfigured = !(isNil "YOSHI_HOME_BASE_CONFIG");
 if (_homeBaseConfigured) then {
 	private _syncedHomeObjects = synchronizedObjects YOSHI_HOME_BASE_CONFIG;
 	{
-		if (_x isKindOf "Helicopter") then {
-			_x setVariable ["isHeli", true, true];
+		if (_x isKindOf "Module_F") then {
+			if (_x isKindOf "SupportFramework_Base_Arrivals_Module") then {
+				YOSHI_HOME_BASE_CONFIG setVariable ["YOSHI_BaseArriveNode", getPosASL _x];
+			};
+			if (_x isKindOf "SupportFramework_Base_Departure_Module") then {
+				YOSHI_HOME_BASE_CONFIG setVariable ["YOSHI_BaseDepartNode", getPosASL _x];
+			};
+		} else {
+			if (_x isKindOf "Helicopter") then {
+				_x setVariable ["isHeli", true, true];
+			};
+			_x setVariable ["isRegistered", true, true];
 		};
-		_x setVariable ["isRegistered", true, true];
 	} forEach _syncedHomeObjects;
 };
 

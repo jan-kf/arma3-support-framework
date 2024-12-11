@@ -372,8 +372,6 @@ class CfgVehicles {
             description[] = {
                 "THIS MODULE REQUIRES Home Base Module TO FUNCTION!",
                 "",
-                "[Experimental module, use at your own risk]",
-                "",
                 "Place this module to set up the ability to use CAS",
                 "",
                 "Location of module is meaningless.",
@@ -433,8 +431,6 @@ class CfgVehicles {
         class ModuleDescription: ModuleDescription {
             description[] = {
                 "THIS MODULE REQUIRES Home Base Module TO FUNCTION!",
-                "",
-                "[Experimental module, use at your own risk]",
                 "",
                 "Place this module to set up the ability to use Artillery",
                 "",
@@ -517,8 +513,6 @@ class CfgVehicles {
             description[] = {
                 "THIS MODULE REQUIRES Home Base Module TO FUNCTION!",
                 "",
-                "[Experimental module, use at your own risk]",
-                "",
                 "Place this module to set up the ability to use Recon",
                 "",
                 "Location of module is meaningless.",
@@ -550,8 +544,6 @@ class CfgVehicles {
             description[] = {
                 "THIS MODULE REQUIRES Home Base Module and Fabricator Module TO FUNCTION!",
                 "",
-                "[Experimental module, use at your own risk]",
-                "",
                 "Place this module to set up the ability to use Virtual Storage",
                 "",
                 "Location of module is meaningless.",
@@ -580,8 +572,6 @@ class CfgVehicles {
         class ModuleDescription: ModuleDescription {
             description[] = {
                 "THIS MODULE REQUIRES Home Base Module and Virtual Storage Module TO FUNCTION!",
-                "",
-                "[Experimental module, use at your own risk]",
                 "",
                 "Place this module to set up the ability to use Fabricators",
                 "",
@@ -685,6 +675,62 @@ class CfgVehicles {
                 "Any synced items will have an APS set up according to the configuration of the module.", 
                 "",
                 "No need to sync to the Home Base Module (or any other module)"
+            };
+            sync[] = {};
+        };
+    };
+
+    class SupportFramework_Base_Arrivals_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Base Arrival Node";
+        icon = "\Support-Framework\UI\virtualStorage.paa"
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};            
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Home Base Module TO FUNCTION!",
+                "",
+                "[Experimental module, use at your own risk]",
+                "",
+                "Sync this module to a base module to set up the an arrival node for a base.",
+                "",
+                "Location of module designates the direction that helicopters will take before landing at the base.",
+            };
+            sync[] = {};
+        };
+    };
+
+    class SupportFramework_Base_Departure_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Base Departure Node";
+        icon = "\Support-Framework\UI\virtualStorage.paa"
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};            
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Home Base Module TO FUNCTION!",
+                "",
+                "[Experimental module, use at your own risk]",
+                "",
+                "Sync this module to a base module to set up the a departure node for a base.",
+                "",
+                "Location of module designates the direction that helicopters will take as they are departing the base.",
             };
             sync[] = {};
         };
