@@ -1,9 +1,14 @@
 class CfgPatches {
     class SupportFramework {
         units[] = {};
-        weapons[] = {};
+        weapons[] = {
+            "YOSHI_ReinsertTerminal",
+            "YOSHI_CASTerminal",
+            "YOSHI_ArtilleryTerminal",
+            "YOSHI_ReconTerminal"
+        };
         requiredVersion = 1.0;
-        requiredAddons[] = {"ace_main"};
+        requiredAddons[] = {"ace_main", "ace_common"};
         author = "Yoshi";
         authorUrl = "https://github.com/jan-kf/arma3-support-framework";
     };
@@ -259,6 +264,7 @@ class CfgVehicles {
         class ModuleDescription;
     };
 
+
     class SupportFramework_HomeBase_Module: Module_F {
         author = "Yoshi";
         category = "SupportFramework_Category";
@@ -288,9 +294,9 @@ class CfgVehicles {
             class RequiredItems: Edit {
                 property = "SupportFramework_HomeBase_Module_RequiredItems";
                 displayName = "Required item to call in support(s)";
-                tooltip = "Comma-separated list of item classes required for redeploy. If empty, hgun_esd_01_F (spectrum device) will be used.";
+                tooltip = "Comma-separated list of item classes required for redeploy. Only one of the items is required to be in the inventory. If empty, the universal terminal, and the module specific terminal (located in the ace Tools section) along with the hgun_esd_01_F (spectrum device) will be used.";
                 typeName = "STRING"; 
-                defaultValue = """hgun_esd_01_F"""; 
+                defaultValue = """hgun_esd_01_F, YOSHI_UniversalTerminal, YOSHI_ReinsertTerminal"""; 
             };
             class LzPrefixes: Edit {
                 property = "SupportFramework_HomeBase_Module_LzPrefixes";
@@ -355,9 +361,9 @@ class CfgVehicles {
             class RequiredItems: Edit {
                 property = "SupportFramework_CAS_Module_RequiredItems";
                 displayName = "Required item to call in support(s)";
-                tooltip = "Comma-separated list of item classes required for CAS support. If empty, hgun_esd_01_F (spectrum device) will be used.";
+                tooltip = "Comma-separated list of item classes required for CAS support. Only one of the items is required to be in the inventory. If empty, the universal terminal, and the module specific terminal (located in the ace Tools section) along with the hgun_esd_01_F (spectrum device) will be used.";
                 typeName = "STRING"; 
-                defaultValue = """hgun_esd_01_F"""; 
+                defaultValue = """hgun_esd_01_F, YOSHI_UniversalTerminal, YOSHI_CASTerminal"""; 
             };
             class CasPrefixes: Edit {
                 property = "SupportFramework_HomeBase_Module_CasPrefixes";
@@ -415,9 +421,9 @@ class CfgVehicles {
             class RequiredItems: Edit {
                 property = "SupportFramework_Artillery_Module_RequiredItems";
                 displayName = "Required item to call in support(s)";
-                tooltip = "Comma-separated list of item classes required for Artillery support. If empty, hgun_esd_01_F (spectrum device) will be used.";
+                tooltip = "Comma-separated list of item classes required for Artillery support. Only one of the items is required to be in the inventory. If empty, the universal terminal, and the module specific terminal (located in the ace Tools section) along with the hgun_esd_01_F (spectrum device) will be used.";
                 typeName = "STRING"; 
-                defaultValue = """hgun_esd_01_F"""; 
+                defaultValue = """hgun_esd_01_F, YOSHI_UniversalTerminal, YOSHI_ArtilleryTerminal"""; 
             };
             class ArtilleryPrefixes: Edit {
                 property = "SupportFramework_HomeBase_Module_ArtilleryPrefixes";
@@ -460,9 +466,9 @@ class CfgVehicles {
             class RequiredItems: Edit {
                 property = "SupportFramework_Recon_Module_RequiredItems";
                 displayName = "Required item to call in support(s)";
-                tooltip = "Comma-separated list of item classes required for Recon support. If empty, hgun_esd_01_F (spectrum device) will be used.";
+                tooltip = "Comma-separated list of item classes required for Recon support. Only one of the items is required to be in the inventory. If empty, the universal terminal, and the module specific terminal (located in the ace Tools section) along with the hgun_esd_01_F (spectrum device) will be used.";
                 typeName = "STRING"; 
-                defaultValue = """hgun_esd_01_F"""; 
+                defaultValue = """hgun_esd_01_F, YOSHI_UniversalTerminal, YOSHI_ReconTerminal"""; 
             };
             class ReconPrefixes: Edit {
                 property = "SupportFramework_HomeBase_Module_ReconPrefixes";
@@ -1072,6 +1078,50 @@ class CfgSounds {
         titles[] = {};
     };
 
+};
+
+class CfgWeapons {
+    class ACE_ItemCore;
+	class CBA_MiscItem_ItemInfo;
+	class YOSHI_Terminal: ACE_ItemCore
+	{
+		author="$STR_ace_common_ACETeam";
+		scope=2;
+        scopeArsenal=2;
+		displayName="$STR_ace_microdagr_itemName";
+		model="\A3\Weapons_F\DummyItemHorizontal.p3d";
+		// picture="\z\ace\addons\microdagr\images\microDAGR_item.paa";
+		ACE_isTool=1;
+		class ItemInfo: CBA_MiscItem_ItemInfo
+		{
+			mass=1;
+		};
+	};
+    class YOSHI_ReinsertTerminal: YOSHI_Terminal
+	{
+		displayName="(YSF) Reinsert Terminal";
+        _generalMacro="YOSHI_ReinsertTerminal";
+	};
+    class YOSHI_CASTerminal: YOSHI_Terminal
+	{
+		displayName="(YSF) CAS Terminal";
+        _generalMacro="YOSHI_CASTerminal";
+	};
+    class YOSHI_ArtilleryTerminal: YOSHI_Terminal
+	{
+		displayName="(YSF) Artillery Terminal";
+        _generalMacro="YOSHI_ArtilleryTerminal";
+	};
+    class YOSHI_ReconTerminal: YOSHI_Terminal
+	{
+		displayName="(YSF) Recon Terminal";
+        _generalMacro="YOSHI_ReconTerminal";
+	};
+    class YOSHI_UniversalTerminal: YOSHI_Terminal
+	{
+		displayName="(YSF) Universal Terminal";
+        _generalMacro="YOSHI_UniversalTerminal";
+	};
 };
 
 
