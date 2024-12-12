@@ -56,6 +56,12 @@
 
 // };
 
+YOSHI_DefaultRequiredItems = ["hgun_esd_01_F", "YOSHI_UniversalTerminal"];
+YOSHI_DefaultRequiredItems_Reinsert = YOSHI_DefaultRequiredItems + ["YOSHI_ReinsertTerminal"];
+YOSHI_DefaultRequiredItems_CAS = YOSHI_DefaultRequiredItems + ["YOSHI_CASTerminal"];
+YOSHI_DefaultRequiredItems_Artillery = YOSHI_DefaultRequiredItems + ["YOSHI_ArtilleryTerminal"];
+YOSHI_DefaultRequiredItems_Recon = YOSHI_DefaultRequiredItems + ["YOSHI_ReconTerminal"];
+
 
 private _redeploymentActions = [
 	"RedeploymentActions", "Redeployment", "",
@@ -76,7 +82,7 @@ private _redeploymentActions = [
 			if (_requiredItemsStr != "") then {
 				_requiredItems = _requiredItemsStr splitString ", ";
 			} else {
-				_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
+				_requiredItems = YOSHI_DefaultRequiredItems_Reinsert; // default value -- hard fallback
 			};
 			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
 			
@@ -111,7 +117,7 @@ private _casActions = [
 			if (_requiredItemsStr != "") then {
 				_requiredItems = _requiredItemsStr splitString ", ";
 			} else {
-				_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
+				_requiredItems = YOSHI_DefaultRequiredItems_CAS; // default value -- hard fallback
 			};
 			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
 
@@ -148,7 +154,7 @@ private _reconActions = [
 			if (_requiredItemsStr != "") then {
 				_requiredItems = _requiredItemsStr splitString ", ";
 			} else {
-				_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
+				_requiredItems = YOSHI_DefaultRequiredItems_Recon; // default value -- hard fallback
 			};
 			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
 
@@ -194,7 +200,7 @@ private _artilleryActions = [
 			if (_requiredItemsStr != "") then {
 				_requiredItems = _requiredItemsStr splitString ", ";
 			} else {
-				_requiredItems = ["hgun_esd_01_F"]; // default value -- hard fallback
+				_requiredItems = YOSHI_DefaultRequiredItems_Artillery; // default value -- hard fallback
 			};
 
 			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
