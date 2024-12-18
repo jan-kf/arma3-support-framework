@@ -60,7 +60,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 				private _color = "#FFFFFF";
 				
 				private _vicWaveOffAction = [
-					format["%1-waveOff", netId _vehicle], "<t color='#F23838'>Wave Off!</t>", "",
+					format["%1-waveOff", netId _vehicle], "<t color='#F23838'>Wave Off!</t>", "\A3\ui_f\data\map\markers\military\pickup_CA.paa",
 					{
 						// statement 
 						params ["_target", "_caller", "_vic"];
@@ -85,7 +85,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 				_actions pushBack [_vicWaveOffAction, [], _target]; 
 				
 				private _vicRTBAction = [
-					format["%1-rtb", netId _vehicle], format["<t color='%1'>RTB</t>", _color], "",
+					format["%1-rtb", netId _vehicle], format["<t color='%1'>RTB</t>", _color], "\A3\ui_f\data\map\markers\military\start_CA.paa",
 					{
 						// statement 
 						params ["_target", "_caller", "_vic"];
@@ -134,7 +134,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 						private _prefix = toLower _x;
 						if (_displayName find _prefix == 0) then {
 							private _vicRequestToLZAction = [
-								format["%1-reconTo-%2", netId _vehicle, _marker], format["<t color='%1'>Request Recon at %2</t>", _color, _markerName], "",
+								format["%1-reconTo-%2", netId _vehicle, _marker], format["<t color='%1'>Request Recon at %2</t>", _color, _markerName], "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa",
 								{
 									// statement 
 									params ["_target", "_caller", "_args"];

@@ -1,4 +1,6 @@
-_boxPos = getPosATL _this;
+_thing = _this;
+
+_boxPos = getPosATL _thing;
 _targetPos = getPosATL chamberlain;
 
 _gravity = 9.81;
@@ -17,9 +19,9 @@ _initialVelocityZ = ((_targetPos select 2) - (_boxPos select 2)) / _timeOfFlight
 
 _velocity = [_initialVelocityX, _initialVelocityY, _initialVelocityZ];
 
-_this setVelocity _velocity;
+_thing setVelocity _velocity;
 
-[_this, _timeOfFlight] spawn {
+[_thing, _timeOfFlight] spawn {
 
 	params ["_obj", "_delay"];
 
@@ -38,7 +40,7 @@ _this setVelocity _velocity;
 		_para = "B_Parachute_02_F";
 
 		_velocity = (velocityModelSpace _obj) vectorMultiply 0.5;
-		hint str(_velocity);
+
 
 		_dropPos1 = getpos _obj;
 
@@ -53,7 +55,7 @@ _this setVelocity _velocity;
 	};
 };
 
-hint str(_timeOfFlight);
+
 
 /////////////////////////
 
@@ -135,3 +137,62 @@ _this setVelocity _velocity;
 sleep 1;
 } forEach _nearbyObjects;
 };
+
+/////////////////////
+
+
+// Send an arty shell anywhere:
+
+_ex = createVehicle ["Sh_155mm_AMOS", (getPosATL _this), [], 0, "CAN_COLLIDE"];
+
+_thing = _ex; 
+ 
+_boxPos = getPosATL _thing; 
+_targetPos = getPosATL chamberlain; 
+ 
+_gravity = 9.81; 
+ 
+_distance = _boxPos distance2D _targetPos; 
+ 
+L = 50; 
+d0 = 1000;  
+k = 0.003;  
+ 
+_timeOfFlight = L / (1 + exp(-k * (_distance - d0))); 
+ 
+_initialVelocityX = ((_targetPos select 0) - (_boxPos select 0)) / _timeOfFlight; 
+_initialVelocityY = ((_targetPos select 1) - (_boxPos select 1)) / _timeOfFlight; 
+_initialVelocityZ = ((_targetPos select 2) - (_boxPos select 2)) / _timeOfFlight + 0.5 * _gravity * _timeOfFlight; 
+ 
+_velocity = [_initialVelocityX, _initialVelocityY, _initialVelocityZ]; 
+ 
+_thing setVelocity _velocity;
+
+
+
+
+
+_ex = createVehicle ["GrenadeHand", (getPosATL _this), [], 0, "CAN_COLLIDE"];
+
+_thing = _ex; 
+ 
+_boxPos = getPosATL _thing; 
+_targetPos = getPosATL chamberlain; 
+ 
+_gravity = 9.81; 
+ 
+_distance = _boxPos distance2D _targetPos; 
+ 
+L = 50; 
+d0 = 1000;  
+k = 0.003;  
+ 
+_timeOfFlight = L / (1 + exp(-k * (_distance - d0))); 
+ 
+_initialVelocityX = ((_targetPos select 0) - (_boxPos select 0)) / _timeOfFlight; 
+_initialVelocityY = ((_targetPos select 1) - (_boxPos select 1)) / _timeOfFlight; 
+_initialVelocityZ = ((_targetPos select 2) - (_boxPos select 2)) / _timeOfFlight + 0.5 * _gravity * _timeOfFlight; 
+ 
+_velocity = [_initialVelocityX, _initialVelocityY, _initialVelocityZ]; 
+ 
+_thing setVelocity _velocity;

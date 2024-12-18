@@ -22,7 +22,7 @@ params ["_fabricator", "_itemsToAdd"];
     private _spawnItemAction = [
 		format ["SpawnItemAction-%1", _classOfItemToSpawn], // Action ID
 		format ["Spawn %1", _displayName], // Title
-		"", // Icon (leave blank for no icon or specify a path)
+		"\a3\ui_f\data\igui\cfg\simpletasks\types\Download_ca.paa",
 		{  // Code executed when the action is used
 			params ["_target", "_caller", "_params"];
 			private _fabricator = _params select 0;

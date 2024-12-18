@@ -6,7 +6,7 @@ private _ik_thread = _admin getVariable ["YOSHI_instantKillThread", scriptNull];
 
 if (isNull _ik_thread) then {
 	private _activateInstantKillAction = [
-		format["activateInstantKill-%1", netId _admin], "Activate Instant Kill", "",
+		format["activateInstantKill-%1", netId _admin], "Activate Instant Kill", "\a3\Ui_F_Curator\Data\CfgMarkers\kia_ca.paa",
 		{
 			params ["_target", "_caller", "_admin"];
 

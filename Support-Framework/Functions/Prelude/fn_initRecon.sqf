@@ -152,27 +152,53 @@ YOSHI_PerformReconScan = {
 		{
 			_target = _x;
 			_side = side _x;
+
+			_color = "ColorUNKNOWN";
+			_factionChar = "n";
+			if (_side == west) then {
+				_color = "ColorWEST";
+				_factionChar = "b";
+			}; 
+			if (_side == east) then {
+				_color = "ColorEAST";
+				_factionChar = "o";
+			}; 
+			if (_side == resistance) then {
+				_color = "ColorGUER";
+			}; 
+			if (_side == civilian) then {
+				_color = "ColorCIV";
+			};
 			
 			_type = "mil_dot";
 			if (_target isKindOf "Car") then {
-				_type = "loc_car";
+				_type = format["%1_motor_inf", _factionChar];
 			};
 			if (_target isKindOf "Plane") then {
-				_type = "loc_plane";
+				_type = format["%1_plane", _factionChar];
 			};
 			if (_target isKindOf "Ship") then {
-				_type = "loc_boat";
+				_type = format["%1_naval", _factionChar];
 			};
 			if (_target isKindOf "Helicopter") then {
-				_type = "loc_heli";
+				_type = format["%1_air", _factionChar];
+			};
+			if (_target isKindOf "Tank") then {
+				_type = format["%1_armor", _factionChar];
+			};
+			if (_target isKindOf "UAV") then {
+				_type = format["%1_uav", _factionChar];
+			};
+			if (_target isKindOf "StaticWeapon") then {
+				_type = format["%1_support", _factionChar];
+			};
+			if (_target isKindOf "StaticCannon" || [_target] call YOSHI_isArtilleryCapable) then {
+				_type = format["%1_art", _factionChar];
+			};
+			if (_target isKindOf "StaticMortar") then {
+				_type = format["%1_mortar", _factionChar];
 			};
 
-
-			_color = "ColorUNKNOWN";
-			if (_side == west) then {_color = "ColorWEST"}; 
-			if (_side == east) then {_color = "ColorEAST"}; 
-			if (_side == resistance) then {_color = "ColorGUER"}; 
-			if (_side == civilian) then {_color = "ColorCIV"};
 			if (_target == _uav) then {
 				_color = "ColorBlack";
 				_type = "mil_box";

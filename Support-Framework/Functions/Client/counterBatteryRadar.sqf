@@ -103,7 +103,7 @@ YOSHI_predictFallTime = {
 		_time = _time + 0.1;
 	};
 
-	_time
+	round _time
 };
 
 YOSHI_predictFallPos = {
@@ -158,35 +158,31 @@ YOSHI_handleArtilleryFire = {
 	YOSHI_detectedTargets pushBack [_targetPosition, _shell, _vehicle];
 
 	[_shell, getPosASL _vehicle] spawn {
-		// code that runs on each shell individually
 		params ["_shell", "_originPosition"];
 		while {alive _shell} do {
 			private _projectileImpactETA = _shell call YOSHI_predictFallTime;
 			private _projectileImpactPosition = _shell call YOSHI_predictFallPos;
 
-			private _targetMarker = [_projectileImpactPosition, format["ETA: %1s", _projectileImpactETA], "ColorRed", "mil_destroy"] call YOSHI_addMarker;
-			private _shellMarker = [_shell, "", "ColorRed", "mil_triangle"] call YOSHI_addMarker;
-			_shellMarker setMarkerDir ((getPosASL _shell) getDir _projectileImpactPosition);
-			private _originMarker = [_originPosition] call YOSHI_addMarker;
+			private _hasMarker = _shell getVariable ["YOSHI_markerForShell", false];
+			if (!_hasMarker) then {
+				_shell setVariable ["YOSHI_markerForShell", true];
+				private _targetMarker = [_projectileImpactPosition, format["ETA: %1s", _projectileImpactETA], "ColorRed", "mil_destroy"] call YOSHI_addMarker;
+				private _shellMarker = [_shell, "", "ColorRed", "mil_triangle"] call YOSHI_addMarker;
+				_shellMarker setMarkerDir ((getPosASL _shell) getDir _projectileImpactPosition);
+				private _originMarker = [_originPosition] call YOSHI_addMarker;
 
 
-			sleep 1;
-			deleteMarker _targetMarker;
-			deleteMarker _shellMarker;
-			deleteMarker _originMarker;
+				sleep 1;
+				deleteMarker _targetMarker;
+				deleteMarker _shellMarker;
+				deleteMarker _originMarker;
+				_shell setVariable ["YOSHI_markerForShell", false];
+			};
 		};
 		
-		// private _result = [YOSHI_detectedTargets] call YOSHI_areAllProjectilesDead;
-		// if (_result) then {
-		// 	private _baseParams = call YOSHI_fnc_getBaseCallsign;
-		// 	private _baseCallsign = _baseParams select 0;
-		// 	private _baseName = _baseParams select 1;
-		// 	[_baseCallsign, "YOSHI_SectorClear"] call YOSHI_fnc_playSideRadio;
-		// 	YOSHI_detectedTargets=[];
-		// };
 	};
 
-	if ((serverTime - YOSHI_baseMessageTime) > 10) then {
+	if ((serverTime - YOSHI_baseMessageTime) > 20) then {
 		private _baseParams = call YOSHI_fnc_getBaseCallsign;
 		private _baseCallsign = _baseParams select 0;
 		private _baseName = _baseParams select 1;
@@ -195,7 +191,7 @@ YOSHI_handleArtilleryFire = {
 	};
 };
 
-if(!hasInterface) then {
+if(isServer) then {
 	addMissionEventHandler ["ArtilleryShellFired", {
 		params ["_vehicle", "_weapon", "_ammo", "_gunner", "_instigator", "_artilleryTarget", "_targetPosition", "_shell"];
 

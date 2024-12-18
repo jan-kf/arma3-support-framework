@@ -797,3 +797,28 @@ _trigger setTriggerStatements [
 ];
 
 // also add trigger for fired to temporarily hide the object attached
+
+
+////////////////////
+
+
+_initPos = getPosASL _this; 
+{  
+	_ex = createVehicle ["B_12Gauge_Pellets", _initPos, [], 0, "CAN_COLLIDE"];  
+	_ex setVectorDirAndUp [_x, [0,0,1]];  
+	_vecDir = (vectorDir _ex);
+	_ex setPosASL (_initPos vectorAdd _vecDir);
+	_ex setVelocity (_vecDir vectorMultiply 1000);
+	   
+} forEach [  
+	[-1,-1,-1], [-1,-1,0], [-1,-1,1],  
+	[-1,0,-1], [-1,0,0], [-1,0,1],  
+	[-1,1,-1], [-1,1,0], [-1,1,1],  
+	[0,-1,-1], [0,-1,0], [0,-1,1],  
+	[0,0,-1], [0,0,0], [0,0,1],  
+	[0,1,-1], [0,1,0], [0,1,1],  
+	[1,-1,-1], [1,-1,0], [1,-1,1],  
+	[1,0,-1], [1,0,0], [1,0,1],  
+	[1,1,-1], [1,1,0], [1,1,1], 
+	[0,1,10], [0,-1,-10]  
+];

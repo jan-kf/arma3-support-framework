@@ -170,7 +170,7 @@ YOSHI_towRopeActions = {
 			private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
 
 			private _vicDeployTowAction = [
-				format["%1-deployTow", netId _towVic], format["Attach tow rope to %1", _vehicleDisplayName], "",
+				format["%1-deployTow", netId _towVic], format["Attach tow rope to %1", _vehicleDisplayName], "\A3\ui_f\data\map\markers\military\join_CA.paa",
 				{
 					params ["_target", "_caller", "_args"];
 					// statement 
@@ -206,7 +206,7 @@ YOSHI_towRopeActions = {
 
 	if ((count (ropeAttachedObjects _towVic)) > 0) then {
 		private _vicStowTowAction = [
-			format["%1-StowTow", netId _towVic], "Stow tow ropes", "",
+			format["%1-StowTow", netId _towVic], "Stow tow ropes", "\A3\ui_f\data\map\markers\nato\respawn_unknown_ca.paa",
 			{
 				params ["_target", "_caller", "_towVic"];
 				// statement 

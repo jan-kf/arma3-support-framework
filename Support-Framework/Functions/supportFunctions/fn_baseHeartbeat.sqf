@@ -13,17 +13,6 @@ private _safeIsNull = {
     };
 };
 
-private _isArtilleryCapable = {
-    params ["_unit"];
-    
-    // Check if the unit is capable of artillery fire
-    // This checks if the unit is an artillery piece by verifying it can accept the doArtilleryFire command
-    private _isArtillery = !(_unit isKindOf "Air") && {(_unit isKindOf "LandVehicle") || (_unit isKindOf "Ship")}; // Exclude air units, include land vehicles and ships
-    private _canDoArtilleryFire = _isArtillery && {alive _unit} && {getArtilleryAmmo [_unit] isNotEqualTo []}; // Must be alive and have artillery ammo available
-
-    _canDoArtilleryFire // Return true if capable, false otherwise
-};
-
 private _artyConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
 
 
@@ -134,7 +123,7 @@ while {true} do {
 		{
 			private _vehicle = _x;
 
-			private _isArtillery = [_vehicle] call _isArtilleryCapable;
+			private _isArtillery = [_vehicle] call YOSHI_isArtilleryCapable;
 			private _checkArtillery = _vehicle getVariable "isArtillery";
 			if (_isArtillery && isNil "_checkArtillery") then {
 				_vehicle setVariable ["isArtillery", true, true];

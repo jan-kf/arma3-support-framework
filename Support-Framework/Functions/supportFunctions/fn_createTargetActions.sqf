@@ -3,7 +3,7 @@ params ["_targetPos", "_targetName"];
 private _targetActions = [];
 
 private _targetAction = [
-	format["%1-targetLocation", _targetName], format["%1", _targetName], "",
+	format["%1-targetLocation", _targetName], format["%1", _targetName], "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa",
 	{
 		params ["_target", "_caller", "_targetPos"];
 		true

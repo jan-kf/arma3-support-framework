@@ -22,7 +22,7 @@ if (_loiterPrefixStr != "") then {
 		private _prefix = toLower _x;
 		if (_displayName find _prefix == 0) then {
 			private _vicRequestToLoiterAction = [
-				format["%1-loiterAt-%2", netId _vehicle, _marker], format["Loiter at %1", _markerName], "",
+				format["%1-loiterAt-%2", netId _vehicle, _marker], format["Loiter at %1", _markerName], "\a3\ui_f\data\igui\cfg\simpletasks\types\move_ca.paa",
 				{
 					// statement 
 					params ["_target", "_caller", "_args"];

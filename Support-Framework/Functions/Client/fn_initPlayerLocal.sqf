@@ -64,7 +64,7 @@ YOSHI_DefaultRequiredItems_Recon = YOSHI_DefaultRequiredItems + ["YOSHI_ReconTer
 
 
 private _redeploymentActions = [
-	"RedeploymentActions", "Redeployment", "",
+	"RedeploymentActions", "Redeployment", "\A3\ui_f\data\map\markers\military\end_CA.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -98,7 +98,7 @@ private _redeploymentActions = [
 ] call ace_interact_menu_fnc_createAction;
 
 private _casActions = [
-	"CasActions", "CAS Support", "",
+	"CasActions", "CAS Support", "\a3\ui_f\data\igui\cfg\simpletasks\types\Heli_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -135,7 +135,7 @@ private _casActions = [
 ] call ace_interact_menu_fnc_createAction;
 
 private _reconActions = [
-	"ReconActions", "Recon Support", "",
+	"ReconActions", "Recon Support", "\a3\ui_f\data\igui\cfg\simpletasks\types\search_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -172,7 +172,7 @@ private _reconActions = [
 ] call ace_interact_menu_fnc_createAction;
 
 private _artilleryActions = [
-	"ArtilleryActions", "Artillery", "",
+	"ArtilleryActions", "Artillery", "\a3\ui_f\data\igui\cfg\simpletasks\types\destroy_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -226,7 +226,7 @@ private _artilleryActions = [
 [player, 1, ["ACE_SelfActions"], _reconActions] call ace_interact_menu_fnc_addActionToObject;
 
 private _redeploymentActionsZeus = [
-	"RedeploymentActions", "Redeployment", "",
+	"RedeploymentActions", "Redeployment", "\A3\ui_f\data\map\markers\military\end_CA.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -242,7 +242,7 @@ private _redeploymentActionsZeus = [
 ] call ace_interact_menu_fnc_createAction;
 
 private _casActionsZeus = [
-	"CasActions", "CAS Support", "",
+	"CasActions", "CAS Support", "\a3\ui_f\data\igui\cfg\simpletasks\types\Heli_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -260,7 +260,7 @@ private _casActionsZeus = [
 ] call ace_interact_menu_fnc_createAction;
 
 private _reconActionsZeus = [
-	"ReconActions", "Recon Support", "",
+	"ReconActions", "Recon Support", "\a3\ui_f\data\igui\cfg\simpletasks\types\search_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -278,7 +278,7 @@ private _reconActionsZeus = [
 ] call ace_interact_menu_fnc_createAction;
 
 private _artilleryActionsZeus = [
-	"ArtilleryActions", "Artillery", "",
+	"ArtilleryActions", "Artillery", "\a3\ui_f\data\igui\cfg\simpletasks\types\destroy_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -315,7 +315,7 @@ private _artilleryActionsZeus = [
 private _uavAction = [
 	"UAV_field_task", // Action ID
 	"Field Actions", // Title
-	"", // Icon (leave blank for no icon or specify a path)
+	"\a3\ui_f\data\igui\cfg\simpletasks\types\Use_ca.paa", // Icon (leave blank for no icon or specify a path)
 	{}, // Code executed when the action is used
 	{ // Condition for the action to be available
 		params ["_vic", "_caller", "_params"];
@@ -346,7 +346,7 @@ private _uavAction = [
 				private _prefix = toLower _x;
 				if (_displayName find _prefix == 0) then {
 					private _uavFieldAction = [
-						format["reconTo-%2", _marker], format["Request Recon at %1", _markerName], "",
+						format["reconTo-%2", _marker], format["Request Recon at %1", _markerName], "\a3\ui_f\data\igui\cfg\simpletasks\types\search_ca.paa",
 						{
 							// statement 
 							params ["_target", "_caller", "_args"];
@@ -374,7 +374,7 @@ private _uavAction = [
 
 		// Add more field actions:
 		private _uavFieldActionIED = [
-			"uavIED-action", "Attach IED", "",
+			"uavIED-action", "Attach IED", "\a3\ui_f\data\igui\cfg\simpletasks\types\interact_ca.paa",
 			{
 				// statement 
 				params ["_target", "_caller", "_args"];
@@ -389,7 +389,7 @@ private _uavAction = [
 				_boom = [ 
 					"uavDetonate",  
 					"Detonate",  
-					"",  
+					"\a3\ui_f\data\igui\cfg\simpletasks\types\destroy_ca.paa",  
 					{ 
 						params ["_target", "_caller", "_args"];
 						private _vic = _args select 0;
@@ -502,7 +502,7 @@ private _uavAction = [
 		// _actions pushBack [_uavFieldActionDrop, [], _vic];
 
 		private _uavFieldActionMortar = [
-			"uavIED-action", "Attach 2 Mortar Rounds", "",
+			"uavIED-action", "Attach 2 Mortar Rounds", "\a3\ui_f\data\igui\cfg\simpletasks\types\interact_ca.paa",
 			{
 				// statement 
 				params ["_target", "_caller", "_args"];
@@ -516,7 +516,7 @@ private _uavAction = [
 				_drop = [ 
 					"uavDetach82mm",  
 					"Release Mortar Round",  
-					"",  
+					"\A3\ui_f\data\map\markers\military\warning_CA.paa",  
 					{ 
 						params ["_target", "_caller", "_args"];
 						private _vic = _args select 0;
@@ -553,7 +553,7 @@ private _uavAction = [
 		_actions pushBack [_uavFieldActionMortar, [], _vic];
 
 		private _uavFieldActionGrenade = [
-			"uavGrenade-action", "Attach 4 Grenades", "",
+			"uavGrenade-action", "Attach 4 Grenades", "\a3\ui_f\data\igui\cfg\simpletasks\types\interact_ca.paa",
 			{
 				// statement 
 				params ["_target", "_caller", "_args"];
@@ -567,7 +567,7 @@ private _uavAction = [
 				_drop = [ 
 					"dropGrenade",  
 					"Drop Grenade",  
-					"",  
+					"\A3\ui_f\data\map\markers\military\warning_CA.paa",  
 					{ 
 						params ["_target", "_caller", "_args"];
 						private _vic = _args select 0;
@@ -608,7 +608,7 @@ private _uavAction = [
 ["AllVehicles", 0, ["ACE_MainActions"], _uavAction, true] call ace_interact_menu_fnc_addActionToClass;
 
 private _heliActions = [
-	"HelicopterActions", "Support Actions", "",
+	"HelicopterActions", "Support Actions", "\a3\ui_f\data\igui\cfg\simpletasks\types\Use_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -636,7 +636,7 @@ private _heliActions = [
 
 
 private _artilleryVicActions = [
-	"ArtilleryVicActions", "Support Actions", "",
+	"ArtilleryVicActions", "Support Actions", "\a3\ui_f\data\igui\cfg\simpletasks\types\Use_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -663,7 +663,7 @@ private _artilleryVicActions = [
 ] call ace_interact_menu_fnc_createAction;
 
 private _TowActions = [
-	"TowActions", "Towing", "",
+	"TowActions", "Towing", "\a3\ui_f\data\igui\cfg\simpletasks\types\Use_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -700,7 +700,7 @@ if (_virtualStorageConfigured && _fabricatorConfigured) then {
 
 
 private _logiActions = [
-	"logiActions", "Logistics", "",
+	"logiActions", "Logistics", "\a3\ui_f\data\igui\cfg\simpletasks\types\Container_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -722,7 +722,7 @@ private _logiActions = [
 ["UAV_01_base_F", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
 
 private _easterEggActions = [
-	"easterEggActions", "Enhanced Combat Settings", "",
+	"easterEggActions", "Combat Settings", "\a3\ui_f\data\igui\cfg\simpletasks\types\Use_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
@@ -747,7 +747,7 @@ private _easterEggActions = [
 private _reconScan = [ 
 	"reconScan",  
 	"Perform Scan",  
-	"",  
+	"\A3\ui_f\data\map\markers\nato\respawn_unknown_ca.paa",  
 	{ 
 		params ["_target", "_caller", "_args"];
 		private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");

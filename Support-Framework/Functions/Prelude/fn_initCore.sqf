@@ -50,6 +50,17 @@ YOSHI_attachToBelow = {
 	}; 
 };
 
+YOSHI_isArtilleryCapable = {
+    params ["_unit"];
+    
+    // Check if the unit is capable of artillery fire
+    // This checks if the unit is an artillery piece by verifying it can accept the doArtilleryFire command
+    private _isArtillery = !(_unit isKindOf "Air") && {(_unit isKindOf "LandVehicle") || (_unit isKindOf "Ship")}; // Exclude air units, include land vehicles and ships
+    private _canDoArtilleryFire = _isArtillery && {alive _unit} && {getArtilleryAmmo [_unit] isNotEqualTo []}; // Must be alive and have artillery ammo available
+
+    _canDoArtilleryFire // Return true if capable, false otherwise
+};
+
 // Event handler for object creation
 addMissionEventHandler ["EntityCreated", {
     params ["_entity"];

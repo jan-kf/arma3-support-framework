@@ -690,7 +690,7 @@ class CfgVehicles {
         author = "Yoshi";
         category = "SupportFramework_Category";
         displayName = "Base Arrival Node";
-        icon = "\Support-Framework\UI\virtualStorage.paa"
+        icon = "\A3\ui_f\data\map\markers\military\end_CA.paa"
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -718,7 +718,7 @@ class CfgVehicles {
         author = "Yoshi";
         category = "SupportFramework_Category";
         displayName = "Base Departure Node";
-        icon = "\Support-Framework\UI\virtualStorage.paa"
+        icon = "\A3\ui_f\data\map\markers\military\start_CA.paa"
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
