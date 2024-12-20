@@ -49,7 +49,7 @@ private _assignCasVicAction = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 
-		private _CasConfigured = !(isNil "YOSHI_SUPPORT_CAS_CONFIG");
+		private _CasConfigured = YOSHI_SUPPORT_CAS_CONFIG_OBJECT call ["isInitialized"];
 		private _atBase = _target call YOSHI_fnc_isAtBase;
 		private _registered = _target getVariable ["isRegistered", false];
 		private _isCAS = _target getVariable ["isCAS", false];
@@ -83,7 +83,7 @@ private _unassignCasVicAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _CasConfigured = !(isNil "YOSHI_SUPPORT_CAS_CONFIG");
+		private _CasConfigured = YOSHI_SUPPORT_CAS_CONFIG_OBJECT call ["isInitialized"];
 		private _atBase = _target call YOSHI_fnc_isAtBase;
 		private _registered = _target getVariable ["isRegistered", false];
 		private _isCAS = _target getVariable ["isCAS", false];
@@ -105,7 +105,7 @@ private _assignArtyVicAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _artilleryConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
+		private _artilleryConfigured = YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["isInitialized"];
 		
 		private _registered = _target getVariable ["isRegistered", false];
 		
@@ -126,7 +126,7 @@ private _unassignArtyVicAction = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _artilleryConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
+		private _artilleryConfigured = YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["isInitialized"];
 		
 		private _registered = _target getVariable ["isRegistered", false];
 		

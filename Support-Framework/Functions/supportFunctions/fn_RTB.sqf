@@ -1,5 +1,5 @@
 params ["_vic"];
-// vic is currently making it's way back to YOSHI_HOME_BASE_CONFIG
+// vic is currently making it's way back to YOSHI_HOME_BASE_CONFIG_OBJECT
 
 
 

@@ -1,6 +1,6 @@
 params ["_speaker", "_message"];
 
-private _shutIt = YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false];
+private _shutIt = YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"];
 
 if (!_shutIt) then {
 	[_speaker, _message] remoteExec ['sideRadio'];

@@ -19,12 +19,12 @@ _uav setVariable ["taskStartTime", serverTime, true];
 private _start = _uav getVariable "taskStartTime";
 private _elapsedTime = serverTime - _start;
 
-private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
 private _timeLimit = 300;
 if (_ReconConfigured) then {
-	_timeLimit = YOSHI_SUPPORT_RECON_CONFIG getVariable ["TaskTime", 300];
+	_timeLimit = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["TaskTime"];
 };
-private _markerUpdateInterval = YOSHI_SUPPORT_RECON_CONFIG getVariable ["Interval", 5]; 
+private _markerUpdateInterval = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["Interval"]; 
 
 private _safeIsNull = {
 	params ["_var"];

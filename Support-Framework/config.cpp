@@ -345,6 +345,53 @@ class CfgVehicles {
         };
     };
 
+    class SupportFramework_AdditionalBase_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Additional Base Module";
+        icon = "\Support-Framework\UI\tower.paa"
+        function = "YOSHI_fnc_setAdditionalBase";
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+
+        //https://community.bistudio.com/wiki/Modules#Creating_the_Module_Config
+        canSetArea = 1;						// Allows for setting the area values in the Attributes menu in 3DEN
+		canSetAreaShape = 1;				// Allows for setting "Rectangle" or "Ellipse" in Attributes menu in 3DEN
+        canSetAreaHeight = 0;
+
+		class AttributeValues
+		{
+			// This section allows you to set the default values for the attributes menu in 3DEN
+			size3[] = { 200, 200, -1 };		// 3D size (x-axis radius, y-axis radius, z-axis radius)
+			isRectangle = 0;				// Sets if the default shape should be a rectangle or ellipse
+		};
+
+        class Attributes: AttributesBase {
+            class Units: Units {};
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Home Base Module TO FUNCTION! -- place down a home base before placing any additional bases",
+                "",
+                "Place this module where you want additional bases to be.",
+                "",
+                "Don't sync this to any other module",
+                "",
+                "Position designates center of search for nearby helicopters and landing pads for the base.",
+                "",
+                "Any synced helicopters will be automatically registered at the start of the mission.",
+                "",
+                "If you'd like to have a custom callsign for the Base, then sync a single unit (non-vehicle) and it will use that unit's callsign instead. Syncing a player is allowed." 
+            };
+            sync[] = {"Man", "Helicopter"}; // only able to sync units and helicopters
+            position=1;
+        };
+    };
+
     class SupportFramework_CAS_Module: Module_F {
         author = "Yoshi";
         category = "SupportFramework_Category";
@@ -408,14 +455,14 @@ class CfgVehicles {
                 displayName = "Base's Side";
                 tooltip = "The choices are: west, east, guer, civ -- [BLUFOR, OPFOR, Independent and Civilian, respectively]. Default is west (blufor)";
                 typeName = "STRING"; 
-                defaultValue = "west"; 
+                defaultValue = """west"""; 
                 // Listbox items
 				class Values
 				{
-					class BluforWest { name = "Blufor (West)";	value = "west"; };
-                    class OpforEast	{ name = "Opfor (East)";	value = "east"; };
-                    class IndepGuer	{ name = "Independent (Guer)";	value = "guer"; };
-                    class CivilCiv	{ name = "Civilian (Civ)";	value = "civ"; };
+					class BluforWest { name = "Blufor (West)";	value = """west"""; };
+                    class OpforEast	{ name = "Opfor (East)";	value = """east"""; };
+                    class IndepGuer	{ name = "Independent (Guer)";	value = """guer"""; };
+                    class CivilCiv	{ name = "Civilian (Civ)";	value = """civ"""; };
 				};
             };
             class RequiredItems: Edit {

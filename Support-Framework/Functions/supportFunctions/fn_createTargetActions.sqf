@@ -83,7 +83,7 @@ private _targetAction = [
 													[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] call YOSHI_fnc_sendSideText;
 													private _response = format ["Affirmative %1, %2 times %3 at %4. ETA: %5 seconds, Out.", _groupLeaderCallsign, _amount, _shellDescription, _gridRef, _ETA];
 													
-													if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
+													if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
 														hint _response;
 													} else {
 														[_vehicle, _response] spawn  {

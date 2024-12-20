@@ -3,13 +3,6 @@ params ["_vehicle", "_target"];
 private _actions = [];
 
 // Loiter search details
-private _loiterPrefixStr = YOSHI_HOME_BASE_CONFIG getVariable ["LoiterPrefixes", ""];
-private _loiterPrefixes = [];
-if (_loiterPrefixStr != "") then {
-	_loiterPrefixes = _loiterPrefixStr splitString ", ";
-} else {
-	_loiterPrefixes = ["loiter"]; // default value -- hard fallback
-};
 
 { // add all valid markers as valid locations
 	
@@ -33,7 +26,7 @@ if (_loiterPrefixStr != "") then {
 					_vic setVariable ["fullRun", false, true];
 					_vic setVariable ["destination", getMarkerPos _marker, true];
 					_vic setVariable ["isPerformingDuties", false, true];
-					if (YOSHI_HOME_BASE_CONFIG getVariable ["SideHush", false]) then {
+					if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
 						hint "Moving to loiter point...";
 					} else {
 						private _groupLeaderGroup = group _caller;
@@ -69,7 +62,7 @@ if (_loiterPrefixStr != "") then {
 			] call ace_interact_menu_fnc_createAction;
 			_actions pushBack [_vicRequestToLoiterAction, [], _target];
 			};
-	} forEach _loiterPrefixes;
+	} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT call ["LoiterPrefixes"]);
 
 } forEach allMapMarkers;
 

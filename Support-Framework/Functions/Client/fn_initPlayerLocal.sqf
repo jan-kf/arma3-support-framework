@@ -1,68 +1,3 @@
-// TODO: maybe add support for landing pads that already exist in the map.
-// private _getBuiltInPads = {
-// 	// Define the landing pad classes
-// 	private _landingPadClasses = [
-// 		"Land_HelipadEmpty_F", 
-// 		"Land_HelipadCircle_F", 
-// 		"Land_HelipadCivil_F", 
-// 		"Land_HelipadRescue_F", 
-// 		"Land_HelipadSquare_F", 
-// 		"Land_JumpTarget_F",
-// 		// CUP pads:
-// 		"HeliH",
-// 		"HeliHCivil",
-// 		"Heli_H_civil",
-// 		"HeliHEmpty",
-// 		"HeliHRescue",
-// 		"Heli_H_rescue",
-// 		"PARACHUTE_TARGET"
-// 	];
-
-// 	// Define the location types
-// 	private _locationTypes = [
-// 		"Airport", "CityCenter", "CivilDefense", "CulturalProperty",
-// 		"DangerousForces", "FlatArea", "FlatAreaCity", "FlatAreaCitySmall",
-// 		"Name", "NameCity", "NameCityCapital", "NameLocal", "NameMarine",
-// 		"NameVillage", "SafetyZone", "Strategic", "StrongpointArea"
-// 	];
-
-// 	// Get the position of YOSHI_HOME_BASE_CONFIG
-// 	private _homeBasePos = getPosATL YOSHI_HOME_BASE_CONFIG;
-
-// 	// Find all landing pads on the map
-// 	private _allLandingPads = [];
-// 	{
-// 		_allLandingPads append (allMissionObjects _x);
-// 	} forEach _landingPadClasses;
-
-// 	// Filter landing pads and check for nearby locations
-// 	private _validLandingPads = [];
-// 	{
-// 		private _landingPadPos = getPosATL _x;
-// 		if (_landingPadPos call call YOSHI_fnc_isAtBase) then {
-// 			private _nearbyLocations = nearestLocations [_landingPadPos, _locationTypes, 50];
-// 			if (count _nearbyLocations > 0) then {
-// 				private _nearestLocation = _nearbyLocations select 0;
-// 				private _locationName = text _nearestLocation;
-// 				if (_locationName != "") then {
-// 					_validLandingPads pushBack _x;
-// 				};
-// 			};
-// 		};
-// 	} forEach _allLandingPads;
-
-// 	// Return the array of valid landing pads
-// 	_validLandingPads
-
-// };
-
-YOSHI_DefaultRequiredItems = ["hgun_esd_01_F", "YOSHI_UniversalTerminal"];
-YOSHI_DefaultRequiredItems_Reinsert = YOSHI_DefaultRequiredItems + ["YOSHI_ReinsertTerminal"];
-YOSHI_DefaultRequiredItems_CAS = YOSHI_DefaultRequiredItems + ["YOSHI_CASTerminal"];
-YOSHI_DefaultRequiredItems_Artillery = YOSHI_DefaultRequiredItems + ["YOSHI_ArtilleryTerminal"];
-YOSHI_DefaultRequiredItems_Recon = YOSHI_DefaultRequiredItems + ["YOSHI_ReconTerminal"];
-
-
 private _redeploymentActions = [
 	"RedeploymentActions", "Redeployment", "\A3\ui_f\data\map\markers\military\end_CA.paa",
 	{
@@ -74,17 +9,10 @@ private _redeploymentActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
-		private _homeBaseConfigured = !(isNil "YOSHI_HOME_BASE_CONFIG");
+		private _homeBaseConfigured = YOSHI_HOME_BASE_CONFIG_OBJECT call ["isInitialized"];
 
 		if (_homeBaseConfigured) then {
-			private _requiredItemsStr = YOSHI_HOME_BASE_CONFIG getVariable ["RequiredItems", ""];
-			private _requiredItems = [];
-			if (_requiredItemsStr != "") then {
-				_requiredItems = _requiredItemsStr splitString ", ";
-			} else {
-				_requiredItems = YOSHI_DefaultRequiredItems_Reinsert; // default value -- hard fallback
-			};
-			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
+			private _hasItem = [(YOSHI_HOME_BASE_CONFIG_OBJECT call ["RequiredItems"]), _caller] call YOSHI_fnc_hasItems;
 			
 		 	_hasItem
 		} else {
@@ -108,18 +36,10 @@ private _casActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
-		private _CasConfigured = !(isNil "YOSHI_SUPPORT_CAS_CONFIG");
+		private _CasConfigured = YOSHI_SUPPORT_CAS_CONFIG_OBJECT call ["isInitialized"];
 
 		if (_CasConfigured) then {
-
-			private _requiredItemsStr = YOSHI_SUPPORT_CAS_CONFIG getVariable ["RequiredItems", ""];
-			private _requiredItems = [];
-			if (_requiredItemsStr != "") then {
-				_requiredItems = _requiredItemsStr splitString ", ";
-			} else {
-				_requiredItems = YOSHI_DefaultRequiredItems_CAS; // default value -- hard fallback
-			};
-			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
+			private _hasItem = [(YOSHI_SUPPORT_CAS_CONFIG_OBJECT call ["RequiredItems"]), _caller] call YOSHI_fnc_hasItems;
 
 			_hasItem 
 		} else {
@@ -145,18 +65,10 @@ private _reconActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
-		private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+		private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
 
 		if (_ReconConfigured) then {
-
-			private _requiredItemsStr = YOSHI_SUPPORT_RECON_CONFIG getVariable ["RequiredItems", ""];
-			private _requiredItems = [];
-			if (_requiredItemsStr != "") then {
-				_requiredItems = _requiredItemsStr splitString ", ";
-			} else {
-				_requiredItems = YOSHI_DefaultRequiredItems_Recon; // default value -- hard fallback
-			};
-			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
+			private _hasItem = [(YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["RequiredItems"]), _caller] call YOSHI_fnc_hasItems;
 
 			_hasItem
 		} else {
@@ -176,15 +88,7 @@ private _artilleryActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
-		private _artyPrefixStr = YOSHI_SUPPORT_ARTILLERY_CONFIG getVariable ["ArtilleryPrefixes", ""];
-		private _artyPrefixes = [];
-		if (_artyPrefixStr != "") then {
-			_artyPrefixes = _artyPrefixStr splitString ", ";
-		} else {
-			_artyPrefixes = ["target ", "firemission "]; // default value -- hard fallback
-		};
-
-		hint format["Awaiting orders, searching for markers prefixed with %1...", _artyPrefixes];
+		hint format["Awaiting orders, searching for markers prefixed with %1...", (YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["ArtilleryPrefixes"])];
 
 		true
 	}, 
@@ -192,18 +96,10 @@ private _artilleryActions = [
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
 		// Retrieve the custom argument value
-		private _artyConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
+		private _artyConfigured = YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["isInitialized"];
 
 		if (_artyConfigured) then {
-			private _requiredItemsStr = YOSHI_SUPPORT_ARTILLERY_CONFIG getVariable ["RequiredItems", ""];
-			private _requiredItems = [];
-			if (_requiredItemsStr != "") then {
-				_requiredItems = _requiredItemsStr splitString ", ";
-			} else {
-				_requiredItems = YOSHI_DefaultRequiredItems_Artillery; // default value -- hard fallback
-			};
-
-			private _hasItem = [_requiredItems, _caller] call YOSHI_fnc_hasItems;
+			private _hasItem = [(YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["RequiredItems"]), _caller] call YOSHI_fnc_hasItems;
 			
 			_hasItem
 
@@ -281,16 +177,9 @@ private _artilleryActionsZeus = [
 	"ArtilleryActions", "Artillery", "\a3\ui_f\data\igui\cfg\simpletasks\types\destroy_ca.paa",
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
-		// Statement code
-		private _artyPrefixStr = YOSHI_SUPPORT_ARTILLERY_CONFIG getVariable ["ArtilleryPrefixes", ""];
-		private _artyPrefixes = [];
-		if (_artyPrefixStr != "") then {
-			_artyPrefixes = _artyPrefixStr splitString ", ";
-		} else {
-			_artyPrefixes = ["target ", "firemission "]; // default value -- hard fallback
-		};
+		// Statement Code
 
-		hint format["Awaiting orders, searching for markers prefixed with %1...", _artyPrefixes];
+		hint format["Awaiting orders, searching for markers prefixed with %1...", (YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["ArtilleryPrefixes"])];
 
 		true
 	}, 
@@ -327,14 +216,6 @@ private _uavAction = [
 		// RECON search details
 		private _actions = [];
 
-		private _reconPrefixStr = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ReconPrefixes", ""];
-		private _reconPrefixes = [];
-		if (_reconPrefixStr != "") then {
-			_reconPrefixes = _reconPrefixStr splitString ", ";
-		} else {
-			_reconPrefixes = ["recon ", "rp ", "watch "]; // default value -- hard fallback
-		};
-
 		{ // add all valid markers as valid locations
 			
 			// marker details
@@ -359,7 +240,7 @@ private _uavAction = [
 							params ["_target", "_caller", "_args"];
 							private _vic = _args select 0;
 							// // Condition code here
-							private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+							private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
 							private _isUAV = unitIsUAV _vic;
 							_ReconConfigured && _isUAV
 						},
@@ -368,7 +249,7 @@ private _uavAction = [
 					] call ace_interact_menu_fnc_createAction;
 					_actions pushBack [_uavFieldAction, [], _vic];
 				};
-			} forEach _reconPrefixes;
+			} forEach (YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["ReconPrefixes"]);
 
 		} forEach allMapMarkers;
 
@@ -436,7 +317,7 @@ private _uavAction = [
 				params ["_target", "_caller", "_args"];
 				private _vic = _args select 0;
 				// Condition code here
-				private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+				private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
 				private _isUAV = unitIsUAV _vic;
 				private _vicHasIED = _vic getVariable ["YOSHI_UavHasIED", false];
 				private _vicHasMortar = _vic getVariable ["YOSHI_UavOrdinanceCount", 0] > 0;
@@ -490,7 +371,7 @@ private _uavAction = [
 		// 		params ["_target", "_caller", "_args"];
 		// 		private _vic = _args select 0;
 		// 		// Condition code here
-		// 		private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+		// 		private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
 		// 		private _isUAV = unitIsUAV _vic;
 		// 		private _vicHasMortar = _vic getVariable ["YOSHI_UavHasMortar", false];
 		// 		private _vicHasIED = _vic getVariable ["YOSHI_UavHasIED", false];
@@ -540,7 +421,7 @@ private _uavAction = [
 				params ["_target", "_caller", "_args"];
 				private _vic = _args select 0;
 				// Condition code here
-				private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+				private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
 				private _isUAV = unitIsUAV _vic;
 				private _vicHasMortar = _vic getVariable ["YOSHI_UavOrdinanceCount", 0] > 0;
 				private _vicHasGrenades = _vic getVariable ["YOSHI_UavGrenadeCount", 0] > 0;
@@ -589,7 +470,7 @@ private _uavAction = [
 				params ["_target", "_caller", "_args"];
 				private _vic = _args select 0;
 				// Condition code here
-				private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+				private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
 				private _isUAV = unitIsUAV _vic;
 				private _vicHasGrenades = _vic getVariable ["YOSHI_UavGrenadeCount", 0] > 0;
 				_ReconConfigured && _isUAV && !_vicHasGrenades
@@ -617,7 +498,7 @@ private _heliActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _homeBaseConfigured = !(isNil "YOSHI_HOME_BASE_CONFIG");
+		private _homeBaseConfigured = YOSHI_HOME_BASE_CONFIG_OBJECT call ["isInitialized"];
 		if (_homeBaseConfigured) then {
 			private _atBase = _target call YOSHI_fnc_isAtBase;
 			_atBase
@@ -645,8 +526,8 @@ private _artilleryVicActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Condition code here
-		private _homeBaseConfigured = !(isNil "YOSHI_HOME_BASE_CONFIG");
-		private _artilleryConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
+		private _homeBaseConfigured = YOSHI_HOME_BASE_CONFIG_OBJECT call ["isInitialized"];
+		private _artilleryConfigured = YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["isInitialized"];
 
 		if (_homeBaseConfigured && _artilleryConfigured) then {
 			private _canDoArtilleryFire = _target getVariable ["isArtillery", false];
@@ -750,20 +631,20 @@ private _reconScan = [
 	"\A3\ui_f\data\map\markers\nato\respawn_unknown_ca.paa",  
 	{ 
 		params ["_target", "_caller", "_args"];
-		private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+		private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
 		private _timeLimit = 300;
 		if (_ReconConfigured) then {
-			_timeLimit = YOSHI_SUPPORT_RECON_CONFIG getVariable ["TaskTime", 300];
+			_timeLimit = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["TaskTime"];
 		};  
 
-		private _showNames = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ShowNames", false]; 
-		private _hasHyperSpectralSensors = YOSHI_SUPPORT_RECON_CONFIG getVariable ["HasHyperSpectralSensors", false]; 
+		private _showNames = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["ShowNames"]; 
+		private _hasHyperSpectralSensors = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["HasHyperSpectralSensors"]; 
 		
 		[_target, YOSHI_reconDetectionRange, _showNames, _hasHyperSpectralSensors] call YOSHI_PerformReconScan;
 	},  
 	{ 
 		params ["_target", "_caller", "_args"];
-		private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+		private _ReconConfigured = !(isNil "");
 
 		_ReconConfigured
 	} 

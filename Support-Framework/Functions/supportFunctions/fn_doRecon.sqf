@@ -1,15 +1,15 @@
 params ["_uav"];
 
-private _ReconConfigured = !(isNil "YOSHI_SUPPORT_RECON_CONFIG");
+private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
 private _timeLimit = 300;
 if (_ReconConfigured) then {
-	_timeLimit = YOSHI_SUPPORT_RECON_CONFIG getVariable ["TaskTime", 300];
+	_timeLimit = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["TaskTime"];
 };
 
-private _markerUpdateInterval = YOSHI_SUPPORT_RECON_CONFIG getVariable ["Interval", 5]; 
+private _markerUpdateInterval = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["Interval"]; 
 
-private _showNames = YOSHI_SUPPORT_RECON_CONFIG getVariable ["ShowNames", true]; 
-private _hasHyperSpectralSensors = YOSHI_SUPPORT_RECON_CONFIG getVariable ["HasHyperSpectralSensors", false]; 
+private _showNames = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["ShowNames"]; 
+private _hasHyperSpectralSensors = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["HasHyperSpectralSensors"]; 
 
 _uav setVariable ["taskStartTime", serverTime, true];
 

@@ -13,17 +13,17 @@ private _safeIsNull = {
     };
 };
 
-private _artyConfigured = !(isNil "YOSHI_SUPPORT_ARTILLERY_CONFIG");
+private _artyConfigured = YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["isInitialized"];
 
 
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
 while {true} do {
 	
 
-	if (isNil "YOSHI_HOME_BASE_CONFIG") exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG is not set, terminating process";};
+	if (!(YOSHI_HOME_BASE_CONFIG_OBJECT call ["isInitialized"]) ) exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG_OBJECT is not set, terminating process";};
 	
 	diag_log "[SUPPORT] base heartbeat, bu bum...";
-	// Find all vehicles within a certain radius of YOSHI_HOME_BASE_CONFIG
+	// Find all vehicles within a certain radius of YOSHI_HOME_BASE_CONFIG_OBJECT
 	private _vehiclesNearBase = vehicles select {(_x call YOSHI_fnc_isAtBase) && (_x isKindOf "Helicopter")}; 
 
 	// Iterate through each vehicle
@@ -81,15 +81,7 @@ while {true} do {
 	} forEach _vehiclesNearBase;
 
 	// Function to get markers and spawn landing pads if necessary
-	private _lzPrefixStr = YOSHI_HOME_BASE_CONFIG getVariable ["LzPrefixes", ""];
-	private _lzPrefixes = [];
-	if (_lzPrefixStr != "") then {
-		_lzPrefixes = _lzPrefixStr splitString ", ";
-	} else {
-		_lzPrefixes = ["lz ", "hls "]; // default value -- hard fallback
-	};
-
-    {
+	    {
         private _markerName = _x;
         private _displayName = toLower (markerText _markerName);
 		private _lzMatch = false;
@@ -100,7 +92,7 @@ while {true} do {
 			if (_displayName find _prefix == 0) exitWith {
 				_lzMatch = true;
 			}
-		} forEach _lzPrefixes;
+		} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT call ["LzPrefixes"]);
         if (_lzMatch) then {
             private _markerPos = getMarkerPos _markerName;
             // Check for existing landing pads
@@ -113,13 +105,6 @@ while {true} do {
     } forEach allMapMarkers;
 
 	if (_artyConfigured) then {
-		private _baseSide = YOSHI_SUPPORT_ARTILLERY_CONFIG getVariable ["BaseSide", "west"];
-		if ((typeName _baseSide) != "STRING") then {
-			_baseSide = toLower str(_baseSide)
-		};
-	};
-
-	if (!isNil "_baseSide") then {
 		{
 			private _vehicle = _x;
 
@@ -129,8 +114,9 @@ while {true} do {
 				_vehicle setVariable ["isArtillery", true, true];
 			};
 
-		} forEach (vehicles select {(toLower str(side _x)) isEqualTo _baseSide});
+		} forEach (vehicles select {(side _x) isEqualTo (YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["BaseSide"])});
 	};
+	
 	
 	_keysToRemove = [];
 	{

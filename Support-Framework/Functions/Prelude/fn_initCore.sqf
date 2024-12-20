@@ -16,6 +16,12 @@ YOSHI_HELIPADS = [
 
 publicVariable "YOSHI_HELIPADS";
 
+YOSHI_DefaultRequiredItems = ["hgun_esd_01_F", "YOSHI_UniversalTerminal"];
+YOSHI_DefaultRequiredItems_Reinsert = YOSHI_DefaultRequiredItems + ["YOSHI_ReinsertTerminal"];
+YOSHI_DefaultRequiredItems_CAS = YOSHI_DefaultRequiredItems + ["YOSHI_CASTerminal"];
+YOSHI_DefaultRequiredItems_Artillery = YOSHI_DefaultRequiredItems + ["YOSHI_ArtilleryTerminal"];
+YOSHI_DefaultRequiredItems_Recon = YOSHI_DefaultRequiredItems + ["YOSHI_ReconTerminal"];
+
 YOSHI_MarkersArray = [];
 publicVariable "YOSHI_MarkersArray";
 
@@ -60,6 +66,32 @@ YOSHI_isArtilleryCapable = {
 
     _canDoArtilleryFire // Return true if capable, false otherwise
 };
+
+YOSHI_initList = {
+    params ["_objSelf", "_hashMap", "_key", "_default"];
+
+    private _listStr = _hashMap getVariable _key;
+    private _list = _default;
+    if (_listStr != "") then {
+        _list = _listStr splitString ", ";
+    };
+    _objSelf set [_key, _list];
+};
+
+private _initParams = [
+	["#flags", ["sealed"]],
+	["#create", {}],
+	["#clone", {}],
+	["#delete", {}],
+	["#str", {""}],
+	["isInitialized", false]
+];
+
+YOSHI_HOME_BASE_CONFIG_OBJECT = createHashMapObject [_initParams];
+YOSHI_SUPPORT_CAS_CONFIG_OBJECT = createHashMapObject [_initParams];
+YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT = createHashMapObject [_initParams];
+YOSHI_SUPPORT_RECON_CONFIG_OBJECT = createHashMapObject [_initParams];
+
 
 // Event handler for object creation
 addMissionEventHandler ["EntityCreated", {
