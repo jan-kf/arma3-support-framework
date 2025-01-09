@@ -590,7 +590,10 @@ private _logiActions = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Conditional Code
-		(attachedTo _target) isEqualTo objNull
+		private _isNearVehicles = (count ([_target, _caller, []] call YOSHI_fnc_getSuppliesActions)) > 0;
+		private _isNotAttached = (attachedTo _target) isEqualTo objNull;
+
+		_isNearVehicles && _isNotAttached
 	},
 	{
 		params ["_target", "_caller", "_params"];
@@ -600,6 +603,7 @@ private _logiActions = [
 ] call ace_interact_menu_fnc_createAction;
 
 ["ReammoBox_F", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
+["LandVehicle", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
 ["UAV_01_base_F", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
 
 private _easterEggActions = [

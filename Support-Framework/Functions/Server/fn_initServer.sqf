@@ -16,6 +16,13 @@ private _radius = _center distance [0, 0, 0];
     }; 
 } forEach (nearestTerrainObjects [_center, [], _radius]);
 
+{
+    if ([_x] call YOSHI_fnc_isHeliPad) then {
+        YOSHI_HELIPAD_INDEX pushBack _x;
+    };
+} forEach allMissionObjects "HeliH";
+publicVariable "YOSHI_HELIPAD_INDEX";
+
 //////////////////////////////////////////////////
 
 {
