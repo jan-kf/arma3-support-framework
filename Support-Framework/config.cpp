@@ -788,6 +788,41 @@ class CfgVehicles {
             sync[] = {};
         };
     };
+
+    class Rope;
+    class Spring100xRope : Rope
+	{
+		maxRelLenght = 1.1;			
+		maxExtraLenght = 20;
+		springFactor = 100;	
+		torqueFactor = 0.5;
+		dampingFactor[] = {1.0,2.5,1.0};
+	};
+    class Spring50xRope : Rope
+	{
+		maxRelLenght = 1.1;			
+		maxExtraLenght = 20;
+		springFactor = 50;	
+		torqueFactor = 0.5;
+		dampingFactor[] = {1.0,2.5,1.0};
+	};
+    class Spring10xRope : Rope
+	{
+		maxRelLenght = 1.1;			
+		maxExtraLenght = 20;
+		springFactor = 10;	
+		torqueFactor = 0.5;
+		dampingFactor[] = {1.0,2.5,1.0};
+	};
+    class Spring1xRope : Rope
+	{
+		maxRelLenght = 1.1;			
+		maxExtraLenght = 20;
+		springFactor = 1;	
+		torqueFactor = 0.5;
+		dampingFactor[] = {1.0,2.5,1.0};
+	};
+
 };
 
 class CfgRadio
@@ -817,6 +852,12 @@ class CfgRadio
 		sound[]	= { "\Support-Framework\Sounds\support\transport_request.ogg", 1, 1 };
 		title	= "";
 	};
+    class YOSHI_TransportAck
+	{
+		name	= "Transport Acknowledged";
+		sound[]	= { "\Support-Framework\Sounds\support\transport_acknowledged.ogg", 1, 1 };
+		title	= "";
+	};
     class YOSHI_TransportComplete
 	{
 		name	= "Transport Complete";
@@ -833,6 +874,12 @@ class CfgRadio
 	{
 		name	= "ArtilleryAck";
 		sound[]	= { "\Support-Framework\Sounds\support\artillery_acknowledged.ogg", 1, 1 };
+		title	= "";
+	};
+    class YOSHI_ArtilleryRoundsComplete
+	{
+		name	= "ArtilleryRoundsComplete";
+		sound[]	= { "\Support-Framework\Sounds\support\artillery_rounds_complete.ogg.ogg", 1, 1 };
 		title	= "";
 	};
     class YOSHI_CASRequest

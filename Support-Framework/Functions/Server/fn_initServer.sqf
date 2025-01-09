@@ -6,12 +6,15 @@ execVM "\Support-Framework\Functions\Client\counterBatteryRadar.sqf";
 
 ///////////////////////////////////////////////////
 
-{
-    if ([_x] call YOSHI_fnc_isHeliPad) then {
-        YOSHI_HELIPAD_INDEX pushBack _x;
-    };
-} forEach allMissionObjects "HeliH";
-publicVariable "YOSHI_HELIPAD_INDEX";
+private _worldSize = worldSize;
+private _center = [_worldSize / 2, _worldSize / 2, 0];
+private _radius = _center distance [0, 0, 0];
+
+{ 
+    if (_x isKindOf "HeliH") then { 
+        YOSHI_HELIPAD_INDEX pushBack _x; 
+    }; 
+} forEach (nearestTerrainObjects [_center, [], _radius]);
 
 //////////////////////////////////////////////////
 

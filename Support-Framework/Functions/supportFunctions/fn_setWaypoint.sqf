@@ -8,7 +8,7 @@ private _locationAtBase = [_location] call YOSHI_fnc_isAtBase;
 
 if (!_unitAtBase && _locationAtBase) then {
 
-	_arriveNode = YOSHI_HOME_BASE_CONFIG_OBJECT call ["BaseArriveNode"];
+	_arriveNode = YOSHI_HOME_BASE_CONFIG_OBJECT get "BaseArriveNode";
 
 	if (!(isNil "_arriveNode")) then {
 		private _wp = _group addWaypoint [_arriveNode, 0];
@@ -20,7 +20,7 @@ if (!_unitAtBase && _locationAtBase) then {
 
 if (_unitAtBase && !_locationAtBase) then {
 
-	_departNode = YOSHI_HOME_BASE_CONFIG_OBJECT call ["BaseDepartNode"];
+	_departNode = YOSHI_HOME_BASE_CONFIG_OBJECT get "BaseDepartNode";
 
 	if (!(isNil "_departNode")) then {
 		private _wp = _group addWaypoint [_departNode, 0];

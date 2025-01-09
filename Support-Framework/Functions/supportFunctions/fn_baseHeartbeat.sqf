@@ -13,14 +13,14 @@ private _safeIsNull = {
     };
 };
 
-private _artyConfigured = YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["isInitialized"];
+private _artyConfigured = [YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT] call YOSHI_isInitialized;
 
 
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
 while {true} do {
 	
 
-	if (!(YOSHI_HOME_BASE_CONFIG_OBJECT call ["isInitialized"]) ) exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG_OBJECT is not set, terminating process";};
+	if (!([YOSHI_HOME_BASE_CONFIG_OBJECT] call YOSHI_isInitialized) ) exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG_OBJECT is not set, terminating process";};
 	
 	diag_log "[SUPPORT] base heartbeat, bu bum...";
 	// Find all vehicles within a certain radius of YOSHI_HOME_BASE_CONFIG_OBJECT
@@ -81,7 +81,7 @@ while {true} do {
 	} forEach _vehiclesNearBase;
 
 	// Function to get markers and spawn landing pads if necessary
-	    {
+	{
         private _markerName = _x;
         private _displayName = toLower (markerText _markerName);
 		private _lzMatch = false;
@@ -92,7 +92,7 @@ while {true} do {
 			if (_displayName find _prefix == 0) exitWith {
 				_lzMatch = true;
 			}
-		} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT call ["LzPrefixes"]);
+		} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT get "LzPrefixes");
         if (_lzMatch) then {
             private _markerPos = getMarkerPos _markerName;
             // Check for existing landing pads
@@ -114,7 +114,7 @@ while {true} do {
 				_vehicle setVariable ["isArtillery", true, true];
 			};
 
-		} forEach (vehicles select {(side _x) isEqualTo (YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT call ["BaseSide"])});
+		} forEach (vehicles select {(side _x) isEqualTo (YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT get "BaseSide")});
 	};
 	
 	

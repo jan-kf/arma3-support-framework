@@ -10,7 +10,7 @@ YOSHI_activateInstantKill = {
 		sleep 1.5;
 
 		if (_adminThread isKindOf "B_UGV_9RIFLES_F") then {
-			_adminThread setObjectTexture [0, "9Rifles\Data\Vehicles\stompy_ext_instantKill.paa"];
+			_adminThread setObjectTextureGlobal [0, "9Rifles\Data\Vehicles\stompy_ext_instantKill.paa"];
 		};
 
 		while {alive _adminThread} do {
@@ -73,7 +73,7 @@ YOSHI_deactivateInstantKill = {
 		sleep 1.5;
 
 		if (_adminThread isKindOf "B_UGV_9RIFLES_F") then {
-			_adminThread setObjectTexture [0, "9Rifles\Data\Vehicles\stompy_ext.paa"];
+			_adminThread setObjectTextureGlobal [0, "9Rifles\Data\Vehicles\stompy_ext.paa"];
 		};
 
 		terminate _thread;

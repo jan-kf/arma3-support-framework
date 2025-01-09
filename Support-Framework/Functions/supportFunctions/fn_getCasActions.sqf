@@ -28,7 +28,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 				private _task = _vic getVariable ["currentTask", "waiting"];
 				if (_task == "waiting") then {
 
-					hint format["%1 is awaiting orders, searching for markers prefixed with %2...", groupId group _vic, (YOSHI_HOME_BASE_CONFIG_OBJECT call ["CasPrefixes"])];
+					hint format["%1 is awaiting orders, searching for markers prefixed with %2...", groupId group _vic, (YOSHI_HOME_BASE_CONFIG_OBJECT get "CasPrefixes")];
 
 				} else {
 					// Display the vic's current task
@@ -57,7 +57,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 						// statement 
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
-						if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
+						if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
 							hint "Waving off CAS...";
 						};
 						[_vic] remoteExec ["YOSHI_fnc_waveOff", 2];
@@ -86,7 +86,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 						private _groupLeaderGroup = group _caller;
 						private _groupLeaderCallsign = groupId _groupLeaderGroup;
 						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call YOSHI_fnc_sendSideText;
-						if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
+						if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
 							hint "CAS returning to base...";
 						}
 					}, 
@@ -128,7 +128,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 									_vic setVariable ["targetGroupLeader", _caller, true];
 									_vic setVariable ["currentTask", "requestCas", true];
 									_vic setVariable ["fullRun", false, true];
-									if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
+									if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
 										hint "Calling in CAS...";
 									};
 									[_vic, getMarkerPos _marker] remoteExec ["YOSHI_fnc_requestCas", 2];
@@ -138,7 +138,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 									private _vic = _args select 0;
 									private _marker = _args select 1;
 									// // Condition code here
-									private _CasConfigured = YOSHI_SUPPORT_CAS_CONFIG_OBJECT call ["isInitialized"];
+									private _CasConfigured = YOSHI_SUPPORT_CAS_CONFIG_OBJECT call YOSHI_isInitialized;
 									private _isCAS = _target getVariable ["isCAS", false];
 									private _notReinserting = !(_vic getVariable ["isPerformingDuties", false]);
 									private _task = _vic getVariable ["currentTask", "waiting"];
@@ -151,7 +151,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 							] call ace_interact_menu_fnc_createAction;
 							_actions pushBack [_vicRequestToLZAction, [], _target];
 						};
-					} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT call ["CasPrefixes"]);
+					} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT get "CasPrefixes");
 
 				} forEach allMapMarkers;
 

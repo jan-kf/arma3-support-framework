@@ -9,7 +9,7 @@ private _baseName = _baseParams select 1;
 
 [driver _vic, format ["%2, this is %1, requesting permission to land, over", groupId group _vic, _baseName]] call YOSHI_fnc_sendSideText;
 sleep 3;
-_location = [_vic, YOSHI_HOME_BASE_CONFIG_OBJECT call ["location"], true, true] call YOSHI_fnc_findRendezvousPoint;
+_location = [_vic, YOSHI_HOME_BASE_CONFIG_OBJECT get "location", true, true] call YOSHI_fnc_findRendezvousPoint;
 if (isNil "_location") exitWith {
 	if (_vic getVariable ["isHeli", false]) then {
 		[_baseCallsign, format ["%1, No helipad is available at the moment, over.", groupId group _vic]] call YOSHI_fnc_sendSideText;

@@ -1,6 +1,6 @@
 if (!isServer) exitWith {};
 
-if (!(YOSHI_HOME_BASE_CONFIG_OBJECT call ["isInitialized"]) ) exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG_OBJECT is not set, terminating process";};
+if (!(YOSHI_HOME_BASE_CONFIG_OBJECT call YOSHI_isInitialized) ) exitWith {diag_log "[SUPPORT] YOSHI_HOME_BASE_CONFIG_OBJECT is not set, terminating process";};
 
 private _vic = _this select 0;
 
@@ -184,7 +184,7 @@ if (_isAlive) then {
 	];
 	private _farewell = _array2 select (floor (random (count _array2)));
 
-	private _shutIt = YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"];
+	private _shutIt = YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush";
 	if (!_shutIt) then {
 		[format[_farewell, groupId group _vic, 'systemChat']] remoteExec ['systemChat'];
 	}

@@ -108,7 +108,7 @@ YOSHI_deployTowRopes = {
 
 	_createdRopes = [];
 	{
-		_createdRopes pushBack (ropeCreate [_towVic, _rot_tr, _cargo, _x, 5, ["RopeEnd", [0, 0, 1]], ["RopeEnd", [0, 0, 1]]]);
+		_createdRopes pushBack (ropeCreate [_towVic, _rot_tr, _cargo, _x, 5, ["RopeEnd", [0, 0, 1]], ["RopeEnd", [0, 0, 1]], "Spring1xRope"]);
 	} forEach _rotatedCargoAttachPoints;
 
 	_shouldSetParent = false;
@@ -131,7 +131,7 @@ YOSHI_stowTowRopes = {
 	private _attachedObjects = ropeAttachedObjects _vic;
 
 	{ [_x, objNull] remoteExec ["setTowParent"] } forEach _attachedObjects;
-
+	
 	private _ropes = ropes _vic;
 
 	{ ropeDestroy _x } forEach _ropes;

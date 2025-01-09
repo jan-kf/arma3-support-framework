@@ -3,7 +3,7 @@ private _baseName = "Base";
 
 private _baseIsNotVirtual = false;
 
-private _syncedObjects = YOSHI_HOME_BASE_CONFIG_OBJECT call ["syncedObjects"];
+private _syncedObjects = YOSHI_HOME_BASE_CONFIG_OBJECT get "syncedObjects";
 {
 	if (_x isKindOf "Man") exitWith {
 		_baseCallsign = _x;

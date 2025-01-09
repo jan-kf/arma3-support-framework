@@ -36,7 +36,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 					} forEach _allInVehicle;
 
 					// Format the names into a string
-					private _namesString = format ["Waiting for redeploy in %2: %1, searching for markers prefixed with %3...", _names joinString ", ", groupId group _vic, (YOSHI_HOME_BASE_CONFIG_OBJECT call ["LzPrefixes"])];
+					private _namesString = format ["Waiting for redeploy in %2: %1, searching for markers prefixed with %3...", _names joinString ", ", groupId group _vic, (YOSHI_HOME_BASE_CONFIG_OBJECT get "LzPrefixes")];
 
 					// Display the names using a hint
 					hint _namesString;
@@ -89,7 +89,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 						// statement 
 						params ["_target", "_caller", "_vic"];
 						_vic setVariable ["targetGroupLeader", _caller, true];
-						if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
+						if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
 							hint "Waving off transport...";
 						};
 						[_vic] remoteExec ["YOSHI_fnc_waveOff", 2];
@@ -141,7 +141,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 						[_caller, format ["%1, this is %2, RTB.",groupId group _vic, _groupLeaderCallsign]] call YOSHI_fnc_sendSideText;
 						[_vic, format["Moving to RTB"]] call YOSHI_fnc_vehicleChatter;
 						[_vic, "YOSHI_TransportLeave"] call YOSHI_fnc_playVehicleRadio;
-						if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
+						if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
 							hint "Transport returning to base...";
 						}
 					}, 
@@ -183,7 +183,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 									_vic setVariable ["targetGroupLeader", _caller, true];
 									_vic setVariable ["currentTask", "requestReinsert", true];
 									_vic setVariable ["fullRun", false, true];
-									if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
+									if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
 										hint "Requesting transport...";
 									};
 									[_vic, getMarkerPos _marker] remoteExec ["YOSHI_fnc_requestReinsert", 2];
@@ -205,7 +205,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 							] call ace_interact_menu_fnc_createAction;
 							_actions pushBack [_vicRequestToLZAction, [], _target];
 							};
-					} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT call ["LzPrefixes"]);
+					} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT get "LzPrefixes");
 
 				} forEach allMapMarkers;
 

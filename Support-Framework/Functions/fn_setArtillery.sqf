@@ -25,7 +25,7 @@ YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT = createHashMapObject [[
 			case "civ": { civilian };
 			case "guer": { independent };
 			case "east": { east };
-			case "west": { west };
+			default { west }; // Default to "west"
 		};
 		_self set ["BaseSide", _baseSide];
 

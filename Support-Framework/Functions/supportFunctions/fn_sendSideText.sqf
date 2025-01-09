@@ -1,6 +1,6 @@
 params ["_speaker", "_message", ["_all", true]];
 
-private _shutIt = YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"];
+private _shutIt = YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush";
 
 if (!_shutIt) then {
 	if (_all) then {

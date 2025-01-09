@@ -75,6 +75,7 @@ if (!_straightFromTop || !_isLoitering) then {
 		_base_message = "Roger %1, dispatching %2, out.";
 	};
 	[_baseCallsign, format [_base_message, _groupLeaderCallsign, groupId group _vic]] call YOSHI_fnc_sendSideText;
+	[_baseCallsign, "YOSHI_TransportAck"] call YOSHI_fnc_playSideRadio;
 	sleep 3;
 };
 

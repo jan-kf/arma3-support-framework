@@ -186,7 +186,7 @@ YOSHI_PerformReconScan = {
 			if (_target isKindOf "Tank") then {
 				_type = format["%1_armor", _factionChar];
 			};
-			if (_target isKindOf "UAV") then {
+			if (unitIsUAV _target) then {
 				_type = format["%1_uav", _factionChar];
 			};
 			if (_target isKindOf "StaticWeapon") then {

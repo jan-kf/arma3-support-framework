@@ -1,3 +1,17 @@
+YOSHI_isInitialized = {  
+    params ["_config"];  
+    if (!isNil "_config") then {  
+        private _value = _config get "isInitialized";  
+        if (typeName _value == "CODE") then { 
+            call _value 
+        } else { 
+            _value  
+        };  
+    } else {  
+        false  
+    };  
+};
+
 YOSHI_HELIPADS = [
     "Land_HelipadEmpty_F", 
     "Land_HelipadCircle_F", 

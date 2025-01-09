@@ -4,10 +4,10 @@ params ["_vic"];
 private _start = _vic getVariable "taskStartTime";
 private _elapsedTime = serverTime - _start;
 
-private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["isInitialized"];
+private _ReconConfigured = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call YOSHI_isInitialized;
 
 if (_ReconConfigured) then {
-	_timeLimit = YOSHI_SUPPORT_RECON_CONFIG_OBJECT call ["TaskTime"];
+	_timeLimit = YOSHI_SUPPORT_RECON_CONFIG_OBJECT get "TaskTime";
 
 	private _safeIsNull = {
 		params ["_var"];

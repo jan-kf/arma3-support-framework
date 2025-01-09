@@ -83,7 +83,7 @@ private _targetAction = [
 													[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] call YOSHI_fnc_sendSideText;
 													private _response = format ["Affirmative %1, %2 times %3 at %4. ETA: %5 seconds, Out.", _groupLeaderCallsign, _amount, _shellDescription, _gridRef, _ETA];
 													
-													if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
+													if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
 														hint _response;
 													} else {
 														[_vehicle, _response] spawn  {
@@ -93,6 +93,11 @@ private _targetAction = [
 
 															[_vehicle, _response] call YOSHI_fnc_sendSideText;
 															[_vehicle, "YOSHI_ArtilleryAck"] call YOSHI_fnc_playSideRadio;
+
+															waitUntil {sleep 1; unitReady _vehicle};
+
+															[_vehicle, "Rounds complete, Out."] call YOSHI_fnc_sendSideText;
+															[_vehicle, "ArtilleryRoundsComplete"] call YOSHI_fnc_playSideRadio;
 															
 														};
 													};

@@ -26,7 +26,7 @@ private _actions = [];
 					_vic setVariable ["fullRun", false, true];
 					_vic setVariable ["destination", getMarkerPos _marker, true];
 					_vic setVariable ["isPerformingDuties", false, true];
-					if (YOSHI_HOME_BASE_CONFIG_OBJECT call ["SideHush"]) then {
+					if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
 						hint "Moving to loiter point...";
 					} else {
 						private _groupLeaderGroup = group _caller;
@@ -62,7 +62,7 @@ private _actions = [];
 			] call ace_interact_menu_fnc_createAction;
 			_actions pushBack [_vicRequestToLoiterAction, [], _target];
 			};
-	} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT call ["LoiterPrefixes"]);
+	} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT get "LoiterPrefixes");
 
 } forEach allMapMarkers;
 
