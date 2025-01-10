@@ -173,7 +173,7 @@ copyVehicle = {
 
 // Function to paste a vehicle
 pasteVehicle = {
-    params ["_pos", "_data"];
+    params ["_pos", "_data", ["_dir", 0]];
     
     private _vehicleType = _data select 0;
     private _textures = _data select 1;
@@ -182,6 +182,9 @@ pasteVehicle = {
     // private _ammo = _data select 4;
 
     private _newVehicle = createVehicle [_vehicleType, _pos, [], 0, "FLY"];
+    private _velocity = velocity _newVehicle; 
+    _newVehicle setDir _dir;
+    _newVehicle setVelocity (_velocity vectorMultiply (cos _dir));
     // _newVehicle setDamage _damage;
     _newVehicle setFuel _fuel;
     // _newVehicle setVehicleAmmo _ammo;

@@ -60,6 +60,9 @@ class CfgFunctions {
             class setCAS {
                 description = "Function to set the CAS variables.";
             };
+            class setFixedRecon {
+                description = "Function to set the FixedWing Recon variables.";
+            };
             class setArtillery {
                 description = "Function to set the Artillery variables.";
             };
