@@ -190,7 +190,7 @@ YOSHI_PerformReconScan = {
 				_type = format["%1_uav", _factionChar];
 			};
 			if (_target isKindOf "StaticWeapon") then {
-				_type = format["%1_support", _factionChar];
+				_type = format["%1_installation", _factionChar];
 			};
 			if (_target isKindOf "StaticCannon" || [_target] call YOSHI_isArtilleryCapable) then {
 				_type = format["%1_art", _factionChar];

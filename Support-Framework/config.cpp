@@ -758,6 +758,7 @@ class CfgVehicles {
                 "Location of module designates the direction that helicopters will take before landing at the base.",
             };
             sync[] = {};
+            position=1;
         };
     };
 
@@ -786,6 +787,96 @@ class CfgVehicles {
                 "Location of module designates the direction that helicopters will take as they are departing the base.",
             };
             sync[] = {};
+            position=1;
+        };
+    };
+
+    class SupportFramework_Map_Infil_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Map Infil Node";
+        icon = "\A3\ui_f\data\map\markers\military\end_CA.paa"
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};            
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Home Base Module and Map Exfil TO FUNCTION!",
+                "",
+                "[Experimental module, use at your own risk]",
+                "",
+                "Sync this module to a fixed wing module to set up the infil for that fixed wing module",
+                "",
+                "Location of module designates the direction that off-map support units will arrive from.",
+            };
+            sync[] = {};
+            position=1;
+        };
+    };
+
+    class SupportFramework_Map_Exfil_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Map Exfil Node";
+        icon = "\A3\ui_f\data\map\markers\military\end_CA.paa"
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};            
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Home Base Module and Map Infil TO FUNCTION!",
+                "",
+                "[Experimental module, use at your own risk]",
+                "",
+                "Sync this module to a fixed wing module to set up the exfil for that fixed wing module",
+                "",
+                "Location of module designates the direction that off-map support units will depart from.",
+            };
+            sync[] = {};
+            position=1;
+        };
+    };
+
+    class SupportFramework_FixedWing_Recon_Module: Module_F {
+        author = "Yoshi";
+        category = "SupportFramework_Category";
+        displayName = "Fixed Wing Recon Module";
+        icon = "\Support-Framework\UI\cas.paa"
+        function = "YOSHI_fnc_setFixedRecon";
+        functionPriority = 1; // Execution priority, lower numbers are executed first
+        scope = 2; // Editor visibility. 2 is for normal use.
+        isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isTriggerActivated = 0;
+        isDisposable = 0;
+        class Attributes: AttributesBase {
+            class Units: Units {};
+            class ModuleDescription: ModuleDescription{}; // Module description should be shown last
+        };
+        class ModuleDescription: ModuleDescription {
+            description[] = {
+                "THIS MODULE REQUIRES Recon Module TO FUNCTION!",
+                "",
+                "Place this module to set up the ability to use off-map fixed wing recon",
+                "",
+                "Location of module is meaningless.",
+                "",
+                "Any synced aircraft will be automatically registered and stored in virtual storage the start of the mission. No need to sync to the Home Base Module (or any other module)",
+                "Virtual Storage = the vehicle will not appear where it was placed in the editor, but instead will be stored in memory for later use.",
+                "This module will utilize the same recon markers as the Recon Module to use as support."
+            };
+            sync[] = {"Helicopter"}; 
         };
     };
 

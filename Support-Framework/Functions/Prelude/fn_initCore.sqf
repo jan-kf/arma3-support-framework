@@ -152,3 +152,46 @@ addMissionEventHandler ["EntityDeleted", {
 		publicVariable "YOSHI_HELIPAD_INDEX";
     };
 }];
+
+
+// Function to copy a vehicle
+copyVehicle = {
+    params ["_vehicle"];
+    
+    private _data = [
+        typeOf _vehicle,
+        getObjectTextures _vehicle,
+        fuel _vehicle
+        // damage _vehicle, // getAllHitPointsDamage
+        // ammo _vehicle, // magazinesAmmo addMagazines 
+        // getObjectMaterials _vehicle,
+        // crew _vehicle apply { [typeOf _x, getUnitLoadout _x] }, // keep it simple for now
+        // [magazinesCargo _vehicle, weaponsCargo _vehicle, itemsCargo _vehicle]
+    ];
+    _data
+};
+
+// Function to paste a vehicle
+pasteVehicle = {
+    params ["_pos", "_data"];
+    
+    private _vehicleType = _data select 0;
+    private _textures = _data select 1;
+    private _fuel = _data select 2;
+    // private _damage = _data select 3;
+    // private _ammo = _data select 4;
+
+    private _newVehicle = createVehicle [_vehicleType, _pos, [], 0, "FLY"];
+    // _newVehicle setDamage _damage;
+    _newVehicle setFuel _fuel;
+    // _newVehicle setVehicleAmmo _ammo;
+
+    {
+        _newVehicle setObjectTextureGlobal [_forEachIndex, _x];
+    } forEach _textures;
+
+
+    createVehicleCrew _newVehicle;
+
+    _newVehicle
+};
