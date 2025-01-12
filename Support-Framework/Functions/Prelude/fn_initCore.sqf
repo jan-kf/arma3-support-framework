@@ -198,3 +198,91 @@ pasteVehicle = {
 
     _newVehicle
 };
+
+YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
+	["#flags", ["sealed"]],
+	["#create", {
+		params ["_hashMap"];
+
+		_self set ["syncedObjects", synchronizedObjects _hashMap];
+
+		private _fw_recon_units = [];
+		{
+			if (_x isKindOf "Module_F") then {
+				if (_x isKindOf "SupportFramework_Map_Infil_Module") then {
+					_self set ["MapArriveNode", getPosASL _x];
+				};
+				if (_x isKindOf "SupportFramework_Map_Exfil_Module") then {
+					_self set ["MapDepartNode", getPosASL _x];
+				};
+			} else {
+				_fw_recon_units pushBack (_x call copyVehicle);
+				deleteVehicleCrew _x;
+				deleteVehicle _x;
+			};
+		} forEach (_self get "syncedObjects");
+
+		_self set ["SavedUnits", _fw_recon_units];
+
+	}],
+	["#clone", {  }],
+	["#delete", {  }],
+	["#str", { "YOSHI_FW_RECON_CONFIG_OBJECT" }],
+	["SavedUnits", { _self get "SavedUnits" }],
+	["MapArriveNode", { _self get ["MapArriveNode", [0,0,0]] }],
+	["MapDepartNode", { _self get ["MapDepartNode", [0,0,0]] }],
+	["syncedObjects", { _self get "syncedObjects" }],
+	["DeployUnit", {
+		params ["_self", "_type"];
+
+		private _units = +(_self get "SavedUnits");
+		{
+			if ((_x select 0) isEqualTo _type) exitWith {
+				_units deleteAt _forEachIndex;
+				private _newVehicle = [_self get "MapArriveNode", _x, ((_self get "MapArriveNode") getDir (_self get "MapDepartNode"))] call pasteVehicle;
+				_self set ["SavedUnits", _units];
+				_newVehicle
+			};
+		} forEach _units;
+	}],
+	["StashUnit", {
+		params ["_self", "_unit"];
+
+		private _units = +(_self get "SavedUnits");
+		_units pushBack (_unit call copyVehicle);
+		_self set ["SavedUnits", _units];
+		deleteVehicleCrew _unit;
+		deleteVehicle _unit;
+	}]
+], objNull];
+
+
+
+_target = laserTarget _this;
+_bomb = createVehicle ["Bo_GBU12_LGB_MI10", ((getPosATL _this) vectorAdd [-100,100,1000])];
+
+_dir = _bomb getDir _target;
+_bomb setDir _dir;
+
+_bomb setMissileTarget [_target, true];
+
+
+//////////
+
+_plane = _this;
+private _weapons = weapons _plane;
+private _magazines = magazines _plane;
+
+private _bombWeapon = "";
+{
+    if ((_x find "Bomb") > -1) exitWith {
+        _bombWeapon = _x;
+    };
+    if ((_x find "Vblauncher") > -1) exitWith {
+        _bombWeapon = _x;
+    };
+} forEach _weapons;
+
+_fired = _plane fireAtTarget [laserTarget zeus, _bombWeapon];
+
+hint str(_fired);
