@@ -5,8 +5,12 @@ private _viaNode = false;
 
 private _unitAtBase = [_unit] call YOSHI_fnc_isAtBase;
 private _locationAtBase = [_location] call YOSHI_fnc_isAtBase;
+private _isNotDeployedFixedWing = true;
+if ([YOSHI_FW_CONFIG_OBJECT] call YOSHI_isInitialized) then {
+	private _isNotDeployedFixedWing = !(_unit in (YOSHI_FW_CONFIG_OBJECT get "DeployedUnits"));
+};
 
-if (!_unitAtBase && _locationAtBase) then {
+if (!_unitAtBase && _locationAtBase && _isNotDeployedFixedWing) then {
 
 	_arriveNode = YOSHI_HOME_BASE_CONFIG_OBJECT get "BaseArriveNode";
 
@@ -18,7 +22,7 @@ if (!_unitAtBase && _locationAtBase) then {
 	};
 };
 
-if (_unitAtBase && !_locationAtBase) then {
+if (_unitAtBase && !_locationAtBase && _isNotDeployedFixedWing) then {
 
 	_departNode = YOSHI_HOME_BASE_CONFIG_OBJECT get "BaseDepartNode";
 
@@ -36,5 +40,6 @@ _wp setWaypointType _type;
 if (!_viaNode) then {
 	_group setCurrentWaypoint _wp;
 };
+
 
 _wp

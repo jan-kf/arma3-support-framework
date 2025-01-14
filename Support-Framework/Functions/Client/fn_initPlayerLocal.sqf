@@ -116,10 +116,45 @@ private _artilleryActions = [
 	[false, false, false, true, false] // 9: Other parameters [showDisabled,enableInside,canCollapse,runOnHover,doNotCheckLOS] <ARRAY> (Optional)
 ] call ace_interact_menu_fnc_createAction;
 
+private _fixedWingActions = [
+	"FixedWingActions", "Fixed Wing", "\a3\ui_f\data\igui\cfg\simpletasks\types\Plane_ca.paa",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		hint format["Awaiting orders, searching for markers prefixed with %1...", (YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT get "ArtilleryPrefixes")];
+
+		true
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Condition code here
+		// Retrieve the custom argument value
+		private _fixedWingConfigured = [YOSHI_FW_CONFIG_OBJECT] call YOSHI_isInitialized;
+		private _artyConfigured = [YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT] call YOSHI_isInitialized;
+
+		if (_fixedWingConfigured && _artyConfigured) then {
+			private _hasItem = [(YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT get "RequiredItems"), _caller] call YOSHI_fnc_hasItems;
+			
+			_hasItem
+
+		} else {
+			false
+		};
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		[_target, _caller, _params] call YOSHI_FIXED_WING_ACTIONS;
+	},
+	"", // 7: Position (Position array, Position code or Selection Name) <ARRAY>, <CODE> or <STRING> (Optional)
+	4, // 8: Distance <NUMBER>
+	[false, false, false, true, false] // 9: Other parameters [showDisabled,enableInside,canCollapse,runOnHover,doNotCheckLOS] <ARRAY> (Optional)
+] call ace_interact_menu_fnc_createAction;
+
 [player, 1, ["ACE_SelfActions"], _redeploymentActions] call ace_interact_menu_fnc_addActionToObject;
 [player, 1, ["ACE_SelfActions"], _casActions] call ace_interact_menu_fnc_addActionToObject;
 [player, 1, ["ACE_SelfActions"], _artilleryActions] call ace_interact_menu_fnc_addActionToObject;
 [player, 1, ["ACE_SelfActions"], _reconActions] call ace_interact_menu_fnc_addActionToObject;
+[player, 1, ["ACE_SelfActions"], _fixedWingActions] call ace_interact_menu_fnc_addActionToObject;
 
 private _redeploymentActionsZeus = [
 	"RedeploymentActions", "Redeployment", "\A3\ui_f\data\map\markers\military\end_CA.paa",
@@ -195,11 +230,29 @@ private _artilleryActionsZeus = [
 	[false, false, false, true, false] // 9: Other parameters [showDisabled,enableInside,canCollapse,runOnHover,doNotCheckLOS] <ARRAY> (Optional)
 ] call ace_interact_menu_fnc_createAction;
 
+private _fixedWingActionsZeus = [
+	"fixedWingActions", "Fixed Wing", "\a3\ui_f\data\igui\cfg\simpletasks\types\Plane_ca.paa",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement Code
+
+		true
+	}, 
+	{
+		true
+	},
+	{
+		params ["_target", "_caller", "_params"];
+		[_target, _caller, _params] call YOSHI_FIXED_WING_ACTIONS;
+	}
+] call ace_interact_menu_fnc_createAction;
+
 
 [["ACE_ZeusActions"], _redeploymentActionsZeus] call ace_interact_menu_fnc_addActionToZeus;
 [["ACE_ZeusActions"], _casActionsZeus] call ace_interact_menu_fnc_addActionToZeus;
 [["ACE_ZeusActions"], _artilleryActionsZeus] call ace_interact_menu_fnc_addActionToZeus;
 [["ACE_ZeusActions"], _reconActionsZeus] call ace_interact_menu_fnc_addActionToZeus;
+[["ACE_ZeusActions"], _fixedWingActionsZeus] call ace_interact_menu_fnc_addActionToZeus;
 
 private _uavAction = [
 	"UAV_field_task", // Action ID

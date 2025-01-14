@@ -42,6 +42,10 @@ class CfgFunctions {
             file = "\Support-Framework\Functions\Client";
             class initPlayerLocal { postInit = 1; };
         };
+        class Actions {
+            file = "\Support-Framework\Functions\Actions";
+            class fixedWingActions;
+        };
         class Prelude {
             file = "\Support-Framework\Functions\Prelude";
             class initCore { preInit = 1; };
@@ -60,7 +64,7 @@ class CfgFunctions {
             class setCAS {
                 description = "Function to set the CAS variables.";
             };
-            class setFixedRecon {
+            class setFixedWings {
                 description = "Function to set the FixedWing Recon variables.";
             };
             class setArtillery {
@@ -798,7 +802,7 @@ class CfgVehicles {
         author = "Yoshi";
         category = "SupportFramework_Category";
         displayName = "Map Infil Node";
-        icon = "\A3\ui_f\data\map\markers\military\end_CA.paa"
+        icon = "\A3\ui_f\data\map\markers\handdrawn\end_CA.paa"
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -827,7 +831,7 @@ class CfgVehicles {
         author = "Yoshi";
         category = "SupportFramework_Category";
         displayName = "Map Exfil Node";
-        icon = "\A3\ui_f\data\map\markers\military\end_CA.paa"
+        icon = "\A3\ui_f\data\map\markers\handdrawn\start_CA.paa"
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -852,12 +856,12 @@ class CfgVehicles {
         };
     };
 
-    class SupportFramework_FixedWing_Recon_Module: Module_F {
+    class SupportFramework_FixedWing_Module: Module_F {
         author = "Yoshi";
         category = "SupportFramework_Category";
         displayName = "Fixed Wing Recon Module";
-        icon = "\Support-Framework\UI\cas.paa"
-        function = "YOSHI_fnc_setFixedRecon";
+        icon = "\a3\ui_f\data\igui\cfg\simpletasks\types\Plane_ca.paa"
+        function = "YOSHI_fnc_setFixedWings";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
         isGlobal = 0; // Effect is local (0 for local only, 1 for global, 2 for persistent)
@@ -869,15 +873,14 @@ class CfgVehicles {
         };
         class ModuleDescription: ModuleDescription {
             description[] = {
-                "THIS MODULE REQUIRES Recon Module TO FUNCTION!",
+                "THIS MODULE REQUIRES Home Base Module TO FUNCTION!",
                 "",
-                "Place this module to set up the ability to use off-map fixed wing recon",
+                "Place this module to set up the ability to use off-map fixed wing units",
                 "",
                 "Location of module is meaningless.",
                 "",
                 "Any synced aircraft will be automatically registered and stored in virtual storage the start of the mission. No need to sync to the Home Base Module (or any other module)",
-                "Virtual Storage = the vehicle will not appear where it was placed in the editor, but instead will be stored in memory for later use.",
-                "This module will utilize the same recon markers as the Recon Module to use as support."
+                "Virtual Storage = the vehicle will not appear where it was placed in the editor, but instead will be stored in memory for later use."
             };
             sync[] = {"Helicopter"}; 
         };

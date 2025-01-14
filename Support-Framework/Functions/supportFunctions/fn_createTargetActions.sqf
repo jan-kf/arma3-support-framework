@@ -1,4 +1,4 @@
-params ["_targetPos", "_targetName"];
+params ["_targetPos", "_targetName", ["_targetObject", objNull]];
 
 private _targetActions = [];
 
@@ -13,9 +13,12 @@ private _targetAction = [
 		true
 	},
 	{
-		params ["_target", "_caller", "_targetPos"];
+		params ["_target", "_caller", "_args"];
 		private _vehicleActions = [];
 		private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
+		private _targetPos = _args select 0;
+		private _targetObject = _args select 1;
+		
 
 		{
 			private _vehicle = _x;
@@ -139,9 +142,46 @@ private _targetAction = [
 			};
 		} forEach _registeredVehicles;
 
+
+		if ((_targetObject isNotEqualTo objNull) &&([YOSHI_FW_CONFIG_OBJECT] call YOSHI_isInitialized)) then {
+			private _deployedWings = YOSHI_FW_CONFIG_OBJECT get "DeployedUnits";
+			private _fixedWingActions = [];
+			{
+				private _ordinance = _x call YOSHI_GET_BOMB;
+				if (_ordinance != "") then {
+					private _vehicleClass = typeOf _x;
+					private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+					private _fixedWingAction = [
+						format["vicActionDropBomb-%1", netId _x], format["Release Bomb from %1", _vehicleDisplayName], "",
+						{
+							params ["_targetObject", "_caller", "_args"];
+							//statement
+							private _vehicle = _args select 0;
+							private _ordinance = _args select 1;
+
+							_vehicle fireAtTarget [_targetObject, _ordinance];
+							// BOOM
+
+						}, 
+						{
+							params ["_targetObject", "_caller", "_args"];
+							// Condition code here
+							true
+						},
+						{ // 5: Insert children code <CODE> (Optional)
+						},
+						[_x, _ordinance, _targetObject] // 6 Params
+					] call ace_interact_menu_fnc_createAction;
+					_fixedWingActions pushBack [_fixedWingAction, [], _targetObject];
+				};
+			} forEach _deployedWings;
+			_vehicleActions = _vehicleActions + _fixedWingActions;
+		};
+
+
 		_vehicleActions
 	},
-	_targetPos,
+	[_targetPos, _targetObject], // 6 Params
 	"",
 	4,
 	[false, false, true, true, false]

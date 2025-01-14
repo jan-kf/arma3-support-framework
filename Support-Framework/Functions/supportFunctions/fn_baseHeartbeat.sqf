@@ -14,6 +14,7 @@ private _safeIsNull = {
 };
 
 private _artyConfigured = [YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT] call YOSHI_isInitialized;
+private _fixedWingsConfigured = [YOSHI_FW_CONFIG_OBJECT] call YOSHI_isInitialized;
 
 
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
@@ -115,6 +116,20 @@ while {true} do {
 			};
 
 		} forEach (vehicles select {(side _x) isEqualTo (YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT get "BaseSide")});
+	};
+
+	if (_fixedWingsConfigured) then {
+		{
+			private _caller = _x getVariable ["YOSHI_FW_CALLER", objNull];
+			if (!isNull _caller) then {
+				private _group = group _x;
+				if ((getWPPos [_group, 0]) distance2D (getPosASL _caller) > 100) then {
+					_currentWaypoint = currentWaypoint _group;
+					_currentWaypoint setWaypointPosition (getPosASL _caller);
+				};
+			};
+			_x flyInHeight [1000, true];
+		} forEach (YOSHI_FW_CONFIG_OBJECT get "DeployedUnits");
 	};
 	
 	

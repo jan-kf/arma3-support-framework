@@ -6,13 +6,14 @@ _playersAndVehicles append vehicles;
 
 {
     private _playerOrVehicle = _x;
-    private _laserTargetPos = getPosATL (laserTarget _playerOrVehicle);
+    private _laserTarget = laserTarget _playerOrVehicle;
+    private _laserTargetPos = getPosATL _laserTarget;
     private _normalizedLaserTargetPos = [round (_laserTargetPos select 0), round (_laserTargetPos select 1), round (_laserTargetPos select 2)];
     if (isLaserOn _playerOrVehicle && (str(_normalizedLaserTargetPos) != str([0,0,0]))) then {
         
         private _laserTargetOwner = if (_playerOrVehicle isKindOf "Man") then {name _playerOrVehicle} else {groupID group _playerOrVehicle};
         private _laserTargetName = format ["%1's Laser", _laserTargetOwner];
-        _targetActions append ([_normalizedLaserTargetPos, _laserTargetName] call YOSHI_fnc_createTargetActions);
+        _targetActions append ([_normalizedLaserTargetPos, _laserTargetName, _laserTarget] call YOSHI_fnc_createTargetActions);
     };
 } forEach _playersAndVehicles;
 
