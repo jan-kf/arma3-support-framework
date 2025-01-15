@@ -28,6 +28,43 @@ YOSHI_GET_BOMB = {
     _bombWeapon
 };
 
+YOSHI_GET_LGM = { 
+    params ["_vehicle"]; 
+    private _bomb = ""; 
+    private _missile = ""; 
+ 
+    { 
+        private _weapon = _x; 
+        private _mags = getArray (configFile >> "CfgWeapons" >> _weapon >> "magazines"); 
+ 
+        { 
+            private _magazine = _x; 
+            private _ammoType = getText (configFile >> "CfgMagazines" >> _magazine >> "ammo"); 
+            private _isLaserGuided = getNumber (configFile >> "CfgAmmo" >> _ammoType >> "laserLock") > 0; 
+            private _isBomb = _isLaserGuided && ((toLower _weapon) find "bomb" > -1 || (toLower _weapon) find "gbu" > -1); 
+            private _hasAmmo = ((magazinesAmmoFull _vehicle) findIf {(_x select 0) isEqualTo _magazine && (_x select 1) > 0}) > -1; 
+ 
+            if (_isLaserGuided && _hasAmmo) then { 
+                if (_bomb == "" && _isBomb) then { 
+                    _bomb = _weapon; 
+                } else { 
+                    if (_missile == "" && !_isBomb) then { 
+                        _missile = _weapon; 
+                    }; 
+                }; 
+ 
+                if (_bomb != "" && _missile != "") exitWith {}; 
+            }; 
+        } forEach _mags; 
+ 
+        if (_bomb != "" && _missile != "") exitWith {}; 
+    } forEach (weapons _vehicle); 
+ 
+    [_bomb, _missile] 
+};
+
+
+
 YOSHI_HAS_LEFT_MAP = {
     params ["_unit"];
     private _pos = getPosASL _unit;
@@ -54,7 +91,7 @@ YOSHI_FIXED_WING_ACTIONS = {
 				params ["_target", "_caller", "_vehicleClass"];
 				//statement
 				
-				_unit = [YOSHI_FW_CONFIG_OBJECT, _vehicleClass] call (YOSHI_FW_CONFIG_OBJECT get "DeployUnit");
+				_unit = [YOSHI_FW_CONFIG_OBJECT, _vehicleClass, _caller] call (YOSHI_FW_CONFIG_OBJECT get "DeployUnit");
 				[_unit, getPosASL _caller, "LOITER"] call YOSHI_fnc_setWaypoint;
 
 			}, 
@@ -79,6 +116,7 @@ YOSHI_FIXED_WING_ACTIONS = {
 				params ["_target", "_caller", "_unit"];
 				//statement
 				
+				_unit setVariable ["YOSHI_FW_CALLER", objNull];
                 [_unit] spawn {
                     params ["_unit"];
                     [_unit, YOSHI_FW_CONFIG_OBJECT get "MapDepartNode", "MOVE"] call YOSHI_fnc_setWaypoint;

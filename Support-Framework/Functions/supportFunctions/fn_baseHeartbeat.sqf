@@ -120,15 +120,18 @@ while {true} do {
 
 	if (_fixedWingsConfigured) then {
 		{
+			_x flyInHeightASL [2000, 2000, 2000];
 			private _caller = _x getVariable ["YOSHI_FW_CALLER", objNull];
 			if (!isNull _caller) then {
 				private _group = group _x;
 				if ((getWPPos [_group, 0]) distance2D (getPosASL _caller) > 100) then {
-					_currentWaypoint = currentWaypoint _group;
-					_currentWaypoint setWaypointPosition (getPosASL _caller);
+					_currentWaypointIndex = currentWaypoint _group;
+					[_group, _currentWaypointIndex] setWaypointPosition [(getPosASL _caller), 0];
 				};
 			};
-			_x flyInHeight [1000, true];
+			if (_x checkAIFeature "AUTOTARGET") then { _x disableAI "AUTOTARGET"; };
+			if (_x checkAIFeature "AUTOCOMBAT") then { _x disableAI "AUTOCOMBAT"; };
+			if (_x checkAIFeature "TARGET") then { _x disableAI "TARGET"; };
 		} forEach (YOSHI_FW_CONFIG_OBJECT get "DeployedUnits");
 	};
 	

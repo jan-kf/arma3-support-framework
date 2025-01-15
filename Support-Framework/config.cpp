@@ -818,6 +818,8 @@ class CfgVehicles {
                 "",
                 "[Experimental module, use at your own risk]",
                 "",
+                "Place this module on the outside edge of the map",
+                "",
                 "Sync this module to a fixed wing module to set up the infil for that fixed wing module",
                 "",
                 "Location of module designates the direction that off-map support units will arrive from.",
@@ -847,9 +849,11 @@ class CfgVehicles {
                 "",
                 "[Experimental module, use at your own risk]",
                 "",
+                "Place this module on the outside edge of the map",
+                "",
                 "Sync this module to a fixed wing module to set up the exfil for that fixed wing module",
                 "",
-                "Location of module designates the direction that off-map support units will depart from.",
+                "Location of module designates the direction that off-map support units will depart to.",
             };
             sync[] = {};
             position=1;
@@ -859,7 +863,7 @@ class CfgVehicles {
     class SupportFramework_FixedWing_Module: Module_F {
         author = "Yoshi";
         category = "SupportFramework_Category";
-        displayName = "Fixed Wing Recon Module";
+        displayName = "Fixed Wing Module";
         icon = "\a3\ui_f\data\igui\cfg\simpletasks\types\Plane_ca.paa"
         function = "YOSHI_fnc_setFixedWings";
         functionPriority = 1; // Execution priority, lower numbers are executed first

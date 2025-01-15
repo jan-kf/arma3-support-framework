@@ -147,33 +147,39 @@ private _targetAction = [
 			private _deployedWings = YOSHI_FW_CONFIG_OBJECT get "DeployedUnits";
 			private _fixedWingActions = [];
 			{
-				private _ordinance = _x call YOSHI_GET_BOMB;
-				if (_ordinance != "") then {
-					private _vehicleClass = typeOf _x;
-					private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
-					private _fixedWingAction = [
-						format["vicActionDropBomb-%1", netId _x], format["Release Bomb from %1", _vehicleDisplayName], "",
-						{
-							params ["_targetObject", "_caller", "_args"];
-							//statement
-							private _vehicle = _args select 0;
-							private _ordinance = _args select 1;
+				private _ordinanceLoadout = _x call YOSHI_GET_LGM;
+				private _vehicle = _x;
+				{
+					if (_x != "") then {
+						private _ordinance = _x;
+						private _vehicleClass = typeOf _vehicle;
+						private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
+						private _ordinanceType = if (_forEachIndex isEqualTo 0) then {"Bomb"} else {"Missile"};
+						private _fixedWingAction = [
+							format["vicActionDropBomb-%1", netId _vehicle], format["Release %2 from %1", _vehicleDisplayName, _ordinanceType], "",
+							{
+								params ["_targetObject", "_caller", "_args"];
+								//statement
+								private _vehicle = _args select 0;
+								private _ordinance = _args select 1;
 
-							_vehicle fireAtTarget [_targetObject, _ordinance];
-							// BOOM
+								_vehicle fireAtTarget [_targetObject, _ordinance];
+								// BOOM
 
-						}, 
-						{
-							params ["_targetObject", "_caller", "_args"];
-							// Condition code here
-							true
-						},
-						{ // 5: Insert children code <CODE> (Optional)
-						},
-						[_x, _ordinance, _targetObject] // 6 Params
-					] call ace_interact_menu_fnc_createAction;
-					_fixedWingActions pushBack [_fixedWingAction, [], _targetObject];
-				};
+							}, 
+							{
+								params ["_targetObject", "_caller", "_args"];
+								// Condition code here
+								true
+							},
+							{ // 5: Insert children code <CODE> (Optional)
+							},
+							[_vehicle, _ordinance, _targetObject] // 6 Params
+						] call ace_interact_menu_fnc_createAction;
+						_fixedWingActions pushBack [_fixedWingAction, [], _targetObject];
+					};
+				} forEach _ordinanceLoadout;
+
 			} forEach _deployedWings;
 			_vehicleActions = _vehicleActions + _fixedWingActions;
 		};
