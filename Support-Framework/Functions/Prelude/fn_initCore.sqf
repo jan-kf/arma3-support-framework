@@ -153,17 +153,55 @@ addMissionEventHandler ["EntityDeleted", {
     };
 }];
 
+YOSHI_GET_PYLON_INFO = {
+    params ["_vehicle"];
+    private _allPylonInfo = getAllPylonsInfo _vehicle;
+    private _pylonData = [];
+    {
+        _pylonData pushBack [_x select 0, _x select 3, _x select 2, _x select 4];
+    } forEach _allPylonInfo;
+    _pylonData
+};
+
+YOSHI_SET_VEHICLE_PYLONS = {
+    params ["_vehicle", "_pylonData"];
+    {
+        _vehicle setPylonLoadout  [_x select 0, _x select 1, true, _x select 2];
+        _vehicle setAmmoOnPylon [_x select 0, _x select 3];
+    } forEach _pylonData;
+};
+
+YOSHI_GET_DAMAGE_INFO = {
+    params ["_vehicle"];
+    private _damageInfo = getAllHitPointsDamage _vehicle;
+    if (count _damageInfo == 0) exitWith {[]};
+    private _damageLocations = _damageInfo select 0;
+    private _damageValues = _damageInfo select 2;
+    private _damageData = [];
+    {
+        _damageData pushBack [_damageLocations select _forEachIndex, _x];
+    } forEach _damageValues; 
+    _damageData
+};
+
+YOSHI_SET_DAMAGE_INFO = {
+    params ["_vehicle", "_damageData"];
+    {
+        _vehicle setHitPointDamage [_x select 0, _x select 1, false];
+    } forEach _damageData;
+};
 
 // Function to copy a vehicle
-copyVehicle = {
+YOSHI_COPY_VEHICLE = {
     params ["_vehicle"];
     
     private _data = [
         typeOf _vehicle,
         getObjectTextures _vehicle,
-        fuel _vehicle
+        fuel _vehicle,
+        _vehicle call YOSHI_GET_PYLON_INFO,
+        _vehicle call YOSHI_GET_DAMAGE_INFO
         // damage _vehicle, // getAllHitPointsDamage
-        // ammo _vehicle, // magazinesAmmo addMagazines 
         // getObjectMaterials _vehicle,
         // crew _vehicle apply { [typeOf _x, getUnitLoadout _x] }, // keep it simple for now
         // [magazinesCargo _vehicle, weaponsCargo _vehicle, itemsCargo _vehicle]
@@ -172,22 +210,26 @@ copyVehicle = {
 };
 
 // Function to paste a vehicle
-pasteVehicle = {
-    params ["_pos", "_data", ["_dir", 0]];
+YOSHI_PASTE_VEHICLE = {
+    params ["_pos", "_data", ["_dir", 0], ["_altitude", 0]];
     
     private _vehicleType = _data select 0;
     private _textures = _data select 1;
     private _fuel = _data select 2;
-    // private _damage = _data select 3;
-    // private _ammo = _data select 4;
+    private _ammo = _data select 3;
+    private _damage = _data select 4;
+
+    if (_altitude > 0) then {
+        _pos set [2, _altitude];
+    };
 
     private _newVehicle = createVehicle [_vehicleType, _pos, [], 0, "FLY"];
     private _velocity = velocity _newVehicle; 
     _newVehicle setDir _dir;
     _newVehicle setVelocity (_velocity vectorMultiply (cos _dir));
-    // _newVehicle setDamage _damage;
     _newVehicle setFuel _fuel;
-    // _newVehicle setVehicleAmmo _ammo;
+    [_newVehicle, _ammo] call YOSHI_SET_VEHICLE_PYLONS;
+    [_newVehicle, _damage] call YOSHI_SET_DAMAGE_INFO;
 
     {
         _newVehicle setObjectTextureGlobal [_forEachIndex, _x];
@@ -216,7 +258,7 @@ YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
 					_self set ["MapDepartNode", getPosASL _x];
 				};
 			} else {
-				_fw_recon_units pushBack (_x call copyVehicle);
+				_fw_recon_units pushBack (_x call YOSHI_COPY_VEHICLE);
 				deleteVehicleCrew _x;
 				deleteVehicle _x;
 			};
@@ -241,7 +283,7 @@ YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
 		{
 			if ((_x select 0) isEqualTo _type) exitWith {
 				_units deleteAt _forEachIndex;
-				private _newVehicle = [_self get "MapArriveNode", _x, ((_self get "MapArriveNode") getDir (_self get "MapDepartNode"))] call pasteVehicle;
+				private _newVehicle = [_self get "MapArriveNode", _x, ((_self get "MapArriveNode") getDir (_self get "MapDepartNode")), 2000] call YOSHI_PASTE_VEHICLE;
 				_self set ["SavedUnits", _units];
                 _self set ["DeployedUnits", (_self get "DeployedUnits") + [_newVehicle]];
                 if (!isNull _caller) then {
@@ -255,7 +297,7 @@ YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
 		params ["_self", "_unit"];
 
 		private _units = +(_self get "SavedUnits");
-		_units pushBack (_unit call copyVehicle);
+		_units pushBack (_unit call YOSHI_COPY_VEHICLE);
 		_self set ["SavedUnits", _units];
         _self set ["DeployedUnits", (_self get "DeployedUnits") - [_unit]];
 		deleteVehicleCrew _unit;

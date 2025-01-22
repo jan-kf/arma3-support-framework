@@ -121,9 +121,16 @@ while {true} do {
 	if (_fixedWingsConfigured) then {
 		{
 			_x flyInHeightASL [2000, 2000, 2000];
+			_x flyInHeight 2000;
+			private _group = group _x;
+
+			if ((waypointType [_group, currentWaypoint _group]) isEqualTo "LOITER") then {
+				[_group, currentWaypoint _group] setWaypointLoiterRadius 2000;
+			};
+
 			private _caller = _x getVariable ["YOSHI_FW_CALLER", objNull];
 			if (!isNull _caller) then {
-				private _group = group _x;
+				
 				if ((getWPPos [_group, 0]) distance2D (getPosASL _caller) > 100) then {
 					_currentWaypointIndex = currentWaypoint _group;
 					[_group, _currentWaypointIndex] setWaypointPosition [(getPosASL _caller), 0];
