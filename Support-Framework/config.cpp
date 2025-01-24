@@ -873,6 +873,13 @@ class CfgVehicles {
         isDisposable = 0;
         class Attributes: AttributesBase {
             class Units: Units {};
+            class RequiredItems: Edit {
+                property = "SupportFramework_FixedWing_RequiredItems";
+                displayName = "Required item to call in support(s)";
+                tooltip = "Comma-separated list of item classes required for redeploy. Only one of the items is required to be in the inventory. If empty, the universal terminal, and the module specific terminal (located in the ace Tools section) along with the hgun_esd_01_F (spectrum device) will be used.";
+                typeName = "STRING"; 
+                defaultValue = """hgun_esd_01_F, YOSHI_UniversalTerminal, YOSHI_FixedWingTerminal"""; 
+            };
             class ModuleDescription: ModuleDescription{}; // Module description should be shown last
         };
         class ModuleDescription: ModuleDescription {

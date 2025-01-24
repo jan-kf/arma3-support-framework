@@ -171,6 +171,14 @@ YOSHI_SET_VEHICLE_PYLONS = {
     } forEach _pylonData;
 };
 
+YOSHI_REARM_ALL_PYLONS = {
+    params ["_vehicle"];
+    private _allPylonInfo = getAllPylonsInfo _vehicle;
+    {
+        _vehicle setAmmoOnPylon [_x select 0, 1000];
+    } forEach _allPylonInfo;
+};
+
 YOSHI_GET_DAMAGE_INFO = {
     params ["_vehicle"];
     private _damageInfo = getAllHitPointsDamage _vehicle;
@@ -181,14 +189,22 @@ YOSHI_GET_DAMAGE_INFO = {
     {
         _damageData pushBack [_damageLocations select _forEachIndex, _x];
     } forEach _damageValues; 
-    _damageData
+    [damage _vehicle, _damageData]
 };
 
 YOSHI_SET_DAMAGE_INFO = {
-    params ["_vehicle", "_damageData"];
+    params ["_vehicle", "_fullDamageData"];
+    private _specificDamageData = _fullDamageData select 1;
+    private _basicDamage = _fullDamageData select 0;
+    _vehicle setDamage [_basicDamage, false];
     {
         _vehicle setHitPointDamage [_x select 0, _x select 1, false];
-    } forEach _damageData;
+    } forEach _specificDamageData;
+};
+
+YOSHI_FULL_REPAIR_VEHICLE = {
+    params ["_vehicle"];
+    _vehicle setDamage 0;
 };
 
 // Function to copy a vehicle
@@ -217,7 +233,8 @@ YOSHI_PASTE_VEHICLE = {
     private _textures = _data select 1;
     private _fuel = _data select 2;
     private _ammo = _data select 3;
-    private _damage = _data select 4;
+    private _fullDamageData = _data select 4;
+    
 
     if (_altitude > 0) then {
         _pos set [2, _altitude];
@@ -229,7 +246,7 @@ YOSHI_PASTE_VEHICLE = {
     _newVehicle setVelocity (_velocity vectorMultiply (cos _dir));
     _newVehicle setFuel _fuel;
     [_newVehicle, _ammo] call YOSHI_SET_VEHICLE_PYLONS;
-    [_newVehicle, _damage] call YOSHI_SET_DAMAGE_INFO;
+    [_newVehicle, _fullDamageData] call YOSHI_SET_DAMAGE_INFO;
 
     {
         _newVehicle setObjectTextureGlobal [_forEachIndex, _x];
@@ -245,6 +262,9 @@ YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
 	["#flags", ["sealed"]],
 	["#create", {
 		params ["_hashMap"];
+
+        // RequiredItems
+		[_self, _hashMap, "RequiredItems", YOSHI_DefaultRequiredItems_Reinsert] call YOSHI_initList;
 
 		_self set ["syncedObjects", synchronizedObjects _hashMap];
 
@@ -271,6 +291,7 @@ YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
 	["#clone", {  }],
 	["#delete", {  }],
 	["#str", { "YOSHI_FW_BASE_CONFIG_OBJECT" }],
+    ["RequiredItems", { _self get "RequiredItems" }],
 	["SavedUnits", { _self get "SavedUnits" }],
     ["DeployedUnits", { _self get "DeployedUnits" }],
 	["MapArriveNode", { _self get ["MapArriveNode", [0,0,0]] }],

@@ -1,3 +1,5 @@
+params ["_forArtillery"];
+
 private _targetActions = [];
 // Process laser targets from players
 
@@ -13,7 +15,7 @@ _playersAndVehicles append vehicles;
         
         private _laserTargetOwner = if (_playerOrVehicle isKindOf "Man") then {name _playerOrVehicle} else {groupID group _playerOrVehicle};
         private _laserTargetName = format ["%1's Laser", _laserTargetOwner];
-        _targetActions append ([_normalizedLaserTargetPos, _laserTargetName, _laserTarget] call YOSHI_fnc_createTargetActions);
+        _targetActions append ([_normalizedLaserTargetPos, _laserTargetName, _laserTarget, _forArtillery] call YOSHI_fnc_createTargetActions);
     };
 } forEach _playersAndVehicles;
 

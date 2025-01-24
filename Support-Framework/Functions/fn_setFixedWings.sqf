@@ -76,7 +76,7 @@ YOSHI_HAS_LEFT_MAP = {
     };
 };
 
-YOSHI_FIXED_WING_ACTIONS = {
+YOSHI_FIXED_WING_DEPLOYMENTS = {
 	
 	params ["_target", "_caller", "_params"];
 
@@ -143,4 +143,13 @@ YOSHI_FIXED_WING_ACTIONS = {
 	} forEach _deployedWings;
 	
 	_fixedWingActions
+};
+
+YOSHI_FIXED_WING_ACTIONS = {
+	
+	params ["_target", "_caller", "_params"];
+	
+    private _targetActions = ([false] call YOSHI_fnc_createTargetsFromLasers);
+
+    _targetActions
 };
