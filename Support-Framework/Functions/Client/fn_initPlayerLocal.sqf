@@ -704,8 +704,32 @@ private _logiActions = [
 		[_target, _caller, _params] call YOSHI_fnc_getSuppliesActions;
 	}
 ] call ace_interact_menu_fnc_createAction;
+private _virtualInventoryActions = [
+	"zenInventoryActions", "Open Virtual Inventory", "\a3\ui_f\data\igui\cfg\simpletasks\types\rearm_ca.paa",
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Statement code
+		[_target] call zen_inventory_fnc_configure;
+	}, 
+	{
+		params ["_target", "_caller", "_actionId", "_arguments"];
+		// Conditional Code
+		_isNearFabricator = false;
+		private _fabricatorConfigured = !(isNil "YOSHI_FABRICATOR");
+		if (_fabricatorConfigured) then {
+			private _syncedFabricatorObjects = synchronizedObjects YOSHI_FABRICATOR;
+			{
+				if (_target distance _x < 20) exitWith {
+					_isNearFabricator = true;
+				};
+			} forEach _syncedFabricatorObjects;
+		};
+		_isNearFabricator
+	}
+] call ace_interact_menu_fnc_createAction;
 
 ["ReammoBox_F", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
+["ReammoBox_F", 0, ["ACE_MainActions"], _virtualInventoryActions, true] call ace_interact_menu_fnc_addActionToClass;
 ["LandVehicle", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
 ["UAV_01_base_F", 0, ["ACE_MainActions"], _logiActions, true] call ace_interact_menu_fnc_addActionToClass;
 

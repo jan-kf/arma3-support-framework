@@ -626,7 +626,14 @@ class CfgVehicles {
         isTriggerActivated = 0;
         isDisposable = 0;
         class Attributes: AttributesBase {
-            class Units: Units {};            
+            class Units: Units {};
+            class EnableLocalArsenal: Checkbox {
+                property = "SupportFramework_Fabricator_Module_EnableLocalArsenal";
+                displayName = "Enable local virtual inventory";
+                tooltip = "Enabling this will add an action to containers near the fabricator, that will access a virtual inventory -- allowing for easy supply creation without needing to open/close an arsenal (Uses ZEN Inventory)";
+                typeName = "BOOLEAN";
+                defaultValue = "true"; 
+            };
             class ModuleDescription: ModuleDescription{}; // Module description should be shown last
         };
         class ModuleDescription: ModuleDescription {
