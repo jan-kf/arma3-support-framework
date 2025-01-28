@@ -31,23 +31,46 @@ YOSHI_activateInstantKill = {
 				_pos = (getPosASL _adminThread); 
 				_gunPos = _pos vectorAdd [0,0,2]; 
 
-				_isInVic = (vehicle _x != _x);
-
-				_projectile = "B_127x99_SLAP_Tracer_Green";
-				if (_isInVic) then {
-					_projectile = "B_40mm_APFSDS_Tracer_Yellow";
-				};
-
-				_ex = createVehicle [_projectile, [0,0,0], [], 0, "CAN_COLLIDE"];
-				_ex setPosASL _gunPos; 
-
 				_enPos = eyePos _x;
 				_modifier = [0,0,0];
-			
+				_hits = lineIntersectsSurfaces [_gunPos, _enPos, objNull, objNull, true, 3, "FIRE", "GEOM"];
+				if ((count _hits) > 0) then {
+					 
+					private _hitCalculations = 0;
+					{
+						_hitObj = (_x select 2);
+						// Check CfgVehicles properties
+						private _armor = getNumber (configFile >> "CfgVehicles" >> typeOf _hitObj >> "armor");
+
+						_hitCalculations = _hitCalculations + _armor;
+					} forEach _hits;
+					hint str(_hitCalculations);
+					
+					if (_hitCalculations < 2000) then {
+						_isInVic = (vehicle _x != _x);
+
+						_projectile = "B_127x108_APDS";
+						if (_isInVic) then {
+							_projectile = "B_40mm_APFSDS";
+						};
+
+						// if ((vehicle _x) isKindof "Air") then {
+						// 	_projectile = "Missile_AA_04_F";
+						// 	_ex = createVehicle [_projectile, _gunPos, [], 0, "NONE"];
+						// 	_ex setVectorDirAndUp [[0,0,1],[0,1,0]];
+						// 	_ex setMissileTarget (vehicle _x);
+
+						// };
+						_ex = createVehicle [_projectile, [0,0,0], [], 0, "CAN_COLLIDE"];
+						_ex setPosASL _gunPos; 
+
+						_direction = _gunPos vectorFromTo (_enPos vectorAdd _modifier);  
+						_velocity = _direction vectorMultiply 2000; 
+						_ex setVelocity _velocity;
+						
+					};  
+				};
 				
-				_direction = _gunPos vectorFromTo (_enPos vectorAdd _modifier);  
-				_velocity = _direction vectorMultiply 2000; 
-				_ex setVelocity _velocity; 
 				sleep 0.1;
 			
 			} forEach _hostiles;

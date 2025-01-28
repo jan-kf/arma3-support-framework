@@ -153,6 +153,34 @@ addMissionEventHandler ["EntityDeleted", {
     };
 }];
 
+YOSHI_beamA2B = {
+	params ["_posA", "_posB"];
+    
+	drawLine3D [_posA, _posB, [1, 0, 0, 1], 20];
+};
+
+YOSHI_beamVic2Pos = {
+	params ["_vic", "_pos"];
+
+	_count = 5;
+
+	// prevent drawing more than once per instance of APS trigger
+	_shouldDraw = player getVariable ["YOSHI_DRAW_DEBOUNCE", true];
+
+	if (_shouldDraw) then {
+		player setVariable ["YOSHI_DRAW_DEBOUNCE", false];
+
+		while {(alive _vic) && (_count > 0)} do {
+			_topOfVic = ASLToATL ([_vic] call YOSHI_getPosTop); 
+			[_topOfVic, _pos] call YOSHI_beamA2B;
+			sleep 0.05;
+			_count = _count - 1;
+		};
+
+		player setVariable ["YOSHI_DRAW_DEBOUNCE", true];
+	};
+};
+
 YOSHI_GET_PYLON_INFO = {
     params ["_vehicle"];
     private _allPylonInfo = getAllPylonsInfo _vehicle;
