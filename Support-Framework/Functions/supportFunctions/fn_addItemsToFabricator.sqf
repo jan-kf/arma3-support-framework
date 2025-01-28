@@ -25,46 +25,7 @@ params ["_fabricator", "_itemsToAdd"];
 		"\a3\ui_f\data\igui\cfg\simpletasks\types\Download_ca.paa",
 		{  // Code executed when the action is used
 			params ["_target", "_caller", "_params"];
-			private _fabricator = _params select 0;
-			private _itemToAdd = _params select 1;
-			private _originalPos = getPosATL _fabricator; 
-			private _newObject = createVehicle [typeOf _itemToAdd, _originalPos, [], 0, "NONE"]; 
-			
-			clearWeaponCargoGlobal _newObject; 
-			clearMagazineCargoGlobal _newObject; 
-			clearItemCargoGlobal _newObject; 
-			clearBackpackCargoGlobal _newObject; 
-			
-			
-			private _weapons = getWeaponCargo _itemToAdd;
-			{
-				private _weaponType = (_weapons select 0) select _forEachIndex;
-				private _weaponCount = (_weapons select 1) select _forEachIndex;
-				_newObject addWeaponCargoGlobal [_weaponType, _weaponCount];
-			} forEach (_weapons select 0);
-
-
-			private _magazines = getMagazineCargo _itemToAdd;
-			{
-				private _magazineType = (_magazines select 0) select _forEachIndex;
-				private _magazineCount = (_magazines select 1) select _forEachIndex;
-				_newObject addMagazineCargoGlobal [_magazineType, _magazineCount];
-			} forEach (_magazines select 0);
-
-
-			private _items = getItemCargo _itemToAdd;
-			{
-				private _itemType = (_items select 0) select _forEachIndex;
-				private _itemCount = (_items select 1) select _forEachIndex;
-				_newObject addItemCargoGlobal [_itemType, _itemCount];
-			} forEach (_items select 0);
-
-			private _backpacks = getBackpackCargo _itemToAdd;
-			{
-				private _backpackType = (_backpacks select 0) select _forEachIndex;
-				private _backpackCount = (_backpacks select 1) select _forEachIndex;
-				_newObject addBackpackCargoGlobal [_backpackType, _backpackCount];
-			} forEach (_backpacks select 0);
+			[_target, _caller, _params] call YOSHI_SPAWN_SAVED_ITEM_ACTION;
 		},
 		{ // Condition for the action to be available
 			params ["_vic", "_caller", "_params"];
