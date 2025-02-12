@@ -165,6 +165,7 @@ private _targetAction = [
 									private _ordinance = _args select 1;
 
 									_vehicle fireAtTarget [_targetObject, _ordinance];
+									hint "Package away";
 									// BOOM
 
 								}, 

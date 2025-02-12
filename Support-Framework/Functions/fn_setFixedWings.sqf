@@ -49,6 +49,7 @@ YOSHI_FIXED_WING_DEPLOYMENTS = {
 				
 				_unit = [YOSHI_FW_CONFIG_OBJECT, _vehicleClass, _caller] call (YOSHI_FW_CONFIG_OBJECT get "DeployUnit");
 				[_unit, getPosASL _caller, "LOITER"] call YOSHI_fnc_setWaypoint;
+                hint "Deploying Asset"; 
 
 			}, 
 			{
@@ -73,6 +74,7 @@ YOSHI_FIXED_WING_DEPLOYMENTS = {
 				//statement
 				
 				_unit call YOSHI_SEND_FW_AWAY;
+                hint "Sending Asset Away";
 
 			}, 
 			{

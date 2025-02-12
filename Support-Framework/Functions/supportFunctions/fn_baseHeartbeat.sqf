@@ -136,6 +136,15 @@ while {true} do {
 					[_group, _currentWaypointIndex] setWaypointPosition [(getPosASL _caller), 0];
 				};
 			};
+
+			private _remaining_fuel_time = _x getVariable ["YOSHI_FUEL_TIME_REMAINING", 999];
+
+			if (_remaining_fuel_time < 300) then {
+				// 5 minutes of fuel remaining
+				_x call YOSHI_SEND_FW_AWAY;
+
+			};
+
 			if (_x checkAIFeature "AUTOTARGET") then { _x disableAI "AUTOTARGET"; };
 			if (_x checkAIFeature "AUTOCOMBAT") then { _x disableAI "AUTOCOMBAT"; };
 			if (_x checkAIFeature "TARGET") then { _x disableAI "TARGET"; };

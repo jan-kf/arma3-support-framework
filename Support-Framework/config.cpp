@@ -55,6 +55,7 @@ class CfgFunctions {
             class initMapTools { preInit = 1; };
             class initRecon { preInit = 1; };
             class initEasterEgg { preInit = 1; };
+            class initVehicleFunctions { preInit = 1; };
         };
         class Modules {
             file = "\Support-Framework\Functions";
