@@ -12,7 +12,7 @@ YOSHI_SET_VEHICLE_PYLONS = {
     params ["_vehicle", "_pylonData"];
     {
         _vehicle setPylonLoadout  [_x select 0, _x select 1, true, _x select 2];
-        _vehicle setAmmoOnPylon [_x select 0, _x select 3];
+        // _vehicle setAmmoOnPylon [_x select 0, _x select 3]; // skip so that they're fully rearmed after deploying
     } forEach _pylonData;
 };
 
@@ -88,7 +88,7 @@ YOSHI_PASTE_VEHICLE = {
     private _velocity = velocity _newVehicle; 
     _newVehicle setDir _dir;
     _newVehicle setVelocity (_velocity vectorMultiply (cos _dir));
-    _newVehicle setFuel _fuel;
+    // _newVehicle setFuel _fuel; // skipping for the moment since we want them to be refueled
     [_newVehicle, _ammo] call YOSHI_SET_VEHICLE_PYLONS;
     [_newVehicle, _fullDamageData] call YOSHI_SET_DAMAGE_INFO;
 
