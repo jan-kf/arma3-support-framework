@@ -148,38 +148,74 @@ YOSHI_GET_FW_ROLE = {
     if (unitIsUAV  _vehicle) then {
         _role = _role + 2; // Recon
     };
-    if (vehicleCargoEnabled _vehicle) then {
+    if (isClass (configFile >> "CfgVehicles" >> typeOf _vehicle >> "vehicleTransport")) then {
         _role = _role + 4; // Logistics
     };
     _role
 };
 
 YOSHI_CALCULATE_FUEL_CONSUMPTION = {
+    // local function
+
 	params ["_vehicle"];
+    private _fuelHistory = _vehicle getVariable ["YOSHI_FUEL_HISTORY", []];
+    private _currentFuel = fuel _vehicle;
+    _fuelHistory pushBack _currentFuel;
+    _vehicle setVariable ["YOSHI_FUEL_HISTORY", _fuelHistory];
+    private _historyLength = count _fuelHistory;
+    if (_historyLength > 10) then {
+        _fuelHistory deleteAt 0;
+    };
+    private _firstValue = _fuelHistory select 0;
+    private _fuelConsumptionRate = (_firstValue - _currentFuel) / (_historyLength * 5);
+    
+    if (_fuelConsumptionRate == 0) exitWith {-1};
+
+    private _estimatedTimeToEmpty = _currentFuel / _fuelConsumptionRate;
+    _estimatedTimeToEmpty
+
 };
 
-YOSHI_CREATE_FUEL_CONSUMPTION_THREAD = {
+YOSHI_ADJUST_LOITER_POINT = {
+    params ["_vehicle"];
+    private _group = group _vehicle;
+
+    _group setBehaviourStrong "CARELESS";
+    _group setCombatMode "GREEN";
+
+    if ((waypointType [_group, currentWaypoint _group]) isEqualTo "LOITER") then {
+        [_group, currentWaypoint _group] setWaypointLoiterRadius 2000;
+    };
+
+    private _caller = _vehicle getVariable ["YOSHI_FW_CALLER", objNull];
+    if (!isNull _caller) then {
+        
+        if ((getWPPos [_group, 0]) distance2D (getPosASL _caller) > 100) then {
+            _currentWaypointIndex = currentWaypoint _group;
+            [_group, _currentWaypointIndex] setWaypointPosition [(getPosASL _caller), 0];
+        };
+    };
+};
+
+YOSHI_CREATE_FW_THREAD = {
 	params ["_vehicle"];
-    _vehicle setVariable ["YOSHI_FUEL_HISTORY", [fuel _vehicle], true];
 	private _thread = [_vehicle] spawn {
 		params ["_vehicle"];
-		private _fuelHistory = _vehicle getVariable ["YOSHI_FUEL_HISTORY", [fuel _vehicle]];
 		while {alive _vehicle} do {
 			sleep 5;
-		    private _currentFuel = fuel _vehicle;
-			_fuelHistory pushBack _currentFuel;
-			private _historyLength = count _fuelHistory;
-			if (_historyLength > 10) then {
-				_fuelHistory deleteAt 0;
+            _vehicle flyInHeightASL [2000, 2000, 2000];
+			_vehicle flyInHeight 2000;
+
+
+		    private _fuelTimeRemaining = _vehicle call YOSHI_CALCULATE_FUEL_CONSUMPTION;
+            if (_fuelTimeRemaining > -1  && _fuelTimeRemaining < 300) then {
+				// 5 minutes of fuel remaining
+				_vehicle call YOSHI_SEND_FW_AWAY;
 			};
-			private _firstValue = _fuelHistory select 0;
-			private _fuelConsumptionRate = (_firstValue - _currentFuel) / (_historyLength * 5);
-            if (_fuelConsumptionRate > 0) then {
-                private _estimatedTimeToEmpty = _currentFuel / _fuelConsumptionRate;
-                _vehicle setVariable ["YOSHI_FUEL_TIME_REMAINING", _estimatedTimeToEmpty, true];
-            };
+
+            _vehicle call YOSHI_ADJUST_LOITER_POINT;
+            
 		};
-		_vehicle setVariable ["YOSHI_FUEL_HISTORY", _fuelHistory, true];
 	};
-	_vehicle setVariable ["YOSHI_FUEL_CONSUMPTION_THREAD", _thread, true];
+	_vehicle setVariable ["YOSHI_FW_THREAD", _thread, true];
 };

@@ -42,7 +42,7 @@ YOSHI_FIXED_WING_DEPLOYMENTS = {
 		private _vehicleClass = _x select 0;
 		private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
 		private _storedWingAction = [
-			format["deploy-%1", _vehicleClass], format["Deploy %1", _vehicleDisplayName], "",
+			format["deploy-%1-%2", _vehicleClass, random 1000], format["Deploy %1", _vehicleDisplayName], "",
 			{
 				params ["_target", "_caller", "_vehicleClass"];
 				//statement
@@ -80,7 +80,7 @@ YOSHI_FIXED_WING_DEPLOYMENTS = {
 			{
 				params ["_target", "_caller", "_unit"];
 				// Condition code here
-				true
+				alive _unit
 			},
 			{ // 5: Insert children code <CODE> (Optional)
 			},

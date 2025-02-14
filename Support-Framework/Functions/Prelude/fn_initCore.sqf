@@ -131,6 +131,7 @@ addMissionEventHandler ["EntityCreated", {
 
     if (unitIsUAV _entity) then {
         _entity setFuelConsumptionCoef 0.1;
+        _entity setUnitTrait ["camouflageCoef", 0.3];
     };
 
     // if (_entity isKindOf "B_UGV_9RIFLES_F") then {
@@ -181,6 +182,34 @@ YOSHI_beamVic2Pos = {
 	};
 };
 
+YOSHI_findNearestBorderPos = {
+    params ["_pos"];
+
+    private _mapSize = worldSize;
+    private _buffer = 100;
+
+    private _x = _pos select 0;
+    private _y = _pos select 1;
+
+    private _distWest = _x;
+    private _distEast = _mapSize - _x;
+    private _distSouth = _y;
+    private _distNorth = _mapSize - _y;
+
+    private _minDist = selectMin [_distWest, _distEast, _distSouth, _distNorth];
+
+    private _borderX = _x;
+    private _borderY = _y;
+
+    if (_minDist == _distWest) then { _borderX = -_buffer; }; // Move 100m past West
+    if (_minDist == _distEast) then { _borderX = _mapSize + _buffer; }; // Move 100m past East
+    if (_minDist == _distSouth) then { _borderY = -_buffer; }; // Move 100m past South
+    if (_minDist == _distNorth) then { _borderY = _mapSize + _buffer; }; // Move 100m past North
+
+    [_borderX, _borderY, _pos select 2]
+};
+
+
 YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
 	["#flags", ["sealed"]],
 	["#create", {
@@ -195,10 +224,10 @@ YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
 		{
 			if (_x isKindOf "Module_F") then {
 				if (_x isKindOf "SupportFramework_Map_Infil_Module") then {
-					_self set ["MapArriveNode", getPosASL _x];
+					_self set ["MapArriveNode", [(getPosASL _x)] call YOSHI_findNearestBorderPos];
 				};
 				if (_x isKindOf "SupportFramework_Map_Exfil_Module") then {
-					_self set ["MapDepartNode", getPosASL _x];
+					_self set ["MapDepartNode", [(getPosASL _x)] call YOSHI_findNearestBorderPos];
 				};
 			} else {
 				_fw_units pushBack (_x call YOSHI_COPY_VEHICLE);
@@ -233,7 +262,7 @@ YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
                 if (!isNull _caller) then {
                     _newVehicle setVariable ["YOSHI_FW_CALLER", _caller];
                 };
-                _newVehicle call YOSHI_CREATE_FUEL_CONSUMPTION_THREAD;
+                _newVehicle call YOSHI_CREATE_FW_THREAD;
 				_newVehicle
 			};
 		} forEach _units;
@@ -245,7 +274,7 @@ YOSHI_FW_BASE_CONFIG_OBJECT = createHashMapObject [[
 		_units pushBack (_unit call YOSHI_COPY_VEHICLE);
 		_self set ["SavedUnits", _units];
         _self set ["DeployedUnits", (_self get "DeployedUnits") - [_unit]];
-        private _fuelThread = _unit getVariable ["YOSHI_FUEL_CONSUMPTION_THREAD", 0];
+        private _fuelThread = _unit getVariable ["YOSHI_FW_THREAD", 0];
         terminate _fuelThread;
 		deleteVehicleCrew _unit;
 		deleteVehicle _unit;

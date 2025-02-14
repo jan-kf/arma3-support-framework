@@ -14,7 +14,6 @@ private _safeIsNull = {
 };
 
 private _artyConfigured = [YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT] call YOSHI_isInitialized;
-private _fixedWingsConfigured = [YOSHI_FW_CONFIG_OBJECT] call YOSHI_isInitialized;
 
 
 // gameloop -- consider making separate functions and "spawn" -ing them in separate threads
@@ -116,41 +115,7 @@ while {true} do {
 			};
 
 		} forEach (vehicles select {(side _x) isEqualTo (YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT get "BaseSide")});
-	};
-
-	if (_fixedWingsConfigured) then {
-		{
-			_x flyInHeightASL [2000, 2000, 2000];
-			_x flyInHeight 2000;
-			private _group = group _x;
-
-			if ((waypointType [_group, currentWaypoint _group]) isEqualTo "LOITER") then {
-				[_group, currentWaypoint _group] setWaypointLoiterRadius 2000;
-			};
-
-			private _caller = _x getVariable ["YOSHI_FW_CALLER", objNull];
-			if (!isNull _caller) then {
-				
-				if ((getWPPos [_group, 0]) distance2D (getPosASL _caller) > 100) then {
-					_currentWaypointIndex = currentWaypoint _group;
-					[_group, _currentWaypointIndex] setWaypointPosition [(getPosASL _caller), 0];
-				};
-			};
-
-			private _remaining_fuel_time = _x getVariable ["YOSHI_FUEL_TIME_REMAINING", 999];
-
-			if (_remaining_fuel_time < 300) then {
-				// 5 minutes of fuel remaining
-				_x call YOSHI_SEND_FW_AWAY;
-
-			};
-
-			if (_x checkAIFeature "AUTOTARGET") then { _x disableAI "AUTOTARGET"; };
-			if (_x checkAIFeature "AUTOCOMBAT") then { _x disableAI "AUTOCOMBAT"; };
-			if (_x checkAIFeature "TARGET") then { _x disableAI "TARGET"; };
-		} forEach (YOSHI_FW_CONFIG_OBJECT get "DeployedUnits");
-	};
-	
+	};	
 	
 	_keysToRemove = [];
 	{

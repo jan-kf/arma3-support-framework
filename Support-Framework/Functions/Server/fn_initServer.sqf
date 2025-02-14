@@ -42,6 +42,7 @@ publicVariable "YOSHI_HELIPAD_INDEX";
 
 {
     _x setFuelConsumptionCoef 0.1;
+    _x setUnitTrait ["camouflageCoef", 0.3];
 } forEach allMissionObjects "UAV_01_base_F";
 
 
