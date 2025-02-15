@@ -44,7 +44,6 @@ YOSHI_activateInstantKill = {
 
 						_hitCalculations = _hitCalculations + _armor;
 					} forEach _hits;
-					hint str(_hitCalculations);
 					
 					if (_hitCalculations < 2000) then {
 						_isInVic = (vehicle _x != _x);

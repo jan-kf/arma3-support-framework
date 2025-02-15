@@ -59,7 +59,7 @@ while {(alive _uav) && (_elapsedTime < (_timeLimit + (_markerUpdateInterval * 2)
 	_elapsedTime = serverTime - _start;
 };
 
-private _lz = getPosATL _caller;
+private _lz = getPosASL _caller;
 
 for "_i" from (count waypoints _grp - 1) to 0 step -1 do
 {
@@ -80,7 +80,7 @@ while {(_uav distance2D _caller > 50) || !(unitReady _uav)} do {
 
 [_uav, false] remoteExec ["setCaptive"];
 
-createVehicle ["Land_HelipadEmpty_F", getPosATL _caller, [], 0];
+createVehicle ["Land_HelipadEmpty_F", getPosASL _caller, [], 0];
 
 sleep 3;
 

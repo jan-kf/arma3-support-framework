@@ -9,7 +9,7 @@ _playersAndVehicles append vehicles;
 {
     private _playerOrVehicle = _x;
     private _laserTarget = laserTarget _playerOrVehicle;
-    private _laserTargetPos = getPosATL _laserTarget;
+    private _laserTargetPos = getPosASL _laserTarget;
     private _normalizedLaserTargetPos = [round (_laserTargetPos select 0), round (_laserTargetPos select 1), round (_laserTargetPos select 2)];
     if (isLaserOn _playerOrVehicle && (str(_normalizedLaserTargetPos) != str([0,0,0]))) then {
         

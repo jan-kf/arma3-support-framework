@@ -58,3 +58,4 @@ YOSHI_HOME_BASE_CONFIG_OBJECT = createHashMapObject [[
 	["BaseDepartNode", { _self get "BaseDepartNode" }],
 	["isInitialized", { true }]
 ], _logic];
+publicVariable "YOSHI_HOME_BASE_CONFIG_OBJECT";

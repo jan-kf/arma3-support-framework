@@ -39,3 +39,4 @@ YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT = createHashMapObject [[
 	["BaseSide", { _self get "BaseSide" }],
 	["isInitialized", { true }]
 ], _logic];
+publicVariable "YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT";

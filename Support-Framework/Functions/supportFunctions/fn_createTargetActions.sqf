@@ -99,7 +99,7 @@ private _targetAction = [
 																[_vehicle, _response] call YOSHI_fnc_sendSideText;
 																[_vehicle, "YOSHI_ArtilleryAck"] call YOSHI_fnc_playSideRadio;
 
-																waitUntil {sleep 1; unitReady _vehicle};
+																waitUntil {sleep 5; unitReady _vehicle};
 
 																[_vehicle, "Rounds complete, Out."] call YOSHI_fnc_sendSideText;
 																[_vehicle, "ArtilleryRoundsComplete"] call YOSHI_fnc_playSideRadio;

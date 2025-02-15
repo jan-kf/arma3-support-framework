@@ -189,7 +189,6 @@ YOSHI_ADJUST_LOITER_POINT = {
 
     private _caller = _vehicle getVariable ["YOSHI_FW_CALLER", objNull];
     if (!isNull _caller) then {
-        
         if ((getWPPos [_group, 0]) distance2D (getPosASL _caller) > 100) then {
             _currentWaypointIndex = currentWaypoint _group;
             [_group, _currentWaypointIndex] setWaypointPosition [(getPosASL _caller), 0];

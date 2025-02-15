@@ -23,8 +23,8 @@ if (isNil "_location") exitWith {
 	_vic setVariable ["currentTask", "marooned", true];
 };
 _vic setVariable ["destination", _location, true];
-_destinationPos = getPosATL _location; 
-_currentPos = getPosATL _vic;
+_destinationPos = getPosASL _location; 
+_currentPos = getPosASL _vic;
 
 // logic to check if Vic is already at location
 if ((_vic distance2D _destinationPos < 100) && ([_vic] call YOSHI_fnc_hasLanded)) exitWith {

@@ -28,3 +28,4 @@ YOSHI_EXTRA_BASE_CONFIG_OBJECT = createHashMapObject [[
 	["#str", { "YOSHI_EXTRA_BASE_CONFIG_OBJECT" }],
 	["isInitialized", { true }]
 ], _logic];
+publicVariable "YOSHI_EXTRA_BASE_CONFIG_OBJECT";

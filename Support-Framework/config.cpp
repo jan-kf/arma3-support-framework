@@ -44,7 +44,7 @@ class CfgFunctions {
         };
         class Actions {
             file = "\Support-Framework\Functions\Actions";
-            class fixedWingActions;
+            class fixedWingActions { postInit = 1; };
         };
         class Prelude {
             file = "\Support-Framework\Functions\Prelude";
@@ -693,7 +693,7 @@ class CfgVehicles {
         function = "YOSHI_fnc_setAPS";
         functionPriority = 1; // Execution priority, lower numbers are executed first
         scope = 2; // Editor visibility. 2 is for normal use.
-        isGlobal = 2; // Effect is local (0 for local only, 1 for global, 2 for persistent)
+        isGlobal = 1; // Effect is local (0 for local only, 1 for global, 2 for persistent)
         isTriggerActivated = 0;
         isDisposable = 0;
         class Attributes: AttributesBase {

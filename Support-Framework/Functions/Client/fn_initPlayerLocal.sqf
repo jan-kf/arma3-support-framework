@@ -775,7 +775,7 @@ private _reconScan = [
 	},  
 	{ 
 		params ["_target", "_caller", "_args"];
-		private _ReconConfigured = !(isNil "");
+		private _ReconConfigured = [YOSHI_SUPPORT_RECON_CONFIG_OBJECT] call YOSHI_isInitialized;
 
 		_ReconConfigured
 	} 

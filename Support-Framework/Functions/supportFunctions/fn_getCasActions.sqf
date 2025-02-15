@@ -28,7 +28,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 				private _task = _vic getVariable ["currentTask", "waiting"];
 				if (_task == "waiting") then {
 
-					hint format["%1 is awaiting orders, searching for markers prefixed with %2...", groupId group _vic, (YOSHI_HOME_BASE_CONFIG_OBJECT get "CasPrefixes")];
+					hint format["%1 is awaiting orders, searching for markers prefixed with %2...", groupId group _vic, (YOSHI_SUPPORT_CAS_CONFIG_OBJECT get "CasPrefixes")];
 
 				} else {
 					// Display the vic's current task
@@ -151,7 +151,7 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 							] call ace_interact_menu_fnc_createAction;
 							_actions pushBack [_vicRequestToLZAction, [], _target];
 						};
-					} forEach (YOSHI_HOME_BASE_CONFIG_OBJECT get "CasPrefixes");
+					} forEach (YOSHI_SUPPORT_CAS_CONFIG_OBJECT get "CasPrefixes");
 
 				} forEach allMapMarkers;
 

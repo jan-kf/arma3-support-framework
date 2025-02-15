@@ -37,3 +37,4 @@ YOSHI_SUPPORT_RECON_CONFIG_OBJECT = createHashMapObject [[
 	["syncedObjects", { _self get "syncedObjects" }],
 	["isInitialized", { true }]
 ], _logic];
+publicVariable "YOSHI_SUPPORT_RECON_CONFIG_OBJECT";

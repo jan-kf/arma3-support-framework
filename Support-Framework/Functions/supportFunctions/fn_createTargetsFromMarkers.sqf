@@ -7,7 +7,7 @@ private _targetActions = [];
     { 
         private _prefix = toLower _x;
         if (toLower _markerName find _prefix == 0) then {
-            _targetActions append ([_markerPos, _markerName] call YOSHI_fnc_createTargetActions);
+            _targetActions append ([_markerPos, _markerName, objNull, true] call YOSHI_fnc_createTargetActions);
         };
     } forEach (YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT get "ArtilleryPrefixes");
 } forEach allMapMarkers;

@@ -91,7 +91,7 @@ YOSHI_numToTextArray = {
 YOSHI_predictFallTime = {
 	params["_projectile"];
 
-	private _position = getPosATL _projectile;
+	private _position = getPosASL _projectile;
 	private _velocity = velocity _projectile;
 	private _gravity = [0,0,-9.81];
 	private _time = 0;
@@ -109,7 +109,7 @@ YOSHI_predictFallTime = {
 YOSHI_predictFallPos = {
 	params["_projectile"];
 	
-	private _position = getPosATL _projectile;
+	private _position = getPosASL _projectile;
 	private _velocity = velocity _projectile;
 	private _gravity = [0,0,-9.81];
 	private _time = 0;
