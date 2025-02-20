@@ -196,6 +196,7 @@ YOSHI_ADJUST_LOITER_POINT = {
     };
 };
 
+
 YOSHI_CREATE_FW_THREAD = {
 	params ["_vehicle"];
 	private _thread = [_vehicle] spawn {
@@ -207,9 +208,35 @@ YOSHI_CREATE_FW_THREAD = {
 
 
 		    private _fuelTimeRemaining = _vehicle call YOSHI_CALCULATE_FUEL_CONSUMPTION;
+            if (_fuelTimeRemaining > -1  && _fuelTimeRemaining < 420) then {
+				// 5 minutes of fuel remaining
+				_vehicle call YOSHI_SEND_FW_AWAY;
+                if (!(_vehicle getVariable ["YOSHI_REPORTED_LOW_FUEL", false])) then {
+                    _vehicle setVariable ["YOSHI_REPORTED_LOW_FUEL", true, true];
+                    if (!(unitIsUAV _vehicle)) then {
+                        if ((_vehicle call YOSHI_GET_FW_ROLE) >= 4) then {
+                            [_vehicle, selectRandom ["YOSHI_AlbatrossLowFuel1", "YOSHI_AlbatrossLowFuel2", "YOSHI_AlbatrossLowFuel3"]] call YOSHI_fnc_playSideRadio;
+                        } else {
+                            //[_vehicle, selectRandom ["YOSHI_ValkyrieLowFuel1", "YOSHI_ValkyrieLowFuel2", "YOSHI_ValkyrieLowFuel3"]] call YOSHI_fnc_playSideRadio;
+                        };
+                    };
+                    
+                };
+			};
             if (_fuelTimeRemaining > -1  && _fuelTimeRemaining < 300) then {
 				// 5 minutes of fuel remaining
 				_vehicle call YOSHI_SEND_FW_AWAY;
+                if (!(_vehicle getVariable ["YOSHI_REPORTED_BINGO_FUEL", false])) then {
+                    _vehicle setVariable ["YOSHI_REPORTED_BINGO_FUEL", true, true];
+                    if (!(unitIsUAV _vehicle)) then {
+                        if ((_vehicle call YOSHI_GET_FW_ROLE) >= 4) then {
+                            [_vehicle, selectRandom ["YOSHI_AlbatrossNoFuel1", "YOSHI_AlbatrossNoFuel2", "YOSHI_AlbatrossNoFuel3"]] call YOSHI_fnc_playSideRadio;
+                        } else {
+                            //[_vehicle, selectRandom ["YOSHI_ValkyrieNoFuel1", "YOSHI_ValkyrieNoFuel2", "YOSHI_ValkyrieNoFuel3"]] call YOSHI_fnc_playSideRadio;
+                        };
+                    };
+                    
+                };
 			};
 
             _vehicle call YOSHI_ADJUST_LOITER_POINT;

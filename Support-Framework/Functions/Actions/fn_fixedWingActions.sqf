@@ -41,12 +41,8 @@ YOSHI_FIXED_WING_DEPLOYMENTS = {
 				params ["_target", "_caller", "_vehicleClass"];
 				//statement
 				
-				_unit = [YOSHI_FW_CONFIG_OBJECT, _vehicleClass, _caller] call (YOSHI_FW_CONFIG_OBJECT get "DeployUnit");
-                [_unit, _caller] spawn {
-                    params ["_unit", "_caller"];
-                    sleep 5;
-				    [_unit, getPosASL _caller, "LOITER"] call YOSHI_fnc_setWaypoint;
-                };
+				[YOSHI_FW_CONFIG_OBJECT, _vehicleClass, _caller] call (YOSHI_FW_CONFIG_OBJECT get "DeployUnit");
+                
                 hint "Deploying Asset"; 
 
 			}, 
@@ -72,6 +68,13 @@ YOSHI_FIXED_WING_DEPLOYMENTS = {
 				//statement
 				
 				_unit call YOSHI_SEND_FW_AWAY;
+                if (!(unitIsUAV _unit)) then {
+                    if ((_unit call YOSHI_GET_FW_ROLE) >= 4) then {
+                        [_unit, selectRandom ["YOSHI_AlbatrossLeave1", "YOSHI_AlbatrossLeave2", "YOSHI_AlbatrossLeave3"]] call YOSHI_fnc_playSideRadio;
+                    } else {
+                        //[_unit, selectRandom ["YOSHI_ValkyrieLeave1", "YOSHI_ValkyrieLeave2", "YOSHI_ValkyrieLeave3"]] call YOSHI_fnc_playSideRadio;
+                    };
+                };
                 hint "Sending Asset Away";
 
 			}, 

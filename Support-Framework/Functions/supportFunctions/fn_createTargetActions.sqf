@@ -101,8 +101,7 @@ private _targetAction = [
 
 																waitUntil {sleep 5; unitReady _vehicle};
 
-																[_vehicle, "Rounds complete, Out."] call YOSHI_fnc_sendSideText;
-																[_vehicle, "ArtilleryRoundsComplete"] call YOSHI_fnc_playSideRadio;
+																[_vehicle, "YOSHI_ArtilleryRoundsComplete"] call YOSHI_fnc_playSideRadio;
 																
 															};
 														};

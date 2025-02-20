@@ -995,8 +995,8 @@ class CfgRadio
     class YOSHI_ArtilleryRoundsComplete
 	{
 		name	= "ArtilleryRoundsComplete";
-		sound[]	= { "\Support-Framework\Sounds\support\artillery_rounds_complete.ogg.ogg", 1, 1 };
-		title	= "";
+		sound[]	= { "\Support-Framework\Sounds\support\artillery_rounds_complete.ogg", 1, 1 };
+		title	= "Rounds complete, Out.";
 	};
     class YOSHI_CASRequest
 	{
@@ -1015,6 +1015,90 @@ class CfgRadio
 		name	= "CASDone";
 		sound[]	= { "\Support-Framework\Sounds\support\cas_heli_accomplished.ogg", 1, 1 };
 		title	= "";
+	};
+    class YOSHI_ValkyrieIntro1
+	{
+		name	= "ValkyrieIntro1";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_intro_airborneinbound.ogg", 1, 1 };
+		title	= "Valkyrie is airborne and inbound. Out.";
+	};
+    class YOSHI_ValkyrieIntro2
+	{
+		name	= "ValkyrieIntro2";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_intro_omao.ogg", 1, 1 };
+		title	= "Acknowledged, Valkyrie is Oscar Mike to the AO. Out.";
+	};
+    class YOSHI_ValkyrieIntro3
+	{
+		name	= "ValkyrieIntro3";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_intro_wheelsup.ogg", 1, 1 };
+		title	= "This is Valkyrie, wheels are up. Out.";
+	};
+    class YOSHI_AlbatrossIntro4
+	{
+		name	= "AlbatrossIntro4";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_intro_etasoon.ogg", 1, 1 };
+		title	= "Affirmative, Albatross has taken off. ETA soon. Out.";
+	};
+    class YOSHI_AlbatrossIntro5
+	{
+		name	= "AlbatrossIntro5";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_intro_roger.ogg", 1, 1 };
+		title	= "Roger, Albatross is en route to the AO. Out.";
+	};
+    class YOSHI_AlbatrossIntro6
+	{
+		name	= "AlbatrossIntro6";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_intro_understood.ogg", 1, 1 };
+		title	= "Understood, Albatross is airborne, en route. Out.";
+	};
+    class YOSHI_AlbatrossLowFuel1
+	{
+		name	= "AlbatrossLowFuel1";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_lowfuel_reporting.ogg", 1, 1 };
+		title	= "Albatross reporting low fuel, two minutes left on station. Out.";
+	};
+    class YOSHI_AlbatrossLowFuel2
+	{
+		name	= "AlbatrossLowFuel2";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_lowfuel_bingo.ogg", 1, 1 };
+		title	= "Approaching bingo, Albatross is wrapping up the mission. Out.";
+	};
+    class YOSHI_AlbatrossLowFuel3
+	{
+		name	= "AlbatrossLowFuel3";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_lowfuel_rtb.ogg", 1, 1 };
+		title	= "Albatross has two minutes left, then RTB. Out.";
+	};
+    class YOSHI_AlbatrossNoFuel1
+	{
+		name	= "AlbatrossNoFuel1";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_nofuel_bingo.ogg", 1, 1 };
+		title	= "Albatross reports bingo fuel, returning to base. Out.";
+	};
+    class YOSHI_AlbatrossNoFuel2
+	{
+		name	= "AlbatrossNoFuel2";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_nofuel_zerofuel.ogg", 1, 1 };
+		title	= "Fuel's dry, Albatross is disengaging. Out.";
+	};
+    class YOSHI_AlbatrossLeave1
+	{
+		name	= "AlbatrossLeave1";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_leave_copy.ogg", 1, 1 };
+		title	= "Copy, Albatross is exiting AO. Out.";
+	};
+    class YOSHI_AlbatrossLeave2
+	{
+		name	= "AlbatrossLeave2";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_leave_roger.ogg", 1, 1 };
+		title	= "Roger, Albatross is returning to base. Out.";
+	};
+    class YOSHI_AlbatrossLeave3
+	{
+		name	= "AlbatrossLeave3";
+		sound[]	= { "\Support-Framework\Sounds\support\Alba_leave_orderrecieved.ogg", 1, 1 };
+		title	= "Order received, Albatross is pulling out. Out.";
 	};
 };
 

@@ -52,7 +52,18 @@ YOSHI_FW_CONFIG_OBJECT = createHashMapObject [[
                     _newVehicle setVariable ["YOSHI_FW_CALLER", _caller, true];
                 };
                 _newVehicle call YOSHI_CREATE_FW_THREAD;
-				_newVehicle
+
+				[_newVehicle, getPosASL _caller, "LOITER"] call YOSHI_fnc_setWaypoint;
+                
+                if (!(unitIsUAV _newVehicle)) then {
+					if ((_newVehicle call YOSHI_GET_FW_ROLE) >= 4) then {
+						(group _newVehicle) setGroupId ["Albatross"];
+						[_newVehicle, selectRandom ["YOSHI_AlbatrossIntro4", "YOSHI_AlbatrossIntro5", "YOSHI_AlbatrossIntro6"]] call YOSHI_fnc_playSideRadio;
+					} else {
+						(group _newVehicle) setGroupId ["Valkyrie"];
+						[_newVehicle, selectRandom ["YOSHI_ValkyrieIntro1", "YOSHI_ValkyrieIntro2", "YOSHI_ValkyrieIntro3"]] call YOSHI_fnc_playSideRadio;
+					};
+				};
 			};
 		} forEach _units;
         publicVariable "YOSHI_FW_CONFIG_OBJECT";
