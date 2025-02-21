@@ -154,7 +154,7 @@ private _fixedWingDeployment = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement code
-		hint "Deploy fixed wing aircraft to loiter above your position.";
+		hint "Deploy fixed wing aircraft to loiter above your position. Only one of each type of aircraft can be deployed at a time.";
 
 		true
 	}, 
@@ -284,7 +284,7 @@ private _fixedWingDeploymentZeus = [
 	{
 		params ["_target", "_caller", "_actionId", "_arguments"];
 		// Statement Code
-		hint "Deploy fixed wing aircraft to loiter above your position.";
+		hint "Deploy fixed wing aircraft to loiter above your position. Only one of each type of aircraft can be deployed at a time.";
 		true
 	}, 
 	{
@@ -582,8 +582,6 @@ private _uavAction = [
 			[_vic] // 6: Action parameters <ANY> (Optional)
 		] call ace_interact_menu_fnc_createAction;
 		_actions pushBack [_uavFieldActionGrenade, [], _vic];
-
-
 			
 		_actions
 	}
@@ -782,3 +780,82 @@ private _reconScan = [
 ] call ace_interact_menu_fnc_createAction; 
 
 ["UAV_01_base_F", 1, ["ACE_SelfActions"], _reconScan, true] call ace_interact_menu_fnc_addActionToClass;
+
+private _intimidationActions = [ 
+	"intimidationActions",  
+	"Intimidation",  
+	"\a3\Ui_F_Curator\Data\CfgMarkers\kia_ca.paa",  
+	{ 
+		params ["_target", "_caller", "_args"];
+		
+		hint "Intimidate the locals...";
+	},  
+	{ 
+		params ["_target", "_caller", "_args"];
+
+		true
+	},
+	{ 
+		params ["_target", "_caller", "_args"];
+		private _rideOfValk = [ 
+			"rideOfValk",  
+			"Ride of the Valkyries",  
+			"\a3\ui_f\data\igui\cfg\simpletasks\types\Radio_ca.paa",  
+			{ 
+				params ["_target", "_caller", "_vehicle"];
+				
+				private _soundSource = _vehicle say3D ["RideOfValkyries", 1000, 1];
+				_vehicle setVariable ["YOSHI_soundSource", _soundSource, true];
+			},  
+			{ 
+				params ["_target", "_caller", "_vehicle"];
+
+				private _soundSource = _vehicle getVariable ["YOSHI_soundSource", objNull];
+				isNull _soundSource
+			},
+			{},
+			_target
+		] call ace_interact_menu_fnc_createAction; 
+		private _fortunateSon = [ 
+			"fortunateSon",  
+			"Fortunate Son",  
+			"\a3\ui_f\data\igui\cfg\simpletasks\types\Radio_ca.paa",  
+			{ 
+				params ["_target", "_caller", "_vehicle"];
+				
+				private _soundSource = _vehicle say3D ["FortunateSon", 1000, 1];
+				_vehicle setVariable ["YOSHI_soundSource", _soundSource, true];
+			},  
+			{ 
+				params ["_target", "_caller", "_vehicle"];
+
+				private _soundSource = _vehicle getVariable ["YOSHI_soundSource", objNull];
+				isNull _soundSource
+			},
+			{},
+			_target
+		] call ace_interact_menu_fnc_createAction;
+		private _stopSong = [ 
+			"stopSong",  
+			"Stop Playback",  
+			"\A3\ui_f\data\map\markers\military\box_CA.paa",  
+			{ 
+				params ["_target", "_caller", "_vehicle"];
+				
+				private _soundSource = _vehicle getVariable ["YOSHI_soundSource", objNull];
+				deleteVehicle _soundSource;
+			},  
+			{ 
+				params ["_target", "_caller", "_vehicle"];
+
+				private _soundSource = _vehicle getVariable ["YOSHI_soundSource", objNull];
+				!isNull _soundSource
+			},
+			{},
+			_target
+		] call ace_interact_menu_fnc_createAction;
+		[[_fortunateSon, [], _target], [_rideOfValk, [], _target], [_stopSong, [], _target]] 
+	} 
+] call ace_interact_menu_fnc_createAction; 
+
+["Air", 1, ["ACE_SelfActions"], _intimidationActions, true] call ace_interact_menu_fnc_addActionToClass;

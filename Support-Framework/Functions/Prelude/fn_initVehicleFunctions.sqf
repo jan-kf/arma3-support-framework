@@ -61,7 +61,9 @@ YOSHI_COPY_VEHICLE = {
         getObjectTextures _vehicle,
         fuel _vehicle,
         _vehicle call YOSHI_GET_PYLON_INFO,
-        _vehicle call YOSHI_GET_DAMAGE_INFO
+        _vehicle call YOSHI_GET_DAMAGE_INFO,
+        _vehicle call YOSHI_GET_FW_ROLE,
+        unitIsUAV _vehicle
         // damage _vehicle, // getAllHitPointsDamage
         // getObjectMaterials _vehicle,
         // crew _vehicle apply { [typeOf _x, getUnitLoadout _x] }, // keep it simple for now
@@ -183,15 +185,16 @@ YOSHI_ADJUST_LOITER_POINT = {
     _group setBehaviourStrong "CARELESS";
     _group setCombatMode "GREEN";
 
-    if ((waypointType [_group, currentWaypoint _group]) isEqualTo "LOITER") then {
-        [_group, currentWaypoint _group] setWaypointLoiterRadius 2000;
-    };
-
     private _caller = _vehicle getVariable ["YOSHI_FW_CALLER", objNull];
     if (!isNull _caller) then {
         if ((getWPPos [_group, 0]) distance2D (getPosASL _caller) > 100) then {
             _currentWaypointIndex = currentWaypoint _group;
             [_group, _currentWaypointIndex] setWaypointPosition [(getPosASL _caller), 0];
+        };
+        if ((waypointType [_group, currentWaypoint _group]) isEqualTo "LOITER") then {
+            private _loiterHeight = ((getPosASL _caller) select 2) + 2000;
+            [_group, currentWaypoint _group] setWaypointLoiterRadius 2000;
+            [_group, currentWaypoint _group] setWaypointLoiterAltitude _loiterHeight;
         };
     };
 };
@@ -203,8 +206,16 @@ YOSHI_CREATE_FW_THREAD = {
 		params ["_vehicle"];
 		while {alive _vehicle} do {
 			sleep 5;
-            _vehicle flyInHeightASL [2000, 2000, 2000];
-			_vehicle flyInHeight 2000;
+
+            private _caller = _vehicle getVariable ["YOSHI_FW_CALLER", objNull];
+            if (!isNull _caller) then {
+                private _loiterHeight = ((getPosASL _caller) select 2) + 2000;
+                _vehicle flyInHeightASL [_loiterHeight, _loiterHeight, _loiterHeight];
+                _vehicle flyInHeight _loiterHeight;
+            } else {
+                _vehicle flyInHeightASL [2000, 2000, 2000];
+                _vehicle flyInHeight 2000;
+            };
 
 
 		    private _fuelTimeRemaining = _vehicle call YOSHI_CALCULATE_FUEL_CONSUMPTION;
@@ -217,7 +228,7 @@ YOSHI_CREATE_FW_THREAD = {
                         if ((_vehicle call YOSHI_GET_FW_ROLE) >= 4) then {
                             [_vehicle, selectRandom ["YOSHI_AlbatrossLowFuel1", "YOSHI_AlbatrossLowFuel2", "YOSHI_AlbatrossLowFuel3"]] call YOSHI_fnc_playSideRadio;
                         } else {
-                            //[_vehicle, selectRandom ["YOSHI_ValkyrieLowFuel1", "YOSHI_ValkyrieLowFuel2", "YOSHI_ValkyrieLowFuel3"]] call YOSHI_fnc_playSideRadio;
+                            [_vehicle, selectRandom ["YOSHI_ValkyrieLowFuel1", "YOSHI_ValkyrieLowFuel2", "YOSHI_ValkyrieLowFuel3"]] call YOSHI_fnc_playSideRadio;
                         };
                     };
                     
@@ -232,7 +243,7 @@ YOSHI_CREATE_FW_THREAD = {
                         if ((_vehicle call YOSHI_GET_FW_ROLE) >= 4) then {
                             [_vehicle, selectRandom ["YOSHI_AlbatrossNoFuel1", "YOSHI_AlbatrossNoFuel2", "YOSHI_AlbatrossNoFuel3"]] call YOSHI_fnc_playSideRadio;
                         } else {
-                            //[_vehicle, selectRandom ["YOSHI_ValkyrieNoFuel1", "YOSHI_ValkyrieNoFuel2", "YOSHI_ValkyrieNoFuel3"]] call YOSHI_fnc_playSideRadio;
+                            [_vehicle, selectRandom ["YOSHI_ValkyrieNoFuel1", "YOSHI_ValkyrieNoFuel2", "YOSHI_ValkyrieNoFuel3"]] call YOSHI_fnc_playSideRadio;
                         };
                     };
                     

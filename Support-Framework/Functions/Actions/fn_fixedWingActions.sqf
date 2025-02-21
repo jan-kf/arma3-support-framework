@@ -34,26 +34,45 @@ YOSHI_FIXED_WING_DEPLOYMENTS = {
 	private _fixedWingActions = [];
 	{
 		private _vehicleClass = _x select 0;
+        private _role = _x select 5;
+        private _isUAV = _x select 6;
 		private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
 		private _storedWingAction = [
 			format["deploy-%1-%2", _vehicleClass, random 1000], format["Deploy %1", _vehicleDisplayName], "",
 			{
-				params ["_target", "_caller", "_vehicleClass"];
+				params ["_target", "_caller", "_args"];
 				//statement
 				
-				[YOSHI_FW_CONFIG_OBJECT, _vehicleClass, _caller] call (YOSHI_FW_CONFIG_OBJECT get "DeployUnit");
+				[YOSHI_FW_CONFIG_OBJECT, _args select 0, _caller] call (YOSHI_FW_CONFIG_OBJECT get "DeployUnit");
                 
                 hint "Deploying Asset"; 
 
 			}, 
 			{
-				params ["_target", "_caller", "_vehicleClass"];
+				params ["_target", "_caller", "_args"];
 				// Condition code here
-				true
+                private _vehicleClass = _args select 0;
+                private _role = _args select 1;
+                private _isUAV = _args select 2;
+
+                private _shouldAllowDeploy = true;
+				
+                if (!_isUAV) then {
+                    private _deployedWings = YOSHI_FW_CONFIG_OBJECT get "DeployedUnits";
+                    {
+                        if (typeOf _x == _vehicleClass) then {
+                            private _roleOfDeployed = _x call YOSHI_GET_FW_ROLE;
+                            if (_roleOfDeployed == _role) then {
+                                _shouldAllowDeploy = false;
+                            };
+                        };
+                    } forEach _deployedWings;
+                };
+                _shouldAllowDeploy
 			},
 			{ // 5: Insert children code <CODE> (Optional)
 			},
-			_vehicleClass // 6 Params
+            [_vehicleClass, _role, _isUAV] // 6 Params
 		] call ace_interact_menu_fnc_createAction;
 		_fixedWingActions pushBack [_storedWingAction, [], _target];
 	} forEach _storedWings;
@@ -72,7 +91,7 @@ YOSHI_FIXED_WING_DEPLOYMENTS = {
                     if ((_unit call YOSHI_GET_FW_ROLE) >= 4) then {
                         [_unit, selectRandom ["YOSHI_AlbatrossLeave1", "YOSHI_AlbatrossLeave2", "YOSHI_AlbatrossLeave3"]] call YOSHI_fnc_playSideRadio;
                     } else {
-                        //[_unit, selectRandom ["YOSHI_ValkyrieLeave1", "YOSHI_ValkyrieLeave2", "YOSHI_ValkyrieLeave3"]] call YOSHI_fnc_playSideRadio;
+                        [_unit, selectRandom ["YOSHI_ValkyrieLeave1", "YOSHI_ValkyrieLeave2", "YOSHI_ValkyrieLeave3"]] call YOSHI_fnc_playSideRadio;
                     };
                 };
                 hint "Sending Asset Away";

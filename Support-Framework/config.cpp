@@ -1034,6 +1034,60 @@ class CfgRadio
 		sound[]	= { "\Support-Framework\Sounds\support\Valk_intro_wheelsup.ogg", 1, 1 };
 		title	= "This is Valkyrie, wheels are up. Out.";
 	};
+    class YOSHI_ValkyrieLowFuel1
+	{
+		name	= "ValkyrieLowFuel1";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_lowfuel_2minstation.ogg", 1, 1 };
+		title	= "Valkyrie here, Fuel’s getting low, two minutes left on station. Out.";
+	};
+    class YOSHI_ValkyrieLowFuel2
+	{
+		name	= "ValkyrieLowFuel2";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_lowfuel_critical.ogg", 1, 1 };
+		title	= "Fuel status critical, Valkyrie’s wrapping up soon. Out.";
+	};
+    class YOSHI_ValkyrieLowFuel3
+	{
+		name	= "ValkyrieLowFuel3";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_lowfuel_indicator.ogg", 1, 1 };
+		title	= "Valkyrie‘s low fuel indicator is on, two minutes before RTB. Out.";
+	};
+    class YOSHI_ValkyrieNoFuel1
+	{
+		name	= "ValkyrieNoFuel1";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_nofuel_bingo.ogg", 1, 1 };
+		title	= "Valkyrie is reporting Bingo fuel, breaking off. Out.";
+	};
+    class YOSHI_ValkyrieNoFuel2
+	{
+		name	= "ValkyrieNoFuel2";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_nofuel_out.ogg", 1, 1 };
+		title	= "Out of fuel, Valkyrie is returning to base. Out.";
+	};
+    class YOSHI_ValkyrieNoFuel3
+	{
+		name	= "ValkyrieNoFuel3";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_nofuel_spent.ogg", 1, 1 };
+		title	= "Fuel spent, Valkyrie is returning for refuel. Out.";
+	};
+    class YOSHI_ValkyrieLeave1
+	{
+		name	= "ValkyrieLeave1";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_leave_ao.ogg", 1, 1 };
+		title	= "Solid copy, Valkyrie is leaving the AO. Out.";
+	};
+    class YOSHI_ValkyrieLeave2
+	{
+		name	= "ValkyrieLeave2";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_leave_base.ogg", 1, 1 };
+		title	= "Valkyrie acknowledges, returning to base. Out.";
+	};
+    class YOSHI_ValkyrieLeave3
+	{
+		name	= "ValkyrieLeave3";
+		sound[]	= { "\Support-Framework\Sounds\support\Valk_leave_rtb.ogg", 1, 1 };
+		title	= "Copy that, Valkyrie is RTB. Out.";
+	};
     class YOSHI_AlbatrossIntro4
 	{
 		name	= "AlbatrossIntro4";
@@ -1105,6 +1159,16 @@ class CfgRadio
 class CfgSounds {
     sounds[] = {};
 
+    class RideOfValkyries {
+        name = "rideOfValkyries";
+        sound[] = {"\Support-Framework\Sounds\easterEgg\ride_of_the_valk.ogg", 1, 1};
+        titles[] = {};
+    };
+    class FortunateSon {
+        name = "fortunateSon";
+        sound[] = {"\Support-Framework\Sounds\easterEgg\fourtunate_son.ogg", 1, 1};
+        titles[] = {};
+    };
     class ApsHit {
         name = "apsHit";
         sound[] = {"\Support-Framework\Sounds\apsHit.ogg", 1, 1};

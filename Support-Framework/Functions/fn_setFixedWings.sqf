@@ -51,11 +51,8 @@ YOSHI_FW_CONFIG_OBJECT = createHashMapObject [[
                 if (!isNull _caller) then {
                     _newVehicle setVariable ["YOSHI_FW_CALLER", _caller, true];
                 };
-                _newVehicle call YOSHI_CREATE_FW_THREAD;
-
-				[_newVehicle, getPosASL _caller, "LOITER"] call YOSHI_fnc_setWaypoint;
                 
-                if (!(unitIsUAV _newVehicle)) then {
+				if (!(unitIsUAV _newVehicle)) then {
 					if ((_newVehicle call YOSHI_GET_FW_ROLE) >= 4) then {
 						(group _newVehicle) setGroupId ["Albatross"];
 						[_newVehicle, selectRandom ["YOSHI_AlbatrossIntro4", "YOSHI_AlbatrossIntro5", "YOSHI_AlbatrossIntro6"]] call YOSHI_fnc_playSideRadio;
@@ -64,6 +61,11 @@ YOSHI_FW_CONFIG_OBJECT = createHashMapObject [[
 						[_newVehicle, selectRandom ["YOSHI_ValkyrieIntro1", "YOSHI_ValkyrieIntro2", "YOSHI_ValkyrieIntro3"]] call YOSHI_fnc_playSideRadio;
 					};
 				};
+
+                _newVehicle call YOSHI_CREATE_FW_THREAD;
+
+				[_newVehicle, getPosASL _caller, "LOITER"] call YOSHI_fnc_setWaypoint;
+                
 			};
 		} forEach _units;
         publicVariable "YOSHI_FW_CONFIG_OBJECT";
@@ -71,15 +73,28 @@ YOSHI_FW_CONFIG_OBJECT = createHashMapObject [[
 	["StashUnit", {
 		params ["_self", "_unit"];
 
-		private _units = +(_self get "SavedUnits");
-		_units pushBack (_unit call YOSHI_COPY_VEHICLE);
-		_self set ["SavedUnits", _units];
-        _self set ["DeployedUnits", (_self get "DeployedUnits") - [_unit]];
-        private _fuelThread = _unit getVariable ["YOSHI_FW_THREAD", 0];
-        terminate _fuelThread;
+		private _units = +(_self get "SavedUnits"); 
+		private _newUnit = _unit call YOSHI_COPY_VEHICLE;
+
+		
+		private _existingFirstValues = _units apply { _x select 0 };
+		private _newUnitFirstValue = _newUnit select 0; 
+
+		if !(_newUnitFirstValue in _existingFirstValues) then {
+			_units pushBack _newUnit; 
+			_self set ["SavedUnits", _units];
+		};
+
+		
+		_self set ["DeployedUnits", (_self get "DeployedUnits") - [_unit]];
+
+		
+		private _fuelThread = _unit getVariable ["YOSHI_FW_THREAD", 0];
+		terminate _fuelThread;
 		deleteVehicleCrew _unit;
 		deleteVehicle _unit;
-        publicVariable "YOSHI_FW_CONFIG_OBJECT";
+
+		publicVariable "YOSHI_FW_CONFIG_OBJECT";
 	}],
     ["isInitialized", { true }]
 ], _logic];
