@@ -171,7 +171,7 @@ private _targetAction = [
 								{
 									params ["_targetObject", "_caller", "_args"];
 									// Condition code here
-									true
+									!((_args select 0) getVariable ["YOSHI_REPORTED_BINGO_FUEL", false])
 								},
 								{ // 5: Insert children code <CODE> (Optional)
 								},

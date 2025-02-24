@@ -55,7 +55,7 @@ YOSHI_FW_CONFIG_OBJECT = createHashMapObject [[
 				if (!(unitIsUAV _newVehicle)) then {
 					if ((_newVehicle call YOSHI_GET_FW_ROLE) >= 4) then {
 						(group _newVehicle) setGroupId ["Albatross"];
-						[_newVehicle, selectRandom ["YOSHI_AlbatrossIntro4", "YOSHI_AlbatrossIntro5", "YOSHI_AlbatrossIntro6"]] call YOSHI_fnc_playSideRadio;
+						[_newVehicle, selectRandom ["YOSHI_AlbatrossIntro1", "YOSHI_AlbatrossIntro2", "YOSHI_AlbatrossIntro3"]] call YOSHI_fnc_playSideRadio;
 					} else {
 						(group _newVehicle) setGroupId ["Valkyrie"];
 						[_newVehicle, selectRandom ["YOSHI_ValkyrieIntro1", "YOSHI_ValkyrieIntro2", "YOSHI_ValkyrieIntro3"]] call YOSHI_fnc_playSideRadio;

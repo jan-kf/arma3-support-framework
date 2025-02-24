@@ -235,7 +235,7 @@ YOSHI_CREATE_FW_THREAD = {
                 };
 			};
             if (_fuelTimeRemaining > -1  && _fuelTimeRemaining < 300) then {
-				// 5 minutes of fuel remaining
+            // 5 minutes of fuel remaining
 				_vehicle call YOSHI_SEND_FW_AWAY;
                 if (!(_vehicle getVariable ["YOSHI_REPORTED_BINGO_FUEL", false])) then {
                     _vehicle setVariable ["YOSHI_REPORTED_BINGO_FUEL", true, true];

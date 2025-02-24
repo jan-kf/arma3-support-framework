@@ -158,9 +158,9 @@ YOSHI_FLING_THING = {
 		if (_delay > 5) then {
 			if (_deltaHeight > -1000) then {
 				sleep (_delay - 4.5);
-				waitUntil {sleep 0.5; ((getPosASL _obj) select 2) < 300};
+				waitUntil {sleep 0.5; ((getPosATL _obj) select 2) < 200};
 			} else {
-				waitUntil {sleep 0.5; ((getPosASL _obj) select 2) < 200};
+				waitUntil {sleep 0.5; ((getPosATL _obj) select 2) < 200};
 			};
 
 			smokeGrenade = "SmokeShellGreen" createVehicle (getPosASL _obj);

@@ -255,3 +255,62 @@ YOSHI_SPAWN_SAVED_ITEM_ACTION = {
 
     _newObject
 };
+
+YOSHI_GET_DIRECTION = {
+    params ["_degree"];
+
+    _degree = _degree % 360;
+
+    private _directions = [
+        "North",
+        "Northeast",
+        "East",
+        "Southeast",
+        "South",
+        "Southwest",
+        "West",
+        "Northwest"
+    ];
+
+    private _index = floor ((_degree + 22.5) / 45) % 8;
+    private _direction = _directions select _index;
+
+    _direction
+
+};
+
+YOSHI_GET_FALL_TIME = {
+    params ["_initialHeight", "_finalHeight"];
+
+    private _g = 9.81;
+
+    private _distance = _initialHeight - _finalHeight;
+    private _time = sqrt((2 * _distance) / _g);
+
+    (round (_time * 100))/100
+
+};
+
+
+YOSHI_playVehicleSoundLocal = {
+    params ["_soundName", "_source"];
+
+    private _soundSource = _source say3D [_soundName, 1000, 1];
+	_source setVariable ["YOSHI_soundSource", _soundSource];
+
+};
+
+YOSHI_playVehicleSoundGlobal = {
+    params ["_soundName", "_source"];
+
+    [[_soundName, _source], YOSHI_playVehicleSoundLocal] remoteExec ["call", 0];
+
+};
+
+YOSHI_stopVehicleSoundGlobal = {
+    params ["_source"];
+
+	private _soundSource = _source getVariable ["YOSHI_soundSource", objNull];
+    deleteVehicle _soundSource;
+
+};

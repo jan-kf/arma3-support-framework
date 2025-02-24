@@ -7,7 +7,7 @@ private _unitAtBase = [_unit] call YOSHI_fnc_isAtBase;
 private _locationAtBase = [_location] call YOSHI_fnc_isAtBase;
 private _isNotDeployedFixedWing = true;
 if ([YOSHI_FW_CONFIG_OBJECT] call YOSHI_isInitialized) then {
-	private _isNotDeployedFixedWing = !(_unit in (YOSHI_FW_CONFIG_OBJECT get "DeployedUnits"));
+	private _isNotDeployedFixedWing = !(typeOf _unit in (YOSHI_FW_CONFIG_OBJECT get "DeployedUnits"));
 };
 
 if (!_unitAtBase && _locationAtBase && _isNotDeployedFixedWing) then {
@@ -33,8 +33,10 @@ if (_unitAtBase && !_locationAtBase && _isNotDeployedFixedWing) then {
 		_viaNode = true;
 	};
 };
-	
-private _wp = _group addWaypoint [_location, 0];
+
+private _location2D = [_location select 0, _location select 1, 0];
+
+private _wp = _group addWaypoint [_location2D, 0];
 _wp setWaypointType _type; 
 
 if (!_viaNode) then {

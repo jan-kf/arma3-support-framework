@@ -1088,21 +1088,21 @@ class CfgRadio
 		sound[]	= { "\Support-Framework\Sounds\support\Valk_leave_rtb.ogg", 1, 1 };
 		title	= "Copy that, Valkyrie is RTB. Out.";
 	};
-    class YOSHI_AlbatrossIntro4
+    class YOSHI_AlbatrossIntro1
 	{
-		name	= "AlbatrossIntro4";
+		name	= "AlbatrossIntro1";
 		sound[]	= { "\Support-Framework\Sounds\support\Alba_intro_etasoon.ogg", 1, 1 };
 		title	= "Affirmative, Albatross has taken off. ETA soon. Out.";
 	};
-    class YOSHI_AlbatrossIntro5
+    class YOSHI_AlbatrossIntro2
 	{
-		name	= "AlbatrossIntro5";
+		name	= "AlbatrossIntro2";
 		sound[]	= { "\Support-Framework\Sounds\support\Alba_intro_roger.ogg", 1, 1 };
 		title	= "Roger, Albatross is en route to the AO. Out.";
 	};
-    class YOSHI_AlbatrossIntro6
+    class YOSHI_AlbatrossIntro3
 	{
-		name	= "AlbatrossIntro6";
+		name	= "AlbatrossIntro3";
 		sound[]	= { "\Support-Framework\Sounds\support\Alba_intro_understood.ogg", 1, 1 };
 		title	= "Understood, Albatross is airborne, en route. Out.";
 	};

@@ -60,11 +60,9 @@ YOSHI_FIXED_WING_DEPLOYMENTS = {
                 if (!_isUAV) then {
                     private _deployedWings = YOSHI_FW_CONFIG_OBJECT get "DeployedUnits";
                     {
-                        if (typeOf _x == _vehicleClass) then {
-                            private _roleOfDeployed = _x call YOSHI_GET_FW_ROLE;
-                            if (_roleOfDeployed == _role) then {
-                                _shouldAllowDeploy = false;
-                            };
+                        private _roleOfDeployed = _x call YOSHI_GET_FW_ROLE;
+                        if (_roleOfDeployed == _role) then {
+                            _shouldAllowDeploy = false;
                         };
                     } forEach _deployedWings;
                 };
@@ -135,12 +133,15 @@ YOSHI_FIXED_WING_LOGI_ACTIONS = {
                     [_newObject] call zen_inventory_fnc_configure; 
 
                     [_newObject, _caller] call YOSHI_FLING_THING;
+                    private _direction = [_caller getDir _newObject] call YOSHI_GET_DIRECTION;
+                    private _eta = [(getPosATL _newObject) select 2, (getPosATL _caller) select 2] call YOSHI_GET_FALL_TIME;
+                    hint format["Supply Drop incoming from: %1 | ETA: %2s", _direction, _eta];;
                     
                 }, 
                 {
                     params ["_target", "_caller", "_unit"];
                     // Condition code here
-                    true
+                    !(_unit getVariable ["YOSHI_REPORTED_BINGO_FUEL", false])
                 },
                 { // 5: Insert children code <CODE> (Optional)
                 },
@@ -192,12 +193,15 @@ YOSHI_FIXED_WING_LOGI_ACTIONS = {
                                     params ["_target", "_caller", "_params"];
                                     private _newObject = [_target, _caller, _params] call YOSHI_SPAWN_SAVED_ITEM_ACTION;
 
-                                    [_newObject, _caller] call YOSHI_FLING_THING;          
+                                    [_newObject, _caller] call YOSHI_FLING_THING;
+                                    private _direction = [_caller getDir _newObject] call YOSHI_GET_DIRECTION;
+                                    private _eta = [(getPosATL _newObject) select 2, (getPosATL _caller) select 2] call YOSHI_GET_FALL_TIME;
+                                    hint format["Supply Drop incoming from: %1 | ETA: %2s", _direction, _eta];          
                                 }, 
                                 {
                                     params ["_target", "_caller", "_params"];
                                     // Condition code here
-                                    true
+                                    !((_params select 0) getVariable ["YOSHI_REPORTED_BINGO_FUEL", false])
                                 },
                                 {},
                                 [_unit, _x] // 6 Params
