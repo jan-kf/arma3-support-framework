@@ -783,7 +783,7 @@ private _reconScan = [
 
 private _intimidationActions = [ 
 	"intimidationActions",  
-	"Intimidation",  
+	"Intimidation (GLOBAL)",  
 	"\a3\Ui_F_Curator\Data\CfgMarkers\kia_ca.paa",  
 	{ 
 		params ["_target", "_caller", "_args"];
@@ -803,9 +803,8 @@ private _intimidationActions = [
 			"\a3\ui_f\data\igui\cfg\simpletasks\types\Radio_ca.paa",  
 			{ 
 				params ["_target", "_caller", "_vehicle"];
-				
-				private _soundSource = _vehicle say3D ["RideOfValkyries", 1000, 1];
-				_vehicle setVariable ["YOSHI_soundSource", _soundSource, true];
+
+				["RideOfValkyries", _vehicle] call YOSHI_playVehicleSoundGlobal;
 			},  
 			{ 
 				params ["_target", "_caller", "_vehicle"];
@@ -823,8 +822,7 @@ private _intimidationActions = [
 			{ 
 				params ["_target", "_caller", "_vehicle"];
 				
-				private _soundSource = _vehicle say3D ["FortunateSon", 1000, 1];
-				_vehicle setVariable ["YOSHI_soundSource", _soundSource, true];
+				["FortunateSon", _vehicle] call YOSHI_playVehicleSoundGlobal;
 			},  
 			{ 
 				params ["_target", "_caller", "_vehicle"];
@@ -842,8 +840,7 @@ private _intimidationActions = [
 			{ 
 				params ["_target", "_caller", "_vehicle"];
 				
-				private _soundSource = _vehicle getVariable ["YOSHI_soundSource", objNull];
-				deleteVehicle _soundSource;
+				[_vehicle] call YOSHI_stopVehicleSoundGlobal;
 			},  
 			{ 
 				params ["_target", "_caller", "_vehicle"];
