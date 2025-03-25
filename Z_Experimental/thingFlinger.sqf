@@ -34,8 +34,8 @@ _thing setVelocity _velocity;
 		_height
 	};
 
-	if (_delay > 5) then {
-		sleep (_delay - 4.5);
+	if (_delay > 2) then {
+		sleep (_delay - 1.5);
 		waitUntil {sleep 0.5; ((getPosASL _obj) select 2) < 200};
 
 		_para = "B_Parachute_02_F";
