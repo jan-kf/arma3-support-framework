@@ -27,6 +27,13 @@ YOSHI_getFrontPosition = {
     _frontPos
 };
 
+YOSHI_animateAPS = {
+	params ["_aps", "_obj", ["_pulseCount", 5], ["_pulseDurationOn", 0.05], ["_pulseDurationOff", 0.05], ["_color", [1, 0, 0, 1]], ["_width", 20], ["_soundName", "ApsHit"], ["_soundDistance", 200]];
+	
+	[[_aps, _soundName, _soundDistance, 2], YOSHI_serverSay3dOnce] remoteExec ["spawn", 2];
+	[[_aps, getPosATL _obj, _pulseCount, _pulseDurationOn, _pulseDurationOff, _color, _width], YOSHI_serverBeamVic2Pos] remoteExec ["spawn", 2];
+};
+
 
 YOSHI_detectRockets = { 
     params ["_vehicle", ["_charges", 40], ["_range", -1], ["_interval", 0.05], ["_cooldown", 0.1]];
@@ -43,7 +50,7 @@ YOSHI_detectRockets = {
     
 	while {(alive _vehicle) && ((_vehicle getVariable ["APS_Charges", 0]) > 0)} do { 
         private _projectiles = nearestObjects [_vehicle, ["MissileBase", "RocketBase"], _range];
-		private _uavs = allUnitsUAV select { ((_x distance _vehicle) <= _range) && (_x isKindOf "Air") }; 
+		private _uavs = allUnitsUAV select { (_x isKindOf "Air") && ((getMass _x) < 500) && ((_x distance _vehicle) <= _range)}; 
 
         { 	
 			private _relativeDir = _x getRelDir _vehicle;
@@ -51,11 +58,8 @@ YOSHI_detectRockets = {
 			if ((_relativeDir < 30) || (_relativeDir > 330)) then {
 				_stop = [_x, 1] call YOSHI_getFrontPosition;
 				_charge = createVehicle ["Land_Orange_01_F", _stop, [], 0, "CAN_COLLIDE"];	
-						
-	
-				private _pos = getPosATL _x;
-				[[_vehicle, _pos], YOSHI_beamVic2Pos] remoteExec ["spawn"];
-				_vehicle say3D ["ApsHit", 200, 1];
+
+				[_vehicle, _x] call YOSHI_animateAPS;
 				
 				_chargesRemaining = _vehicle getVariable ["APS_Charges", 0];
 				_vehicle setVariable ["APS_Charges", _chargesRemaining - 1, true];
@@ -70,12 +74,9 @@ YOSHI_detectRockets = {
 
 		{ 
 			private _isHit = _x getVariable ["YOSHI_APS_HIT", false];
-			if (speed _x > 40 && !_isHit) then {						
-				_vehicle say3D ["ApsDrone", 200, 1];
+			if (abs (speed _x) > 40 && !_isHit) then {						
 
-	
-				private _pos = getPosATL _x;
-				[[_vehicle, _pos, 2, [0, 1, 1, 1], 15], YOSHI_beamVic2Pos] remoteExec ["spawn"];
+				[_vehicle, _x, 1, 0.2, 0.2, [0, 1, 1, 1], 15, "ApsDrone", 300] call YOSHI_animateAPS;
 
 				_x removeAllEventHandlers "Killed";
 				_x removeAllEventHandlers "Hit";
