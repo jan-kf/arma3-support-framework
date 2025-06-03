@@ -76,7 +76,7 @@ YOSHI_isArtilleryCapable = {
     // Check if the unit is capable of artillery fire
     // This checks if the unit is an artillery piece by verifying it can accept the doArtilleryFire command
     private _isArtillery = !(_unit isKindOf "Air") && {(_unit isKindOf "LandVehicle") || (_unit isKindOf "Ship")}; // Exclude air units, include land vehicles and ships
-    private _canDoArtilleryFire = _isArtillery && {alive _unit} && {getArtilleryAmmo [_unit] isNotEqualTo []}; // Must be alive and have artillery ammo available
+    private _canDoArtilleryFire = (_isArtillery && (alive _unit) && (getArtilleryAmmo [_unit] isNotEqualTo [])) || ((typeOf _unit) isEqualTo "B_Ship_MRLS_01_F"); // Must be alive and have artillery ammo available
 
     _canDoArtilleryFire // Return true if capable, false otherwise
 };
@@ -155,15 +155,15 @@ addMissionEventHandler ["EntityDeleted", {
 }];
 
 YOSHI_beamA2B = {
-	params ["_posA", "_posB"];
+	params ["_posA", "_posB", ["_color", [1, 0, 0, 1]], ["_thickness", 20]];
     
-	drawLine3D [_posA, _posB, [1, 0, 0, 1], 20];
+	drawLine3D [_posA, _posB, _color, _thickness];
 };
 
 YOSHI_beamVic2Pos = {
-	params ["_vic", "_pos"];
+	params ["_vic", "_pos", ["_pulseCount", 5], ["_color", [1, 0, 0, 1]], ["_thickness", 20]];
 
-	_count = 5;
+	_count = _pulseCount;
 
 	// prevent drawing more than once per instance of APS trigger
 	_shouldDraw = player getVariable ["YOSHI_DRAW_DEBOUNCE", true];
@@ -173,7 +173,7 @@ YOSHI_beamVic2Pos = {
 
 		while {(alive _vic) && (_count > 0)} do {
 			_topOfVic = ASLToATL ([_vic] call YOSHI_getPosTop); 
-			[_topOfVic, _pos] call YOSHI_beamA2B;
+			[_topOfVic, _pos, _color, _thickness] call YOSHI_beamA2B;
 			sleep 0.05;
 			_count = _count - 1;
 		};
@@ -214,8 +214,7 @@ YOSHI_SPAWN_SAVED_ITEM_ACTION = {
     private _fabricator = _params select 0;
     private _itemToAdd = _params select 1;
 
-    private _originalPos = getPosASL _fabricator; 
-    private _newObject = createVehicle [typeOf _itemToAdd, _originalPos, [], 0, "NONE"]; 
+    private _newObject = createVehicle [typeOf _itemToAdd, _fabricator, [], 0, "NONE"]; 
     
     clearWeaponCargoGlobal _newObject; 
     clearMagazineCargoGlobal _newObject; 
