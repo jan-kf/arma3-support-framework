@@ -25,7 +25,9 @@ params ["_fabricator", "_itemsToAdd"];
 		"\a3\ui_f\data\igui\cfg\simpletasks\types\Download_ca.paa",
 		{  // Code executed when the action is used
 			params ["_target", "_caller", "_params"];
-			[_target, _caller, _params] call YOSHI_SPAWN_SAVED_ITEM_ACTION;
+			private _object = [_target, _caller, _params] call YOSHI_SPAWN_SAVED_ITEM_ACTION;
+
+			[_caller, _object] call ace_dragging_fnc_startCarry;
 		},
 		{ // Condition for the action to be available
 			params ["_vic", "_caller", "_params"];
