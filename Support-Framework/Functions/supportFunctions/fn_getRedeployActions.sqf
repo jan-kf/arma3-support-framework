@@ -26,14 +26,14 @@ private _registeredVehicles = call YOSHI_fnc_getRegisteredVehicles;
 				params ["_target", "_caller", "_vic"];
 				//statement
 				private _task = _vic getVariable ["currentTask", "waiting"];
-				if (_task == "waiting") then {						
-					private _allInVehicle = (crew _vic) - (units _vic); // Get all units in the vehicle and remove the crew members
+				if (_task == "waiting") then {
 
-					// Getting names of non-crew members
 					private _names = [];
 					{
-						_names pushBack (name _x);
-					} forEach _allInVehicle;
+						if (vehicle _x == _vic) then {
+							_names pushBack (name _x);
+						};
+					} forEach allPlayers;
 
 					// Format the names into a string
 					private _namesString = format ["Waiting for redeploy in %2: %1, searching for markers prefixed with %3...", _names joinString ", ", groupId group _vic, (YOSHI_HOME_BASE_CONFIG_OBJECT get "LzPrefixes")];

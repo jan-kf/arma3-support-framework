@@ -54,6 +54,7 @@ class CfgFunctions {
             class initConstants { preInit = 1; };
             class initMapTools { preInit = 1; };
             class initRecon { preInit = 1; };
+            class initAPS { preInit = 1; };
             class initEasterEgg { preInit = 1; };
             class initVehicleFunctions { preInit = 1; };
         };
@@ -1172,6 +1173,11 @@ class CfgSounds {
     class ApsHit {
         name = "apsHit";
         sound[] = {"\Support-Framework\Sounds\apsHit.ogg", 1, 1};
+        titles[] = {};
+    };
+    class ApsDrone {
+        name = "apsDrone";
+        sound[] = {"\Support-Framework\Sounds\apsDrone.ogg", 1, 1};
         titles[] = {};
     };
     class DufflebagShuffle {
