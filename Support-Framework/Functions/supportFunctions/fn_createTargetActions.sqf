@@ -31,106 +31,160 @@ private _targetAction = [
 					private _vehicleAction = [
 						format["vicActionArty-%1", netId _vehicle], format["(%1) %2", groupId group _vehicle, _vehicleDisplayName], "",
 						{
-							params ["_targetPos", "_caller", "_vehicle"];
+							params ["_targetArgs", "_caller", "_vehicle"];
 							true
 						},
 						{
-							params ["_targetPos", "_caller", "_vehicle"];
+							params ["_targetArgs", "_caller", "_vehicle"];
 							alive _vehicle
 						},
 						{
-							params ["_targetPos", "_caller", "_vehicle"];
+							params ["_targetArgs", "_caller", "_vehicle"];
 							private _shellActions = [];
 
-							{ // for every ammo type in this vehicle
-								private _shellType = _x;
+							private _targetPos = _targetArgs select 0;
+							private _targetObject = _targetArgs select 1;
 
-								if (_targetPos inRangeOfArtillery [[_vehicle], _shellType]) then {
-									private _shellAction = [
-										format["vicActionArty-%1-%2", netId _vehicle, _shellType], getText (configFile >> "CfgMagazines" >> _shellType >> "displayName"), "",
-										{
-											params ["_targetPos", "_caller", "_args"];
-											// Fire artillery here
-										},
-										{
-											params ["_targetPos", "_caller", "_args"];
-											true
-										},
-										{ // 5: Insert children code <CODE> (Optional)
-											params ["_targetPos", "_caller", "_args"];
-											private _vehicle = _args select 0;
-											private _shellType = _args select 1;
-											
-											private _amountActions = [];
+							private _artyAmmo = getArtilleryAmmo [_vehicle];
+							if ((typeOf _vehicle) isEqualTo "B_Ship_MRLS_01_F" && (_targetObject isNotEqualTo objNull)) then{
+								private _shellAction = [
+									format["vicActionArty-%1", netId _vehicle],"Cruise Missile", "",
+									{
+										params ["_targetObject", "_caller", "_vehicle"];
+
+										west reportRemoteTarget [_targetObject, 3600];
+										_targetObject confirmSensorTarget [west, true];
+
+										private _gridRef = [getPosASL _targetObject] call YOSHI_fnc_posToGrid;
+
+										private _groupLeaderGroup = group _caller;
+										private _groupLeaderCallsign = groupId _groupLeaderGroup;
+										[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef]] call YOSHI_fnc_sendSideText;
+										private _response = format ["Affirmative %1, Deploying Cruise Missile to %2, Out.", _groupLeaderCallsign, _gridRef];
+										
+										if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
+											hint _response;
+										} else {
+											[_vehicle, _response] spawn  {
+												params ["_vehicle", "_response"];
+												
+												sleep 3;
+
+												[_vehicle, _response] call YOSHI_fnc_sendSideText;
+												[_vehicle, "YOSHI_ArtilleryAck"] call YOSHI_fnc_playSideRadio;
+
+												waitUntil {sleep 5; unitReady _vehicle};
+
+												[_vehicle, "YOSHI_ArtilleryRoundsComplete"] call YOSHI_fnc_playSideRadio;
+												
+											};
+										};
+										
+
+										_vehicle fireAtTarget [_targetObject, "weapon_vls_01"];
+									},
+									{
+										params ["_targetObject", "_caller", "_vehicle"];
+										// Condition code here
+										true
+									},
+									{//5
+									},
+									_vehicle // 6 Params
+								] call ace_interact_menu_fnc_createAction;
+								_shellActions pushBack [_shellAction, [], _targetObject];
+							} else {
+								{ // for every ammo type in this vehicle
+									private _shellType = _x;
+
+									if (_targetPos inRangeOfArtillery [[_vehicle], _shellType]) then {
+										private _shellAction = [
+											format["vicActionArty-%1-%2", netId _vehicle, _shellType], getText (configFile >> "CfgMagazines" >> _shellType >> "displayName"), "",
 											{
-												// add actions for each amount
-												private _amount = _x;
-												private _amountAction = [
-													format["vicActionArty-%1-%2-%3-round(s)", netId _vehicle, _shellType, _amount], format["%1 Round(s)", _amount], "",
-													{
-														params ["_targetPos", "_caller", "_args"];
-														//statement
-														private _vehicle = _args select 0;
-														private _shellType = _args select 1;
-														private _amount = _args select 2;
+												params ["_targetPos", "_caller", "_args"];
+												// Fire artillery here
+											},
+											{
+												params ["_targetPos", "_caller", "_args"];
+												true
+											},
+											{ // 5: Insert children code <CODE> (Optional)
+												params ["_targetPos", "_caller", "_args"];
+												private _vehicle = _args select 0;
+												private _shellType = _args select 1;
+												
+												private _amountActions = [];
+												{
+													// add actions for each amount
+													private _amount = _x;
+													private _amountAction = [
+														format["vicActionArty-%1-%2-%3-round(s)", netId _vehicle, _shellType, _amount], format["%1 Round(s)", _amount], "",
+														{
+															params ["_targetPos", "_caller", "_args"];
+															//statement
+															private _vehicle = _args select 0;
+															private _shellType = _args select 1;
+															private _amount = _args select 2;
 
-														private _shellDisplayName = getText (configFile >> "CfgMagazines" >> _shellType >> "displayName");
-														private _shellDescription = _shellDisplayName;
-														if (_shellDisplayName find "Shell" == -1) then {
-															_shellDescription = format["%1 Munitions", _shellDisplayName];
-														};
-
-														private _gridRef = [_targetPos] call YOSHI_fnc_posToGrid;
-														private _ETA = _vehicle getArtilleryETA [_targetPos, _shellType];
-
-														private _groupLeaderGroup = group _caller;
-														private _groupLeaderCallsign = groupId _groupLeaderGroup;
-														[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] call YOSHI_fnc_sendSideText;
-														private _response = format ["Affirmative %1, %2 times %3 at %4. ETA: %5 seconds, Out.", _groupLeaderCallsign, _amount, _shellDescription, _gridRef, _ETA];
-														
-														if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
-															hint _response;
-														} else {
-															[_vehicle, _response] spawn  {
-																params ["_vehicle", "_response"];
-																
-																sleep 3;
-
-																[_vehicle, _response] call YOSHI_fnc_sendSideText;
-																[_vehicle, "YOSHI_ArtilleryAck"] call YOSHI_fnc_playSideRadio;
-
-																waitUntil {sleep 5; unitReady _vehicle};
-
-																[_vehicle, "YOSHI_ArtilleryRoundsComplete"] call YOSHI_fnc_playSideRadio;
-																
+															private _shellDisplayName = getText (configFile >> "CfgMagazines" >> _shellType >> "displayName");
+															private _shellDescription = _shellDisplayName;
+															if (_shellDisplayName find "Shell" == -1) then {
+																_shellDescription = format["%1 Munitions", _shellDisplayName];
 															};
-														};
-														
 
-														[_vehicle, [_targetPos, _shellType, _amount]] remoteExec ["doArtilleryFire", 2];
-														// BOOM
+															private _gridRef = [_targetPos] call YOSHI_fnc_posToGrid;
+															private _ETA = _vehicle getArtilleryETA [_targetPos, _shellType];
 
-													}, 
-													{
-														params ["_targetPos", "_caller", "_args"];
-														// Condition code here
-														true
-													},
-													{ // 5: Insert children code <CODE> (Optional)
-													},
-													[_vehicle, _shellType, _amount] // 6 Params
-												] call ace_interact_menu_fnc_createAction;
-												_amountActions pushBack [_amountAction, [], _targetPos];
+															private _groupLeaderGroup = group _caller;
+															private _groupLeaderCallsign = groupId _groupLeaderGroup;
+															[_caller, format ["%1, this is %2, Requesting immediate firesupport at %3. %4 times %5. Over.", groupId group _vehicle, _groupLeaderCallsign, _gridRef, _amount, _shellDescription]] call YOSHI_fnc_sendSideText;
+															private _response = format ["Affirmative %1, %2 times %3 at %4. ETA: %5 seconds, Out.", _groupLeaderCallsign, _amount, _shellDescription, _gridRef, _ETA];
+															
+															if (YOSHI_HOME_BASE_CONFIG_OBJECT get "SideHush") then {
+																hint _response;
+															} else {
+																[_vehicle, _response] spawn  {
+																	params ["_vehicle", "_response"];
+																	
+																	sleep 3;
 
-											} forEach [1,2,4,8];
+																	[_vehicle, _response] call YOSHI_fnc_sendSideText;
+																	[_vehicle, "YOSHI_ArtilleryAck"] call YOSHI_fnc_playSideRadio;
 
-											_amountActions
-										},
-										[_vehicle, _shellType] // 6 Params
-									] call ace_interact_menu_fnc_createAction;
-									_shellActions pushBack [_shellAction, [], _targetPos];
-								};
-							} forEach (getArtilleryAmmo [_vehicle]);
+																	waitUntil {sleep 5; unitReady _vehicle};
+
+																	[_vehicle, "YOSHI_ArtilleryRoundsComplete"] call YOSHI_fnc_playSideRadio;
+																	
+																};
+															};
+															
+
+															[_vehicle, [_targetPos, _shellType, _amount]] remoteExec ["doArtilleryFire", 2];
+															// BOOM
+
+														}, 
+														{
+															params ["_targetPos", "_caller", "_args"];
+															// Condition code here
+															true
+														},
+														{ // 5: Insert children code <CODE> (Optional)
+														},
+														[_vehicle, _shellType, _amount] // 6 Params
+													] call ace_interact_menu_fnc_createAction;
+													_amountActions pushBack [_amountAction, [], _targetPos];
+
+												} forEach [1,2,4,8];
+
+												_amountActions
+											},
+											[_vehicle, _shellType] // 6 Params
+										] call ace_interact_menu_fnc_createAction;
+										_shellActions pushBack [_shellAction, [], _targetPos];
+									};
+								} forEach (_artyAmmo);
+							};
+
 
 							_shellActions
 						},
@@ -139,7 +193,7 @@ private _targetAction = [
 						4,
 						[false, false, true, true, false]
 					] call ace_interact_menu_fnc_createAction;
-					_vehicleActions pushBack [_vehicleAction, [], _targetPos];
+					_vehicleActions pushBack [_vehicleAction, [], [_targetPos, _targetObject]];
 				};
 			} forEach _registeredVehicles;
 		} else {
