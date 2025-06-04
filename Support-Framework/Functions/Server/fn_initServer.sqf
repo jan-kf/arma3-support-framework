@@ -46,12 +46,13 @@ publicVariable "YOSHI_HELIPAD_INDEX";
 } forEach allMissionObjects "UAV_01_base_F";
 
 
-// {
-// 	_thread = [_x] spawn YOSHI_detectRockets;
+{
+	_thread = [_x] spawn YOSHI_detectRockets;
 
-// 	_x setVariable ["YOSHI_APS_Thread", _thread];
+	_x setVariable ["YOSHI_APS_Thread", _thread];
 
-// } forEach allMissionObjects "B_UGV_9RIFLES_F";
+} forEach allMissionObjects "B_UGV_9RIFLES_F";
+
 
 ///////////////////////////////////////////
 

@@ -15,6 +15,8 @@ private _isPerformingRestrictedTask = _currentTask in _restrictedTasks;
 // Check if the group has no active waypoint (e.g., not doing anything)
 _isInactive = (_currentWaypoint >= _waypointCount) || (waypointType [_group, _currentWaypoint] == "");
 
+_vic flyInHeight [20, true];
+
 if (_isInactive && !_isPerformingRestrictedTask) then {
 	private _destination = _vic getVariable ["destination", nil];
 	if (!isNil "_location") then {

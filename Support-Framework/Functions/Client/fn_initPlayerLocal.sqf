@@ -312,7 +312,7 @@ private _uavAction = [
 	{ // Condition for the action to be available
 		params ["_vic", "_caller", "_params"];
 
-		unitIsUAV _vic
+		unitIsUAV _vic && alive _vic
 	}, 
 	{
 		params ["_vic", "_caller", "_params"];
@@ -413,6 +413,7 @@ private _uavAction = [
 						];
 					};
 					"HelicopterExploBig" createVehicle _exploPos;
+					deleteVehicle _unit;
 				}];
 
 			}, 
@@ -780,6 +781,24 @@ private _reconScan = [
 ] call ace_interact_menu_fnc_createAction; 
 
 ["UAV_01_base_F", 1, ["ACE_SelfActions"], _reconScan, true] call ace_interact_menu_fnc_addActionToClass;
+
+private _shareLocationData = [ 
+	"shareLocationData",  
+	"Toggle Location Data On Map",  
+	"\a3\ui_f\data\igui\cfg\simpletasks\types\Radio_ca.paa",  
+	{ 
+		params ["_target", "_caller", "_args"];
+		
+		[_target, true] call YOSHI_toggleDisplayLocationDataOnMap;
+	},  
+	{ 
+		params ["_target", "_caller", "_args"];
+		
+		true
+	} 
+] call ace_interact_menu_fnc_createAction; 
+
+["UAV_01_base_F", 1, ["ACE_SelfActions"], _shareLocationData, true] call ace_interact_menu_fnc_addActionToClass;
 
 private _intimidationActions = [ 
 	"intimidationActions",  

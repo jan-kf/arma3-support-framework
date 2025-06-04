@@ -106,7 +106,6 @@ YOSHI_SUPPORT_CAS_CONFIG_OBJECT = createHashMapObject [_initParams];
 YOSHI_SUPPORT_ARTILLERY_CONFIG_OBJECT = createHashMapObject [_initParams];
 YOSHI_SUPPORT_RECON_CONFIG_OBJECT = createHashMapObject [_initParams];
 
-
 // Event handler for object creation
 addMissionEventHandler ["EntityCreated", {
     params ["_entity"];
@@ -134,17 +133,14 @@ addMissionEventHandler ["EntityCreated", {
         _entity setUnitTrait ["camouflageCoef", 0.3];
     };
 
-    // if (_entity isKindOf "B_UGV_9RIFLES_F") then {
-    //     _thread = [_x] spawn YOSHI_detectRockets;
+    if (typeOf _entity isEqualTo "B_UGV_9RIFLES_F") then {
+        _thread = [_entity] spawn YOSHI_detectRockets;
 
-    //     _x setVariable ["YOSHI_APS_Thread", _thread];
-        
-    // };
+        _entity setVariable ["YOSHI_APS_Thread", _thread];
+    };
 
 }];
 
-// at the moment, the index will not allow for deleted helipads, their last location will be considered available until this is on the main branch:
-// for when 2.18 is released:
 // Event handler for object deletion
 addMissionEventHandler ["EntityDeleted", {
     params ["_entity"];
@@ -281,7 +277,14 @@ YOSHI_SPAWN_SAVED_ITEM_ACTION = {
     private _fabricator = _params select 0;
     private _itemToAdd = _params select 1;
 
-    private _newObject = createVehicle [typeOf _itemToAdd, _fabricator, [], 0, "NONE"]; 
+    private _fabricatorPos = getPosATL _fabricator;
+    private _location = _fabricator;
+    if (_fabricatorPos select 2 > 200) then {
+        _location = [_fabricatorPos select 0, _fabricatorPos select 1, (_fabricatorPos select 2) - 10];
+    };
+
+
+    private _newObject = createVehicle [typeOf _itemToAdd, _location, [], 0, "NONE"]; 
     
     clearWeaponCargoGlobal _newObject; 
     clearMagazineCargoGlobal _newObject; 
@@ -366,6 +369,14 @@ YOSHI_playVehicleSoundLocal = {
 
 };
 
+YOSHI_stopVehicleSoundLocal = {
+    params ["_source"];
+
+    private _soundSource = _source getVariable ["YOSHI_soundSource", objNull];
+    deleteVehicle _soundSource;
+
+};
+
 YOSHI_playVehicleSoundGlobal = {
     params ["_soundName", "_source"];
 
@@ -376,7 +387,6 @@ YOSHI_playVehicleSoundGlobal = {
 YOSHI_stopVehicleSoundGlobal = {
     params ["_source"];
 
-	private _soundSource = _source getVariable ["YOSHI_soundSource", objNull];
-    deleteVehicle _soundSource;
+    [[_source], YOSHI_stopVehicleSoundLocal] remoteExec ["call", 0];
 
 };

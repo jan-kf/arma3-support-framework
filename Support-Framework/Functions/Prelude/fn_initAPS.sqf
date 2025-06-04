@@ -50,7 +50,7 @@ YOSHI_detectRockets = {
     
 	while {(alive _vehicle) && ((_vehicle getVariable ["APS_Charges", 0]) > 0)} do { 
         private _projectiles = nearestObjects [_vehicle, ["MissileBase", "RocketBase"], _range];
-		private _uavs = allUnitsUAV select { (_x isKindOf "Air") && ((getMass _x) < 500) && ((_x distance _vehicle) <= _range)}; 
+		private _uavs = allUnitsUAV select { (_x isKindOf "Air") && ((getMass _x) < 1000) && ((_x distance _vehicle) <= _range)}; 
 
         { 	
 			private _relativeDir = _x getRelDir _vehicle;

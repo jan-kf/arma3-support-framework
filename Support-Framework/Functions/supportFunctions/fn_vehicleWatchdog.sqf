@@ -71,7 +71,7 @@ while {_vic getVariable ["isRegistered", false] && alive _vic} do {
 
 	switch (_task) do
 	{
-		case "resistered": {
+		case "registered": {
 			/*
 			vic was just registered, should probably check that it's at base
 			if it's not at base, should probably have it go back to base to sort itself out
