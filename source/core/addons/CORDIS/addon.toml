@@ -1,0 +1,3 @@
+# The imported addon intentionally retains its historical flat CORDIS prefix.
+ignore_pboprefix = true
+

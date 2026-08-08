@@ -1,0 +1,3 @@
+# The imported addon intentionally retains its historical flat FieldUtils prefix.
+ignore_pboprefix = true
+

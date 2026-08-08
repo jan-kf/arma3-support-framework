@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+HEMTT="$ROOT/.tools/hemtt"
+COMPONENTS=(core field-utilities advanced-systems visual-support-tablet)
+MOD_DIRS=("@CORDIS" "@FieldUtils" "@AdvSys" "@VIGIL_Support_Tablet")
+PBO_NAMES=(CORDIS FieldUtils AdvSys VIGIL)
+
+usage() {
+    cat <<'EOF'
+Usage: ./pontifex COMMAND
+
+  check           Run HEMTT static checks for all four mods
+  build           Check and build all four mods into build/current
+  test            Run the phase-one static test suite
+  status          Show tool, Git, artifact, and server-foundation status
+  server status   Show dedicated-server foundation status
+  server start    Reserved for the phase-two isolated test server
+  server stop     Reserved for the phase-two isolated test server
+  release         Reserved until versioning and signing policy are established
+EOF
+}
+
+ensure_hemtt() {
+    "$ROOT/tools/bootstrap-hemtt"
+}
+
+run_check() {
+    ensure_hemtt
+    local component
+    for component in "${COMPONENTS[@]}"; do
+        echo "== check: $component =="
+        (cd "$ROOT/source/$component" && "$HEMTT" check)
+    done
+}
+
+run_build() {
+    ensure_hemtt
+    local stage="$ROOT/build/.current.$$"
+    local component mod_dir pbo_name built_pbo
+    local i
+    mkdir -p "$stage"
+    trap 'rm -rf "$stage"' EXIT
+    for i in "${!COMPONENTS[@]}"; do
+        component="${COMPONENTS[$i]}"
+        mod_dir="${MOD_DIRS[$i]}"
+        pbo_name="${PBO_NAMES[$i]}"
+        echo "== build: $component =="
+        (cd "$ROOT/source/$component" && "$HEMTT" build)
+        mkdir -p "$stage/$mod_dir"
+        cp -a "$ROOT/source/$component/.hemttout/build/." "$stage/$mod_dir/"
+        built_pbo=$(find "$stage/$mod_dir/addons" -maxdepth 1 -type f -name '*.pbo' -print -quit)
+        mv "$built_pbo" "$stage/$mod_dir/addons/$pbo_name.pbo"
+    done
+    rm -rf "$ROOT/build/current"
+    mv "$stage" "$ROOT/build/current"
+    trap - EXIT
+    echo "Build complete: $ROOT/build/current"
+}
+
+show_server_status() {
+    echo "Pontifex isolated server: not installed (phase two)"
+    echo "Planned runtime: $ROOT/server/runtime"
+    echo "Profiles/config: $ROOT/server/config"
+    echo "Test missions: $ROOT/tests/missions"
+    echo "Run logs/results: $ROOT/runs"
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx pufferpanel; then
+        echo "Legacy PufferPanel: running separately at /mnt/services/arma3-server"
+    else
+        echo "Legacy PufferPanel: not detected as running"
+    fi
+}
+
+case "${1:-help}" in
+    check) run_check ;;
+    build) run_build ;;
+    test)
+        run_check
+        echo "PASS: phase-one static checks (dedicated-server integration tests are not implemented yet)"
+        ;;
+    status)
+        "$HEMTT" --version 2>/dev/null || echo "HEMTT: not bootstrapped (run ./pontifex check)"
+        git -C "$ROOT" status --short --branch 2>/dev/null || echo "Git: not initialized"
+        find "$ROOT/build/current" -type f -name '*.pbo' -print 2>/dev/null || true
+        show_server_status
+        ;;
+    server)
+        case "${2:-status}" in
+            status) show_server_status ;;
+            start|stop)
+                echo "Pontifex isolated server is not installed; implement phase two before using '$2'." >&2
+                exit 2
+                ;;
+            *) usage; exit 2 ;;
+        esac
+        ;;
+    release)
+        echo "Release is intentionally disabled until versioning and private-key handling are established." >&2
+        exit 2
+        ;;
+    help|-h|--help) usage ;;
+    *) usage; exit 2 ;;
+esac
+

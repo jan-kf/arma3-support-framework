@@ -1,0 +1,11 @@
+name = "Pontifex: Advanced Systems"; // The name of your mod
+picture = "advSys_1x2.paa"; // Path to the mod icon
+logo = "advSys_1x1.paa"; // Small icon displayed in the main menu
+logoSmall = "yoshi_nobg.paa";
+logoOver = ""; // Mouse over icon in the main menu
+tooltip = ""; // Tooltip text when mouse is over the icon
+tooltipOwned = ""; // Tooltip text when mouse is over the icon and the mod is owned by the player
+action = ""; // URL to mod website or action when clicked
+actionName = "Website"; // Text displayed in the main menu as the action
+overview = "A suite of advanced systems by Yoshi"; // A brief overview or description of your mod
+author = "Yoshi"; // Author name

@@ -1,0 +1,18 @@
+name = "Pontifex Advanced Systems"
+prefix = "advsys"
+
+[version]
+major = 0
+minor = 1
+patch = 0
+git_hash = 0
+
+[files]
+include = ["UPSTREAM_README.md", "advSys_1x1.paa", "advSys_1x2.paa", "yoshi_nobg.paa"]
+
+[hemtt.check]
+pdrive = "ignore"
+
+[hemtt.build]
+pdrive = "ignore"
+

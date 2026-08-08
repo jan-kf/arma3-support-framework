@@ -1,0 +1,4 @@
+/*
+CORDIS settings bootstrap.
+Placeholder for addon settings as the runtime layer expands.
+*/

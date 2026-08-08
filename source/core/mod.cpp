@@ -1,0 +1,11 @@
+name = "Pontifex: CORDIS";
+picture = "cordis.paa";
+logo = "cordis.paa";
+logoSmall = "cordis.paa";
+logoOver = "";
+tooltip = "";
+tooltipOwned = "";
+action = "";
+actionName = "Website";
+overview = "Common Operational Runtime & Distributed Integration Services.";
+author = "Yoshi";
