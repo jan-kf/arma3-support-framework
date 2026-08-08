@@ -27,6 +27,8 @@ VIGIL includes Arma's loose `\a3\ui_f\hpp\defineDIKCodes.inc`, which is not ship
 
 On Gustav, `./pontifex build` successfully produced and checksum-validated four unsigned development PBOs with embedded prefixes `CORDIS`, `FieldUtils`, `AdvSys`, and `VIGIL`. They are package-ready beneath `build/current`. HEMTT reports imported source-quality warnings (including CfgPatches omissions and SQF type/style findings) and warns that Arma 3 Tools is unavailable for BI-native binarization; no build-stopping error remains. These warnings should be triaged separately from the environment bootstrap.
 
+Runtime dependency inspection found CBA required by all four mods, ACE required by Field Utilities and Advanced Systems, and Zeus Enhanced (`zen_main`) required by Field Utilities. These dependencies are not present in the old server tree and must be pinned/provisioned for phase-two integration tests.
+
 ## Legacy Arma/PufferPanel inventory
 
 `/mnt/services/arma3-server` occupies about 5.5 GiB. Its Docker Compose file runs `pufferpanel/pufferpanel:latest`, mounts the Docker socket, and declares UI/SFTP bindings to the historical host address `192.168.1.115`. The container is currently running, but Docker reports no effective published ports. PufferPanel's process and database are operational; the managed Arma server itself is not running.
