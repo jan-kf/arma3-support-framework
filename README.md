@@ -34,7 +34,7 @@ HEMTT 1.20.1 is project-bootstrapped on first use and checksum-verified. The rep
 - Future per-run logs and machine results: `runs/`
 - Preserved original import: `archive/Pontifex-original.zip`
 
-No Pontifex server process exists yet, so `server start` and `server stop` deliberately refuse to act. The unrelated legacy PufferPanel installation remains preserved and running from `/mnt/services/arma3-server`; do not use it as the Pontifex test server.
+No Pontifex server process exists yet, so `server start` and `server stop` deliberately refuse to act. The unrelated legacy PufferPanel installation remains preserved and running from `/mnt/services/arma3-server`; do not use it as the Pontifex test server. Its status/logs are available with `docker compose -f /mnt/services/arma3-server/docker-compose.yml ps` and `docker compose -f /mnt/services/arma3-server/docker-compose.yml logs`; deliberately start or stop it with the corresponding `up -d` or `stop` command.
 
 ## Unfinished / next step
 
