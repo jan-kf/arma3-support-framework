@@ -80,7 +80,11 @@ case "${1:-help}" in
         echo "PASS: phase-one static checks (dedicated-server integration tests are not implemented yet)"
         ;;
     status)
-        "$HEMTT" --version 2>/dev/null || echo "HEMTT: not bootstrapped (run ./pontifex check)"
+        if [[ -x "$HEMTT" ]]; then
+            "$HEMTT" --version 2>&1 || true
+        else
+            echo "HEMTT: not bootstrapped (run ./pontifex check)"
+        fi
         git -C "$ROOT" status --short --branch 2>/dev/null || echo "Git: not initialized"
         find "$ROOT/build/current" -type f -name '*.pbo' -print 2>/dev/null || true
         show_server_status
