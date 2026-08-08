@@ -1,0 +1,23 @@
+hostname = "Pontifex automated integration test";
+password = "";
+passwordAdmin = "";
+maxPlayers = 1;
+persistent = 1;
+verifySignatures = 0;
+BattlEye = 0;
+allowedFilePatching = 0;
+kickDuplicate = 0;
+disableVoN = 1;
+vonCodecQuality = 0;
+logFile = "server-console.log";
+timeStampFormat = "full";
+
+class Missions {
+    class PontifexIntegration {
+        template = "Pontifex_Integration.Stratis";
+        difficulty = "Regular";
+        class Params {
+            ForceFailure = @FORCE_FAILURE@;
+        };
+    };
+};

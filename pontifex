@@ -13,11 +13,12 @@ Usage: ./pontifex COMMAND
 
   check           Run HEMTT static checks for all four mods
   build           Check and build all four mods into build/current
-  test            Run the phase-one static test suite
+  test            Run the fast/static test suite
+  test dedicated  Build and run the real dedicated-server integration test
   status          Show tool, Git, artifact, and server-foundation status
-  server status   Show dedicated-server foundation status
-  server start    Reserved for the phase-two isolated test server
-  server stop     Reserved for the phase-two isolated test server
+  server status   Show the Pontifex-controlled server and dependency status
+  server stop     Stop only the validated Pontifex-controlled server process
+  dependencies    Show pinned dependency status (add 'provision' to install)
   release         Reserved until versioning and signing policy are established
 EOF
 }
@@ -33,6 +34,8 @@ run_check() {
         echo "== check: $component =="
         (cd "$ROOT/source/$component" && "$HEMTT" check)
     done
+    python3 -m py_compile "$ROOT/tools/pontifex_server.py"
+    python3 -m json.tool "$ROOT/server/dependencies.lock.json" >/dev/null
 }
 
 run_build() {
@@ -60,24 +63,23 @@ run_build() {
 }
 
 show_server_status() {
-    echo "Pontifex isolated server: not installed (phase two)"
-    echo "Planned runtime: $ROOT/server/runtime"
-    echo "Profiles/config: $ROOT/server/config"
-    echo "Test missions: $ROOT/tests/missions"
-    echo "Run logs/results: $ROOT/runs"
-    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx pufferpanel; then
-        echo "Legacy PufferPanel: running separately at /mnt/services/arma3-server"
-    else
-        echo "Legacy PufferPanel: not detected as running"
-    fi
+    python3 "$ROOT/tools/pontifex_server.py" status
 }
 
 case "${1:-help}" in
     check) run_check ;;
     build) run_build ;;
     test)
+        if [[ "${2:-}" == "dedicated" ]]; then
+            shift 2
+            exec python3 "$ROOT/tools/pontifex_server.py" test "$@"
+        fi
+        if [[ $# -ne 1 ]]; then
+            usage
+            exit 2
+        fi
         run_check
-        echo "PASS: phase-one static checks (dedicated-server integration tests are not implemented yet)"
+        echo "PASS: fast/static checks"
         ;;
     status)
         if [[ -x "$HEMTT" ]]; then
@@ -92,12 +94,16 @@ case "${1:-help}" in
     server)
         case "${2:-status}" in
             status) show_server_status ;;
-            start|stop)
-                echo "Pontifex isolated server is not installed; implement phase two before using '$2'." >&2
+            stop) exec python3 "$ROOT/tools/pontifex_server.py" stop ;;
+            start)
+                echo "Persistent/manual server start is reserved for a later interactive-test phase." >&2
                 exit 2
                 ;;
             *) usage; exit 2 ;;
         esac
+        ;;
+    dependencies)
+        exec python3 "$ROOT/tools/pontifex_server.py" dependencies "${2:-status}"
         ;;
     release)
         echo "Release is intentionally disabled until versioning and private-key handling are established." >&2
@@ -106,4 +112,3 @@ case "${1:-help}" in
     help|-h|--help) usage ;;
     *) usage; exit 2 ;;
 esac
-

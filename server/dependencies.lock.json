@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "dependencies": [
+    {
+      "id": "cba",
+      "name": "Community Base Addons A3",
+      "version": "3.18.6",
+      "directory": "@CBA_A3",
+      "archive": "CBA_A3_v3.18.6.zip",
+      "url": "https://github.com/CBATeam/CBA_A3/releases/download/v3.18.6/CBA_A3_v3.18.6.zip",
+      "sha256": "80fedfbd9cb57b2393a34c84f80a5268ce8a51b31013976d84232be04c72bf8d"
+    },
+    {
+      "id": "ace",
+      "name": "ACE3",
+      "version": "3.21.0",
+      "directory": "@ace",
+      "archive": "ace3_3.21.0.zip",
+      "url": "https://github.com/acemod/ACE3/releases/download/v3.21.0/ace3_3.21.0.zip",
+      "sha256": "48cb7a90e5200b0b313dff05c4b57b828ca56780c03c0e6de07067a28c544acc"
+    },
+    {
+      "id": "zen",
+      "name": "Zeus Enhanced",
+      "version": "1.15.1",
+      "directory": "@zen",
+      "archive": "zen_1.15.1.zip",
+      "url": "https://github.com/zen-mod/ZEN/releases/download/v1.15.1/zen_1.15.1.zip",
+      "sha256": "740aa11d1d6c3afa6cd4d8301aac3809bb82a53f9f96621eceba46c1d58f6eea"
+    }
+  ]
+}

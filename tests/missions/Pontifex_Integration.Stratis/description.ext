@@ -1,0 +1,19 @@
+onLoadName = "Pontifex Dedicated Integration Test";
+author = "Pontifex test harness";
+disabledAI = 1;
+enableDebugConsole = 0;
+
+class Header {
+    gameType = COOP;
+    minPlayers = 0;
+    maxPlayers = 1;
+};
+
+class Params {
+    class ForceFailure {
+        title = "Force harness failure";
+        values[] = {0, 1};
+        texts[] = {"No", "Yes"};
+        default = 0;
+    };
+};

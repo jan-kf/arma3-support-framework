@@ -3,5 +3,8 @@
 /release/
 /runs/
 /server/runtime/
+/server/dependencies/
+/server/cache/
 /source/*/.hemttout/
-
+**/__pycache__/
+*.pyc
