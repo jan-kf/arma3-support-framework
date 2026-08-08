@@ -1,4 +1,4 @@
-onLoadName = "Pontifex Dedicated Integration Test";
+onLoadName = "Pontifex Integration Test";
 author = "Pontifex test harness";
 disabledAI = 1;
 enableDebugConsole = 0;
@@ -15,5 +15,18 @@ class Params {
         values[] = {0, 1};
         texts[] = {"No", "Yes"};
         default = 0;
+    };
+    class RequireClient {
+        title = "Require one real player client";
+        values[] = {0, 1};
+        texts[] = {"No", "Yes"};
+        default = 0;
+    };
+};
+
+class CfgRemoteExec {
+    class Functions {
+        mode = 1;
+        jip = 0;
     };
 };

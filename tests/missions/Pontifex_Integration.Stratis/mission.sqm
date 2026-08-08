@@ -6,7 +6,7 @@ class EditorData {
     scaleGridStep = 1;
     autoGroupingDist = 10;
     toggles = 1;
-    class ItemIDProvider { nextID = 1; };
+    class ItemIDProvider { nextID = 2; };
     class MarkerIDProvider { nextID = 1; };
     class Camera {
         pos[] = {1938.22, 15.76, 5755.04};
@@ -58,5 +58,21 @@ class Mission {
         wavesForced = 1;
         windForced = 1;
     };
-    class Entities { items = 0; };
+    class Entities {
+        items = 1;
+        class Item0 {
+            dataType = "Object";
+            class PositionInfo {
+                position[] = {1938.22, 5, 5755.04};
+                angles[] = {0, 0, 0};
+            };
+            side = "West";
+            flags = 7;
+            class Attributes {
+                isPlayer = 1;
+            };
+            id = 1;
+            type = "B_Soldier_F";
+        };
+    };
 };

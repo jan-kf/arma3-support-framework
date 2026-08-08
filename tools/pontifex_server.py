@@ -68,9 +68,11 @@ EXPECTED_ASSERTIONS = {
     "core.postInit",
     "harness.forcedFailure",
 }
-PROTOCOL_RE = re.compile(r"PONTIFEX_TEST\|(PASS|FAIL)\|([^|\r\n\"]+)(?:\|([^\r\n\"]*))?")
+PROTOCOL_RE = re.compile(
+    r"PONTIFEX_TEST\|(PASS|FAIL)\|(server|client-a)\|([^|\r\n\"]+)(?:\|([^\r\n\"]*))?"
+)
 COMPLETE_RE = re.compile(
-    r"PONTIFEX_TEST\|COMPLETE\|status=(PASS|FAIL)\|assertions=(\d+)\|failures=(\d+)"
+    r"PONTIFEX_TEST\|COMPLETE\|(server|client-a)\|status=(PASS|FAIL)\|assertions=(\d+)\|failures=(\d+)"
 )
 
 
@@ -234,6 +236,21 @@ def prepare_runtime() -> None:
         shutil.copytree(source, deployed)
         source_pbo = deployed / "addons" / pbo_name
         source_pbo.replace(deployed / "addons" / pbo_name.lower())
+    dependency_mods = RUNTIME / "dependency-mods"
+    shutil.rmtree(dependency_mods, ignore_errors=True)
+    dependency_mods.mkdir()
+    for directory in ("@CBA_A3", "@ace", "@zen"):
+        source = DEPENDENCIES / directory
+        deployed = dependency_mods / directory
+
+        def link_or_copy(src: str, dst: str) -> str:
+            try:
+                os.link(src, dst)
+                return dst
+            except OSError:
+                return shutil.copy2(src, dst)
+
+        shutil.copytree(source, deployed, copy_function=link_or_copy)
     official_mods = RUNTIME / "official-mods"
     shutil.rmtree(official_mods, ignore_errors=True)
     official_mods.mkdir()
@@ -246,9 +263,9 @@ def prepare_runtime() -> None:
             encoding="utf-8",
         )
     mod_aliases = {
-        "@cba_a3": DEPENDENCIES / "@CBA_A3",
-        "@ace": DEPENDENCIES / "@ace",
-        "@zen": DEPENDENCIES / "@zen",
+        "@cba_a3": dependency_mods / "@CBA_A3",
+        "@ace": dependency_mods / "@ace",
+        "@zen": dependency_mods / "@zen",
         "@cordis": runtime_mods / "@cordis",
         "@fieldutils": runtime_mods / "@fieldutils",
         "@advsys": runtime_mods / "@advsys",
@@ -344,14 +361,20 @@ def parse_protocol(text: str) -> tuple[list[dict], dict | None]:
     assertions = []
     for match in PROTOCOL_RE.finditer(text):
         assertions.append(
-            {"status": match.group(1), "name": match.group(2), "detail": (match.group(3) or "").strip()}
+            {
+                "status": match.group(1),
+                "origin": match.group(2),
+                "name": match.group(3),
+                "detail": (match.group(4) or "").strip(),
+            }
         )
     complete_match = None
     for match in COMPLETE_RE.finditer(text):
         complete_match = {
-            "status": match.group(1),
-            "assertions": int(match.group(2)),
-            "failures": int(match.group(3)),
+            "origin": match.group(1),
+            "status": match.group(2),
+            "assertions": int(match.group(3)),
+            "failures": int(match.group(4)),
         }
     return assertions, complete_match
 
@@ -445,7 +468,10 @@ def run_dedicated(force_failure: bool, timeout_seconds: int) -> int:
 
             config_template = (SERVER / "config" / "dedicated.cfg.in").read_text(encoding="utf-8")
             (run_dir / "server.cfg").write_text(
-                config_template.replace("@FORCE_FAILURE@", "1" if force_failure else "0"), encoding="utf-8"
+                config_template.replace("@FORCE_FAILURE@", "1" if force_failure else "0").replace(
+                    "@REQUIRE_CLIENT@", "0"
+                ),
+                encoding="utf-8",
             )
             shutil.copy2(SERVER / "config" / "basic.cfg", run_dir / "basic.cfg")
 

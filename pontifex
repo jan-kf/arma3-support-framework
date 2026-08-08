@@ -15,9 +15,15 @@ Usage: ./pontifex COMMAND
   build           Check and build all four mods into build/current
   test            Run the fast/static test suite
   test dedicated  Build and run the real dedicated-server integration test
+  test multiplayer Build and run server plus one real automated player client
   status          Show tool, Git, artifact, and server-foundation status
   server status   Show the Pontifex-controlled server and dependency status
   server stop     Stop only the validated Pontifex-controlled server process
+  client status   Show real-player image, Steam session, and Arma install status
+  client image    Build the project-local Steam/Proton/Vulkan client image
+  client preflight Prove RTX Vulkan rendering through the virtual display
+  client login    Start loopback-only VNC for initial Steam login/install
+  client stop-login Stop the validated Steam login container
   dependencies    Show pinned dependency status (add 'provision' to install)
   release         Reserved until versioning and signing policy are established
 EOF
@@ -35,6 +41,7 @@ run_check() {
         (cd "$ROOT/source/$component" && "$HEMTT" check)
     done
     python3 -m py_compile "$ROOT/tools/pontifex_server.py"
+    python3 -m py_compile "$ROOT/tools/pontifex_multiplayer.py"
     python3 -m json.tool "$ROOT/server/dependencies.lock.json" >/dev/null
 }
 
@@ -70,6 +77,10 @@ case "${1:-help}" in
     check) run_check ;;
     build) run_build ;;
     test)
+        if [[ "${2:-}" == "multiplayer" ]]; then
+            shift 2
+            exec python3 "$ROOT/tools/pontifex_multiplayer.py" test "$@"
+        fi
         if [[ "${2:-}" == "dedicated" ]]; then
             shift 2
             exec python3 "$ROOT/tools/pontifex_server.py" test "$@"
@@ -93,14 +104,23 @@ case "${1:-help}" in
         ;;
     server)
         case "${2:-status}" in
-            status) show_server_status ;;
-            stop) exec python3 "$ROOT/tools/pontifex_server.py" stop ;;
+            status)
+                show_server_status
+                python3 "$ROOT/tools/pontifex_multiplayer.py" status
+                ;;
+            stop)
+                python3 "$ROOT/tools/pontifex_server.py" stop
+                exec python3 "$ROOT/tools/pontifex_multiplayer.py" stop
+                ;;
             start)
                 echo "Persistent/manual server start is reserved for a later interactive-test phase." >&2
                 exit 2
                 ;;
             *) usage; exit 2 ;;
         esac
+        ;;
+    client)
+        exec python3 "$ROOT/tools/pontifex_multiplayer.py" client "${2:-status}"
         ;;
     dependencies)
         exec python3 "$ROOT/tools/pontifex_server.py" dependencies "${2:-status}"

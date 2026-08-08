@@ -18,6 +18,7 @@ class Missions {
         difficulty = "Regular";
         class Params {
             ForceFailure = @FORCE_FAILURE@;
+            RequireClient = @REQUIRE_CLIENT@;
         };
     };
 };
