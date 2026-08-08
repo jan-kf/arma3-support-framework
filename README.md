@@ -16,12 +16,14 @@ Run these from `/mnt/services/pontifex`:
 ./pontifex build
 ./pontifex test
 ./pontifex test dedicated
+./pontifex test multiplayer
 ./pontifex status
 ./pontifex server status
 ./pontifex server stop
+./pontifex client status
 ```
 
-`check` performs HEMTT config/SQF checks plus harness syntax checks. `build` produces four unsigned development PBOs under `build/current/`. Plain `test` is the fast/static suite. `test dedicated` builds, provisions dependencies, launches a real loopback-only Arma dedicated server, runs the Stratis mission assertions, writes JSON/log evidence, and stops the exact process it launched.
+`check` performs HEMTT config/SQF checks plus harness syntax checks. `build` produces four unsigned development PBOs under `build/current/`. Plain `test` is the fast/static suite. `test dedicated` runs the real server-only test. `test multiplayer` is the one-real-player experiment: it creates an isolated Docker bridge, launches the server and a normal Steam/Proton player client at different virtual addresses, parses both origins, and removes its containers/network.
 
 Inspect the latest dedicated result with:
 
@@ -31,6 +33,16 @@ less runs/latest/server.rpt
 ```
 
 Each run is retained under `runs/<run-id>/`. `server status` shows the controlled process, pinned dependencies, and latest result. `server stop` validates the recorded PID, process start time, process group, and command before stopping anything.
+
+The multiplayer command currently requires one manual, credential-bearing provisioning step. Build and verify the credential-free image with:
+
+```bash
+./pontifex client image
+./pontifex client preflight
+./pontifex client login
+```
+
+`client login` exposes Steam VNC only on Gustav `127.0.0.1:5903`. Reach it through an SSH tunnel, sign in directly to Steam, force a Proton tool for Arma 3, and install the Windows client. Then run `./pontifex client stop-login` and `./pontifex client status`. Steam state and the large game installation remain ignored under `client/runtime/`; never put a password in a command or repository file.
 
 HEMTT 1.20.1 is project-bootstrapped on first use and checksum-verified. The repository contains source and tooling configuration; generated `.hemttout`, `build`, `release`, `runs`, and server runtime files are ignored.
 
@@ -51,6 +63,6 @@ The Arma 3 2.20.152984 base files are currently shared read-only from the preser
 
 ## Unfinished / next step
 
-Phase three should add an automated client/locality test while preserving this server-only smoke test, then add `test --interactive`. Before removing the complete legacy tree, relocate or freshly provision its Steam payload into a Pontifex-owned base-install location. Establish versioning and protected private-key storage before enabling `release`.
+Phase Three client/network tooling is present, but a licensed Steam player session and Windows Arma client must be provisioned before its real-player assertions can be accepted. After that proof, add Client B/JIP/locality coverage and then `test --interactive`. Before removing the complete legacy tree, relocate or freshly provision its Steam payload into a Pontifex-owned base-install location. Establish versioning and protected private-key storage before enabling `release`.
 
-See `docs/dedicated-testing.md` for the lifecycle/protocol and `docs/reconnaissance.md` for the original inventory.
+See `docs/dedicated-testing.md` for the server lifecycle, `docs/multiplayer-testing.md` for the client experiment and secure provisioning boundary, and `docs/reconnaissance.md` for the original inventory.

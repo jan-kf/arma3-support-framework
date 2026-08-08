@@ -16,7 +16,7 @@ Arma 3 Server 2.20.152984 (Steam build 18981937) is reused from:
 
 The executable and base/DLC PBO banks are exposed through symlinks in `server/runtime/install`. PufferPanel is never invoked. Pontifex owns the generated Linux-normalized mod deployment, mission, server config, dependency packages, runtime state, per-run profile, and logs. The legacy payload must remain until it is moved or replaced with a project-owned SteamCMD installation.
 
-Linux Arma requires lowercase mod/PBO paths. Build artifacts retain their historical names; `server/runtime/mods` contains generated lowercase deployment copies. Installed official DLC PBO banks are wrapped as generated test mods because the legacy server did not activate those banks itself.
+Linux Arma requires lowercase mod/PBO paths. Build artifacts retain their historical names; `server/runtime/mods` contains generated lowercase deployment copies. Dependency releases are hard-linked into `server/runtime/dependency-mods` so both host and container lifecycles see a physical game-directory deployment. Installed official DLC PBO banks are wrapped as generated test mods because the legacy server did not activate those banks itself.
 
 ## Dependencies
 
@@ -43,9 +43,9 @@ The source mission is `tests/missions/Pontifex_Integration.Stratis`. It has no p
 Protocol records are single, pipe-delimited RPT lines:
 
 ```text
-PONTIFEX_TEST|PASS|core.config|
-PONTIFEX_TEST|FAIL|harness.forcedFailure|enabled=true
-PONTIFEX_TEST|COMPLETE|status=PASS|assertions=13|failures=0
+PONTIFEX_TEST|PASS|server|core.config|
+PONTIFEX_TEST|FAIL|server|harness.forcedFailure|enabled=true
+PONTIFEX_TEST|COMPLETE|server|status=PASS|assertions=13|failures=0
 ```
 
 Success requires all expected assertion names, no FAIL records, matching assertion counts, and an explicit PASS completion marker. Process uptime alone never counts as success. `--force-failure` is a harness-validation option and must return nonzero.
