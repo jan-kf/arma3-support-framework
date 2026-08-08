@@ -15,11 +15,22 @@ Run these from `/mnt/services/pontifex`:
 ./pontifex check
 ./pontifex build
 ./pontifex test
+./pontifex test dedicated
 ./pontifex status
 ./pontifex server status
+./pontifex server stop
 ```
 
-`check` performs HEMTT config/SQF checks. `build` produces four unsigned development PBOs under `build/current/`. `test` currently means the static phase-one checks; it explicitly does not start Arma.
+`check` performs HEMTT config/SQF checks plus harness syntax checks. `build` produces four unsigned development PBOs under `build/current/`. Plain `test` is the fast/static suite. `test dedicated` builds, provisions dependencies, launches a real loopback-only Arma dedicated server, runs the Stratis mission assertions, writes JSON/log evidence, and stops the exact process it launched.
+
+Inspect the latest dedicated result with:
+
+```bash
+jq . runs/latest/results.json
+less runs/latest/server.rpt
+```
+
+Each run is retained under `runs/<run-id>/`. `server status` shows the controlled process, pinned dependencies, and latest result. `server stop` validates the recorded PID, process start time, process group, and command before stopping anything.
 
 HEMTT 1.20.1 is project-bootstrapped on first use and checksum-verified. The repository contains source and tooling configuration; generated `.hemttout`, `build`, `release`, `runs`, and server runtime files are ignored.
 
@@ -34,11 +45,12 @@ HEMTT 1.20.1 is project-bootstrapped on first use and checksum-verified. The rep
 - Future per-run logs and machine results: `runs/`
 - Preserved original import: `archive/Pontifex-original.zip`
 
-No Pontifex server process exists yet, so `server start` and `server stop` deliberately refuse to act. The unrelated legacy PufferPanel installation remains preserved and running from `/mnt/services/arma3-server`; do not use it as the Pontifex test server. Its status/logs are available with `docker compose -f /mnt/services/arma3-server/docker-compose.yml ps` and `docker compose -f /mnt/services/arma3-server/docker-compose.yml logs`; deliberately start or stop it with the corresponding `up -d` or `stop` command.
+Dependencies are pinned in `server/dependencies.lock.json`, installed outside Git under `server/dependencies/`, and checksum-verified. Provision explicitly with `./pontifex dependencies provision`; dedicated tests provision missing packages automatically. Updates require changing the pinned version, URL, and SHA-256 in the lock file. No Steam credentials are used for CBA, ACE, or Zeus Enhanced.
+
+The Arma 3 2.20.152984 base files are currently shared read-only from the preserved legacy Steam installation through a generated view under `server/runtime/`; test config, dependencies, missions, profiles, deployment copies, state, and logs are Pontifex-owned. The lifecycle does not call PufferPanel. The old panel remains separately managed at `/mnt/services/arma3-server`.
 
 ## Unfinished / next step
 
-Phase two should install a clean Arma 3 dedicated runtime under `server/runtime`, add a minimal test mission and config, deploy the four development builds, run the server with a per-run profile directory, parse its RPT into PASS/FAIL JSON, and then add `test --interactive` behavior. Establish versioning and protected private-key storage before enabling `release`.
+Phase three should add an automated client/locality test while preserving this server-only smoke test, then add `test --interactive`. Before removing the complete legacy tree, relocate or freshly provision its Steam payload into a Pontifex-owned base-install location. Establish versioning and protected private-key storage before enabling `release`.
 
-See `docs/reconnaissance.md` for the import and legacy-server inventory.
-
+See `docs/dedicated-testing.md` for the lifecycle/protocol and `docs/reconnaissance.md` for the original inventory.
