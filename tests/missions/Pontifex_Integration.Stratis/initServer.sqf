@@ -51,7 +51,10 @@
             missionNamespace setVariable ["PONTIFEX_clientConfirmed", _nonce];
         };
 
-        private _clientDeadline = diag_tickTime + 90;
+        // A clean authenticated Steam/Proton client can take several minutes
+        // to complete its first full Arma load before connecting. Keep this
+        // bounded, but do not fail the server before the real player exists.
+        private _clientDeadline = diag_tickTime + 600;
         waitUntil {
             uiSleep 0.25;
             (diag_tickTime > _clientDeadline) ||

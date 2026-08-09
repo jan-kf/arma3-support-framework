@@ -741,24 +741,25 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int) -> int:
                 time.sleep(1)
 
             client_mods = [
-                r"Z:\pontifex\server\runtime\dependency-mods\@CBA_A3",
-                r"Z:\pontifex\server\runtime\dependency-mods\@ace",
-                r"Z:\pontifex\server\runtime\dependency-mods\@zen",
-                r"Z:\pontifex\server\runtime\mods\@cordis",
-                r"Z:\pontifex\server\runtime\mods\@fieldutils",
-                r"Z:\pontifex\server\runtime\mods\@advsys",
-                r"Z:\pontifex\server\runtime\mods\@vigil",
+                r"S:\steamapps\common\Arma 3\@CBA_A3",
+                r"S:\steamapps\common\Arma 3\@ace",
+                r"S:\steamapps\common\Arma 3\@zen",
+                r"S:\steamapps\common\Arma 3\@cordis",
+                r"S:\steamapps\common\Arma 3\@fieldutils",
+                r"S:\steamapps\common\Arma 3\@advsys",
+                r"S:\steamapps\common\Arma 3\@vigil",
             ]
             client_args = [
                 "-noLauncher",
                 "-noSplash",
                 "-skipIntro",
+                "-world=empty",
                 "-noPause",
                 "-noSound",
                 "-noBattlEye",
                 "-window",
-                "-x=640",
-                "-y=480",
+                "-x=1280",
+                "-y=720",
                 "-name=PontifexClientA",
                 r"-profiles=Z:\run\pontifex\profile",
                 f"-connect={server_ip}",
@@ -784,12 +785,35 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int) -> int:
                     *client_security_args(),
                     "--shm-size",
                     "1g",
+                    *(
+                        ["--publish", "127.0.0.1:5904:5900", "--env", "PONTIFEX_TEST_VNC=1"]
+                        if os.environ.get("PONTIFEX_TEST_VNC") == "1"
+                        else []
+                    ),
                     "--env",
                     "NVIDIA_DRIVER_CAPABILITIES=graphics,display,utility,compat32",
                     "--env",
                     "PONTIFEX_LOG_DIR=/run/pontifex",
+                    "--env",
+                    "PROTON_LOG=1",
+                    "--env",
+                    "PROTON_LOG_DIR=/run/pontifex",
                     "--volume",
                     f"{CLIENT_HOME}:/home/pontifex",
+                    "--volume",
+                    f"{RUNTIME / 'dependency-mods' / '@CBA_A3'}:/home/pontifex/.steam/debian-installation/steamapps/common/Arma 3/@CBA_A3:ro",
+                    "--volume",
+                    f"{RUNTIME / 'dependency-mods' / '@ace'}:/home/pontifex/.steam/debian-installation/steamapps/common/Arma 3/@ace:ro",
+                    "--volume",
+                    f"{RUNTIME / 'dependency-mods' / '@zen'}:/home/pontifex/.steam/debian-installation/steamapps/common/Arma 3/@zen:ro",
+                    "--volume",
+                    f"{RUNTIME / 'mods' / '@cordis'}:/home/pontifex/.steam/debian-installation/steamapps/common/Arma 3/@cordis:ro",
+                    "--volume",
+                    f"{RUNTIME / 'mods' / '@fieldutils'}:/home/pontifex/.steam/debian-installation/steamapps/common/Arma 3/@fieldutils:ro",
+                    "--volume",
+                    f"{RUNTIME / 'mods' / '@advsys'}:/home/pontifex/.steam/debian-installation/steamapps/common/Arma 3/@advsys:ro",
+                    "--volume",
+                    f"{RUNTIME / 'mods' / '@vigil'}:/home/pontifex/.steam/debian-installation/steamapps/common/Arma 3/@vigil:ro",
                     "--volume",
                     f"{ROOT}:/pontifex:ro",
                     "--volume",
@@ -951,7 +975,7 @@ def main() -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     test = sub.add_parser("test")
     test.add_argument("--force-failure", action="store_true")
-    test.add_argument("--timeout", type=int, default=int(os.environ.get("PONTIFEX_MULTIPLAYER_TIMEOUT", "300")))
+    test.add_argument("--timeout", type=int, default=int(os.environ.get("PONTIFEX_MULTIPLAYER_TIMEOUT", "720")))
     client = sub.add_parser("client")
     client.add_argument("action", choices=("status", "image", "preflight", "login", "stop-login"))
     sub.add_parser("status")

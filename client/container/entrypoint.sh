@@ -46,9 +46,14 @@ case "${1:-status}" in
         ;;
     test)
         shift
-        export PONTIFEX_DISPLAY_SIZE=640x480
+        # Match the interactive client desktop.  Arma's DirectX renderer is
+        # unreliable on the historic 640x480 test surface.
+        export PONTIFEX_DISPLAY_SIZE=1280x720
         start_network_state_bridge
         start_display
+        if [[ "${PONTIFEX_TEST_VNC:-0}" == "1" ]]; then
+            x11vnc -display "$DISPLAY" -forever -shared -nopw -listen 0.0.0.0 -rfbport 5900 >"${PONTIFEX_LOG_DIR:-/tmp}/x11vnc.log" 2>&1 &
+        fi
         exec dbus-run-session -- /opt/pontifex/run-test.sh "$@"
         ;;
     status)
