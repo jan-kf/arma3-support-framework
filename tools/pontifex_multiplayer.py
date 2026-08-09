@@ -338,6 +338,8 @@ def start_login() -> int:
             "NVIDIA_DRIVER_CAPABILITIES=graphics,display,utility,compat32",
             "--publish",
             "127.0.0.1:5903:5900",
+            "--shm-size",
+            "1g",
             "--volume",
             f"{CLIENT_HOME}:/home/pontifex",
             "--volume",
