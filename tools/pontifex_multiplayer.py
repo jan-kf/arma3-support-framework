@@ -132,6 +132,7 @@ def find_proton() -> Path | None:
 
 def client_install_info() -> dict:
     executable = find_client_executable()
+    character_payload = executable.parent / "Addons" / "characters_f.pbo" if executable else None
     manifest = find_app_manifest()
     build_id = "unknown"
     if manifest:
@@ -151,6 +152,7 @@ def client_install_info() -> dict:
         "steam_session_present": find_login_marker() is not None,
         "arma_executable": str(executable) if executable else None,
         "arma_installed": executable is not None,
+        "character_payload": str(character_payload) if character_payload and character_payload.is_file() else None,
         "steam_build_id": build_id,
         "proton": str(proton) if proton else None,
     }
@@ -598,6 +600,7 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int) -> int:
             ("client image", info["image_ready"]),
             ("Steam authenticated session", info["steam_session_present"]),
             ("licensed Arma 3 client", info["arma_installed"]),
+            ("licensed Arma 3 character payload", info["character_payload"] is not None),
             ("Proton compatibility tool", info["proton"] is not None),
         )
         if not ready
@@ -712,6 +715,13 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int) -> int:
                     f"{server_dir}:{server_dir}:rw",
                     "--volume",
                     f"{dedicated.LEGACY_INSTALL}:{dedicated.LEGACY_INSTALL}:ro",
+                    # SteamCMD's dedicated-server payload deliberately omits
+                    # playable character data.  The integration mission has
+                    # one B_Soldier_F slot, so mount only its licensed base
+                    # PBO from the authenticated client's installation.  It
+                    # remains read-only and is visible only to this server.
+                    "--volume",
+                    f"{info['character_payload']}:{dedicated.INSTALL_VIEW / 'addons' / 'characters_f.pbo'}:ro",
                     "--workdir",
                     str(dedicated.INSTALL_VIEW),
                     "--env",
