@@ -21,7 +21,11 @@ The exact third octet is selected per run and recorded. No Arma or VNC port is p
 
 The server shares the same read-only Arma base payload as the dedicated test. Config, profiles, normalized mods, logs, and run state remain Pontifex-owned. Dependencies are hard-linked into the disposable runtime so Linux Arma can load them across the container mount boundary.
 
-The client image is built from `client/Dockerfile` using Ubuntu 24.04 packages. It runs as the host UID/GID, drops all Linux capabilities, enables `no-new-privileges`, and receives only NVIDIA GPU 0 through NVIDIA CDI. Steam runs with its browser sandbox enabled. A private session bus is exported only as `DBUS_SYSTEM_BUS_ADDRESS` inside the container and hosts a fixed-value, read-only `org.freedesktop.NetworkManager` manager object. It reports global connectivity but exposes no host socket, device, proxy, or configuration operation. A project-owned AppArmor profile and Moby-derived seccomp allowlist permit bubblewrap to create an unprivileged user/mount namespace and perform mounts only after entering it; kernel capability checks continue to block mounts in the container's initial namespace. Pontifex loads the named AppArmor profile with a short-lived setup container, proves the confined bubblewrap path before every login or automated client run, and never runs the long-lived client privileged. The interactive and automated client paths receive a 1 GiB private `/dev/shm` so CEF can keep its renderer alive. The interactive VNC desktop is 1280×720; the automated framebuffer remains 640×480. Sound is disabled, and no physical display is used.
+The client image is built from `client/Dockerfile` using Ubuntu 24.04 packages. It runs as the host UID/GID, drops all Linux capabilities, enables `no-new-privileges`, and receives only NVIDIA GPU 0 through NVIDIA CDI. Steam runs with its browser sandbox enabled. A private session bus is exported only as `DBUS_SYSTEM_BUS_ADDRESS` inside the container and hosts a fixed-value, read-only `org.freedesktop.NetworkManager` manager object. It reports global connectivity but exposes no host socket, device, proxy, or configuration operation. A project-owned AppArmor profile and Moby-derived seccomp allowlist permit bubblewrap to create an unprivileged user/mount namespace and perform mounts only after entering it; kernel capability checks continue to block mounts in the container's initial namespace. Pontifex loads the named AppArmor profile with a short-lived setup container, proves the confined bubblewrap path before every login or automated client run, and never runs the long-lived client privileged. The interactive and automated client paths receive a 1 GiB private `/dev/shm` so CEF can keep its renderer alive. Sound is disabled and no physical display is used.
+
+The display server is Weston 13's unprivileged `headless` backend with its GL renderer, kiosk shell, and Xwayland module. Weston creates one deterministic 1280×720 virtual output and an in-container Wayland socket; it then creates a private Xwayland display for Steam, Proton, DXVK, and Arma. The kiosk shell gives the game the full virtual output without desktop decorations or focus-dependent window management. The entrypoint waits for both the Wayland socket and a responding X11 socket, then exports the discovered `DISPLAY`; Steam and Proton inherit it normally. Weston uses the NVIDIA EGL/GL implementation (recorded in `weston.log`), while DXVK retains the RTX Vulkan device for the game. The only X11 socket directory is the container-local sticky `/tmp/.X11-unix`; neither X11 nor Wayland is mounted from or exposed to the host.
+
+GPU-backed Xorg was deliberately rejected. NVIDIA can start it only in NoScanout mode under this confinement, which leaves Steam with no display information. Asking Xorg for a real output fails with `Failed to acquire modesetting permission`, because the host owns DRM modesetting. Adding only `/dev/dri/card0` and its video group did not change that result. Weston headless avoids DRM/KMS entirely, so no DRM node, modesetting authority, capability, seccomp rule, AppArmor relaxation, host D-Bus socket, privileged container, or external display endpoint is added. Optional x11vnc still exists only inside the client and is published by the controller only to `127.0.0.1` for diagnostics.
 
 The network-state bridge exists solely because Steam's native `client_networkmanager` module declines to export `SteamClient.System.Network.RegisterForDeviceChanges` when no system bus is present; the embedded login page otherwise waits indefinitely even after Steam's separate HTTP connectivity test reports `Connected`. Its manager object implements only `GetDevices`, `GetAllDevices`, `CheckConnectivity`, D-Bus property reads, and object-manager enumeration. All device lists are empty, and all property values are constants. It accepts no mutations and receives no additional Linux capability.
 
@@ -30,13 +34,13 @@ Reconnaissance and validated facts:
 - NVIDIA GeForce RTX 3080, 10 GiB VRAM, driver 580.173.02;
 - native Vulkan 1.4.312 works;
 - NVIDIA CDI exposes the real RTX device inside the unprivileged image;
-- `vkcube` renders continuously through Xvfb on the discrete GPU;
+- `vkcube` presents through Weston headless/Xwayland on the discrete GPU;
 - 31 GiB total RAM (28 GiB available during reconnaissance);
 - 284 GiB free storage during reconnaissance;
 - no Steam player session, Proton, Wine, or App 107410 installation was present;
 - the free Linux dedicated-server App 233780 remains separate and unlicensed.
 
-A short 640×480 `vkcube`/Xvfb probe used about 48 MiB container RAM, 28 MiB VRAM, 43% GPU, 126 W GPU power, and 186% CPU at the sampled instant. This is rendering-layer evidence only—not an Arma client capacity measurement. A real multiplayer run will retain periodic Docker/NVIDIA samples for the meaningful figure.
+A short 1280×720 `vkcube`/Weston/Xwayland probe confirms that the virtual presentation path uses the discrete GPU. This is rendering-layer evidence only—not an Arma client capacity measurement. A real multiplayer run retains periodic Docker/NVIDIA samples for the meaningful figure.
 
 ## One-time secure provisioning
 
@@ -119,7 +123,9 @@ runs/<run-id>/
 │   ├── client.rpt
 │   ├── console.log
 │   ├── steam.log
-│   ├── xvfb.log
+│   ├── steam-107410.log
+│   ├── weston.log
+│   └── weston.stdout.log
 │   └── profile/
 └── network/
     ├── docker-network.json

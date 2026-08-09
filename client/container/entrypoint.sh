@@ -5,14 +5,51 @@ mkdir -p "$XDG_RUNTIME_DIR" "$HOME/.local/share/Steam" "$HOME/.steam"
 chmod 700 "$XDG_RUNTIME_DIR"
 
 start_display() {
-    Xvfb "$DISPLAY" -screen 0 "${PONTIFEX_DISPLAY_SIZE:-1280x720}x24" -nolisten tcp -ac >"${PONTIFEX_LOG_DIR:-/tmp}/xvfb.log" 2>&1 &
-    export PONTIFEX_XVFB_PID=$!
-    for _ in $(seq 1 50); do
-        [[ -S "/tmp/.X11-unix/X${DISPLAY#:}" ]] && return 0
+    local display_size="${PONTIFEX_DISPLAY_SIZE:-1280x720}"
+    local display_width="${display_size%x*}"
+    local display_height="${display_size#*x}"
+    local weston_log="${PONTIFEX_LOG_DIR:-/tmp}/weston.log"
+    local socket
+
+    # Weston headless owns a virtual output only. It never opens a host DRM
+    # device or becomes DRM master; its Xwayland module provides the private
+    # X11 target required by Steam, DXVK, and Arma.
+    export WAYLAND_DISPLAY="pontifex-wayland"
+    unset DISPLAY XAUTHORITY
+    # A kiosk shell keeps the game surface equal to the virtual output.  The
+    # default desktop shell adds decorations, turning a 1280x720 request into
+    # a smaller client surface and introducing focus-dependent window handling
+    # that a headless test has no input device to resolve.
+    weston --backend=headless --renderer=gl --xwayland --shell=kiosk-shell.so \
+        --socket="$WAYLAND_DISPLAY" \
+        --width="$display_width" --height="$display_height" \
+        --no-config --log="$weston_log" >"${PONTIFEX_LOG_DIR:-/tmp}/weston.stdout.log" 2>&1 &
+    export PONTIFEX_WESTON_PID=$!
+    for _ in $(seq 1 100); do
+        if [[ -S "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]]; then
+            for socket in /tmp/.X11-unix/X*; do
+                [[ -S "$socket" ]] || continue
+                if xdpyinfo -display ":${socket##*X}" >/dev/null 2>&1; then
+                    export DISPLAY=":${socket##*X}"
+                    return 0
+                fi
+            done
+        fi
+        if ! kill -0 "$PONTIFEX_WESTON_PID" 2>/dev/null; then
+            break
+        fi
         sleep 0.1
     done
-    echo "virtual display did not start" >&2
+    echo "Weston headless Xwayland display did not start" >&2
+    tail -100 "$weston_log" >&2 || true
     return 1
+}
+
+stop_display() {
+    if [[ -n "${PONTIFEX_WESTON_PID:-}" ]] && kill -0 "$PONTIFEX_WESTON_PID" 2>/dev/null; then
+        kill "$PONTIFEX_WESTON_PID" 2>/dev/null || true
+        wait "$PONTIFEX_WESTON_PID" 2>/dev/null || true
+    fi
 }
 
 start_network_state_bridge() {
@@ -34,15 +71,17 @@ start_network_state_bridge() {
 case "${1:-status}" in
     preflight)
         start_display
+        trap stop_display EXIT
         vulkaninfo --summary
         timeout 5s vkcube || [[ $? -eq 124 ]]
         ;;
     login)
         start_network_state_bridge
         start_display
+        trap stop_display EXIT
         x11vnc -display "$DISPLAY" -forever -shared -nopw -listen 0.0.0.0 -rfbport 5900 >"${PONTIFEX_LOG_DIR:-/tmp}/x11vnc.log" 2>&1 &
         echo "Steam login display ready on container TCP 5900"
-        exec dbus-run-session -- steam
+        dbus-run-session -- steam
         ;;
     test)
         shift
@@ -51,10 +90,11 @@ case "${1:-status}" in
         export PONTIFEX_DISPLAY_SIZE=1280x720
         start_network_state_bridge
         start_display
+        trap stop_display EXIT
         if [[ "${PONTIFEX_TEST_VNC:-0}" == "1" ]]; then
             x11vnc -display "$DISPLAY" -forever -shared -nopw -listen 0.0.0.0 -rfbport 5900 >"${PONTIFEX_LOG_DIR:-/tmp}/x11vnc.log" 2>&1 &
         fi
-        exec dbus-run-session -- /opt/pontifex/run-test.sh "$@"
+        dbus-run-session -- /opt/pontifex/run-test.sh "$@"
         ;;
     status)
         echo "Pontifex real-player client image"

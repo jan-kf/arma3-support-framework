@@ -757,7 +757,6 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int) -> int:
                 "-noPause",
                 "-noSound",
                 "-noBattlEye",
-                "-window",
                 "-x=1280",
                 "-y=720",
                 "-name=PontifexClientA",

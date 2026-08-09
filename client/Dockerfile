@@ -34,14 +34,22 @@ RUN dpkg --add-architecture i386 \
         steam-devices \
         tini \
         vulkan-tools \
+        weston \
         x11vnc \
-        xvfb \
+        x11-utils \
+        xwayland \
     && rm -rf /var/lib/apt/lists/*
 
 RUN existing_group="$(getent group "${CLIENT_GID}" | cut -d: -f1)" \
     && if [ -n "${existing_group}" ]; then groupmod --new-name pontifex "${existing_group}"; else groupadd --gid "${CLIENT_GID}" pontifex; fi \
     && existing_user="$(getent passwd "${CLIENT_UID}" | cut -d: -f1)" \
     && if [ -n "${existing_user}" ]; then usermod --login pontifex --home /home/pontifex --move-home --shell /bin/bash "${existing_user}"; else useradd --uid "${CLIENT_UID}" --gid "${CLIENT_GID}" --create-home --shell /bin/bash pontifex; fi
+
+# Xwayland runs unprivileged and therefore cannot create the conventional X11
+# local-socket directory itself. This directory exists only in the container
+# filesystem; the sticky bit prevents one local client replacing another's
+# socket.
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
 COPY container/entrypoint.sh /opt/pontifex/entrypoint.sh
 COPY container/network-state-bridge.py /opt/pontifex/network-state-bridge.py
