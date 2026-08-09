@@ -21,7 +21,7 @@ The exact third octet is selected per run and recorded. No Arma or VNC port is p
 
 The server shares the same read-only Arma base payload as the dedicated test. Config, profiles, normalized mods, logs, and run state remain Pontifex-owned. Dependencies are hard-linked into the disposable runtime so Linux Arma can load them across the container mount boundary.
 
-The client image is built from `client/Dockerfile` using Ubuntu 24.04 packages. It runs as the host UID/GID, drops all Linux capabilities, enables `no-new-privileges`, and receives only NVIDIA GPU 0 through NVIDIA CDI. It contains 64/32-bit Vulkan/GLVND libraries, Steam, Xvfb, and a loopback-provisioning VNC server. The automated framebuffer is 640×480, sound is disabled, and no physical display is used.
+The client image is built from `client/Dockerfile` using Ubuntu 24.04 packages. It runs as the host UID/GID, drops all Linux capabilities, enables `no-new-privileges`, and receives only NVIDIA GPU 0 through NVIDIA CDI. Steam runs with its browser sandbox enabled. A project-owned AppArmor profile and Moby-derived seccomp allowlist permit bubblewrap to create an unprivileged user/mount namespace and perform mounts only after entering it; kernel capability checks continue to block mounts in the container's initial namespace. Pontifex loads the named AppArmor profile with a short-lived setup container, proves the confined bubblewrap path before every login or automated client run, and never runs the long-lived client privileged. It contains 64/32-bit Vulkan/GLVND libraries, Steam, Xvfb, and a loopback-provisioning VNC server. The automated framebuffer is 640×480, sound is disabled, and no physical display is used.
 
 Reconnaissance and validated facts:
 
@@ -50,6 +50,8 @@ Start Steam's graphical login environment:
 ```bash
 ./pontifex client login
 ```
+
+The command first loads `client/security/pontifex-steam.apparmor` and validates `bwrap` under `client/security/pontifex-steam-seccomp.json`. It fails closed if either profile or the user-namespace probe fails.
 
 It publishes only `127.0.0.1:5903` on Gustav. From a trusted laptop, establish a tunnel equivalent to:
 

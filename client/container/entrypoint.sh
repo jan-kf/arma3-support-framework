@@ -25,7 +25,7 @@ case "${1:-status}" in
         start_display
         x11vnc -display "$DISPLAY" -forever -shared -nopw -listen 0.0.0.0 -rfbport 5900 >"${PONTIFEX_LOG_DIR:-/tmp}/x11vnc.log" 2>&1 &
         echo "Steam login display ready on container TCP 5900"
-        exec dbus-run-session -- steam -no-cef-sandbox
+        exec dbus-run-session -- steam
         ;;
     test)
         shift

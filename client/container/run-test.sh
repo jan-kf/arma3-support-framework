@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-steam -silent -no-cef-sandbox >"${PONTIFEX_LOG_DIR:-/tmp}/steam.log" 2>&1 &
+steam -silent >"${PONTIFEX_LOG_DIR:-/tmp}/steam.log" 2>&1 &
 steam_pid=$!
 
 steam_ready=0
@@ -21,7 +21,7 @@ if [[ "$steam_ready" -ne 1 ]]; then
     exit 69
 fi
 
-steam -silent -no-cef-sandbox -applaunch 107410 "$@"
+steam -silent -applaunch 107410 "$@"
 
 started=0
 for _ in $(seq 1 120); do

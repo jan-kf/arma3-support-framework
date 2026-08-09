@@ -24,6 +24,10 @@ RUNS = dedicated.RUNS
 CLIENT = ROOT / "client"
 CLIENT_RUNTIME = CLIENT / "runtime"
 CLIENT_HOME = CLIENT_RUNTIME / "home"
+CLIENT_SECURITY = CLIENT / "security"
+SECCOMP_PROFILE = CLIENT_SECURITY / "pontifex-steam-seccomp.json"
+APPARMOR_PROFILE = CLIENT_SECURITY / "pontifex-steam.apparmor"
+APPARMOR_NAME = "pontifex-steam"
 IMAGE = "pontifex-arma-client:phase3"
 LOGIN_CONTAINER = "pontifex-client-login"
 MULTIPLAYER_STATE = RUNTIME / "multiplayer.json"
@@ -158,19 +162,118 @@ def ensure_client_dirs() -> None:
     CLIENT_HOME.chmod(0o700)
 
 
+def client_security_args() -> list[str]:
+    return [
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--security-opt",
+        f"seccomp={SECCOMP_PROFILE}",
+        "--security-opt",
+        f"apparmor={APPARMOR_NAME}",
+    ]
+
+
+def ensure_client_security() -> tuple[bool, str]:
+    """Load and prove the confined profile needed by Steam's own sandbox."""
+    missing = [str(path) for path in (SECCOMP_PROFILE, APPARMOR_PROFILE) if not path.is_file()]
+    if missing:
+        return False, f"missing client security profile: {', '.join(missing)}"
+    load = docker(
+        [
+            "run",
+            "--rm",
+            "--privileged",
+            "--user",
+            "0:0",
+            "--network",
+            "none",
+            "--read-only",
+            "--security-opt",
+            "apparmor=unconfined",
+            "--volume",
+            "/sys/kernel/security:/sys/kernel/security",
+            "--volume",
+            f"{APPARMOR_PROFILE}:/opt/pontifex/pontifex-steam.apparmor:ro",
+            "--entrypoint",
+            "/usr/sbin/apparmor_parser",
+            IMAGE,
+            "--replace",
+            "--skip-cache",
+            "/opt/pontifex/pontifex-steam.apparmor",
+        ],
+        check=False,
+    )
+    if load.returncode != 0:
+        return False, f"failed to load {APPARMOR_NAME} AppArmor profile:\n{load.stderr.strip()}"
+    probe = docker(
+        [
+            "run",
+            "--rm",
+            "--user",
+            "pontifex",
+            *client_security_args(),
+            IMAGE,
+            "bwrap",
+            "--ro-bind",
+            "/",
+            "/",
+            "true",
+        ],
+        check=False,
+    )
+    output = (probe.stdout or "") + (probe.stderr or "")
+    if probe.returncode != 0:
+        return False, f"Steam user-namespace sandbox probe failed:\n{output.strip()}"
+    return True, f"{APPARMOR_NAME}: loaded; bubblewrap user namespace: PASS"
+
+
+def wait_for_steam_sandbox(container: str, timeout_seconds: int = 60) -> tuple[bool, str]:
+    """Require Steam, pressure-vessel, and at least one sandboxed CEF zygote."""
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        state = container_inspect(container)
+        if not state or not state["State"]["Running"]:
+            logs = docker(["logs", container], check=False)
+            return False, ((logs.stdout or "") + (logs.stderr or "")).strip()
+        processes = docker(["top", container, "-eo", "pid,comm,args"], check=False)
+        if processes.returncode == 0:
+            lines = processes.stdout.splitlines()
+            pressure_vessel = any("srt-bwrap" in line for line in lines)
+            sandboxed_zygote = any(
+                "steamwebhelper" in line
+                and "--type=zygote" in line
+                and "--no-sandbox" not in line
+                and "--no-zygote-sandbox" not in line
+                for line in lines
+            )
+            cef_sentinel = (
+                CLIENT_HOME
+                / ".steam"
+                / "debian-installation"
+                / "ubuntu12_64"
+                / ".cef-initialize-sentinel"
+            )
+            if pressure_vessel and sandboxed_zygote and not cef_sentinel.exists():
+                return True, "pressure-vessel bubblewrap and CEF namespace sandbox: PASS"
+        time.sleep(1)
+    return False, "Steam did not establish pressure-vessel and a sandboxed CEF zygote before timeout"
+
+
 def gpu_preflight() -> tuple[bool, str]:
     if not image_exists():
         return False, f"client image missing; run ./pontifex client image"
+    security_ok, security_output = ensure_client_security()
+    if not security_ok:
+        return False, security_output
     run = docker(
         [
             "run",
             "--rm",
             "--device",
             "nvidia.com/gpu=0",
-            "--cap-drop",
-            "ALL",
-            "--security-opt",
-            "no-new-privileges",
+            *client_security_args(),
             "--env",
             "NVIDIA_DRIVER_CAPABILITIES=graphics,display,utility,compat32",
             IMAGE,
@@ -178,7 +281,7 @@ def gpu_preflight() -> tuple[bool, str]:
         ],
         check=False,
     )
-    text = (run.stdout or "") + (run.stderr or "")
+    text = security_output + "\n" + (run.stdout or "") + (run.stderr or "")
     return run.returncode == 0 and "NVIDIA GeForce RTX 3080" in text, text
 
 
@@ -186,8 +289,8 @@ def show_client_status() -> int:
     info = client_install_info()
     for key, value in info.items():
         print(f"{key}: {value}")
-    login = docker(["inspect", LOGIN_CONTAINER], check=False)
-    print(f"login_container_running: {login.returncode == 0}")
+    login = container_inspect(LOGIN_CONTAINER)
+    print(f"login_container_running: {bool(login and login['State']['Running'])}")
     ready = (
         info["image_ready"]
         and info["steam_session_present"]
@@ -201,10 +304,25 @@ def start_login() -> int:
     ensure_client_dirs()
     if not image_exists() and build_image() != 0:
         return 1
-    existing = docker(["inspect", LOGIN_CONTAINER], check=False)
-    if existing.returncode == 0:
-        print(f"Steam login container already exists: {LOGIN_CONTAINER}")
-        return 0
+    security_ok, security_output = ensure_client_security()
+    if not security_ok:
+        print(security_output, file=sys.stderr)
+        return 1
+    print(security_output)
+    existing = container_inspect(LOGIN_CONTAINER)
+    if existing and existing["State"]["Running"]:
+        sandbox_ok, sandbox_output = wait_for_steam_sandbox(LOGIN_CONTAINER)
+        print(sandbox_output, file=sys.stdout if sandbox_ok else sys.stderr)
+        if sandbox_ok:
+            print(f"Steam login container already running: {LOGIN_CONTAINER}")
+        return 0 if sandbox_ok else 1
+    if existing:
+        if existing.get("Config", {}).get("Labels", {}).get("pontifex.role") != "client-login":
+            print("refusing to replace container with mismatched ownership label", file=sys.stderr)
+            return 1
+        if docker(["rm", LOGIN_CONTAINER], check=False).returncode != 0:
+            print(f"failed to remove stopped login container: {LOGIN_CONTAINER}", file=sys.stderr)
+            return 1
     result = docker(
         [
             "run",
@@ -215,10 +333,7 @@ def start_login() -> int:
             "pontifex.role=client-login",
             "--device",
             "nvidia.com/gpu=0",
-            "--cap-drop",
-            "ALL",
-            "--security-opt",
-            "no-new-privileges",
+            *client_security_args(),
             "--env",
             "NVIDIA_DRIVER_CAPABILITIES=graphics,display,utility,compat32",
             "--publish",
@@ -237,6 +352,12 @@ def start_login() -> int:
     if result.returncode != 0:
         print(result.stderr, file=sys.stderr)
         return 1
+    sandbox_ok, sandbox_output = wait_for_steam_sandbox(LOGIN_CONTAINER)
+    if not sandbox_ok:
+        print(sandbox_output, file=sys.stderr)
+        return 1
+    print(sandbox_output)
+    print("Steam launched with its browser and bubblewrap sandboxes enabled.")
     print("Steam is available only on Gustav loopback TCP 5903.")
     print("Use an SSH tunnel and a VNC viewer, sign in, force a Proton tool for Arma 3,")
     print("install the Windows client plus Proton, then run:")
@@ -657,10 +778,7 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int) -> int:
                     client_ip,
                     "--device",
                     "nvidia.com/gpu=0",
-                    "--cap-drop",
-                    "ALL",
-                    "--security-opt",
-                    "no-new-privileges",
+                    *client_security_args(),
                     "--shm-size",
                     "1g",
                     "--env",

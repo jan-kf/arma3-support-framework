@@ -12,6 +12,8 @@ RUN dpkg --add-architecture i386 \
     && printf 'steam steam/question select I AGREE\nsteam steam/license note\n' | debconf-set-selections \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
+        apparmor \
+        bubblewrap \
         dbus-x11 \
         libegl1 \
         libegl1:i386 \
