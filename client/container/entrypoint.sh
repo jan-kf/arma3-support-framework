@@ -5,7 +5,7 @@ mkdir -p "$XDG_RUNTIME_DIR" "$HOME/.local/share/Steam" "$HOME/.steam"
 chmod 700 "$XDG_RUNTIME_DIR"
 
 start_display() {
-    Xvfb "$DISPLAY" -screen 0 640x480x24 -nolisten tcp -ac >"${PONTIFEX_LOG_DIR:-/tmp}/xvfb.log" 2>&1 &
+    Xvfb "$DISPLAY" -screen 0 "${PONTIFEX_DISPLAY_SIZE:-1280x720}x24" -nolisten tcp -ac >"${PONTIFEX_LOG_DIR:-/tmp}/xvfb.log" 2>&1 &
     export PONTIFEX_XVFB_PID=$!
     for _ in $(seq 1 50); do
         [[ -S "/tmp/.X11-unix/X${DISPLAY#:}" ]] && return 0
@@ -46,6 +46,7 @@ case "${1:-status}" in
         ;;
     test)
         shift
+        export PONTIFEX_DISPLAY_SIZE=640x480
         start_network_state_bridge
         start_display
         exec dbus-run-session -- /opt/pontifex/run-test.sh "$@"
