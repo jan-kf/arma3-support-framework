@@ -28,6 +28,8 @@ RUN dpkg --add-architecture i386 \
         libxext6:i386 \
         iproute2 \
         procps \
+        python3-dbus \
+        python3-gi \
         steam-installer \
         steam-devices \
         tini \
@@ -42,8 +44,9 @@ RUN existing_group="$(getent group "${CLIENT_GID}" | cut -d: -f1)" \
     && if [ -n "${existing_user}" ]; then usermod --login pontifex --home /home/pontifex --move-home --shell /bin/bash "${existing_user}"; else useradd --uid "${CLIENT_UID}" --gid "${CLIENT_GID}" --create-home --shell /bin/bash pontifex; fi
 
 COPY container/entrypoint.sh /opt/pontifex/entrypoint.sh
+COPY container/network-state-bridge.py /opt/pontifex/network-state-bridge.py
 COPY container/run-test.sh /opt/pontifex/run-test.sh
-RUN chmod 0755 /opt/pontifex/entrypoint.sh /opt/pontifex/run-test.sh
+RUN chmod 0755 /opt/pontifex/entrypoint.sh /opt/pontifex/network-state-bridge.py /opt/pontifex/run-test.sh
 
 USER pontifex
 ENV HOME=/home/pontifex \
