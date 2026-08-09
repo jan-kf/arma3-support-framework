@@ -94,6 +94,7 @@ def steam_roots() -> list[Path]:
     return [
         CLIENT_HOME / ".local" / "share" / "Steam",
         CLIENT_HOME / ".steam" / "steam",
+        CLIENT_HOME / ".steam" / "debian-installation",
     ]
 
 
@@ -932,6 +933,16 @@ def show_runtime_status() -> int:
     print(f"server container running: {bool(server and server['State']['Running'])}")
     print(f"client container running: {bool(client and client['State']['Running'])}")
     print(f"network: {state.get('network')}")
+    run_dir = RUNS / str(state.get("run_id", ""))
+    client_log = run_dir / "client-a" / "console.log"
+    process_text = container_processes(state.get("client_container", "")) if client else ""
+    phase = "steam_booting"
+    if re.search(r"(?:wine|proton|arma3)", process_text, re.IGNORECASE):
+        phase = "proton_or_arma_running"
+    elif client_log.is_file() and "PONTIFEX_TEST|" in client_log.read_text(errors="replace"):
+        phase = "client_assertions_emitting"
+    print(f"client phase: {phase}")
+    print(f"evidence: {run_dir}")
     return 0
 
 

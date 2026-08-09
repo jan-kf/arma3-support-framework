@@ -16,6 +16,7 @@ Usage: ./pontifex COMMAND
   test            Run the fast/static test suite
   test dedicated  Build and run the real dedicated-server integration test
   test multiplayer Build and run server plus one real automated player client
+  multiplayer status Show live real-player multiplayer phase and evidence
   status          Show tool, Git, artifact, and server-foundation status
   server status   Show the Pontifex-controlled server and dependency status
   server stop     Stop only the validated Pontifex-controlled server process
@@ -74,6 +75,13 @@ show_server_status() {
 }
 
 case "${1:-help}" in
+    multiplayer)
+        if [[ "${2:-}" == "status" && $# -eq 2 ]]; then
+            exec python3 "$ROOT/tools/pontifex_multiplayer.py" status
+        fi
+        usage
+        exit 2
+        ;;
     check) run_check ;;
     build) run_build ;;
     test)
