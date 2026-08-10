@@ -1,0 +1,9 @@
+{
+  "source": "https://store.steampowered.com/api/appdetails",
+  "retrieved_at": "2026-08-09T19:00:00Z",
+  "apps": {
+    "1021790": {"name": "Arma 3 Contact", "developers": ["Bohemia Interactive"], "default_enabled": false},
+    "2647760": {"name": "Arma 3 Creator DLC: Reaction Forces", "developers": ["Rotators Collective"]},
+    "2647830": {"name": "Arma 3 Creator DLC: Expeditionary Forces", "developers": ["Tiny Gecko Studios"]}
+  }
+}

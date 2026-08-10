@@ -1,0 +1,5 @@
+version=53;
+addons[]={"A3_Map_Stratis","A3_Characters_F"};
+class AddonsMetaData { class List { items=2; class Item0 { className="A3_Map_Stratis"; name="Stratis"; author="Bohemia Interactive"; }; class Item1 { className="A3_Characters_F"; name="Characters"; author="Bohemia Interactive"; }; }; };
+class ScenarioData { author="Pontifex minimal experiment"; saving=0; };
+class Mission { class Intel { year=2035; month=7; day=6; hour=12; minute=0; }; class Entities { items=1; class Item0 { dataType="Object"; class PositionInfo { position[]={1938.22,5,5755.04}; angles[]={0,0,0}; }; side="Civilian"; flags=7; class Attributes { isPlayer=1; }; id=1; type="C_man_1"; }; }; };

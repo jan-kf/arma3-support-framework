@@ -16,6 +16,8 @@ Usage: ./pontifex COMMAND
   test            Run the fast/static test suite
   test dedicated  Build and run the real dedicated-server integration test
   test multiplayer Build and run server plus one real automated player client
+  manual          Start a two-hour human-driven private client/server test
+  e2e             Run the autonomous single-real-client Pontifex v1 proof
   multiplayer status Show live real-player multiplayer phase and evidence
   status          Show tool, Git, artifact, and server-foundation status
   server status   Show the Pontifex-controlled server and dependency status
@@ -43,6 +45,7 @@ run_check() {
     done
     python3 -m py_compile "$ROOT/tools/pontifex_server.py"
     python3 -m py_compile "$ROOT/tools/pontifex_multiplayer.py"
+    python3 -m unittest discover -s "$ROOT/tests" -p 'test_*.py'
     python3 -m json.tool "$ROOT/server/dependencies.lock.json" >/dev/null
 }
 
@@ -129,6 +132,12 @@ case "${1:-help}" in
         ;;
     client)
         exec python3 "$ROOT/tools/pontifex_multiplayer.py" client "${2:-status}"
+        ;;
+    manual)
+        exec python3 "$ROOT/tools/pontifex_multiplayer.py" manual "${@:2}"
+        ;;
+    e2e)
+        exec python3 "$ROOT/tools/pontifex_multiplayer.py" e2e "${@:2}"
         ;;
     dependencies)
         exec python3 "$ROOT/tools/pontifex_server.py" dependencies "${2:-status}"

@@ -10,8 +10,9 @@ start_display() {
     local display_height="${display_size#*x}"
     local weston_log="${PONTIFEX_LOG_DIR:-/tmp}/weston.log"
     local socket
+    local vnc_dir="${PONTIFEX_LOG_DIR:-/tmp}/vnc"
 
-    # Weston headless owns a virtual output only. It never opens a host DRM
+    # Weston owns a virtual output only. It never opens a host DRM
     # device or becomes DRM master; its Xwayland module provides the private
     # X11 target required by Steam, DXVK, and Arma.
     export WAYLAND_DISPLAY="pontifex-wayland"
@@ -20,9 +21,28 @@ start_display() {
     # default desktop shell adds decorations, turning a 1280x720 request into
     # a smaller client surface and introducing focus-dependent window handling
     # that a headless test has no input device to resolve.
-    weston --backend=headless --renderer=gl --xwayland --shell=kiosk-shell.so \
+    local backend="headless"
+    local backend_args=(--width="$display_width" --height="$display_height")
+    if [[ "${PONTIFEX_COMPOSITOR_VNC:-0}" == "1" ]]; then
+        # Weston's VNC backend captures the compositor output directly. This
+        # avoids Xwayland framebuffer scraping, which cannot read DXVK's
+        # redirected fullscreen surface. Docker publishes this port only on
+        # the host loopback interface for manual diagnostics.
+        backend="vnc"
+        mkdir -p "$vnc_dir"
+        chmod 700 "$vnc_dir"
+        # This short-lived certificate is generated inside the confined
+        # container solely for the loopback-published manual VNC endpoint.
+        # It is neither host-trusted nor persisted with the Steam session.
+        openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+            -keyout "$vnc_dir/key.pem" -out "$vnc_dir/cert.pem" \
+            -subj "/CN=pontifex-manual-vnc" >/dev/null 2>&1
+        chmod 600 "$vnc_dir/key.pem" "$vnc_dir/cert.pem"
+        backend_args+=(--port=5900 --vnc-tls-cert="$vnc_dir/cert.pem" --vnc-tls-key="$vnc_dir/key.pem")
+    fi
+    weston --backend="$backend" --renderer="${PONTIFEX_COMPOSITOR_RENDERER:-gl}" --xwayland --shell=kiosk-shell.so \
         --socket="$WAYLAND_DISPLAY" \
-        --width="$display_width" --height="$display_height" \
+        "${backend_args[@]}" \
         --no-config --log="$weston_log" >"${PONTIFEX_LOG_DIR:-/tmp}/weston.stdout.log" 2>&1 &
     export PONTIFEX_WESTON_PID=$!
     for _ in $(seq 1 100); do
@@ -94,6 +114,14 @@ case "${1:-status}" in
         if [[ "${PONTIFEX_TEST_VNC:-0}" == "1" ]]; then
             x11vnc -display "$DISPLAY" -forever -shared -nopw -listen 0.0.0.0 -rfbport 5900 >"${PONTIFEX_LOG_DIR:-/tmp}/x11vnc.log" 2>&1 &
         fi
+        dbus-run-session -- /opt/pontifex/run-test.sh "$@"
+        ;;
+    manual)
+        shift
+        export PONTIFEX_DISPLAY_SIZE=1280x720
+        start_network_state_bridge
+        start_display
+        trap stop_display EXIT
         dbus-run-session -- /opt/pontifex/run-test.sh "$@"
         ;;
     status)

@@ -51,10 +51,18 @@ RUN existing_group="$(getent group "${CLIENT_GID}" | cut -d: -f1)" \
 # socket.
 RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
+# Weston VNC first verifies the connecting username matches the compositor
+# user, then consults this PAM service. The endpoint is TLS-protected and
+# Docker publishes it on host loopback only; SSH remains the access-control
+# boundary for a manual diagnostic session, so no persistent VNC password is
+# stored in the image or Steam home.
+RUN printf 'auth required pam_permit.so\naccount required pam_permit.so\n' > /etc/pam.d/weston-remote-access
+
 COPY container/entrypoint.sh /opt/pontifex/entrypoint.sh
 COPY container/network-state-bridge.py /opt/pontifex/network-state-bridge.py
 COPY container/run-test.sh /opt/pontifex/run-test.sh
-RUN chmod 0755 /opt/pontifex/entrypoint.sh /opt/pontifex/network-state-bridge.py /opt/pontifex/run-test.sh
+COPY container/vnc-join-adapter.py /opt/pontifex/vnc-join-adapter.py
+RUN chmod 0755 /opt/pontifex/entrypoint.sh /opt/pontifex/network-state-bridge.py /opt/pontifex/run-test.sh /opt/pontifex/vnc-join-adapter.py
 
 USER pontifex
 ENV HOME=/home/pontifex \

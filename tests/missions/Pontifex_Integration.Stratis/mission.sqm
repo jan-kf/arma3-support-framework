@@ -17,14 +17,20 @@ class EditorData {
 };
 
 binarizationWanted = 0;
-addons[] = {"A3_Map_Stratis"};
+addons[] = {"A3_Map_Stratis", "A3_Characters_F"};
 
 class AddonsMetaData {
     class List {
-        items = 1;
+        items = 2;
         class Item0 {
             className = "A3_Map_Stratis";
             name = "Stratis";
+            author = "Bohemia Interactive";
+            url = "https://www.arma3.com";
+        };
+        class Item1 {
+            className = "A3_Characters_F";
+            name = "Characters";
             author = "Bohemia Interactive";
             url = "https://www.arma3.com";
         };

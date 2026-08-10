@@ -14,6 +14,7 @@ from pathlib import Path, PurePosixPath
 import re
 import shutil
 import signal
+import struct
 import subprocess
 import sys
 import time
@@ -26,6 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SERVER = ROOT / "server"
 RUNTIME = SERVER / "runtime"
 INSTALL_VIEW = RUNTIME / "install"
+CA_CERTIFICATE_BUNDLE = RUNTIME / "ca-certificates.crt"
 DEPENDENCIES = SERVER / "dependencies"
 CACHE = SERVER / "cache"
 RUNS = ROOT / "runs"
@@ -37,22 +39,10 @@ LEGACY_INSTALL = Path(
         "/mnt/services/arma3-server/pufferpanel/data/servers/80e9c1f3",
     )
 )
+INSTALLER_STEAM_APP_ID = "233780"
+RUNTIME_STEAM_APP_ID = "107410"
 MISSION_NAME = "Pontifex_Integration.Stratis"
 MISSION_SOURCE = ROOT / "tests" / "missions" / MISSION_NAME
-OFFICIAL_MODS = (
-    "curator",
-    "kart",
-    "heli",
-    "mark",
-    "expansion",
-    "jets",
-    "argo",
-    "orange",
-    "tacops",
-    "tank",
-    "enoch",
-    "aow",
-)
 EXPECTED_ASSERTIONS = {
     "sqf.executed",
     "server.isDedicated",
@@ -93,6 +83,84 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def build_mission_pbo(source: Path, destination: Path) -> dict:
+    """Create a deterministic uncompressed PBO for a mission directory.
+
+    Arma's dedicated-server directory mission path caused the engine to build
+    a transient ``__cur_mp`` transfer that crashed the real client while it
+    reconstructed multiplayer state.  A normal banked PBO transfers
+    byte-for-byte and is the format accepted by ordinary dedicated servers.
+    This deliberately packages only the selected mission; it has no effect on
+    addons, Steam, networking, or the container boundary.
+    """
+    if not source.is_dir():
+        raise RuntimeError(f"mission directory not found: {source}")
+    files = sorted(path for path in source.rglob("*") if path.is_file())
+    if not files:
+        raise RuntimeError(f"mission directory is empty: {source}")
+    entries: list[tuple[str, bytes]] = []
+    for path in files:
+        name = path.relative_to(source).as_posix()
+        if not name.isascii() or ".." in PurePosixPath(name).parts:
+            raise RuntimeError(f"unsafe mission PBO path: {name}")
+        entries.append((name, path.read_bytes()))
+
+    header = bytearray()
+    for name, data in entries:
+        header.extend(name.encode("ascii"))
+        header.append(0)
+        # PBO entry: packing method, original size, reserved, timestamp, size.
+        # Zero timestamp preserves deterministic output; zero method means raw.
+        header.extend(struct.pack("<IIIII", 0, 0, 0, 0, len(data)))
+    header.append(0)
+    header.extend(struct.pack("<IIIII", 0, 0, 0, 0, 0))
+    body = bytes(header) + b"".join(data for _, data in entries)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(body + b"\0" + hashlib.sha1(body).digest())
+    return {
+        "source": str(source),
+        "destination": str(destination),
+        "files": [name for name, _ in entries],
+        "sha256": sha256(destination),
+        "size": destination.stat().st_size,
+    }
+
+
+def official_component_policy() -> dict:
+    """Classify content from the SteamCMD App 233780 layout, not a name list.
+
+    App 233780's root Addons bank is core content.  Its sibling directories
+    that contain an Addons bank are first-party components shipped by that
+    application.  Creator DLC is deliberately absent from this free dedicated
+    payload, so it cannot enter this policy merely because it is installed in
+    the authenticated client's library.
+    """
+    manifest = LEGACY_INSTALL / "steamapps" / "appmanifest_233780.acf"
+    if not manifest.is_file():
+        raise RuntimeError(f"SteamCMD App 233780 manifest not found: {manifest}")
+    components = []
+    for directory in sorted(LEGACY_INSTALL.iterdir(), key=lambda item: item.name.casefold()):
+        addons = directory / "addons"
+        if not directory.is_dir() or directory.name.startswith("@") or not addons.is_dir():
+            continue
+        pbos = sorted(path.name for path in addons.glob("*.pbo") if path.is_file())
+        if pbos:
+            components.append({"id": directory.name.casefold(), "path": directory, "pbos": pbos})
+    return {
+        "steam_app": int(INSTALLER_STEAM_APP_ID),
+        "core": {"path": LEGACY_INSTALL / "addons"},
+        "official_components": components,
+        "excluded": {
+            "creator_or_community_dlc": "not supplied by SteamCMD App 233780",
+            "workshop_or_user_mods": "directories prefixed with @ are explicit-only",
+        },
+    }
+
+
+def official_component_ids() -> tuple[str, ...]:
+    return tuple(item["id"] for item in official_component_policy()["official_components"])
 
 
 def lock_data() -> dict:
@@ -202,6 +270,16 @@ def prepare_runtime() -> None:
     if not binary.is_file():
         raise RuntimeError(f"Arma server binary not found: {binary}")
     RUNTIME.mkdir(parents=True, exist_ok=True)
+    # The bare Ubuntu image used for the confined dedicated process deliberately
+    # contains no package-managed trust store.  Steam's OpenSSL transport looks
+    # specifically for this standard bundle; stage a copy in the disposable
+    # runtime so it can be mounted read-only without granting the process any
+    # host configuration or write access.
+    host_ca_bundle = Path("/etc/ssl/certs/ca-certificates.crt")
+    if not host_ca_bundle.is_file():
+        raise RuntimeError(f"host CA certificate bundle not found: {host_ca_bundle}")
+    shutil.copy2(host_ca_bundle, CA_CERTIFICATE_BUNDLE)
+    CA_CERTIFICATE_BUNDLE.chmod(0o644)
     if INSTALL_VIEW.exists() or INSTALL_VIEW.is_symlink():
         if INSTALL_VIEW.is_symlink() or INSTALL_VIEW.is_file():
             INSTALL_VIEW.unlink()
@@ -219,9 +297,24 @@ def prepare_runtime() -> None:
         if source.name in excluded:
             continue
         (INSTALL_VIEW / source.name).symlink_to(source, target_is_directory=source.is_dir())
+    # App 233780 is solely the SteamCMD distribution/update application.  The
+    # dedicated executable validates multiplayer tickets in Arma 3's Steamworks
+    # application context (107410), so its disposable runtime overlay must use
+    # that ID.  The override remains only for explicitly controlled A/B probes.
+    runtime_app_id = os.environ.get("PONTIFEX_SERVER_RUNTIME_APPID", RUNTIME_STEAM_APP_ID)
+    if runtime_app_id not in {RUNTIME_STEAM_APP_ID, INSTALLER_STEAM_APP_ID}:
+        raise RuntimeError(f"unsupported runtime Steam App ID: {runtime_app_id}")
+    app_id = INSTALL_VIEW / "steam_appid.txt"
+    app_id.unlink(missing_ok=True)
+    app_id.write_text(f"{runtime_app_id}\n", encoding="ascii")
     missions = INSTALL_VIEW / "mpmissions"
     missions.mkdir()
-    shutil.copytree(MISSION_SOURCE, missions / MISSION_NAME)
+    if MISSION_SOURCE.is_file():
+        shutil.copy2(MISSION_SOURCE, missions / MISSION_SOURCE.name)
+    else:
+        # Always use a banked PBO.  See build_mission_pbo() for why a source
+        # directory is intentionally not exposed to the dedicated executable.
+        build_mission_pbo(MISSION_SOURCE, missions / f"{MISSION_NAME}.pbo")
     runtime_mods = RUNTIME / "mods"
     shutil.rmtree(runtime_mods, ignore_errors=True)
     runtime_mods.mkdir()
@@ -254,10 +347,11 @@ def prepare_runtime() -> None:
     official_mods = RUNTIME / "official-mods"
     shutil.rmtree(official_mods, ignore_errors=True)
     official_mods.mkdir()
-    for name in OFFICIAL_MODS:
+    for component in official_component_policy()["official_components"]:
+        name = component["id"]
         deployed = official_mods / f"@pontifex_a3_{name}"
         deployed.mkdir()
-        (deployed / "addons").symlink_to(LEGACY_INSTALL / name / "addons", target_is_directory=True)
+        (deployed / "addons").symlink_to(component["path"] / "addons", target_is_directory=True)
         (deployed / "mod.cpp").write_text(
             f'name = "Arma 3 {name} test bank";\nauthor = "Bohemia Interactive";\n',
             encoding="utf-8",
@@ -272,7 +366,7 @@ def prepare_runtime() -> None:
         "@vigil": runtime_mods / "@vigil",
     }
     mod_aliases.update(
-        {f"@pontifex_a3_{name}": official_mods / f"@pontifex_a3_{name}" for name in OFFICIAL_MODS}
+        {f"@pontifex_a3_{name}": official_mods / f"@pontifex_a3_{name}" for name in official_component_ids()}
     )
     for alias, target in mod_aliases.items():
         (INSTALL_VIEW / alias).symlink_to(target, target_is_directory=True)
@@ -476,7 +570,7 @@ def run_dedicated(force_failure: bool, timeout_seconds: int) -> int:
             shutil.copy2(SERVER / "config" / "basic.cfg", run_dir / "basic.cfg")
 
             mod_paths = [
-                *(f"@pontifex_a3_{name}" for name in OFFICIAL_MODS),
+                *(f"@pontifex_a3_{name}" for name in official_component_ids()),
                 "@cba_a3",
                 "@ace",
                 "@zen",
