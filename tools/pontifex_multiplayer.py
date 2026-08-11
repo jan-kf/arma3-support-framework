@@ -87,6 +87,7 @@ class TestPlan:
     client_expected: frozenset[str]
     gameplay: bool = False
     selected: frozenset[str] = frozenset()
+    project_mods: bool = False
 
 
 SMOKE_PLAN = TestPlan(
@@ -102,17 +103,23 @@ INTEGRATION_PLAN = TestPlan(
 )
 GAMEPLAY_PLAN = TestPlan(
     "gameplay",
-    SMOKE_PLAN.server_expected | frozenset({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"}),
-    SMOKE_PLAN.client_expected | frozenset({"gameplay.vehicleResolved", "gameplay.enterVehicle"}),
+    SMOKE_PLAN.server_expected | frozenset({
+        "gameplay.vehicleCreated", "gameplay.driverAuthoritative",
+        "aps.positive.projectileSpawned", "aps.positive.collisionCourse", "aps.positive.engaged",
+        "aps.positive.neutralized", "aps.positive.chargeConsumed", "aps.positive.protected",
+        "aps.control.disabledImpact", "aps.control.disabledNoEngagement", "aps.control.outsideEnvelope",
+    }),
+    SMOKE_PLAN.client_expected | frozenset({"gameplay.vehicleResolved", "gameplay.enterVehicle", "aps.replication"}),
     gameplay=True,
-    selected=frozenset({"vehicle-entry"}),
+    selected=frozenset({"vehicle-entry", "aps-intercept"}),
+    project_mods=True,
 )
-LIVE_PLAN = TestPlan("live", SMOKE_PLAN.server_expected, SMOKE_PLAN.client_expected, selected=frozenset({"lifecycle"}))
+LIVE_PLAN = TestPlan("live", SMOKE_PLAN.server_expected, SMOKE_PLAN.client_expected, selected=frozenset({"lifecycle"}), project_mods=True)
 TEST_PLANS = {plan.name: plan for plan in (SMOKE_PLAN, INTEGRATION_PLAN, GAMEPLAY_PLAN, LIVE_PLAN)}
 TIER_TESTS = {
     "smoke": frozenset({"lifecycle"}),
     "integration": frozenset({"mission-namespace", "config", "round-trip"}),
-    "gameplay": frozenset({"vehicle-entry"}),
+    "gameplay": frozenset({"vehicle-entry", "aps-intercept"}),
     "live": frozenset({"lifecycle"}),
 }
 
@@ -135,10 +142,21 @@ def select_plan(name: str, selected: str | None = None) -> TestPlan:
         if "round-trip" in chosen:
             server.add("integration.roundTrip")
             client.add("integration.roundTrip")
-    elif name == "gameplay" and "vehicle-entry" in chosen:
-        server.update({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"})
-        client.update({"gameplay.vehicleResolved", "gameplay.enterVehicle"})
-    return TestPlan(name, frozenset(server), frozenset(client), gameplay=name == "gameplay", selected=chosen)
+    elif name == "gameplay":
+        if "vehicle-entry" in chosen:
+            server.update({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"})
+            client.update({"gameplay.vehicleResolved", "gameplay.enterVehicle"})
+        if "aps-intercept" in chosen:
+            server.update({
+                "aps.positive.projectileSpawned", "aps.positive.collisionCourse", "aps.positive.engaged",
+                "aps.positive.neutralized", "aps.positive.chargeConsumed", "aps.positive.protected",
+                "aps.control.disabledImpact", "aps.control.disabledNoEngagement", "aps.control.outsideEnvelope",
+            })
+            client.add("aps.replication")
+    return TestPlan(
+        name, frozenset(server), frozenset(client), gameplay=name == "gameplay", selected=chosen,
+        project_mods=name == "gameplay" and "aps-intercept" in chosen,
+    )
 
 
 def docker(args: list[str], *, check: bool = True, capture: bool = True) -> subprocess.CompletedProcess:
@@ -847,16 +865,21 @@ class Mission {{
  waitUntil { uiSleep 0.1; !isNil "PONTIFEX_TIER_vehicle" || diag_tickTime > _vehicleDeadline };
  private _vehicle = missionNamespace getVariable ["PONTIFEX_TIER_vehicle", objNull];
  ["gameplay.vehicleCreated", !isNull _vehicle && {typeOf _vehicle isEqualTo "C_Offroad_01_F"}, format ["netId=%1", netId _vehicle]] call _assert;
- missionNamespace setVariable ["PONTIFEX_TIER_vehicleNetId", netId _vehicle, true];
- PONTIFEX_TIER_fnc_gameplayAction = { params ["_receivedToken", "_vehicleId"]; missionNamespace setVariable ["PONTIFEX_TIER_gameplayAction", [_receivedToken, _vehicleId]]; };
- private _actionDeadline = diag_tickTime + 30;
- waitUntil { uiSleep 0.1; !(missionNamespace getVariable ["PONTIFEX_TIER_gameplayAction", []] isEqualTo []) || diag_tickTime > _actionDeadline };
- private _action = missionNamespace getVariable ["PONTIFEX_TIER_gameplayAction", []];
- private _actionOk = !isNull _vehicle && {(count _action) isEqualTo 2} && {(_action # 0) isEqualTo _token} && {(_action # 1) isEqualTo netId _vehicle};
- if (_actionOk) then { _player moveInDriver _vehicle; };
- private _driverDeadline = diag_tickTime + 30;
- waitUntil { uiSleep 0.1; !isNull _vehicle && {driver _vehicle isEqualTo _player} || diag_tickTime > _driverDeadline };
- ["gameplay.driverAuthoritative", _actionOk && {!isNull _vehicle} && {driver _vehicle isEqualTo _player}, format ["driver=%1|vehicle=%2|action=%3", if (isNull _vehicle || {isNull driver _vehicle}) then {"<none>"} else {name (driver _vehicle)}, netId _vehicle, _action]] call _assert;
+missionNamespace setVariable ["PONTIFEX_TIER_vehicleNetId", netId _vehicle, true];
+PONTIFEX_TIER_fnc_gameplayAction = { params ["_receivedToken", "_vehicleId"]; missionNamespace setVariable ["PONTIFEX_TIER_gameplayAction", [_receivedToken, _vehicleId, remoteExecutedOwner]]; };
+private _actionDeadline = diag_tickTime + 30;
+waitUntil { uiSleep 0.1; !(missionNamespace getVariable ["PONTIFEX_TIER_gameplayAction", []] isEqualTo []) || diag_tickTime > _actionDeadline };
+private _action = missionNamespace getVariable ["PONTIFEX_TIER_gameplayAction", []];
+private _actionOwner = _action param [2, -1];
+private _actionPlayer = (allPlayers select { owner _x isEqualTo _actionOwner }) param [0, objNull];
+private _actionOk = !isNull _vehicle && {!isNull _actionPlayer} && {(count _action) isEqualTo 3} && {(_action # 0) isEqualTo _token} && {(_action # 1) isEqualTo netId _vehicle};
+if (!isNull _actionPlayer) then { _player = _actionPlayer; };
+if (_actionOk) then { _player moveInDriver _vehicle; };
+private _playerUid = getPlayerUID _player;
+private _driverDeadline = diag_tickTime + 30;
+waitUntil { uiSleep 0.1; !isNull _vehicle && {!isNull driver _vehicle} && {_playerUid isNotEqualTo ""} && {(getPlayerUID (driver _vehicle)) isEqualTo _playerUid} || diag_tickTime > _driverDeadline };
+private _driverUid = if (isNull _vehicle || {isNull driver _vehicle}) then {""} else {getPlayerUID (driver _vehicle)};
+["gameplay.driverAuthoritative", _actionOk && {!isNull _vehicle} && {_playerUid isNotEqualTo ""} && {_driverUid isEqualTo _playerUid}, format ["driver=%1|driverNetId=%2|driverUid=%3|playerNetId=%4|playerUid=%5|owner=%6|vehicle=%7|action=%8", if (isNull _vehicle || {isNull driver _vehicle}) then {"<none>"} else {name (driver _vehicle)}, if (isNull _vehicle || {isNull driver _vehicle}) then {""} else {netId (driver _vehicle)}, _driverUid, netId _player, _playerUid, _actionOwner, netId _vehicle, _action]] call _assert;
 '''
         gameplay_client = '''
  private _vehicleDeadline = diag_tickTime + 30;
@@ -871,7 +894,127 @@ class Mission {{
  waitUntil { uiSleep 0.1; !isNull _vehicle && {driver _vehicle isEqualTo player} || diag_tickTime > _actionDeadline };
  private _actionOk = !isNull _vehicle && {driver _vehicle isEqualTo player} && {vehicle player isEqualTo _vehicle};
  ["gameplay.enterVehicle", _actionOk, format ["vehicle=%1", netId _vehicle]] call _assert;
- [_token, netId _vehicle] remoteExecCall ["PONTIFEX_TIER_fnc_gameplayAction", 2];
+[_token, netId _vehicle] remoteExecCall ["PONTIFEX_TIER_fnc_gameplayAction", 2];
+'''
+    aps_server = ""
+    aps_client = ""
+    if plan.name == "gameplay" and "aps-intercept" in plan.selected:
+        # This fixture uses a real Arma rocket object, on the server (its
+        # owner). The collision-course assertion is evaluated by the
+        # production APS predicate; the fixture then calls the production
+        # local interceptor directly. Synthetic createVehicle rockets do not
+        # emit the normal Fired event, and this dedicated build does not
+        # dispatch CBA's per-frame tracker, so registering the synthetic
+        # object alone cannot exercise its response path.
+        aps_server = '''
+ // createVehicle positions are terrain-relative here. Keep the vehicle and
+ // its synthetic rocket on the same local terrain plane; a fixed world Z
+ // leaves the rocket far below terrain-snapped vehicles on elevated Stratis.
+ private _apsPosition = _player modelToWorld [110, 0, 0];
+ _apsPosition set [2, 0];
+ private _apsVehicle = "B_MBT_01_cannon_F" createVehicle _apsPosition;
+ _apsVehicle setDir 270;
+ _apsVehicle allowDamage true;
+ _apsVehicle setDamage 0;
+ [_apsVehicle, 2] call YOSHI_fnc_apsEnableVehicle;
+ [] call YOSHI_fnc_apsEnsureLocalRuntime;
+ private _chargesBefore = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
+ private _impactSeen = false;
+ _apsVehicle addEventHandler ["HitPart", { _impactSeen = true; missionNamespace setVariable ["PONTIFEX_TIER_apsPositiveImpact", true]; }];
+// Position projectiles from the vehicle's actual ASL position.  A vehicle is
+// terrain-snapped by createVehicle, while a fixed ATL/world-Z rocket can be
+// spawned into terrain on uneven Stratis ground.
+private _rocketPosition = (getPosASL _apsVehicle) vectorAdd [70, 0, 2];
+private _rocket = "R_PG32V_F" createVehicle (ASLToATL _rocketPosition);
+_rocket setPosASL _rocketPosition;
+ _rocket setVectorDirAndUp [[-1, 0, 0], [0, 0, 1]];
+ _rocket setVelocity [-320, 0, 0];
+ private _projectileUid = [_rocket] call YOSHI_fnc_apsProjectileUid;
+ sleep 0.02;
+private _threat = [_apsVehicle, _rocket] call YOSHI_fnc_apsEvaluateProjectileThreat;
+["aps.positive.projectileSpawned", !isNull _rocket && {_projectileUid isNotEqualTo ""}, format ["uid=%1", _projectileUid]] call _assert;
+["aps.positive.collisionCourse", !(_threat isEqualTo []), format ["threat=%1", _threat]] call _assert;
+private _projectileLocal = local _rocket;
+private _projectileTrackable = [_rocket] call YOSHI_fnc_apsIsTrackableProjectile;
+private _response = [_apsVehicle, _rocket] call YOSHI_fnc_apsSelectProjectileResponse;
+private _candidateCount = count (nearestObjects [_rocket, ["LandVehicle", "Air", "Ship"], YOSHI_APS_PROJECTILE_SEARCH_RADIUS]);
+private _interceptStarted = [_rocket] call YOSHI_fnc_apsTryInterceptProjectileLocal;
+private _postCallNull = isNull _rocket;
+private _postCallLocal = !isNull _rocket && {local _rocket};
+private _interceptFlag = !isNull _rocket && {_rocket getVariable ["YOSHI_APS_InterceptedLocal", false]};
+ private _engagementDeadline = diag_tickTime + 10;
+ private _engaged = false;
+ waitUntil {
+     uiSleep 0.05;
+     _engaged = (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) findIf {
+         (_x param [0, ""]) isEqualTo (netId _apsVehicle) &&
+         {(_x param [1, ""]) isEqualTo _projectileUid} &&
+         {(_x param [2, ""]) isEqualTo "hardkill"}
+     } >= 0;
+     _engaged || diag_tickTime > _engagementDeadline
+ };
+["aps.positive.engaged", _interceptStarted && {_engaged}, format ["started=%1|local=%2|trackable=%3|response=%4|candidates=%5|postNull=%6|postLocal=%7|interceptFlag=%8|vehicle=%9|projectile=%10|events=%11", _interceptStarted, _projectileLocal, _projectileTrackable, _response, _candidateCount, _postCallNull, _postCallLocal, _interceptFlag, netId _apsVehicle, _projectileUid, missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]]] call _assert;
+ private _chargesAfter = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
+ ["aps.positive.neutralized", _engaged && {isNull _rocket}, format ["projectile=%1|null=%2", _projectileUid, isNull _rocket]] call _assert;
+ ["aps.positive.chargeConsumed", _chargesAfter isEqualTo (_chargesBefore - 1), format ["before=%1|after=%2", _chargesBefore, _chargesAfter]] call _assert;
+ private _positiveImpact = missionNamespace getVariable ["PONTIFEX_TIER_apsPositiveImpact", false];
+ ["aps.positive.protected", !_positiveImpact && {(damage _apsVehicle) < 0.01}, format ["impact=%1|damage=%2", _positiveImpact, damage _apsVehicle]] call _assert;
+
+ // Control: the same real rocket trajectory against an otherwise identical
+ // but APS-disabled vehicle must produce an actual impact, not just time out.
+ private _controlPosition = _apsPosition vectorAdd [0, 100, 0];
+ private _controlVehicle = "B_MBT_01_cannon_F" createVehicle _controlPosition;
+ _controlVehicle allowDamage true;
+ _controlVehicle setDamage 0;
+ missionNamespace setVariable ["PONTIFEX_TIER_apsControlImpact", false];
+ _controlVehicle addEventHandler ["HitPart", { missionNamespace setVariable ["PONTIFEX_TIER_apsControlImpact", true]; }];
+ private _eventsBeforeControl = +(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]);
+private _controlRocketPosition = (getPosASL _controlVehicle) vectorAdd [70, 0, 2];
+private _controlRocket = "R_PG32V_F" createVehicle (ASLToATL _controlRocketPosition);
+_controlRocket setPosASL _controlRocketPosition;
+ _controlRocket setVectorDirAndUp [[-1, 0, 0], [0, 0, 1]];
+ _controlRocket setVelocity [-320, 0, 0];
+ [_controlRocket] call YOSHI_fnc_apsTrackProjectileLocal;
+ private _controlDeadline = diag_tickTime + 8;
+ waitUntil { uiSleep 0.05; (missionNamespace getVariable ["PONTIFEX_TIER_apsControlImpact", false]) || (damage _controlVehicle) > 0.01 || diag_tickTime > _controlDeadline };
+ private _controlImpact = missionNamespace getVariable ["PONTIFEX_TIER_apsControlImpact", false];
+ ["aps.control.disabledImpact", _controlImpact || {(damage _controlVehicle) > 0.01}, format ["impact=%1|damage=%2|rocketNull=%3", _controlImpact, damage _controlVehicle, isNull _controlRocket]] call _assert;
+ ["aps.control.disabledNoEngagement", (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) isEqualTo _eventsBeforeControl, format ["eventsBefore=%1|eventsAfter=%2", _eventsBeforeControl, missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]]] call _assert;
+
+ // A parallel path remains inside search distance but outside the production
+ // miss-distance envelope.  It is removed after proving that no APS event or
+ // charge change occurred, avoiding terrain/TTL ambiguity.
+ private _outsideCharges = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
+ private _outsideEvents = +(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]);
+// Keep the deliberate miss above uneven terrain as well as laterally outside
+// the APS envelope, so its normal continued flight is observable.
+private _outsideRocketPosition = (getPosASL _apsVehicle) vectorAdd [70, 35, 20];
+private _outsideRocket = "R_PG32V_F" createVehicle (ASLToATL _outsideRocketPosition);
+_outsideRocket setPosASL _outsideRocketPosition;
+ _outsideRocket setVectorDirAndUp [[-1, 0, 0], [0, 0, 1]];
+ _outsideRocket setVelocity [-320, 0, 0];
+sleep 0.02;
+private _outsideThreat = [_apsVehicle, _outsideRocket] call YOSHI_fnc_apsEvaluateProjectileThreat;
+private _outsideSpeed = vectorMagnitude (velocity _outsideRocket);
+private _outsideOk = !isNull _outsideRocket && {_outsideSpeed >= 10} && {_outsideThreat isEqualTo []} &&
+    {(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) isEqualTo _outsideEvents} &&
+    {([_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount) isEqualTo _outsideCharges};
+["aps.control.outsideEnvelope", _outsideOk, format ["threat=%1|rocketNull=%2|speed=%3|charges=%4|events=%5", _outsideThreat, isNull _outsideRocket, _outsideSpeed, [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount, missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]]] call _assert;
+ if (!isNull _outsideRocket) then { deleteVehicle _outsideRocket; };
+ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _apsVehicle, _projectileUid], true];
+ {{ if (!isNull _x) then { deleteVehicle _x; }; }} forEach [_apsVehicle, _controlVehicle];
+'''
+        aps_client = '''
+ private _apsDeadline = diag_tickTime + 45;
+ waitUntil { uiSleep 0.1; !isNil {missionNamespace getVariable "PONTIFEX_TIER_apsReplication"} || diag_tickTime > _apsDeadline };
+ private _apsReplication = missionNamespace getVariable ["PONTIFEX_TIER_apsReplication", []];
+ private _apsId = _apsReplication param [1, ""];
+ private _apsProjectile = _apsReplication param [2, ""];
+ private _apsObject = if (_apsId isEqualType "" && {_apsId isNotEqualTo ""}) then {objectFromNetId _apsId} else {objNull};
+ private _apsEvent = (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) findIf {
+     (_x param [0, ""]) isEqualTo _apsId && {(_x param [1, ""]) isEqualTo _apsProjectile} && {(_x param [2, ""]) isEqualTo "hardkill"}
+ } >= 0;
+ ["aps.replication", (_apsReplication param [0, ""]) isEqualTo _token && {_apsId isNotEqualTo ""} && {_apsProjectile isNotEqualTo ""} && {_apsEvent}, format ["vehicle=%1|projectile=%2|objectResolved=%3|event=%4", _apsId, _apsProjectile, !isNull _apsObject, _apsEvent]] call _assert;
 '''
     live_server = ""
     live_client = ""
@@ -881,7 +1024,26 @@ class Mission {{
         # command inbox.  Normal smoke/integration/gameplay missions have no
         # file-patching flag or command mount.
         live_server = '''
- [] spawn { private _last = ""; while {true} do { uiSleep 0.5; private _payload = "pontifex_live" callExtension "next"; if (_payload isNotEqualTo "" && {_payload isNotEqualTo _last}) then { _last = _payload; diag_log "PONTIFEX_LIVE|server|EXEC"; call compile _payload; }; }; };
+ // This dedicated-server build does not deliver mission EachFrame handlers
+ // after mission start: both CBA's PFH dispatcher and a direct EachFrame
+ // handler register but never tick. A scheduled mission loop does run here.
+ // Vary the extension argument on every poll: the extension ignores the
+ // nonce, but Arma then performs a fresh call instead of memoizing the first
+ // identical request.
+ diag_log "PONTIFEX_LIVE|server|POLLER_REGISTERED";
+ while {true} do {
+     private _poll = (missionNamespace getVariable ["PONTIFEX_LIVE_poll", 0]) + 1;
+     missionNamespace setVariable ["PONTIFEX_LIVE_poll", _poll];
+     if ((_poll mod 10) isEqualTo 0) then { diag_log format ["PONTIFEX_LIVE|server|POLL|%1", _poll]; };
+     private _payload = "pontifex_live" callExtension (format ["next-%1", _poll]);
+     private _last = missionNamespace getVariable ["PONTIFEX_LIVE_last", ""];
+     if (_payload isNotEqualTo "" && {_payload isNotEqualTo _last}) then {
+         missionNamespace setVariable ["PONTIFEX_LIVE_last", _payload];
+         diag_log "PONTIFEX_LIVE|server|EXEC";
+         call compile _payload;
+     };
+     sleep 0.5;
+ };
  diag_log "PONTIFEX_LIVE|server|READY";
 '''
         live_client = '''
@@ -904,6 +1066,7 @@ class Mission {{
  ["smoke.ack", (missionNamespace getVariable ["PONTIFEX_TIER_clientReady", ""]) isEqualTo _token, "client ready"] call _assert;
  {integration_server}
  {gameplay_server}
+ {aps_server}
  private _results = missionNamespace getVariable ["PONTIFEX_TIER_serverResults", []];
  private _failures = {{(_x # 1) isEqualTo "FAIL"}} count _results;
  private _status = "FAIL";
@@ -926,6 +1089,7 @@ class Mission {{
  [_token] remoteExecCall ["PONTIFEX_TIER_fnc_clientReady", 2];
  {integration_client}
  {gameplay_client}
+ {aps_client}
  private _ackDeadline = diag_tickTime + 45;
  waitUntil {{ uiSleep 0.1; ((missionNamespace getVariable ["PONTIFEX_TIER_serverAck", []]) param [0, ""]) isEqualTo _token || diag_tickTime > _ackDeadline }};
  private _ack = missionNamespace getVariable ["PONTIFEX_TIER_serverAck", []];
@@ -1120,7 +1284,10 @@ def run_multiplayer(
         e2e_mission = write_tier_mission(run_dir / "mission" / mission_name, token, plan, live=live)
         dedicated.MISSION_SOURCE = Path(e2e_mission["source"])
         dedicated.MISSION_NAME = mission_name
-    minimal = e2e or plan is not None or experiment is not None or experiment_pbo is not None
+    # A fixture can be self-contained yet still require the real Pontifex
+    # addon stack.  Keep the smoke path minimal, but mount dependencies and
+    # project mods for plans (such as APS) that explicitly declare them.
+    minimal = (e2e or plan is not None or experiment is not None or experiment_pbo is not None) and not (plan is not None and plan.project_mods)
     latest = RUNS / "latest"
     latest.unlink(missing_ok=True)
     latest.symlink_to(run_id)
@@ -1159,6 +1326,7 @@ def run_multiplayer(
             "client_expected": sorted(plan.client_expected),
             "single_boot_batch": plan.name == "integration",
             "live_command_channel": live,
+            "project_mods": plan.project_mods,
         }
     if manual:
         manifest["manual_access"] = {

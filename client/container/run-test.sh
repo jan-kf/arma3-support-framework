@@ -19,19 +19,19 @@ copy_steam_diagnostics() {
 }
 trap copy_steam_diagnostics EXIT
 
-steam -silent >"$log_dir/steam.log" 2>&1 &
-steam_pid=$!
-
 # A running WebHelper and launcher service only proves that Steam has spawned
 # its UI subprocesses.  Steam accepts and drops an -applaunch request before
-# post-logon is complete.  Record the existing console-log length and wait for
-# this particular Steam start to report its post-logon milestone.
+# post-logon is complete.  The persistent console log is rotated during a
+# normal Steam start, so a byte offset captured from its previous generation
+# can point past the new file forever.  Use a run-local freshness marker
+# instead: the post-logon record must be in the current log written after this
+# invocation began.
 steam_console_log="$steam_root/logs/console_log.txt"
-if [[ -f "$steam_console_log" ]]; then
-    steam_console_offset=$(wc -c <"$steam_console_log")
-else
-    steam_console_offset=0
-fi
+steam_ready_marker="$log_dir/.steam-ready-started"
+: >"$steam_ready_marker"
+
+steam -silent >"$log_dir/steam.log" 2>&1 &
+steam_pid=$!
 
 steam_ready=0
 for _ in $(seq 1 120); do
@@ -41,8 +41,8 @@ for _ in $(seq 1 120); do
     if pgrep -u "$(id -u)" -f 'steamwebhelper' >/dev/null \
         && pgrep -u "$(id -u)" -f 'steam-runtime-launcher-service' >/dev/null \
         && [[ -f "$steam_console_log" ]] \
-        && tail -c "+$((steam_console_offset + 1))" "$steam_console_log" \
-            | grep -q 'Waiting for compat in post-logon took:'; then
+        && [[ "$steam_console_log" -nt "$steam_ready_marker" ]] \
+        && grep -Fq 'Waiting for compat in post-logon took:' "$steam_console_log"; then
         steam_ready=1
         break
     fi

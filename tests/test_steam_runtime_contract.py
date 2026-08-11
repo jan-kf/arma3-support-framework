@@ -23,6 +23,14 @@ class SteamRuntimeContractTests(unittest.TestCase):
             dedicated.RUNTIME / "ca-certificates.crt",
         )
 
+    def test_steam_readiness_survives_console_log_rotation(self) -> None:
+        script = (ROOT / "client" / "container" / "run-test.sh").read_text(encoding="utf-8")
+        self.assertIn('steam_ready_marker="$log_dir/.steam-ready-started"', script)
+        self.assertIn(': >"$steam_ready_marker"', script)
+        self.assertIn('[[ "$steam_console_log" -nt "$steam_ready_marker" ]]', script)
+        self.assertIn("grep -Fq 'Waiting for compat in post-logon took:' \"$steam_console_log\"", script)
+        self.assertNotIn("steam_console_offset", script)
+
 
 if __name__ == "__main__":
     unittest.main()

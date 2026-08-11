@@ -19,6 +19,8 @@ The current integration demonstrations are `mission-namespace`, `config`, and `r
 
 The gameplay demonstration creates a server-owned Offroad, publishes its netId, moves the real client player into the driver seat, and requires an authoritative server verification. It is a model for scenario setup, action, assertion, and cleanup—not a replacement for the canonical E2E.
 
+The permanent `aps-intercept` scenario additionally runs a real server-owned rocket through the production APS predicate and interceptor. It records the exact vehicle and projectile IDs in the authoritative engagement ledger, requires projectile neutralization and exactly one hard-kill charge consumed, and verifies the replicated ledger from the real client. Its controls prove an APS-disabled vehicle receives the impact without an engagement or charge consumption, while an elevated lateral miss remains a live projectile outside the envelope with no engagement or charge change. Fixture rockets are positioned from the terrain-snapped vehicle's ASL position; this prevents an elevated Stratis terrain surface from turning the test into a ground-collision artifact.
+
 ### Developer Live Mode
 
 ```bash

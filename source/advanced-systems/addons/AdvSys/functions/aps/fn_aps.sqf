@@ -580,14 +580,28 @@ YOSHI_fnc_apsCommitIntercept = {
     private _onceKey = format ["YOSHI_APS_INTERCEPT|%1|%2|%3", _vehicleUid, _projectileUid, _mode];
     if !([_onceKey, 5] call YCD_fnc_claimOnceKey) exitWith {false};
 
+    private _consumed = false;
     switch (toLowerANSI _mode) do {
         case "hardkill": {
-            [_vehicle] call YOSHI_fnc_apsConsumeHardKillChargeAuthoritative;
+            _consumed = [_vehicle] call YOSHI_fnc_apsConsumeHardKillChargeAuthoritative;
         };
         case "softkill": {
-            [_vehicle] call YOSHI_fnc_apsConsumeSoftKillChargeAuthoritative;
+            _consumed = [_vehicle] call YOSHI_fnc_apsConsumeSoftKillChargeAuthoritative;
         };
     };
+
+    // An intercepted projectile is meaningful only if the authoritative
+    // system successfully consumed the corresponding resource.  Keep a
+    // compact replicated event ledger for diagnostics and deterministic
+    // mission tests; it contains identities only, never executable input.
+    if (!_consumed) exitWith {false};
+
+    private _events = missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []];
+    _events pushBack [_vehicleUid, _projectileUid, toLowerANSI _mode, diag_tickTime];
+    if ((count _events) > 64) then {
+        _events deleteRange [0, (count _events) - 64];
+    };
+    missionNamespace setVariable ["YOSHI_APS_EngagementEvents", _events, true];
 
     true
 };
