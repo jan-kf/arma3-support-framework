@@ -14,10 +14,15 @@ Usage: ./pontifex COMMAND
   check           Run HEMTT static checks for all four mods
   build           Check and build all four mods into build/current
   test            Run the fast/static test suite
+  test smoke      Fresh single-client infrastructure smoke test
+  test integration Fresh single-boot in-mission integration batch
+  test gameplay   Fresh deterministic gameplay scenario suite
+  test live       Start durable Developer Live Mode
   test dedicated  Build and run the real dedicated-server integration test
   test multiplayer Build and run server plus one real automated player client
   manual          Start a two-hour human-driven private client/server test
   e2e             Run the autonomous single-real-client Pontifex v1 proof
+  live ...        Inspect/control an active Developer Live Mode session
   multiplayer status Show live real-player multiplayer phase and evidence
   status          Show tool, Git, artifact, and server-foundation status
   server status   Show the Pontifex-controlled server and dependency status
@@ -88,6 +93,15 @@ case "${1:-help}" in
     check) run_check ;;
     build) run_build ;;
     test)
+        if [[ "${2:-}" == "smoke" || "${2:-}" == "integration" || "${2:-}" == "gameplay" ]]; then
+            tier="$2"
+            shift 2
+            exec python3 "$ROOT/tools/pontifex_multiplayer.py" tier "$tier" "$@"
+        fi
+        if [[ "${2:-}" == "live" ]]; then
+            shift 2
+            exec python3 "$ROOT/tools/pontifex_multiplayer.py" live-start "$@"
+        fi
         if [[ "${2:-}" == "multiplayer" ]]; then
             shift 2
             exec python3 "$ROOT/tools/pontifex_multiplayer.py" test "$@"
@@ -138,6 +152,9 @@ case "${1:-help}" in
         ;;
     e2e)
         exec python3 "$ROOT/tools/pontifex_multiplayer.py" e2e "${@:2}"
+        ;;
+    live)
+        exec python3 "$ROOT/tools/pontifex_multiplayer.py" live "${@:2}"
         ;;
     dependencies)
         exec python3 "$ROOT/tools/pontifex_server.py" dependencies "${2:-status}"

@@ -1,8 +1,39 @@
-# One-real-player multiplayer experiment
+# Real-client multiplayer testing
 
-## Current boundary
+## Test tiers
 
-The credential-free architecture is implemented and its independent layers are proven. Gustav has no existing licensed Arma 3 player installation or reusable Steam login. Therefore `./pontifex test multiplayer` deliberately returns `client_not_provisioned` before creating a network or process until an account that owns Arma 3 completes Steam login/Steam Guard and installs the Windows client plus Proton.
+Every real-client tier creates a fresh tokenized mission and deterministic PBO, uses the normal private Docker bridge and Steam/Proton path, and reports machine-readable assertions by origin. Normal tier runs tear down their client, server, and private network after completion.
+
+| Command | Purpose | Session shape |
+| --- | --- | --- |
+| `./pontifex test smoke` | Fastest real confidence check: build, server, native join, player creation, and both init phases. | One fresh boot. |
+| `./pontifex test integration [--select name,...]` | Modular script/config/RPC checks. | One fresh boot, then all selected checks run inside that mission session. |
+| `./pontifex test gameplay` | Deterministic setup/action/assert/cleanup scenarios. | One fresh boot per scenario suite. |
+| `./pontifex e2e` | Canonical tokenized end-to-end proof. | One fresh boot and authoritative in-game action. |
+
+The current integration demonstrations are `mission-namespace`, `config`, and `round-trip`. They can be independently selected, for example:
+
+```bash
+./pontifex test integration --select config,round-trip
+```
+
+The gameplay demonstration creates a server-owned Offroad, publishes its netId, moves the real client player into the driver seat, and requires an authoritative server verification. It is a model for scenario setup, action, assertion, and cleanup—not a replacement for the canonical E2E.
+
+### Developer Live Mode
+
+```bash
+./pontifex test live
+./pontifex live status
+./pontifex live exec server 'diag_log "my server probe";'
+./pontifex live exec client 'diag_log "my client probe";'
+./pontifex live test config
+./pontifex live reset
+./pontifex live stop
+```
+
+Live Mode first completes the smoke protocol, then deliberately retains its already-running private server/client session. It is a development aid, never proof: permanent tests must be promoted to Tier 2 or Tier 3 and pass from a fresh autonomous run.
+
+The server command channel is intentionally narrow. A runtime-only Arma extension can read exactly one run-scoped, read-only mounted SQF inbox and exposes no networking, process execution, directory traversal, or writes. Client snippets are relayed through the existing authenticated mission RPC channel. Commands are atomically replaced, size-limited, and audited in the run's `live-control/commands.jsonl`. `live stop` is the only command that tears down the retained containers and bridge.
 
 No Git remote is configured. Source commits remain local-only until a remote URL and authentication are supplied.
 

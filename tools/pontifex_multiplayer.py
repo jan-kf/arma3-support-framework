@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+from dataclasses import dataclass
 import hashlib
 import json
 import os
@@ -70,6 +71,74 @@ E2E_CLIENT_EXPECTED = {
     "e2e.actionExecuted",
     "e2e.finalState",
 }
+
+
+@dataclass(frozen=True)
+class TestPlan:
+    """A self-contained mission test tier.
+
+    Plans deliberately describe *in-mission* work only.  The container,
+    Steam, Proton, and native-connect lifecycle remains shared, so a batch
+    never pays for another game boot.
+    """
+
+    name: str
+    server_expected: frozenset[str]
+    client_expected: frozenset[str]
+    gameplay: bool = False
+    selected: frozenset[str] = frozenset()
+
+
+SMOKE_PLAN = TestPlan(
+    "smoke",
+    frozenset({"smoke.init.sqf", "smoke.token", "smoke.player", "smoke.ack"}),
+    frozenset({"smoke.initPlayerLocal", "smoke.identity", "smoke.token", "smoke.ack"}),
+)
+INTEGRATION_PLAN = TestPlan(
+    "integration",
+    SMOKE_PLAN.server_expected | frozenset({"integration.missionNamespace", "integration.config", "integration.roundTrip"}),
+    SMOKE_PLAN.client_expected | frozenset({"integration.hasInterface", "integration.roundTrip"}),
+    selected=frozenset({"mission-namespace", "config", "round-trip"}),
+)
+GAMEPLAY_PLAN = TestPlan(
+    "gameplay",
+    SMOKE_PLAN.server_expected | frozenset({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"}),
+    SMOKE_PLAN.client_expected | frozenset({"gameplay.vehicleResolved", "gameplay.enterVehicle"}),
+    gameplay=True,
+    selected=frozenset({"vehicle-entry"}),
+)
+LIVE_PLAN = TestPlan("live", SMOKE_PLAN.server_expected, SMOKE_PLAN.client_expected, selected=frozenset({"lifecycle"}))
+TEST_PLANS = {plan.name: plan for plan in (SMOKE_PLAN, INTEGRATION_PLAN, GAMEPLAY_PLAN, LIVE_PLAN)}
+TIER_TESTS = {
+    "smoke": frozenset({"lifecycle"}),
+    "integration": frozenset({"mission-namespace", "config", "round-trip"}),
+    "gameplay": frozenset({"vehicle-entry"}),
+    "live": frozenset({"lifecycle"}),
+}
+
+
+def select_plan(name: str, selected: str | None = None) -> TestPlan:
+    """Compose a tier from independently selectable in-mission test IDs."""
+    base = TEST_PLANS[name]
+    chosen = TIER_TESTS[name] if not selected else frozenset(item.strip() for item in selected.split(",") if item.strip())
+    unknown = chosen - TIER_TESTS[name]
+    if unknown or not chosen:
+        raise ValueError(f"unknown {name} test selection: {', '.join(sorted(unknown)) or '<empty>'}")
+    server = set(SMOKE_PLAN.server_expected)
+    client = set(SMOKE_PLAN.client_expected)
+    if name == "integration":
+        if "mission-namespace" in chosen:
+            server.add("integration.missionNamespace")
+        if "config" in chosen:
+            server.add("integration.config")
+            client.add("integration.hasInterface")
+        if "round-trip" in chosen:
+            server.add("integration.roundTrip")
+            client.add("integration.roundTrip")
+    elif name == "gameplay" and "vehicle-entry" in chosen:
+        server.update({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"})
+        client.update({"gameplay.vehicleResolved", "gameplay.enterVehicle"})
+    return TestPlan(name, frozenset(server), frozenset(client), gameplay=name == "gameplay", selected=chosen)
 
 
 def docker(args: list[str], *, check: bool = True, capture: bool = True) -> subprocess.CompletedProcess:
@@ -681,6 +750,202 @@ def write_result(run_dir: Path, result: dict) -> None:
     print(f"evidence: {run_dir}")
 
 
+def prepare_live_extension(run_dir: Path) -> Path:
+    """Build the fixed-path read-only Live Mode extension for this run only."""
+    source = ROOT / "tools" / "pontifex_live_extension.c"
+    output_dir = run_dir / "live-extension"
+    output_dir.mkdir(mode=0o700)
+    output = output_dir / "pontifex_live_x64.so"
+    build = subprocess.run(
+        ["gcc", "-shared", "-fPIC", "-O2", "-o", str(output), str(source)],
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    (output_dir / "build.log").write_text(build.stdout or "", encoding="utf-8")
+    if build.returncode != 0 or not output.is_file():
+        raise RuntimeError("failed to build the Developer Live command extension")
+    output.chmod(0o555)
+    # Arma 3 builds have used both names while probing Linux extensions.
+    # Both files are identical and live only in this disposable run.
+    shutil.copy2(output, output_dir / "pontifex_live.so")
+    (output_dir / "pontifex_live.so").chmod(0o555)
+    return output_dir
+
+
+def write_tier_mission(destination: Path, token: str, plan: TestPlan, *, live: bool = False) -> dict:
+    """Generate a fresh, vanilla mission for one scalable test tier.
+
+    The runner is intentionally mission-local: a test batch starts Arma once,
+    then dispatches every selected assertion inside the already-running
+    session.  A tier's names are stable machine-readable contracts, while the
+    token makes every individual run distinguishable from stale artifacts.
+    """
+    destination.mkdir(parents=True, exist_ok=False)
+    position_x = 4683 + (int(token[-4:], 16) % 30)
+    vehicle_entity = ""
+    addons = '"A3_Characters_F"'
+    metadata = 'items=1; class Item0 { className="A3_Characters_F"; name="Characters"; author="Bohemia Interactive"; };'
+    if plan.gameplay:
+        addons += ',"A3_Soft_F"'
+        metadata = 'items=2; class Item0 { className="A3_Characters_F"; name="Characters"; author="Bohemia Interactive"; }; class Item1 { className="A3_Soft_F"; name="Soft Vehicles"; author="Bohemia Interactive"; };'
+        vehicle_entity = f''' class Item1 {{ dataType="Object"; class PositionInfo {{ position[]={{ {position_x + 8},16,2778 }}; }}; side="Empty"; flags=7; class Attributes {{ name="PONTIFEX_TIER_vehicle"; }}; id=2; type="C_Offroad_01_F"; }};'''
+    mission_sqm = f'''version=54;
+binarizationWanted=0;
+sourceName="Pontifex{plan.name.title()}_{token}";
+addons[]={{ {addons} }};
+class AddonsMetaData {{ class List {{ {metadata} }}; }};
+randomSeed={int(token[-8:], 16)};
+class Mission {{
+ class Intel {{ year=2035; month=7; day=6; hour=12; minute=0; startWeather=0; forecastWeather=0; }};
+ class Entities {{ items={2 if plan.gameplay else 1};
+  class Item0 {{ dataType="Group"; side="West"; class Entities {{ items=1; class Item0 {{ dataType="Object"; class PositionInfo {{ position[]={{ {position_x},16,2778 }}; }}; side="West"; flags=7; class Attributes {{ isPlayer=1; }}; id=1; type="B_Soldier_A_F"; }}; }}; class Attributes {{}}; id=0; }};{vehicle_entity}
+ }};
+}};
+'''
+    description = (
+        "class Header { gameType = COOP; minPlayers = 1; maxPlayers = 1; };\n"
+        "skipLobby = 1;\nrespawn = 3;\nrespawnOnStart = 1;\ndisabledAI = 1;\n"
+    )
+    integration_server = ""
+    integration_client = ""
+    if plan.name == "integration":
+        integration_server = ""
+        integration_client = ""
+        if "mission-namespace" in plan.selected:
+            integration_server += '''
+ missionNamespace setVariable ["PONTIFEX_TIER_integrationValue", _token];
+ ["integration.missionNamespace", (missionNamespace getVariable ["PONTIFEX_TIER_integrationValue", ""]) isEqualTo _token, "round-trip mission namespace"] call _assert;
+'''
+        if "config" in plan.selected:
+            integration_server += '''
+ ["integration.config", isClass (configFile >> "CfgVehicles" >> "B_Soldier_A_F"), "CfgVehicles/B_Soldier_A_F"] call _assert;
+'''
+            integration_client += '''
+ ["integration.hasInterface", hasInterface isEqualTo true, "client interface"] call _assert;
+'''
+        if "round-trip" in plan.selected:
+            integration_server += '''
+ [_token] remoteExecCall ["PONTIFEX_TIER_fnc_integrationRequest", owner _player];
+ private _integrationDeadline = diag_tickTime + 20;
+ waitUntil { uiSleep 0.1; (missionNamespace getVariable ["PONTIFEX_TIER_integrationAck", ""]) isEqualTo _token || diag_tickTime > _integrationDeadline };
+ ["integration.roundTrip", (missionNamespace getVariable ["PONTIFEX_TIER_integrationAck", ""]) isEqualTo _token, "client-to-server event"] call _assert;
+'''
+            integration_client += '''
+ PONTIFEX_TIER_fnc_integrationRequest = { params ["_requestToken"]; missionNamespace setVariable ["PONTIFEX_TIER_integrationRequest", _requestToken]; };
+ private _integrationDeadline = diag_tickTime + 20;
+ waitUntil { uiSleep 0.1; (missionNamespace getVariable ["PONTIFEX_TIER_integrationRequest", ""]) isEqualTo _token || diag_tickTime > _integrationDeadline };
+ private _integrationOk = (missionNamespace getVariable ["PONTIFEX_TIER_integrationRequest", ""]) isEqualTo _token;
+ ["integration.roundTrip", _integrationOk, "server-to-client event"] call _assert;
+ if (_integrationOk) then { missionNamespace setVariable ["PONTIFEX_TIER_integrationAck", _token]; [_token] remoteExecCall ["PONTIFEX_TIER_fnc_integrationAck", 2]; };
+'''
+    gameplay_server = ""
+    gameplay_client = ""
+    if plan.gameplay:
+        gameplay_server = '''
+ private _vehicleDeadline = diag_tickTime + 20;
+ waitUntil { uiSleep 0.1; !isNil "PONTIFEX_TIER_vehicle" || diag_tickTime > _vehicleDeadline };
+ private _vehicle = missionNamespace getVariable ["PONTIFEX_TIER_vehicle", objNull];
+ ["gameplay.vehicleCreated", !isNull _vehicle && {typeOf _vehicle isEqualTo "C_Offroad_01_F"}, format ["netId=%1", netId _vehicle]] call _assert;
+ missionNamespace setVariable ["PONTIFEX_TIER_vehicleNetId", netId _vehicle, true];
+ PONTIFEX_TIER_fnc_gameplayAction = { params ["_receivedToken", "_vehicleId"]; missionNamespace setVariable ["PONTIFEX_TIER_gameplayAction", [_receivedToken, _vehicleId]]; };
+ private _actionDeadline = diag_tickTime + 30;
+ waitUntil { uiSleep 0.1; !(missionNamespace getVariable ["PONTIFEX_TIER_gameplayAction", []] isEqualTo []) || diag_tickTime > _actionDeadline };
+ private _action = missionNamespace getVariable ["PONTIFEX_TIER_gameplayAction", []];
+ private _actionOk = !isNull _vehicle && {(count _action) isEqualTo 2} && {(_action # 0) isEqualTo _token} && {(_action # 1) isEqualTo netId _vehicle};
+ if (_actionOk) then { _player moveInDriver _vehicle; };
+ private _driverDeadline = diag_tickTime + 30;
+ waitUntil { uiSleep 0.1; !isNull _vehicle && {driver _vehicle isEqualTo _player} || diag_tickTime > _driverDeadline };
+ ["gameplay.driverAuthoritative", _actionOk && {!isNull _vehicle} && {driver _vehicle isEqualTo _player}, format ["driver=%1|vehicle=%2|action=%3", if (isNull _vehicle || {isNull driver _vehicle}) then {"<none>"} else {name (driver _vehicle)}, netId _vehicle, _action]] call _assert;
+'''
+        gameplay_client = '''
+ private _vehicleDeadline = diag_tickTime + 30;
+ waitUntil { uiSleep 0.1; !isNil {missionNamespace getVariable "PONTIFEX_TIER_vehicleNetId"} || diag_tickTime > _vehicleDeadline };
+ private _vehicleId = missionNamespace getVariable ["PONTIFEX_TIER_vehicleNetId", ""];
+ private _vehicle = if (_vehicleId isEqualType "" && {_vehicleId isNotEqualTo ""}) then {objectFromNetId _vehicleId} else {objNull};
+ private _resolveDeadline = diag_tickTime + 30;
+ waitUntil { uiSleep 0.1; !isNull _vehicle || diag_tickTime > _resolveDeadline };
+ ["gameplay.vehicleResolved", !isNull _vehicle && {(netId _vehicle) isEqualTo _vehicleId}, format ["netId=%1", _vehicleId]] call _assert;
+ if (!isNull _vehicle) then { player moveInDriver _vehicle; };
+ private _actionDeadline = diag_tickTime + 20;
+ waitUntil { uiSleep 0.1; !isNull _vehicle && {driver _vehicle isEqualTo player} || diag_tickTime > _actionDeadline };
+ private _actionOk = !isNull _vehicle && {driver _vehicle isEqualTo player} && {vehicle player isEqualTo _vehicle};
+ ["gameplay.enterVehicle", _actionOk, format ["vehicle=%1", netId _vehicle]] call _assert;
+ [_token, netId _vehicle] remoteExecCall ["PONTIFEX_TIER_fnc_gameplayAction", 2];
+'''
+    live_server = ""
+    live_client = ""
+    if live:
+        # This exists only in Developer Live Mode, where the operator has
+        # intentionally opted into file patching and a run-scoped writable
+        # command inbox.  Normal smoke/integration/gameplay missions have no
+        # file-patching flag or command mount.
+        live_server = '''
+ [] spawn { private _last = ""; while {true} do { uiSleep 0.5; private _payload = "pontifex_live" callExtension "next"; if (_payload isNotEqualTo "" && {_payload isNotEqualTo _last}) then { _last = _payload; diag_log "PONTIFEX_LIVE|server|EXEC"; call compile _payload; }; }; };
+ diag_log "PONTIFEX_LIVE|server|READY";
+'''
+        live_client = '''
+ PONTIFEX_LIVE_fnc_exec = { params ["_source", "_commandId"]; diag_log format ["PONTIFEX_LIVE|client-a|EXEC|%1", _commandId]; call compile _source; };
+ diag_log "PONTIFEX_LIVE|client-a|READY";
+'''
+    init_server = f'''[] spawn {{
+ private _token = "{token}";
+ waitUntil {{ time > 0 }};
+ missionNamespace setVariable ["PONTIFEX_TIER_serverResults", []];
+ private _assert = {{ params ["_name", "_condition", ["_detail", ""]]; private _status = "FAIL"; if (_condition isEqualTo true) then {{ _status = "PASS"; }}; private _results = missionNamespace getVariable ["PONTIFEX_TIER_serverResults", []]; _results pushBack [_name, _status, _detail]; missionNamespace setVariable ["PONTIFEX_TIER_serverResults", _results]; diag_log format ["PONTIFEX_TEST|%1|server|%2|%3", _status, _name, _detail]; }};
+ ["smoke.init.sqf", true, "server mission init"] call _assert;
+ ["smoke.token", _token isEqualTo "{token}", format ["token=%1", _token]] call _assert;
+ PONTIFEX_TIER_fnc_clientReady = {{ params ["_receivedToken"]; missionNamespace setVariable ["PONTIFEX_TIER_clientReady", _receivedToken]; missionNamespace setVariable ["PONTIFEX_LIVE_clientOwner", remoteExecutedOwner]; }};
+ PONTIFEX_TIER_fnc_integrationAck = {{ params ["_receivedToken"]; missionNamespace setVariable ["PONTIFEX_TIER_integrationAck", _receivedToken]; }};
+ private _deadline = diag_tickTime + 180;
+ waitUntil {{ uiSleep 0.1; count allPlayers isEqualTo 1 && {{(missionNamespace getVariable ["PONTIFEX_TIER_clientReady", ""]) isEqualTo _token}} || diag_tickTime > _deadline }};
+ private _player = allPlayers param [0, objNull];
+ ["smoke.player", !isNull _player && {{name _player isEqualTo "PontifexClientA"}}, format ["name=%1|count=%2", name _player, count allPlayers]] call _assert;
+ ["smoke.ack", (missionNamespace getVariable ["PONTIFEX_TIER_clientReady", ""]) isEqualTo _token, "client ready"] call _assert;
+ {integration_server}
+ {gameplay_server}
+ private _results = missionNamespace getVariable ["PONTIFEX_TIER_serverResults", []];
+ private _failures = {{(_x # 1) isEqualTo "FAIL"}} count _results;
+ private _status = "FAIL";
+ if (_failures isEqualTo 0 && {{(count _results) isEqualTo {len(plan.server_expected)}}}) then {{ _status = "PASS"; [_token, _status] remoteExecCall ["PONTIFEX_TIER_fnc_serverAck", owner _player]; }};
+ diag_log format ["PONTIFEX_TEST|COMPLETE|server|status=%1|assertions=%2|failures=%3", _status, count _results, _failures];
+ diag_log format ["PONTIFEX_TIER|{plan.name}|%1|%2", _status, _token];
+ {live_server}
+}};
+'''
+    init_client = f'''[] spawn {{
+ private _token = "{token}";
+ private _deadline = diag_tickTime + 150;
+ waitUntil {{ uiSleep 0.1; !isNull player && {{hasInterface}} || diag_tickTime > _deadline }};
+ missionNamespace setVariable ["PONTIFEX_TIER_clientResults", []];
+ private _assert = {{ params ["_name", "_condition", ["_detail", ""]]; private _status = "FAIL"; if (_condition isEqualTo true) then {{ _status = "PASS"; }}; private _results = missionNamespace getVariable ["PONTIFEX_TIER_clientResults", []]; _results pushBack [_name, _status, _detail]; missionNamespace setVariable ["PONTIFEX_TIER_clientResults", _results]; diag_log format ["PONTIFEX_TEST|%1|client-a|%2|%3", _status, _name, _detail]; }};
+ ["smoke.initPlayerLocal", hasInterface && {{!isNull player}}, "client mission init"] call _assert;
+ ["smoke.identity", name player isEqualTo "PontifexClientA" && {{getPlayerUID player isNotEqualTo ""}}, format ["name=%1|uid=%2", name player, getPlayerUID player]] call _assert;
+ ["smoke.token", _token isEqualTo "{token}", format ["token=%1", _token]] call _assert;
+ PONTIFEX_TIER_fnc_serverAck = {{ params ["_replyToken", "_status"]; missionNamespace setVariable ["PONTIFEX_TIER_serverAck", [_replyToken, _status]]; }};
+ [_token] remoteExecCall ["PONTIFEX_TIER_fnc_clientReady", 2];
+ {integration_client}
+ {gameplay_client}
+ private _ackDeadline = diag_tickTime + 45;
+ waitUntil {{ uiSleep 0.1; ((missionNamespace getVariable ["PONTIFEX_TIER_serverAck", []]) param [0, ""]) isEqualTo _token || diag_tickTime > _ackDeadline }};
+ private _ack = missionNamespace getVariable ["PONTIFEX_TIER_serverAck", []];
+ ["smoke.ack", (_ack param [0, ""]) isEqualTo _token && {{(_ack param [1, "FAIL"]) isEqualTo "PASS"}}, format ["ack=%1", _ack]] call _assert;
+ private _results = missionNamespace getVariable ["PONTIFEX_TIER_clientResults", []];
+ private _failures = {{(_x # 1) isEqualTo "FAIL"}} count _results;
+ private _status = "FAIL";
+ if (_failures isEqualTo 0 && {{(count _results) isEqualTo {len(plan.client_expected)}}}) then {{ _status = "PASS"; }};
+ diag_log format ["PONTIFEX_TEST|COMPLETE|client-a|status=%1|assertions=%2|failures=%3", _status, count _results, _failures];
+ diag_log format ["PONTIFEX_TIER|{plan.name}|%1|%2", _status, _token];
+ {live_client}
+}};
+'''
+    (destination / "mission.sqm").write_text(mission_sqm, encoding="ascii")
+    (destination / "description.ext").write_text(description, encoding="ascii")
+    (destination / "initServer.sqf").write_text(init_server, encoding="ascii")
+    (destination / "initPlayerLocal.sqf").write_text(init_client, encoding="ascii")
+    return {"token": token, "source": str(destination), "mission_sha256": dedicated.sha256(destination / "mission.sqm"), "plan": plan.name}
+
+
 def write_e2e_mission(destination: Path, token: str) -> dict:
     """Create a fresh vanilla mission whose state transition is self-checking."""
     destination.mkdir(parents=True, exist_ok=False)
@@ -800,15 +1065,22 @@ def manual_ssh_target() -> str:
     return os.environ.get("PONTIFEX_SSH_TARGET", socket.gethostname())
 
 
-def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = False, e2e: bool = False) -> int:
+def run_multiplayer(
+    force_failure: bool,
+    timeout_seconds: int,
+    manual: bool = False,
+    e2e: bool = False,
+    plan: TestPlan | None = None,
+    live: bool = False,
+) -> int:
     # Native Arma startup parameters are the normal autonomous E2E join path.
     # Keep the VNC adapter for diagnostic/manual workflows only; it no longer
     # drives Server Browser / Direct Connect for the production proof.
-    native_connect = e2e or os.environ.get("PONTIFEX_NATIVE_CONNECT") == "1"
+    native_connect = e2e or plan is not None or os.environ.get("PONTIFEX_NATIVE_CONNECT") == "1"
     experiment = os.environ.get("PONTIFEX_EXPERIMENT_MISSION")
     experiment_pbo = os.environ.get("PONTIFEX_EXPERIMENT_PBO")
-    if e2e and (experiment or experiment_pbo):
-        raise RuntimeError("the autonomous E2E command selects its own fresh mission")
+    if (e2e or plan is not None) and (experiment or experiment_pbo):
+        raise RuntimeError("fresh autonomous tier commands select their own mission")
     if experiment and experiment_pbo:
         raise RuntimeError("select either PONTIFEX_EXPERIMENT_MISSION or PONTIFEX_EXPERIMENT_PBO")
     if experiment:
@@ -829,6 +1101,12 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
     client_dir = run_dir / "client-a"
     for path in (server_dir / "profile", client_dir / "profile", run_dir / "network"):
         path.mkdir(parents=True, exist_ok=True)
+    if live:
+        (run_dir / "live-control").mkdir(mode=0o700)
+        # A blank inbox is important: the mission poller treats a changed,
+        # non-empty file as a command.  It never inherits a previous run.
+        for endpoint in ("server.sqf", "client.sqf"):
+            (run_dir / "live-control" / endpoint).write_text("", encoding="ascii")
     e2e_mission = None
     if e2e:
         token = f"e2e-{run_id}-{uuid.uuid4().hex[:12]}"
@@ -836,7 +1114,13 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
         e2e_mission = write_e2e_mission(run_dir / "mission" / mission_name, token)
         dedicated.MISSION_SOURCE = Path(e2e_mission["source"])
         dedicated.MISSION_NAME = mission_name
-    minimal = e2e or experiment is not None or experiment_pbo is not None
+    elif plan is not None:
+        token = f"{plan.name}-{run_id}-{uuid.uuid4().hex[:12]}"
+        mission_name = f"Pontifex{plan.name.title()}_{run_id.replace('-', '_')}.Stratis"
+        e2e_mission = write_tier_mission(run_dir / "mission" / mission_name, token, plan, live=live)
+        dedicated.MISSION_SOURCE = Path(e2e_mission["source"])
+        dedicated.MISSION_NAME = mission_name
+    minimal = e2e or plan is not None or experiment is not None or experiment_pbo is not None
     latest = RUNS / "latest"
     latest.unlink(missing_ok=True)
     latest.symlink_to(run_id)
@@ -844,7 +1128,12 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
     manifest = {
         "schema": 2,
         "run_id": run_id,
-        "mode": "autonomous-single-client-e2e" if e2e else ("manual-multiplayer" if manual else ("multiplayer-forced-failure" if force_failure else "multiplayer")),
+        "mode": (
+            "autonomous-single-client-e2e" if e2e else
+            f"tier-{plan.name}" if plan is not None else
+            "manual-multiplayer" if manual else
+            "multiplayer-forced-failure" if force_failure else "multiplayer"
+        ),
         "started_at": dedicated.utc_now(),
         "timeout_seconds": timeout_seconds,
         "git": dedicated.git_info(),
@@ -852,11 +1141,25 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
         "arma_client": client_version(),
         "dependencies": dedicated.dependency_status(),
         "builds": [],
-        "command": ["./pontifex", "e2e"] if e2e else (["./pontifex", "manual"] if manual else ["./pontifex", "test", "multiplayer"] + (["--force-failure"] if force_failure else [])),
+        "command": (
+            ["./pontifex", "e2e"] if e2e else
+            ["./pontifex", "test", "live"] if live else
+            ["./pontifex", "test", plan.name] if plan is not None else
+            ["./pontifex", "manual"] if manual else
+            ["./pontifex", "test", "multiplayer"] + (["--force-failure"] if force_failure else [])
+        ),
         "architecture": "two unprivileged Docker containers on one run-scoped bridge; NVIDIA CDI client GPU",
     }
     if e2e_mission:
         manifest["fresh_mission"] = e2e_mission
+    if plan is not None:
+        manifest["test_plan"] = {
+            "tier": plan.name,
+            "server_expected": sorted(plan.server_expected),
+            "client_expected": sorted(plan.client_expected),
+            "single_boot_batch": plan.name == "integration",
+            "live_command_channel": live,
+        }
     if manual:
         manifest["manual_access"] = {
             "ssh_target": manual_ssh_target(),
@@ -949,11 +1252,17 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
                 result["reason"] = "build_failed"
                 return_code = 1
                 return return_code
-            phase("runtime_setup_entered", minimal=minimal, e2e=e2e)
+            phase("runtime_setup_entered", minimal=minimal, e2e=e2e, plan=plan.name if plan else None)
             dependencies = {} if minimal else dedicated.provision_dependencies()
             dedicated.prepare_runtime()
+            live_extension_dir = None
+            if live:
+                # The extension is built afresh inside this run directory and
+                # reads only the explicitly mounted command inbox.  It is not
+                # present in normal test tiers or the production E2E.
+                live_extension_dir = prepare_live_extension(run_dir)
             phase("runtime_setup_completed")
-            if e2e:
+            if e2e_mission:
                 staged_pbo = dedicated.INSTALL_VIEW / "mpmissions" / f"{dedicated.MISSION_NAME}.pbo"
                 if not staged_pbo.is_file():
                     raise RuntimeError("fresh E2E mission PBO was not staged")
@@ -987,7 +1296,7 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
                 .replace("@REQUIRE_CLIENT@", "0" if minimal else "1")
                 .replace("Pontifex_Integration.Stratis", dedicated.MISSION_NAME)
             )
-            if e2e:
+            if e2e or plan is not None:
                 # The mission itself owns skipLobby.  The server.cfg setting
                 # is deliberately absent: Arma consults it only when no
                 # mission/campaign config defines skipLobby.
@@ -1060,6 +1369,9 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
                     f"{RUNTIME}:{RUNTIME}:rw",
                     "--volume",
                     f"{server_dir}:{server_dir}:rw",
+                    *(["--volume", f"{run_dir / 'live-control'}:/run/pontifex/live-control:ro"] if live else []),
+                    *(["--mount", f"type=bind,source={live_extension_dir / 'pontifex_live_x64.so'},target={dedicated.INSTALL_VIEW / 'pontifex_live_x64.so'},readonly"] if live else []),
+                    *(["--mount", f"type=bind,source={live_extension_dir / 'pontifex_live.so'},target={dedicated.INSTALL_VIEW / 'pontifex_live.so'},readonly"] if live else []),
                     "--volume",
                     f"{dedicated.LEGACY_INSTALL}:{dedicated.LEGACY_INSTALL}:ro",
                     "--mount",
@@ -1089,12 +1401,15 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
                 "network": network,
                 "server_container": server_name,
                 "client_container": client_name,
+                "live": live,
+                "live_control": str(run_dir / "live-control") if live else None,
             }
             dedicated.atomic_json(MULTIPLAYER_STATE, state)
 
             server_deadline = time.monotonic() + 30
             while time.monotonic() < server_deadline:
-                if "PONTIFEX_TEST|PASS|server|sqf.executed" in container_logs(server_name):
+                startup_assertion = "sqf.executed" if e2e else ("smoke.init.sqf" if plan else "sqf.executed")
+                if f"PONTIFEX_TEST|PASS|server|{startup_assertion}" in container_logs(server_name):
                     break
                 if not container_running(server_name):
                     raise RuntimeError("server exited before mission initialization")
@@ -1168,7 +1483,7 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
                     # headless GL compositor has an observed Xwayland abort
                     # under this load (signal 6), so apply the known-good
                     # presentation path to the autonomous E2E as well.
-                    *( ["--env", "PONTIFEX_COMPOSITOR_RENDERER=pixman"] if (manual or e2e) else [] ),
+                    *( ["--env", "PONTIFEX_COMPOSITOR_RENDERER=pixman"] if (manual or e2e or plan is not None) else [] ),
                     # This is a compositor-local VNC endpoint for the E2E
                     # join adapter.  Unlike manual mode there is no Docker
                     # publish rule, so it is unreachable from the host.
@@ -1273,8 +1588,14 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
                         manifest["server_process_table"] = container_processes(server_name)
                         dedicated.atomic_json(run_dir / "manifest.json", manifest)
                 if not manual and server_complete and client_complete:
-                    reason = "complete"
-                    break
+                    if live:
+                        if "PONTIFEX_LIVE|server|READY" in server_text and "PONTIFEX_LIVE|client-a|READY" in client_text:
+                            reason = "live_ready"
+                            result["status"] = "READY"
+                            break
+                    else:
+                        reason = "complete"
+                        break
                 if not container_running(server_name):
                     reason = "server_exited"
                     break
@@ -1314,8 +1635,8 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
                 time.sleep(1)
 
             (client_dir / "console.log").write_text(container_logs(client_name), encoding="utf-8")
-            server_expected = E2E_SERVER_EXPECTED if e2e else SERVER_EXPECTED
-            client_expected = E2E_CLIENT_EXPECTED if e2e else CLIENT_EXPECTED
+            server_expected = E2E_SERVER_EXPECTED if e2e else (plan.server_expected if plan else SERVER_EXPECTED)
+            client_expected = E2E_CLIENT_EXPECTED if e2e else (plan.client_expected if plan else CLIENT_EXPECTED)
             server_missing, server_error = validate_origin(server_assertions, server_complete, server_expected)
             client_missing, client_error = validate_origin(client_assertions, client_complete, client_expected)
             result.update(
@@ -1329,7 +1650,10 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
                     **({"join_adapter_attempted": join_adapter_attempted} if e2e else {}),
                 }
             )
-            if manual and reason == "timeout":
+            if live and reason == "live_ready" and not server_error and not client_error:
+                result["status"] = "READY"
+                result["reason"] = "live_ready"
+            elif manual and reason == "timeout":
                 result["status"] = "READY"
                 result["reason"] = "manual_timeout"
             elif reason != "complete":
@@ -1352,19 +1676,26 @@ def run_multiplayer(force_failure: bool, timeout_seconds: int, manual: bool = Fa
             if client_name:
                 (client_dir / "console.log").write_text(container_logs(client_name), encoding="utf-8")
                 combine_rpts(client_dir, client_dir / "client.rpt")
-            cleanup = {
-                "client_removed": validated_remove_container(client_name, run_id),
-                "server_removed": validated_remove_container(server_name, run_id),
-                "network_removed": validated_remove_network(network, run_id) if network else True,
-            }
-            cleanup["state_removed"] = all(cleanup.values())
+            if live and result["status"] == "READY":
+                cleanup = {"deferred": True, "state_removed": False}
+            else:
+                cleanup = {
+                    "client_removed": validated_remove_container(client_name, run_id),
+                    "server_removed": validated_remove_container(server_name, run_id),
+                    "network_removed": validated_remove_network(network, run_id) if network else True,
+                }
+            if "state_removed" not in cleanup:
+                cleanup["state_removed"] = all(cleanup.values())
             if cleanup["state_removed"]:
                 MULTIPLAYER_STATE.unlink(missing_ok=True)
             result["cleanup"] = cleanup
             manifest["finished_at"] = dedicated.utc_now()
             manifest["gpu_finish"] = gpu_sample()
             dedicated.atomic_json(run_dir / "manifest.json", manifest)
-            if not all(cleanup.values()):
+            # A healthy developer session intentionally retains its containers,
+            # private network and state file.  It is therefore READY rather
+            # than a failed cleanup; `pontifex live stop` owns that teardown.
+            if not (live and result["status"] == "READY") and not all(cleanup.values()):
                 result["status"] = "FAIL"
                 result["reason"] = "cleanup_failed"
             write_result(run_dir, result)
@@ -1401,6 +1732,128 @@ def show_runtime_status() -> int:
     return 0
 
 
+def live_state() -> dict:
+    """Read and validate the sole active developer-live session."""
+    if not MULTIPLAYER_STATE.is_file():
+        raise RuntimeError("no Pontifex live session is active")
+    state = json.loads(MULTIPLAYER_STATE.read_text(encoding="utf-8"))
+    if not state.get("live"):
+        raise RuntimeError("the active Pontifex runtime is not Developer Live Mode")
+    control = Path(str(state.get("live_control", "")))
+    if not control.is_dir() or control.parent.parent != RUNS:
+        raise RuntimeError("live command directory is invalid")
+    return state
+
+
+def write_live_command(endpoint: str, source: str) -> Path:
+    """Atomically publish one explicit developer command to one mission VM."""
+    if endpoint not in {"server", "client"}:
+        raise RuntimeError("live endpoint must be server or client")
+    if not source.strip() or len(source.encode("utf-8")) > 32 * 1024:
+        raise RuntimeError("live command must be non-empty and at most 32 KiB")
+    state = live_state()
+    control = Path(state["live_control"])
+    command_id = uuid.uuid4().hex
+    if endpoint == "client":
+        # The live server is the only endpoint granted file patching.  It
+        # relays explicitly requested client snippets over the mission's
+        # already-authenticated multiplayer channel, keeping Proton's client
+        # launch arguments identical to normal smoke/integration/gameplay.
+        escaped = source.rstrip().replace('"', '""')
+        source = (
+            f'private _owner = missionNamespace getVariable ["PONTIFEX_LIVE_clientOwner", -1]; '
+            f'if (_owner > 0) then {{ ["{escaped}", "{command_id}"] remoteExecCall ["PONTIFEX_LIVE_fnc_exec", _owner]; }} '
+            f'else {{ diag_log "PONTIFEX_LIVE|client-a|NO_OWNER"; }};'
+        )
+        target_endpoint = "server"
+    else:
+        target_endpoint = endpoint
+    payload = f'diag_log "PONTIFEX_LIVE|{endpoint}|COMMAND|{command_id}";\n{source.rstrip()}\n'
+    target = control / f"{target_endpoint}.sqf"
+    temporary = target.with_suffix(".sqf.new")
+    temporary.write_text(payload, encoding="utf-8")
+    os.replace(temporary, target)
+    record = {"at": dedicated.utc_now(), "id": command_id, "endpoint": endpoint, "source": source}
+    with (control / "commands.jsonl").open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(record, sort_keys=True) + "\n")
+    return target
+
+
+def show_live_status() -> int:
+    try:
+        state = live_state()
+    except (RuntimeError, OSError, json.JSONDecodeError) as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    output = {
+        "run_id": state["run_id"],
+        "server_running": bool((item := container_inspect(state["server_container"])) and item["State"]["Running"]),
+        "client_running": bool((item := container_inspect(state["client_container"])) and item["State"]["Running"]),
+        "control": state["live_control"],
+    }
+    print(json.dumps(output, sort_keys=True))
+    return 0 if output["server_running"] and output["client_running"] else 1
+
+
+def run_live_test(name: str) -> int:
+    scripts = {
+        "config": (
+            'diag_log format ["PONTIFEX_LIVE_TEST|PASS|server|config|B_Soldier_A_F=%1", isClass (configFile >> "CfgVehicles" >> "B_Soldier_A_F")];',
+            'diag_log format ["PONTIFEX_LIVE_TEST|PASS|client-a|config|hasInterface=%1", hasInterface];',
+        ),
+        "namespace": (
+            'missionNamespace setVariable ["PONTIFEX_LIVE_namespace", "PASS", true]; diag_log "PONTIFEX_LIVE_TEST|PASS|server|namespace";',
+            'diag_log format ["PONTIFEX_LIVE_TEST|PASS|client-a|namespace|value=%1", missionNamespace getVariable ["PONTIFEX_LIVE_namespace", "missing"]];',
+        ),
+    }
+    if name not in scripts:
+        print(f"unknown live demonstration test: {name}", file=sys.stderr)
+        return 2
+    server, client = scripts[name]
+    # One inbox update prevents the poller from observing only the latter of
+    # two rapid writes.  The server assertion runs first, then relays the
+    # client assertion using the same controlled transport as `live exec`.
+    command_id = uuid.uuid4().hex
+    escaped = client.replace('"', '""')
+    combined = (
+        f'{server}\nprivate _owner = missionNamespace getVariable ["PONTIFEX_LIVE_clientOwner", -1]; '
+        f'if (_owner > 0) then {{ ["{escaped}", "{command_id}"] remoteExecCall ["PONTIFEX_LIVE_fnc_exec", _owner]; }};'
+    )
+    write_live_command("server", combined)
+    print(json.dumps({"status": "queued", "test": name}, sort_keys=True))
+    return 0
+
+
+def reset_live() -> int:
+    client = 'diag_log "PONTIFEX_LIVE|client-a|RESET";'.replace('"', '""')
+    write_live_command(
+        "server",
+        '{ if (_x getVariable ["PONTIFEX_LIVE_owned", false]) then { deleteVehicle _x; }; } forEach vehicles; '
+        'diag_log "PONTIFEX_LIVE|server|RESET"; '
+        'private _owner = missionNamespace getVariable ["PONTIFEX_LIVE_clientOwner", -1]; '
+        f'if (_owner > 0) then {{ ["{client}", "reset"] remoteExecCall ["PONTIFEX_LIVE_fnc_exec", _owner]; }};',
+    )
+    print('{"status":"reset_queued"}')
+    return 0
+
+
+def start_live(timeout_seconds: int) -> int:
+    """Start live mode in a user service so terminal closure cannot kill it."""
+    unit = "pontifex-live"
+    command = [
+        "systemd-run", "--user", "--unit", unit, "--collect", "--no-block",
+        "--property=KillMode=control-group", "--property=TimeoutStartSec=3h",
+        sys.executable, str(Path(__file__).resolve()), "live-worker", "--timeout", str(timeout_seconds),
+    ]
+    completed = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if completed.returncode != 0:
+        print(completed.stderr.strip(), file=sys.stderr)
+        return completed.returncode
+    print(completed.stdout.strip())
+    print("Developer Live Mode is starting; run './pontifex live status' until it reports both endpoints ready.")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
@@ -1411,6 +1864,24 @@ def main() -> int:
     manual.add_argument("--timeout", type=int, default=int(os.environ.get("PONTIFEX_MANUAL_TIMEOUT", "7200")))
     e2e = sub.add_parser("e2e")
     e2e.add_argument("--timeout", type=int, default=int(os.environ.get("PONTIFEX_E2E_TIMEOUT", "720")))
+    tier = sub.add_parser("tier")
+    tier.add_argument("name", choices=("smoke", "integration", "gameplay"))
+    tier.add_argument("--select", help="comma-separated test IDs; defaults to the whole tier")
+    tier.add_argument("--timeout", type=int, default=int(os.environ.get("PONTIFEX_TIER_TIMEOUT", "360")))
+    live_worker = sub.add_parser("live-worker")
+    live_worker.add_argument("--timeout", type=int, default=int(os.environ.get("PONTIFEX_LIVE_TIMEOUT", "10800")))
+    live_start = sub.add_parser("live-start")
+    live_start.add_argument("--timeout", type=int, default=int(os.environ.get("PONTIFEX_LIVE_TIMEOUT", "10800")))
+    live = sub.add_parser("live")
+    live_sub = live.add_subparsers(dest="live_command", required=True)
+    live_sub.add_parser("status")
+    live_exec = live_sub.add_parser("exec")
+    live_exec.add_argument("endpoint", choices=("server", "client"))
+    live_exec.add_argument("source")
+    live_test = live_sub.add_parser("test")
+    live_test.add_argument("name", choices=("config", "namespace"))
+    live_sub.add_parser("reset")
+    live_sub.add_parser("stop")
     client = sub.add_parser("client")
     client.add_argument("action", choices=("status", "image", "preflight", "login", "stop-login"))
     sub.add_parser("status")
@@ -1422,6 +1893,36 @@ def main() -> int:
         return run_multiplayer(False, args.timeout, manual=True)
     if args.command == "e2e":
         return run_multiplayer(False, args.timeout, e2e=True)
+    if args.command == "tier":
+        try:
+            plan = select_plan(args.name, args.select)
+        except ValueError as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        return run_multiplayer(False, args.timeout, plan=plan)
+    if args.command == "live-worker":
+        return run_multiplayer(False, args.timeout, plan=LIVE_PLAN, live=True)
+    if args.command == "live-start":
+        return start_live(args.timeout)
+    if args.command == "live":
+        if args.live_command == "status":
+            return show_live_status()
+        if args.live_command == "exec":
+            try:
+                path = write_live_command(args.endpoint, args.source)
+            except RuntimeError as exc:
+                print(str(exc), file=sys.stderr)
+                return 1
+            print(json.dumps({"status": "queued", "endpoint": args.endpoint, "path": str(path)}, sort_keys=True))
+            return 0
+        if args.live_command == "test":
+            return run_live_test(args.name)
+        if args.live_command == "reset":
+            return reset_live()
+        if args.live_command == "stop":
+            cleanup = clean_multiplayer_state()
+            print(json.dumps(cleanup, sort_keys=True))
+            return 0 if all(cleanup.values()) else 1
     if args.command == "client":
         if args.action == "status":
             return show_client_status()
