@@ -30,6 +30,8 @@ Run these from `/mnt/services/pontifex`:
 
 `check` performs HEMTT config/SQF checks plus harness syntax checks. `build` produces four unsigned development PBOs under `build/current/`. Plain `test` is the fast/static suite. `test smoke`, `test integration`, and `test gameplay` are the fresh real-client tiers; see [multiplayer testing](docs/multiplayer-testing.md#test-tiers). `test dedicated` runs the real server-only test. `test multiplayer` is the one-real-player experiment: it creates an isolated Docker bridge, launches the server and a normal Steam/Proton player client at different virtual addresses, parses both origins, and removes its containers/network.
 
+The generic framework is [Tribunal](tribunal/docs/architecture.md). Pontifex is its first registered mod suite; feature scenarios remain beside the feature they validate. Use `python3 -m tribunal.cli --project tribunal.project.json scenarios` to inspect registered scenarios, or replace `scenarios` with a normal Pontifex command to dispatch through the same project manifest.
+
 Inspect the latest dedicated result with:
 
 ```bash

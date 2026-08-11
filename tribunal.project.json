@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "project": "Pontifex",
+  "assertion_prefix": "PONTIFEX_TEST",
+  "entrypoint": "./pontifex",
+  "scenario_roots": [
+    "source/advanced-systems/tests/tribunal"
+  ]
+}

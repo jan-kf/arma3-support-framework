@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
-from dataclasses import dataclass
 import hashlib
 import json
 import os
@@ -18,6 +17,14 @@ import subprocess
 import sys
 import time
 import uuid
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from tribunal.assertions.protocol import validate_origin
+from tribunal.discovery import discover
+from tribunal.runner.model import TierPlan as TestPlan
 
 import pontifex_server as dedicated
 
@@ -32,6 +39,8 @@ CLIENT_SECURITY = CLIENT / "security"
 SECCOMP_PROFILE = CLIENT_SECURITY / "pontifex-steam-seccomp.json"
 APPARMOR_PROFILE = CLIENT_SECURITY / "pontifex-steam.apparmor"
 APPARMOR_NAME = "pontifex-steam"
+FEATURE_SCENARIOS = discover([ROOT / "source" / "advanced-systems" / "tests" / "tribunal"])
+APS_SCENARIO = FEATURE_SCENARIOS["aps-intercept"]
 STEAM_DLC_CATALOG = ROOT / "server" / "steam-arma3-dlc-catalog.json"
 IMAGE = "pontifex-arma-client:phase3"
 LOGIN_CONTAINER = "pontifex-client-login"
@@ -73,23 +82,6 @@ E2E_CLIENT_EXPECTED = {
 }
 
 
-@dataclass(frozen=True)
-class TestPlan:
-    """A self-contained mission test tier.
-
-    Plans deliberately describe *in-mission* work only.  The container,
-    Steam, Proton, and native-connect lifecycle remains shared, so a batch
-    never pays for another game boot.
-    """
-
-    name: str
-    server_expected: frozenset[str]
-    client_expected: frozenset[str]
-    gameplay: bool = False
-    selected: frozenset[str] = frozenset()
-    project_mods: bool = False
-
-
 SMOKE_PLAN = TestPlan(
     "smoke",
     frozenset({"smoke.init.sqf", "smoke.token", "smoke.player", "smoke.ack"}),
@@ -103,13 +95,8 @@ INTEGRATION_PLAN = TestPlan(
 )
 GAMEPLAY_PLAN = TestPlan(
     "gameplay",
-    SMOKE_PLAN.server_expected | frozenset({
-        "gameplay.vehicleCreated", "gameplay.driverAuthoritative",
-        "aps.positive.projectileSpawned", "aps.positive.collisionCourse", "aps.positive.engaged",
-        "aps.positive.neutralized", "aps.positive.chargeConsumed", "aps.positive.protected",
-        "aps.control.disabledImpact", "aps.control.disabledNoEngagement", "aps.control.outsideEnvelope",
-    }),
-    SMOKE_PLAN.client_expected | frozenset({"gameplay.vehicleResolved", "gameplay.enterVehicle", "aps.replication"}),
+    SMOKE_PLAN.server_expected | frozenset({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"}) | APS_SCENARIO.server_expected,
+    SMOKE_PLAN.client_expected | frozenset({"gameplay.vehicleResolved", "gameplay.enterVehicle"}) | APS_SCENARIO.client_expected,
     gameplay=True,
     selected=frozenset({"vehicle-entry", "aps-intercept"}),
     project_mods=True,
@@ -147,15 +134,14 @@ def select_plan(name: str, selected: str | None = None) -> TestPlan:
             server.update({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"})
             client.update({"gameplay.vehicleResolved", "gameplay.enterVehicle"})
         if "aps-intercept" in chosen:
-            server.update({
-                "aps.positive.projectileSpawned", "aps.positive.collisionCourse", "aps.positive.engaged",
-                "aps.positive.neutralized", "aps.positive.chargeConsumed", "aps.positive.protected",
-                "aps.control.disabledImpact", "aps.control.disabledNoEngagement", "aps.control.outsideEnvelope",
-            })
-            client.add("aps.replication")
+            server.update(APS_SCENARIO.server_expected)
+            client.update(APS_SCENARIO.client_expected)
     return TestPlan(
         name, frozenset(server), frozenset(client), gameplay=name == "gameplay", selected=chosen,
-        project_mods=name == "gameplay" and "aps-intercept" in chosen,
+        project_mods=name == "gameplay" and any(
+            FEATURE_SCENARIOS[item].requires_project_mods
+            for item in chosen.intersection(FEATURE_SCENARIOS)
+        ),
     )
 
 
@@ -745,20 +731,6 @@ def run_join_adapter(
         ],
         check=False,
     )
-
-
-def validate_origin(assertions: list[dict], complete: dict | None, expected: set[str]) -> tuple[list[str], str | None]:
-    names = {item["name"] for item in assertions}
-    missing = sorted(expected - names)
-    if missing or not assertions:
-        return missing, "malformed_or_incomplete_protocol"
-    if complete is None:
-        return missing, "missing_complete_marker"
-    if complete["assertions"] != len(assertions):
-        return missing, "assertion_count_mismatch"
-    if any(item["status"] == "FAIL" for item in assertions) or complete["status"] != "PASS" or complete["failures"]:
-        return missing, "assertion_failure"
-    return missing, None
 
 
 def write_result(run_dir: Path, result: dict) -> None:

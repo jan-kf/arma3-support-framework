@@ -7,14 +7,12 @@ import argparse
 import contextlib
 import datetime as dt
 import fcntl
-import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
 import re
 import shutil
 import signal
-import struct
 import subprocess
 import sys
 import time
@@ -22,8 +20,16 @@ import urllib.request
 import uuid
 import zipfile
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-ROOT = Path(__file__).resolve().parent.parent
+from tribunal.assertions.protocol import parse_protocol as parse_tribunal_protocol
+from tribunal.mission.pbo import build_mission_pbo, sha256
+from tribunal.reporting.artifacts import atomic_json
+
+
+ROOT = PROJECT_ROOT
 SERVER = ROOT / "server"
 RUNTIME = SERVER / "runtime"
 INSTALL_VIEW = RUNTIME / "install"
@@ -58,74 +64,8 @@ EXPECTED_ASSERTIONS = {
     "core.postInit",
     "harness.forcedFailure",
 }
-PROTOCOL_RE = re.compile(
-    r"PONTIFEX_TEST\|(PASS|FAIL)\|(server|client-a)\|([^|\r\n\"]+)(?:\|([^\r\n\"]*))?"
-)
-COMPLETE_RE = re.compile(
-    r"PONTIFEX_TEST\|COMPLETE\|(server|client-a)\|status=(PASS|FAIL)\|assertions=(\d+)\|failures=(\d+)"
-)
-
-
 def utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z")
-
-
-def atomic_json(path: Path, data: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    temp.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    temp.replace(path)
-
-
-def sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def build_mission_pbo(source: Path, destination: Path) -> dict:
-    """Create a deterministic uncompressed PBO for a mission directory.
-
-    Arma's dedicated-server directory mission path caused the engine to build
-    a transient ``__cur_mp`` transfer that crashed the real client while it
-    reconstructed multiplayer state.  A normal banked PBO transfers
-    byte-for-byte and is the format accepted by ordinary dedicated servers.
-    This deliberately packages only the selected mission; it has no effect on
-    addons, Steam, networking, or the container boundary.
-    """
-    if not source.is_dir():
-        raise RuntimeError(f"mission directory not found: {source}")
-    files = sorted(path for path in source.rglob("*") if path.is_file())
-    if not files:
-        raise RuntimeError(f"mission directory is empty: {source}")
-    entries: list[tuple[str, bytes]] = []
-    for path in files:
-        name = path.relative_to(source).as_posix()
-        if not name.isascii() or ".." in PurePosixPath(name).parts:
-            raise RuntimeError(f"unsafe mission PBO path: {name}")
-        entries.append((name, path.read_bytes()))
-
-    header = bytearray()
-    for name, data in entries:
-        header.extend(name.encode("ascii"))
-        header.append(0)
-        # PBO entry: packing method, original size, reserved, timestamp, size.
-        # Zero timestamp preserves deterministic output; zero method means raw.
-        header.extend(struct.pack("<IIIII", 0, 0, 0, 0, len(data)))
-    header.append(0)
-    header.extend(struct.pack("<IIIII", 0, 0, 0, 0, 0))
-    body = bytes(header) + b"".join(data for _, data in entries)
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_bytes(body + b"\0" + hashlib.sha1(body).digest())
-    return {
-        "source": str(source),
-        "destination": str(destination),
-        "files": [name for name, _ in entries],
-        "sha256": sha256(destination),
-        "size": destination.stat().st_size,
-    }
 
 
 def official_component_policy() -> dict:
@@ -452,25 +392,10 @@ def stop_server(grace: float = 12.0) -> bool:
 
 
 def parse_protocol(text: str) -> tuple[list[dict], dict | None]:
-    assertions = []
-    for match in PROTOCOL_RE.finditer(text):
-        assertions.append(
-            {
-                "status": match.group(1),
-                "origin": match.group(2),
-                "name": match.group(3),
-                "detail": (match.group(4) or "").strip(),
-            }
-        )
-    complete_match = None
-    for match in COMPLETE_RE.finditer(text):
-        complete_match = {
-            "origin": match.group(1),
-            "status": match.group(2),
-            "assertions": int(match.group(3)),
-            "failures": int(match.group(4)),
-        }
-    return assertions, complete_match
+    assertions, complete = parse_tribunal_protocol(text, prefix="PONTIFEX_TEST")
+    for assertion in assertions:
+        assertion["detail"] = assertion["detail"].strip()
+    return assertions, complete
 
 
 def newest_rpt(profile: Path) -> Path | None:

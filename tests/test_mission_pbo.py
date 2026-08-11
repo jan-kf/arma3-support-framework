@@ -10,7 +10,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
+from tribunal.mission.pbo import build_mission_pbo  # noqa: E402
 import pontifex_server as dedicated  # noqa: E402
 
 
@@ -23,8 +25,8 @@ class MissionPboTests(unittest.TestCase):
             (mission / "mission.sqm").write_text("version=54;\n", encoding="ascii")
             (mission / "nested" / "init.sqf").write_text('diag_log "ok";\n', encoding="ascii")
 
-            first = dedicated.build_mission_pbo(mission, root / "first.pbo")
-            second = dedicated.build_mission_pbo(mission, root / "second.pbo")
+            first = build_mission_pbo(mission, root / "first.pbo")
+            second = build_mission_pbo(mission, root / "second.pbo")
 
             self.assertEqual(first["files"], ["mission.sqm", "nested/init.sqf"])
             self.assertEqual(first["sha256"], second["sha256"])
