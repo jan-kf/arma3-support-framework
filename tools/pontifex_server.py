@@ -38,6 +38,7 @@ DEPENDENCIES = SERVER / "dependencies"
 CACHE = SERVER / "cache"
 RUNS = ROOT / "runs"
 LOCK_FILE = SERVER / "dependencies.lock.json"
+STEAM_DLC_CATALOG = SERVER / "steam-arma3-dlc-catalog.json"
 STATE_FILE = RUNTIME / "server.json"
 LEGACY_INSTALL = Path(
     os.environ.get(
@@ -72,28 +73,46 @@ def official_component_policy() -> dict:
     """Classify content from the SteamCMD App 233780 layout, not a name list.
 
     App 233780's root Addons bank is core content.  Its sibling directories
-    that contain an Addons bank are first-party components shipped by that
-    application.  Creator DLC is deliberately absent from this free dedicated
-    payload, so it cannot enter this policy merely because it is installed in
-    the authenticated client's library.
+    that contain an Addons bank are official components.  The supported
+    ``creatordlc`` branch also supplies Creator DLC banks, so their Steam app
+    metadata—not directory naming—keeps those third-party banks explicit-only.
     """
     manifest = LEGACY_INSTALL / "steamapps" / "appmanifest_233780.acf"
     if not manifest.is_file():
         raise RuntimeError(f"SteamCMD App 233780 manifest not found: {manifest}")
+    catalog = json.loads(STEAM_DLC_CATALOG.read_text(encoding="utf-8"))["apps"]
+    creator_banks = {
+        item["component_bank"].casefold(): item
+        for item in catalog.values()
+        if item.get("component_bank") and item["developers"] != ["Bohemia Interactive"]
+    }
     components = []
+    excluded_creator = []
     for directory in sorted(LEGACY_INSTALL.iterdir(), key=lambda item: item.name.casefold()):
         addons = directory / "addons"
         if not directory.is_dir() or directory.name.startswith("@") or not addons.is_dir():
             continue
         pbos = sorted(path.name for path in addons.glob("*.pbo") if path.is_file())
         if pbos:
-            components.append({"id": directory.name.casefold(), "path": directory, "pbos": pbos})
+            component_id = directory.name.casefold()
+            creator = creator_banks.get(component_id)
+            if creator:
+                excluded_creator.append(
+                    {
+                        "id": component_id,
+                        "path": str(directory),
+                        "steam_name": creator["name"],
+                        "developers": creator["developers"],
+                    }
+                )
+            else:
+                components.append({"id": component_id, "path": directory, "pbos": pbos})
     return {
         "steam_app": int(INSTALLER_STEAM_APP_ID),
         "core": {"path": LEGACY_INSTALL / "addons"},
         "official_components": components,
         "excluded": {
-            "creator_or_community_dlc": "not supplied by SteamCMD App 233780",
+            "creator_or_community_dlc": excluded_creator,
             "workshop_or_user_mods": "directories prefixed with @ are explicit-only",
         },
     }

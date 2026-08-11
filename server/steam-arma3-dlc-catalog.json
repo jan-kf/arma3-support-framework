@@ -3,7 +3,12 @@
   "retrieved_at": "2026-08-09T19:00:00Z",
   "apps": {
     "1021790": {"name": "Arma 3 Contact", "developers": ["Bohemia Interactive"], "default_enabled": false},
-    "2647760": {"name": "Arma 3 Creator DLC: Reaction Forces", "developers": ["Rotators Collective"]},
-    "2647830": {"name": "Arma 3 Creator DLC: Expeditionary Forces", "developers": ["Tiny Gecko Studios"]}
+    "1042220": {"name": "Arma 3 Creator DLC: Global Mobilization - Cold War Germany", "developers": ["Vertexmacht"], "component_bank": "gm"},
+    "1175380": {"name": "Arma 3 Creator DLC: Spearhead 1944", "developers": ["Heavy Ordnance Works"], "component_bank": "spe"},
+    "1227700": {"name": "Arma 3 Creator DLC: S.O.G. Prairie Fire", "developers": ["Savage Game Design"], "component_bank": "vn"},
+    "1294440": {"name": "Arma 3 Creator DLC: CSLA Iron Curtain", "developers": ["CSLA Studio"], "component_bank": "csla"},
+    "1681170": {"name": "Arma 3 Creator DLC: Western Sahara", "developers": ["Rotators Collective"], "component_bank": "ws"},
+    "2647760": {"name": "Arma 3 Creator DLC: Reaction Forces", "developers": ["Rotators Collective"], "component_bank": "rf"},
+    "2647830": {"name": "Arma 3 Creator DLC: Expeditionary Forces", "developers": ["Tiny Gecko Studios"], "component_bank": "ef"}
   }
 }
