@@ -25,6 +25,17 @@ class RegionMetrics:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class RegionDifference:
+    changed_pixels: int
+    changed_fraction: float
+    centroid: tuple[float, float] | None
+    bounding_box: tuple[int, int, int, int] | None
+
+    def as_dict(self) -> dict[str, object]:
+        return asdict(self)
+
+
 def region_metrics(rgb: bytes, frame_width: int, frame_height: int, region: Region) -> RegionMetrics:
     if len(rgb) != frame_width * frame_height * 3:
         raise ValueError("RGB frame size does not match dimensions")
@@ -75,3 +86,42 @@ def changed_pixel_fraction(before: bytes, after: bytes, *, channel_tolerance: in
         if max(abs(before[offset + channel] - after[offset + channel]) for channel in range(3)) > channel_tolerance:
             changed += 1
     return changed / pixels
+
+
+def region_difference(
+    before: bytes,
+    after: bytes,
+    frame_width: int,
+    frame_height: int,
+    region: Region,
+    *,
+    channel_tolerance: int = 18,
+) -> RegionDifference:
+    """Summarize meaningful pixel changes inside one bounded UI region.
+
+    Coordinates are returned in full-frame pixel space so callers can compare
+    the evidence directly with a map control's projected screen coordinate.
+    """
+
+    # Reuse validation shared with all regional observability helpers.
+    region_metrics(before, frame_width, frame_height, region)
+    region_metrics(after, frame_width, frame_height, region)
+    changed: list[tuple[int, int]] = []
+    for y in range(region.y, region.y + region.height):
+        for x in range(region.x, region.x + region.width):
+            offset = (y * frame_width + x) * 3
+            if max(
+                abs(before[offset + channel] - after[offset + channel])
+                for channel in range(3)
+            ) > channel_tolerance:
+                changed.append((x, y))
+    if not changed:
+        return RegionDifference(0, 0.0, None, None)
+    xs = [point[0] for point in changed]
+    ys = [point[1] for point in changed]
+    return RegionDifference(
+        len(changed),
+        len(changed) / (region.width * region.height),
+        (sum(xs) / len(xs), sum(ys) / len(ys)),
+        (min(xs), min(ys), max(xs), max(ys)),
+    )

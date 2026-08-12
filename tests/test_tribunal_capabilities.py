@@ -8,7 +8,7 @@ from pathlib import Path
 
 from tribunal.discovery import discover
 from tribunal.observability.visual import frame_metrics, visual_transition
-from tribunal.observability.ui import Region, changed_pixel_fraction, selected_region_index
+from tribunal.observability.ui import Region, changed_pixel_fraction, region_difference, selected_region_index
 from tribunal.network import NETWORK_PROFILES
 from tribunal.reporting.evidence import EvidenceAttachment, attach_evidence
 from tribunal.runner.model import ClientIdentity, client_identity_map
@@ -61,6 +61,28 @@ class TribunalCapabilityTests(unittest.TestCase):
         self.assertGreater(metrics[1].mean_luma, metrics[0].mean_luma)
         self.assertGreater(changed_pixel_fraction(bytes((0, 0, 0)) * width * height, bytes(frame)), 0.4)
         self.assertIsNone(selected_region_index(bytes((0, 50, 0)) * width * height, width, height, regions)[0])
+
+    def test_region_difference_is_bounded_and_reports_position(self) -> None:
+        width, height = 8, 4
+        baseline = bytes((0, 0, 0)) * width * height
+        changed = bytearray(baseline)
+        for x, y in ((3, 1), (4, 1), (4, 2)):
+            offset = (y * width + x) * 3
+            changed[offset:offset + 3] = bytes((0, 255, 0))
+
+        evidence = region_difference(
+            baseline, bytes(changed), width, height, Region(2, 1, 4, 2)
+        )
+        self.assertEqual(evidence.changed_pixels, 3)
+        self.assertEqual(evidence.bounding_box, (3, 1, 4, 2))
+        self.assertEqual(evidence.centroid, (11 / 3, 4 / 3))
+        self.assertEqual(evidence.changed_fraction, 3 / 8)
+        self.assertEqual(
+            region_difference(
+                baseline, bytes(changed), width, height, Region(0, 0, 2, 4)
+            ).changed_pixels,
+            0,
+        )
 
     def test_tabbed_control_driver_retries_cold_key_chord_by_state(self) -> None:
         source = (ROOT / "tools" / "tribunal_ui_probe.py").read_text(encoding="utf-8")

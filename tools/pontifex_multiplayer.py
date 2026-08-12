@@ -1232,9 +1232,6 @@ def run_multiplayer(
         for item in sorted(plan.selected if plan else ())
         if item in ALL_SCENARIOS and ALL_SCENARIOS[item].metadata.get("visual_driver")
     ]
-    if len(ui_scenarios) > 1:
-        raise RuntimeError("only one interactive visual scenario may run per fresh session")
-    ui_scenario = ui_scenarios[0] if ui_scenarios else None
     experiment = os.environ.get("PONTIFEX_EXPERIMENT_MISSION")
     experiment_pbo = os.environ.get("PONTIFEX_EXPERIMENT_PBO")
     if (e2e or plan is not None) and (experiment or experiment_pbo):
@@ -1664,7 +1661,7 @@ def run_multiplayer(
                     # autonomous visual scenarios. No Docker publish rule
                     # is added here; manual mode remains the only path that
                     # explicitly binds a host loopback diagnostic port.
-                    *( ["--env", "PONTIFEX_COMPOSITOR_VNC=1"] if (e2e or visual_required or ui_scenario or live) else [] ),
+                    *( ["--env", "PONTIFEX_COMPOSITOR_VNC=1"] if (e2e or visual_required or ui_scenarios or live) else [] ),
                     "--env",
                     "NVIDIA_DRIVER_CAPABILITIES=graphics,display,utility,compat32",
                     "--env",
@@ -1751,8 +1748,8 @@ def run_multiplayer(
             join_adapter_attempted = False
             visual_probe_attempted = False
             visual_probe_report = None
-            ui_probe_attempted = False
-            ui_probe_report = None
+            ui_probes_attempted: set[str] = set()
+            ui_probe_reports: dict[str, dict] = {}
             reason = "timeout"
             while time.monotonic() < deadline:
                 server_text = container_logs(server_name)
@@ -1790,13 +1787,21 @@ def run_multiplayer(
                     if visual_probe.returncode != 0 or not visual_probe_report or visual_probe_report.get("status") != "PASS":
                         reason = "visual_probe_failed"
                         break
-                if ui_scenario and not ui_probe_attempted and str(ui_scenario.metadata["visual_armed_marker"]) in client_text:
-                    ui_probe_attempted = True
-                    if ui_scenario.metadata.get("visual_driver") != "tabbed-control":
-                        raise RuntimeError(f"unsupported Tribunal visual driver: {ui_scenario.metadata.get('visual_driver')}")
+                ui_scenario = next(
+                    (
+                        scenario for scenario in ui_scenarios
+                        if scenario.identifier not in ui_probes_attempted
+                        and str(scenario.metadata["visual_armed_marker"]) in client_text
+                    ),
+                    None,
+                )
+                if ui_scenario is not None:
+                    ui_probes_attempted.add(ui_scenario.identifier)
+                    ui_probe_report = None
+                    visual_driver = ui_scenario.metadata.get("visual_driver")
                     ui_output = client_dir / f"{ui_scenario.identifier}-visual.json"
-                    ui_probe = docker(
-                        [
+                    if visual_driver == "tabbed-control":
+                        probe_args = [
                             "exec", "-e", "DISPLAY=:0", client_name,
                             "python3", "/pontifex/tools/tribunal_ui_probe.py",
                             "--output", f"/run/pontifex/{ui_output.name}",
@@ -1804,16 +1809,32 @@ def run_multiplayer(
                             "--initial-index", str(ui_scenario.metadata["visual_initial_index"]),
                             "--target-index", str(ui_scenario.metadata["visual_target_index"]),
                             "--timeout", "45",
-                        ],
-                        check=False,
-                    )
+                        ]
+                        evidence_kind = "interactive-framebuffer-sequence"
+                    elif visual_driver == "map-markers":
+                        probe_args = [
+                            "exec", "-e", "DISPLAY=:0", client_name,
+                            "python3", "/pontifex/tools/tribunal_map_probe.py",
+                            "--output", f"/run/pontifex/{ui_output.name}",
+                            "--regions", json.dumps(ui_scenario.metadata["visual_regions"], separators=(",", ":")),
+                            "--initial-index", str(ui_scenario.metadata["visual_initial_index"]),
+                            "--target-index", str(ui_scenario.metadata["visual_target_index"]),
+                            "--map-region", json.dumps(ui_scenario.metadata["map_region"], separators=(",", ":")),
+                            "--expected-anchor", json.dumps(ui_scenario.metadata["map_expected_anchor"], separators=(",", ":")),
+                            "--timeout", "55",
+                        ]
+                        evidence_kind = "interactive-map-marker-sequence"
+                    else:
+                        raise RuntimeError(f"unsupported Tribunal visual driver: {visual_driver}")
+                    ui_probe = docker(probe_args, check=False)
                     (client_dir / f"{ui_scenario.identifier}-visual-console.log").write_text(
                         (ui_probe.stdout or "") + (ui_probe.stderr or ""), encoding="utf-8"
                     )
                     if ui_output.is_file():
                         ui_probe_report = json.loads(ui_output.read_text(encoding="utf-8"))
+                        ui_probe_reports[ui_scenario.identifier] = ui_probe_report
                         attach_evidence(result, EvidenceAttachment(
-                            "interactive-framebuffer-sequence", "client-a", ui_scenario.identifier,
+                            evidence_kind, "client-a", ui_scenario.identifier,
                             ui_output, ui_probe_report,
                         ))
                     if ui_probe.returncode != 0 or not ui_probe_report or ui_probe_report.get("status") != "PASS":
@@ -1872,7 +1893,20 @@ def run_multiplayer(
                     "resource_samples": samples,
                     **({"join_adapter_attempted": join_adapter_attempted} if e2e else {}),
                     **({"visual_probe_attempted": visual_probe_attempted, "visual_probe": visual_probe_report} if visual_required else {}),
-                    **({"ui_probe_attempted": ui_probe_attempted, "ui_probe": ui_probe_report} if ui_scenario else {}),
+                    **(
+                        {
+                            "ui_probes_attempted": sorted(ui_probes_attempted),
+                            "ui_probes": ui_probe_reports,
+                            **(
+                                {
+                                    "ui_probe_attempted": bool(ui_probes_attempted),
+                                    "ui_probe": ui_probe_reports.get(ui_scenarios[0].identifier),
+                                }
+                                if len(ui_scenarios) == 1 else {}
+                            ),
+                        }
+                        if ui_scenarios else {}
+                    ),
                 }
             )
             if live and reason == "live_ready" and not server_error and not client_error:

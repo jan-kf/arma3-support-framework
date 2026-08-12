@@ -94,18 +94,86 @@ therefore require the real display/control objects, enabled tab control,
 selection, and application type, correlated with the framebuffer; the test
 does not reinterpret that unreliable parent visibility flag as rendering.
 
+## Dynamic map-marker architecture
+
+Vigil currently has four marker-producing paths, all created with
+`createMarkerLocal` in the client UI context:
+
+* artillery strike-pattern previews in `YOSHI_drawStrikePattern`;
+* selected asset and fixed-wing overlays in `YOSHI_assetSelected`;
+* coordinate-preview markers in `YOSHI_assetCoordChanged`;
+* an optional first-round ETA icon created with the strike preview.
+
+There is no incoming-artillery or incoming-rocket detection/aggregation system
+in the current Vigil source. The dynamic behavior tested here is therefore the
+real artillery *preview*, not an invented threat detector and not artillery
+execution. The product stores preview inputs in
+`uiNamespace["YOSHI_taskArty_state"]`, generated world positions in
+`uiNamespace["YOSHI_taskArty_strikePattern"]`, and current marker names in
+`uiNamespace["YOSHI_sp_markers"]`. Changing count, spread, direction, pattern,
+grid, or ordnance calls `YOSHI_taskArty_DrawFromState`, which deletes the old
+local names and recreates the complete pattern. Count zero clears the pattern.
+Dialog unload calls `YSF_clearAllMarkers`; there is no independent time-based
+expiry for preview markers.
+
+The permanent `vigil-markers` scenario drives the actual coordinate and count
+handlers without submitting a support request. It fixes the map at world
+`[4680,2770]` and scale `0.2`, then proves:
+
+1. count zero has no marker names or strike positions;
+2. count one creates one registered 100x125 m ellipse at the exact world point;
+3. count three deletes that name and creates three distinct registered
+   ellipses/positions;
+4. returning to zero removes all three names from `allMapMarkers`;
+5. Escape destroys the client display and retains empty marker stores.
+
+Scale matters to visual evidence. At scale `0.025`, the 100x125 m ellipse
+border lies outside the visible viewport even though its center projects
+on-screen. The calibrated `0.2` view keeps the complete marker footprint in
+the map and prevents an off-viewport rendering false negative.
+
+The server asserts that it is dedicated/headless and owns neither the display
+nor preview marker state. The client asserts `hasInterface`, identity
+`client-a`, the map/control objects, exact local marker registry entries, and
+world-to-screen projections. This preserves a future client-b contract: its
+local namespace must remain empty unless it independently opens and drives its
+own preview.
+
+Tribunal's generic `region_difference` helper reports a bounded changed-pixel
+count/fraction, full-frame centroid, and bounding box. The authenticated RFB
+map driver correlates those metrics with backing state and stores
+game/open/page/baseline/one/three/cleared/closed screenshots as an
+`interactive-map-marker-sequence` attachment. It accepts anti-aliasing and
+scaling differences but requires the change near the expected projected map
+anchor, a larger distinct three-marker footprint, two stable restored baseline
+frames, and a visibly closed UI.
+
+Marker validation explicitly rejects:
+
+* backing state without rendered pixels;
+* unrelated framebuffer changes outside the bounded map;
+* a marker whose changed-pixel centroid is inconsistent with the projected
+  world coordinate;
+* a marker outside the current viewport;
+* reused/stale marker names or old names still present in `allMapMarkers`;
+* three backing entries with no distinct rendered footprint;
+* transient hover paint mistaken for the Artillery page;
+* cleanup state whose framebuffer does not return to baseline;
+* another client's or the dedicated server's namespace satisfying client-a;
+* missing screenshots, protocol evidence, marker properties, or lifecycle
+  stages.
+
 ## Follow-on order
 
 After this MVP, add coverage in this order:
 
 1. client-b isolation while client-a opens and changes pages;
-2. map-marker presence, placement, visibility, and dynamic marker counts;
-3. benign invalid/edge-case input and close/reconnect state;
-4. artillery request lifecycle;
-5. helicopter movement and landing;
-6. CAS tasking;
-7. network-profile behavior for task and marker replication;
-8. audible sound capture after Tribunal gains its opt-in audio backend.
+2. benign invalid/edge-case input and close/reconnect state;
+3. artillery request lifecycle;
+4. helicopter movement and landing;
+5. CAS tasking;
+6. network-profile behavior for task and marker replication;
+7. audible sound capture after Tribunal gains its opt-in audio backend.
 
 Each behavioral scenario should keep real input/rendered evidence distinct
 from server-authoritative task effects and must pass from a fresh autonomous

@@ -47,6 +47,22 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertIn("[] call YSF_UI_OpenTablet", vigil.client_sqf)
         self.assertIn('"exec", "-e", "DISPLAY=:0", client_name', inspect.getsource(multiplayer))
         self.assertEqual(multiplayer.FEATURE_SCENARIOS["vigil-ui"], vigil)
+        markers = scenarios["vigil-markers"]
+        self.assertEqual(markers.metadata["visual_driver"], "map-markers")
+        self.assertEqual(markers.metadata["map_expected_anchor"], {"x": 0.5, "y": 0.5})
+        self.assertIn("vigil.marker.firstBacking", markers.client_expected)
+        self.assertIn("vigil.marker.dynamicReplacement", markers.client_expected)
+        self.assertIn('["count", _countControl] call YOSHI_setCount', markers.client_sqf)
+        self.assertIn("_x in allMapMarkers", markers.client_sqf)
+        self.assertNotIn("YOSHI_taskArty_submit", markers.client_sqf)
+        self.assertEqual(multiplayer.FEATURE_SCENARIOS["vigil-markers"], markers)
+        runner_source = inspect.getsource(multiplayer)
+        self.assertIn('visual_driver == "map-markers"', runner_source)
+        self.assertIn("/pontifex/tools/tribunal_map_probe.py", runner_source)
+        self.assertIn("ui_probes_attempted: set[str]", runner_source)
+        self.assertNotIn("only one interactive visual scenario", runner_source)
+        gameplay = multiplayer.select_plan("gameplay")
+        self.assertTrue({"vigil-ui", "vigil-markers"}.issubset(gameplay.selected))
 
     def test_generic_tribunal_sources_do_not_encode_pontifex_features(self) -> None:
         prohibited = ("aps", "iron dome", "vigil", "field utilities", "pontifex")
