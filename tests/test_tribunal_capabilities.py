@@ -8,6 +8,7 @@ from pathlib import Path
 
 from tribunal.discovery import discover
 from tribunal.observability.visual import frame_metrics, visual_transition
+from tribunal.observability.ui import Region, changed_pixel_fraction, selected_region_index
 from tribunal.network import NETWORK_PROFILES
 from tribunal.reporting.evidence import EvidenceAttachment, attach_evidence
 from tribunal.runner.model import ClientIdentity, client_identity_map
@@ -46,6 +47,28 @@ class TribunalCapabilityTests(unittest.TestCase):
         self.assertTrue(evidence["appeared"])
         self.assertTrue(evidence["disappeared"])
         self.assertFalse(visual_transition(baseline, baseline, absent)[0])
+
+    def test_tabbed_control_detection_uses_regions_and_contrast(self) -> None:
+        width, height = 8, 2
+        frame = bytearray((0, 15, 0) * width * height)
+        regions = (Region(0, 0, 4, 2), Region(4, 0, 4, 2))
+        for y in range(2):
+            for x in range(4, 8):
+                offset = (y * width + x) * 3
+                frame[offset:offset + 3] = bytes((0, 100, 0))
+        selected, metrics = selected_region_index(bytes(frame), width, height, regions)
+        self.assertEqual(selected, 1)
+        self.assertGreater(metrics[1].mean_luma, metrics[0].mean_luma)
+        self.assertGreater(changed_pixel_fraction(bytes((0, 0, 0)) * width * height, bytes(frame)), 0.4)
+        self.assertIsNone(selected_region_index(bytes((0, 50, 0)) * width * height, width, height, regions)[0])
+
+    def test_tabbed_control_driver_retries_cold_key_chord_by_state(self) -> None:
+        source = (ROOT / "tools" / "tribunal_ui_probe.py").read_text(encoding="utf-8")
+        self.assertIn("while time.monotonic() < deadline and open_pixels is None", source)
+        self.assertIn('"state_driven": True', source)
+        self.assertIn('"backend": "x11-xtest"', source)
+        self.assertIn("XTestFakeKeyEvent", source)
+        self.assertIn("timed out opening UI after", source)
 
     def test_evidence_attachments_extend_existing_result_schema(self) -> None:
         result = {"schema": 2, "status": "PASS", "assertions": []}

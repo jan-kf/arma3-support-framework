@@ -86,6 +86,23 @@ preferred; authenticated RFB input is appropriate only when the UI or input
 path itself is under test. No host VNC publish is required by the capability
 probe.
 
+Interactive tabbed controls use the same generic boundary. A product scenario
+declares stable screen regions and expected initial/target indexes; Tribunal
+captures the live surface, delivers real key/pointer input, moves the pointer
+away to exclude hover-only paint, and requires a persistent structural page
+change. Close and reopen are independently correlated with product-side
+display state. Evidence is an `interactive-framebuffer-sequence` attachment
+containing protocol metadata, tolerant region metrics, changed-pixel ratios,
+input records, and per-state screenshots. Product names, dialog IDs, and
+application state remain outside Tribunal.
+
+Keyboard chords that must reach Proton as Windows DIK events use XTest against
+the same private Xwayland display; Weston's RFB keysym path is not sufficient
+for that translation. Pointer input and framebuffer capture remain on the
+authenticated RFB session. XTest uses the already-present client library and
+container-local display socket and adds no capability, device, host publish,
+or external input path.
+
 ## Network-condition boundary
 
 The client has an empty capability bounding set. A direct `tc netem` probe in

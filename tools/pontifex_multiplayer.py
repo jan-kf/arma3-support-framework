@@ -41,7 +41,10 @@ CLIENT_SECURITY = CLIENT / "security"
 SECCOMP_PROFILE = CLIENT_SECURITY / "pontifex-steam-seccomp.json"
 APPARMOR_PROFILE = CLIENT_SECURITY / "pontifex-steam.apparmor"
 APPARMOR_NAME = "pontifex-steam"
-FEATURE_SCENARIOS = discover([ROOT / "source" / "advanced-systems" / "tests" / "tribunal"])
+FEATURE_SCENARIOS = discover([
+    ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
+    ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
+])
 FRAMEWORK_SCENARIOS = discover([ROOT / "tribunal" / "scenarios"])
 ALL_SCENARIOS = {**FRAMEWORK_SCENARIOS, **FEATURE_SCENARIOS}
 APS_SCENARIO = FEATURE_SCENARIOS["aps-intercept"]
@@ -99,10 +102,10 @@ INTEGRATION_PLAN = TestPlan(
 )
 GAMEPLAY_PLAN = TestPlan(
     "gameplay",
-    SMOKE_PLAN.server_expected | frozenset({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"}) | APS_SCENARIO.server_expected,
-    SMOKE_PLAN.client_expected | frozenset({"gameplay.vehicleResolved", "gameplay.enterVehicle"}) | APS_SCENARIO.client_expected,
+    SMOKE_PLAN.server_expected | frozenset({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"}) | frozenset().union(*(scenario.server_expected for scenario in FEATURE_SCENARIOS.values())),
+    SMOKE_PLAN.client_expected | frozenset({"gameplay.vehicleResolved", "gameplay.enterVehicle"}) | frozenset().union(*(scenario.client_expected for scenario in FEATURE_SCENARIOS.values())),
     gameplay=True,
-    selected=frozenset({"vehicle-entry", "aps-intercept"}),
+    selected=frozenset({"vehicle-entry", *FEATURE_SCENARIOS}),
     project_mods=True,
 )
 CAPABILITY_PLAN = TestPlan(
@@ -117,7 +120,7 @@ TEST_PLANS = {plan.name: plan for plan in (SMOKE_PLAN, INTEGRATION_PLAN, GAMEPLA
 TIER_TESTS = {
     "smoke": frozenset({"lifecycle"}),
     "integration": frozenset({"mission-namespace", "config", "round-trip"}),
-    "gameplay": frozenset({"vehicle-entry", "aps-intercept"}),
+    "gameplay": frozenset({"vehicle-entry", *FEATURE_SCENARIOS}),
     "capability": frozenset(FRAMEWORK_SCENARIOS),
     "live": frozenset({"lifecycle"}),
 }
@@ -145,9 +148,10 @@ def select_plan(name: str, selected: str | None = None) -> TestPlan:
         if "vehicle-entry" in chosen:
             server.update({"gameplay.vehicleCreated", "gameplay.driverAuthoritative"})
             client.update({"gameplay.vehicleResolved", "gameplay.enterVehicle"})
-        if "aps-intercept" in chosen:
-            server.update(APS_SCENARIO.server_expected)
-            client.update(APS_SCENARIO.client_expected)
+        for identifier in chosen.intersection(FEATURE_SCENARIOS):
+            scenario = FEATURE_SCENARIOS[identifier]
+            server.update(scenario.server_expected)
+            client.update(scenario.expected_for("client-a"))
     elif name == "capability":
         for identifier in chosen:
             scenario = FRAMEWORK_SCENARIOS[identifier]
@@ -1223,6 +1227,14 @@ def run_multiplayer(
     # drives Server Browser / Direct Connect for the production proof.
     native_connect = e2e or plan is not None or os.environ.get("PONTIFEX_NATIVE_CONNECT") == "1"
     visual_required = bool(plan and "visual-framebuffer" in plan.selected)
+    ui_scenarios = [
+        ALL_SCENARIOS[item]
+        for item in sorted(plan.selected if plan else ())
+        if item in ALL_SCENARIOS and ALL_SCENARIOS[item].metadata.get("visual_driver")
+    ]
+    if len(ui_scenarios) > 1:
+        raise RuntimeError("only one interactive visual scenario may run per fresh session")
+    ui_scenario = ui_scenarios[0] if ui_scenarios else None
     experiment = os.environ.get("PONTIFEX_EXPERIMENT_MISSION")
     experiment_pbo = os.environ.get("PONTIFEX_EXPERIMENT_PBO")
     if (e2e or plan is not None) and (experiment or experiment_pbo):
@@ -1647,7 +1659,12 @@ def run_multiplayer(
                     # This is a compositor-local VNC endpoint for the E2E
                     # join adapter.  Unlike manual mode there is no Docker
                     # publish rule, so it is unreachable from the host.
-                    *( ["--env", "PONTIFEX_COMPOSITOR_VNC=1"] if (e2e or visual_required) else [] ),
+                    # Live UI development uses the same authenticated,
+                    # container-private RFB observability backend as
+                    # autonomous visual scenarios. No Docker publish rule
+                    # is added here; manual mode remains the only path that
+                    # explicitly binds a host loopback diagnostic port.
+                    *( ["--env", "PONTIFEX_COMPOSITOR_VNC=1"] if (e2e or visual_required or ui_scenario or live) else [] ),
                     "--env",
                     "NVIDIA_DRIVER_CAPABILITIES=graphics,display,utility,compat32",
                     "--env",
@@ -1734,6 +1751,8 @@ def run_multiplayer(
             join_adapter_attempted = False
             visual_probe_attempted = False
             visual_probe_report = None
+            ui_probe_attempted = False
+            ui_probe_report = None
             reason = "timeout"
             while time.monotonic() < deadline:
                 server_text = container_logs(server_name)
@@ -1770,6 +1789,35 @@ def run_multiplayer(
                         attach_evidence(result, EvidenceAttachment("framebuffer-transition", "client-a", "visual-framebuffer", visual_output, visual_probe_report))
                     if visual_probe.returncode != 0 or not visual_probe_report or visual_probe_report.get("status") != "PASS":
                         reason = "visual_probe_failed"
+                        break
+                if ui_scenario and not ui_probe_attempted and str(ui_scenario.metadata["visual_armed_marker"]) in client_text:
+                    ui_probe_attempted = True
+                    if ui_scenario.metadata.get("visual_driver") != "tabbed-control":
+                        raise RuntimeError(f"unsupported Tribunal visual driver: {ui_scenario.metadata.get('visual_driver')}")
+                    ui_output = client_dir / f"{ui_scenario.identifier}-visual.json"
+                    ui_probe = docker(
+                        [
+                            "exec", "-e", "DISPLAY=:0", client_name,
+                            "python3", "/pontifex/tools/tribunal_ui_probe.py",
+                            "--output", f"/run/pontifex/{ui_output.name}",
+                            "--regions", json.dumps(ui_scenario.metadata["visual_regions"], separators=(",", ":")),
+                            "--initial-index", str(ui_scenario.metadata["visual_initial_index"]),
+                            "--target-index", str(ui_scenario.metadata["visual_target_index"]),
+                            "--timeout", "45",
+                        ],
+                        check=False,
+                    )
+                    (client_dir / f"{ui_scenario.identifier}-visual-console.log").write_text(
+                        (ui_probe.stdout or "") + (ui_probe.stderr or ""), encoding="utf-8"
+                    )
+                    if ui_output.is_file():
+                        ui_probe_report = json.loads(ui_output.read_text(encoding="utf-8"))
+                        attach_evidence(result, EvidenceAttachment(
+                            "interactive-framebuffer-sequence", "client-a", ui_scenario.identifier,
+                            ui_output, ui_probe_report,
+                        ))
+                    if ui_probe.returncode != 0 or not ui_probe_report or ui_probe_report.get("status") != "PASS":
+                        reason = "ui_probe_failed"
                         break
                 if not container_running(server_name):
                     reason = "server_exited"
@@ -1824,6 +1872,7 @@ def run_multiplayer(
                     "resource_samples": samples,
                     **({"join_adapter_attempted": join_adapter_attempted} if e2e else {}),
                     **({"visual_probe_attempted": visual_probe_attempted, "visual_probe": visual_probe_report} if visual_required else {}),
+                    **({"ui_probe_attempted": ui_probe_attempted, "ui_probe": ui_probe_report} if ui_scenario else {}),
                 }
             )
             if live and reason == "live_ready" and not server_error and not client_error:

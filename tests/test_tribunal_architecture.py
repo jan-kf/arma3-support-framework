@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import inspect
 import sys
 import unittest
 from pathlib import Path
@@ -23,13 +24,29 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertEqual(multiplayer.TestPlan.__module__, "tribunal.runner.model")
 
     def test_feature_scenarios_are_discovered_outside_tribunal(self) -> None:
-        scenarios = discover([ROOT / "source" / "advanced-systems" / "tests" / "tribunal"])
+        scenarios = discover([
+            ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
+            ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
+        ])
         aps = scenarios["aps-intercept"]
         self.assertIsInstance(aps, Scenario)
         self.assertEqual(aps.tier, "gameplay")
         self.assertIn("aps.positive.engaged", aps.server_expected)
         self.assertIn("aps.replication", aps.client_expected)
         self.assertEqual(multiplayer.APS_SCENARIO, aps)
+        vigil = scenarios["vigil-ui"]
+        self.assertEqual(vigil.metadata["visual_driver"], "tabbed-control")
+        self.assertIn("vigil.input.artilleryTab", vigil.client_expected)
+        self.assertIn("vigil.fixture.inputReady", vigil.client_expected)
+        self.assertNotIn("ctrlShown _page", vigil.client_sqf)
+        self.assertIn("ctrlEnabled _tabs", vigil.client_sqf)
+        self.assertIn("lbCurSel _tabs", vigil.client_sqf)
+        self.assertLess(vigil.client_sqf.index("private _inputReadyAt"), vigil.client_sqf.index('player linkItem "YSF_VigilTerminal_B"'))
+        self.assertLess(vigil.client_sqf.index("vigil.fixture.inputReady"), vigil.client_sqf.index('diag_log "TRIBUNAL_VIGIL|ARMED"'))
+        self.assertIn("private _reopenWorker = [] spawn", vigil.client_sqf)
+        self.assertIn("[] call YSF_UI_OpenTablet", vigil.client_sqf)
+        self.assertIn('"exec", "-e", "DISPLAY=:0", client_name', inspect.getsource(multiplayer))
+        self.assertEqual(multiplayer.FEATURE_SCENARIOS["vigil-ui"], vigil)
 
     def test_generic_tribunal_sources_do_not_encode_pontifex_features(self) -> None:
         prohibited = ("aps", "iron dome", "vigil", "field utilities", "pontifex")
