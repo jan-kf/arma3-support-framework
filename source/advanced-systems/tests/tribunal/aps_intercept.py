@@ -21,6 +21,8 @@ TRIBUNAL_SCENARIO = Scenario(
         "aps.control.disabledImpact",
         "aps.control.disabledNoEngagement",
         "aps.control.outsideEnvelope",
+        "aps.control.directionAway",
+        "aps.softkill.deflection",
     }),
     client_expected=frozenset({"aps.replication"}),
     # The existing generated SQF fixture is intentionally retained by the

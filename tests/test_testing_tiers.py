@@ -13,6 +13,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import pontifex_multiplayer as multiplayer  # noqa: E402
+from tribunal.assertions.protocol import parse_protocol  # noqa: E402
 
 
 class TierFrameworkTests(unittest.TestCase):
@@ -49,24 +50,51 @@ class TierFrameworkTests(unittest.TestCase):
 
     def test_aps_gameplay_fixture_requires_causal_interception_evidence(self) -> None:
         plan = multiplayer.select_plan("gameplay", "aps-intercept")
-        self.assertTrue(plan.project_mods)
         with tempfile.TemporaryDirectory() as temporary:
             mission = Path(temporary) / "Tier.Stratis"
             multiplayer.write_tier_mission(mission, "gameplay-test-deadbeef", plan)
             server = (mission / "initServer.sqf").read_text(encoding="ascii")
             client = (mission / "initPlayerLocal.sqf").read_text(encoding="ascii")
-        for assertion in (
-            "aps.positive.collisionCourse", "aps.positive.engaged", "aps.positive.neutralized",
-            "aps.positive.chargeConsumed", "aps.positive.protected", "aps.control.disabledImpact",
-            "aps.control.disabledNoEngagement", "aps.control.outsideEnvelope",
-        ):
+        for assertion in ("aps.positive.projectileSpawned", "aps.positive.collisionCourse", "aps.positive.engaged", "aps.positive.neutralized", "aps.positive.chargeConsumed", "aps.positive.protected", "aps.control.disabledImpact", "aps.control.disabledNoEngagement", "aps.control.outsideEnvelope", "aps.control.directionAway", "aps.softkill.deflection"):
             self.assertIn(assertion, server)
-        self.assertIn("YOSHI_APS_EngagementEvents", server)
-        self.assertIn("[_rocket] call YOSHI_fnc_apsTryInterceptProjectileLocal", server)
-        self.assertIn("private _rocketPosition = (getPosASL _apsVehicle) vectorAdd [70, 0, 2]", server)
-        self.assertIn("private _outsideRocketPosition = (getPosASL _apsVehicle) vectorAdd [70, 35, 20]", server)
-        self.assertIn("_outsideSpeed >= 10", server)
+        self.assertIn('TRIBUNAL_fnc_directProjectileLaunch', server)
+        self.assertIn('TRIBUNAL_PROJECTILE|%1|LAUNCH', server)
+        self.assertIn('createVehicle [_class, ASLToATL _requestedPosition, [], 0, "CAN_COLLIDE"]', server)
+        self.assertIn('["R_PG32V_F", _origin, _direction, 250', server)
+        self.assertNotIn('{direct_fixture_sqf()}', server)
+        self.assertNotIn('private _projectile = "R_PG32V_F" createVehicle', server)
+        self.assertIn('[_softVehicle, "softkill", 0, 0, false, 8, 0] call _injectThreat', server)
+        self.assertIn('PONTIFEX_APS_FIXTURE|softkill|SAMEFRAME', server)
+        self.assertIn('PONTIFEX_APS_FIXTURE|softkill|NEXTFRAME', server)
+        self.assertIn('[_projectile] call YOSHI_fnc_apsTrackProjectileLocal', server)
+        self.assertIn("TRIBUNAL_PROJECTILE|%1|LAUNCH", server)
+        self.assertIn("TRIBUNAL_PROJECTILE|%1|SAMPLE", server)
+        self.assertNotIn('"B_static_AT_F" createVehicle', server)
         self.assertIn("aps.replication", client)
+
+    def test_terminal_lifecycle_outcomes_short_circuit_only_complete_non_live_runs(self) -> None:
+        passed = {"status": "PASS", "assertions": 1, "failures": 0}
+        failed = {"status": "FAIL", "assertions": 1, "failures": 1}
+        self.assertTrue(multiplayer.terminal_results_ready(passed, passed, manual=False, live=False))
+        self.assertTrue(multiplayer.terminal_results_ready(failed, passed, manual=False, live=False))
+        self.assertFalse(multiplayer.terminal_results_ready(passed, None, manual=False, live=False))
+        self.assertFalse(multiplayer.terminal_results_ready(None, None, manual=False, live=False))
+        self.assertFalse(multiplayer.terminal_results_ready(passed, passed, manual=True, live=False))
+        self.assertFalse(multiplayer.terminal_results_ready(passed, passed, manual=False, live=True))
+        self.assertTrue(multiplayer.terminal_results_ready(passed, passed, manual=False, live=True, server_text="PONTIFEX_LIVE|server|READY", client_text="PONTIFEX_LIVE|client-a|READY"))
+
+    def test_protocol_parser_reads_terminal_assertions_and_completion(self) -> None:
+        records, complete = parse_protocol(
+            "\n".join((
+                "PONTIFEX_TIER|PASS|server|aps.positive.engaged|projectile=2:145",
+                "PONTIFEX_TIER|FAIL|server|aps.softkill.deflection|fuel=1:1",
+                "PONTIFEX_TIER|COMPLETE|server|status=FAIL|assertions=2|failures=1",
+            )),
+            prefix="PONTIFEX_TIER",
+        )
+        self.assertEqual([record["name"] for record in records], ["aps.positive.engaged", "aps.softkill.deflection"])
+        self.assertEqual(records[0]["detail"], "projectile=2:145")
+        self.assertEqual(complete, {"origin": "server", "status": "FAIL", "assertions": 2, "failures": 1})
 
     def test_live_command_is_scoped_and_atomically_replaces_the_inbox(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

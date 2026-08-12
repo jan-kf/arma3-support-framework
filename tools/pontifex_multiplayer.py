@@ -23,6 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from tribunal.assertions.protocol import validate_origin
+from tribunal.mission.projectiles import direct_fixture_sqf
 from tribunal.discovery import discover
 from tribunal.runner.model import TierPlan as TestPlan
 
@@ -871,111 +872,84 @@ private _driverUid = if (isNull _vehicle || {isNull driver _vehicle}) then {""} 
     aps_server = ""
     aps_client = ""
     if plan.name == "gameplay" and "aps-intercept" in plan.selected:
-        # This fixture uses a real Arma rocket object, on the server (its
-        # owner). The collision-course assertion is evaluated by the
-        # production APS predicate; the fixture then calls the production
-        # local interceptor directly. Synthetic createVehicle rockets do not
-        # emit the normal Fired event, and this dedicated build does not
-        # dispatch CBA's per-frame tracker, so registering the synthetic
-        # object alone cannot exercise its response path.
-        aps_server = '''
- // createVehicle positions are terrain-relative here. Keep the vehicle and
- // its synthetic rocket on the same local terrain plane; a fixed world Z
- // leaves the rocket far below terrain-snapped vehicles on elevated Stratis.
- private _apsPosition = _player modelToWorld [110, 0, 0];
- _apsPosition set [2, 0];
- private _apsVehicle = "B_MBT_01_cannon_F" createVehicle _apsPosition;
- _apsVehicle setDir 270;
- _apsVehicle allowDamage true;
- _apsVehicle setDamage 0;
- [_apsVehicle, 2] call YOSHI_fnc_apsEnableVehicle;
- [] call YOSHI_fnc_apsEnsureLocalRuntime;
- private _chargesBefore = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
- private _impactSeen = false;
- _apsVehicle addEventHandler ["HitPart", { _impactSeen = true; missionNamespace setVariable ["PONTIFEX_TIER_apsPositiveImpact", true]; }];
-// Position projectiles from the vehicle's actual ASL position.  A vehicle is
-// terrain-snapped by createVehicle, while a fixed ATL/world-Z rocket can be
-// spawned into terrain on uneven Stratis ground.
-private _rocketPosition = (getPosASL _apsVehicle) vectorAdd [70, 0, 2];
-private _rocket = "R_PG32V_F" createVehicle (ASLToATL _rocketPosition);
-_rocket setPosASL _rocketPosition;
- _rocket setVectorDirAndUp [[-1, 0, 0], [0, 0, 1]];
- _rocket setVelocity [-320, 0, 0];
- private _projectileUid = [_rocket] call YOSHI_fnc_apsProjectileUid;
- sleep 0.02;
-private _threat = [_apsVehicle, _rocket] call YOSHI_fnc_apsEvaluateProjectileThreat;
-["aps.positive.projectileSpawned", !isNull _rocket && {_projectileUid isNotEqualTo ""}, format ["uid=%1", _projectileUid]] call _assert;
-["aps.positive.collisionCourse", !(_threat isEqualTo []), format ["threat=%1", _threat]] call _assert;
-private _projectileLocal = local _rocket;
-private _projectileTrackable = [_rocket] call YOSHI_fnc_apsIsTrackableProjectile;
-private _response = [_apsVehicle, _rocket] call YOSHI_fnc_apsSelectProjectileResponse;
-private _candidateCount = count (nearestObjects [_rocket, ["LandVehicle", "Air", "Ship"], YOSHI_APS_PROJECTILE_SEARCH_RADIUS]);
-private _interceptStarted = [_rocket] call YOSHI_fnc_apsTryInterceptProjectileLocal;
-private _postCallNull = isNull _rocket;
-private _postCallLocal = !isNull _rocket && {local _rocket};
-private _interceptFlag = !isNull _rocket && {_rocket getVariable ["YOSHI_APS_InterceptedLocal", false]};
- private _engagementDeadline = diag_tickTime + 10;
- private _engaged = false;
- waitUntil {
-     uiSleep 0.05;
-     _engaged = (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) findIf {
-         (_x param [0, ""]) isEqualTo (netId _apsVehicle) &&
-         {(_x param [1, ""]) isEqualTo _projectileUid} &&
-         {(_x param [2, ""]) isEqualTo "hardkill"}
-     } >= 0;
-     _engaged || diag_tickTime > _engagementDeadline
- };
-["aps.positive.engaged", _interceptStarted && {_engaged}, format ["started=%1|local=%2|trackable=%3|response=%4|candidates=%5|postNull=%6|postLocal=%7|interceptFlag=%8|vehicle=%9|projectile=%10|events=%11", _interceptStarted, _projectileLocal, _projectileTrackable, _response, _candidateCount, _postCallNull, _postCallLocal, _interceptFlag, netId _apsVehicle, _projectileUid, missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]]] call _assert;
- private _chargesAfter = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
- ["aps.positive.neutralized", _engaged && {isNull _rocket}, format ["projectile=%1|null=%2", _projectileUid, isNull _rocket]] call _assert;
- ["aps.positive.chargeConsumed", _chargesAfter isEqualTo (_chargesBefore - 1), format ["before=%1|after=%2", _chargesBefore, _chargesAfter]] call _assert;
- private _positiveImpact = missionNamespace getVariable ["PONTIFEX_TIER_apsPositiveImpact", false];
- ["aps.positive.protected", !_positiveImpact && {(damage _apsVehicle) < 0.01}, format ["impact=%1|damage=%2", _positiveImpact, damage _apsVehicle]] call _assert;
-
- // Control: the same real rocket trajectory against an otherwise identical
- // but APS-disabled vehicle must produce an actual impact, not just time out.
- private _controlPosition = _apsPosition vectorAdd [0, 100, 0];
- private _controlVehicle = "B_MBT_01_cannon_F" createVehicle _controlPosition;
- _controlVehicle allowDamage true;
- _controlVehicle setDamage 0;
- missionNamespace setVariable ["PONTIFEX_TIER_apsControlImpact", false];
- _controlVehicle addEventHandler ["HitPart", { missionNamespace setVariable ["PONTIFEX_TIER_apsControlImpact", true]; }];
- private _eventsBeforeControl = +(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]);
-private _controlRocketPosition = (getPosASL _controlVehicle) vectorAdd [70, 0, 2];
-private _controlRocket = "R_PG32V_F" createVehicle (ASLToATL _controlRocketPosition);
-_controlRocket setPosASL _controlRocketPosition;
- _controlRocket setVectorDirAndUp [[-1, 0, 0], [0, 0, 1]];
- _controlRocket setVelocity [-320, 0, 0];
- [_controlRocket] call YOSHI_fnc_apsTrackProjectileLocal;
- private _controlDeadline = diag_tickTime + 8;
- waitUntil { uiSleep 0.05; (missionNamespace getVariable ["PONTIFEX_TIER_apsControlImpact", false]) || (damage _controlVehicle) > 0.01 || diag_tickTime > _controlDeadline };
- private _controlImpact = missionNamespace getVariable ["PONTIFEX_TIER_apsControlImpact", false];
- ["aps.control.disabledImpact", _controlImpact || {(damage _controlVehicle) > 0.01}, format ["impact=%1|damage=%2|rocketNull=%3", _controlImpact, damage _controlVehicle, isNull _controlRocket]] call _assert;
- ["aps.control.disabledNoEngagement", (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) isEqualTo _eventsBeforeControl, format ["eventsBefore=%1|eventsAfter=%2", _eventsBeforeControl, missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]]] call _assert;
-
- // A parallel path remains inside search distance but outside the production
- // miss-distance envelope.  It is removed after proving that no APS event or
- // charge change occurred, avoiding terrain/TTL ambiguity.
- private _outsideCharges = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
- private _outsideEvents = +(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]);
-// Keep the deliberate miss above uneven terrain as well as laterally outside
-// the APS envelope, so its normal continued flight is observable.
-private _outsideRocketPosition = (getPosASL _apsVehicle) vectorAdd [70, 35, 20];
-private _outsideRocket = "R_PG32V_F" createVehicle (ASLToATL _outsideRocketPosition);
-_outsideRocket setPosASL _outsideRocketPosition;
- _outsideRocket setVectorDirAndUp [[-1, 0, 0], [0, 0, 1]];
- _outsideRocket setVelocity [-320, 0, 0];
-sleep 0.02;
-private _outsideThreat = [_apsVehicle, _outsideRocket] call YOSHI_fnc_apsEvaluateProjectileThreat;
-private _outsideSpeed = vectorMagnitude (velocity _outsideRocket);
-private _outsideOk = !isNull _outsideRocket && {_outsideSpeed >= 10} && {_outsideThreat isEqualTo []} &&
-    {(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) isEqualTo _outsideEvents} &&
-    {([_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount) isEqualTo _outsideCharges};
-["aps.control.outsideEnvelope", _outsideOk, format ["threat=%1|rocketNull=%2|speed=%3|charges=%4|events=%5", _outsideThreat, isNull _outsideRocket, _outsideSpeed, [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount, missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]]] call _assert;
- if (!isNull _outsideRocket) then { deleteVehicle _outsideRocket; };
- missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _apsVehicle, _projectileUid], true];
- {{ if (!isNull _x) then { deleteVehicle _x; }; }} forEach [_apsVehicle, _controlVehicle];
+        # Deterministic direct shotRocket fixture. Direct spawns must be registered
+        # explicitly because the production tracker normally learns only Fired events.
+        aps_server = (
+            r'''
+private _newTarget = {
+    params ["_position", ["_fuel", 0]];
+    private _target = "O_MBT_02_cannon_F" createVehicle _position;
+    _target setFuel _fuel; _target engineOn false; _target allowDamage true; _target setDamage 0;
+    sleep 3; _target setVelocity [0, 0, 0]; _target
+};
 '''
+            + direct_fixture_sqf()
+            + r'''
+private _injectThreat = {
+    // APS-only wrapper: geometry and explicit APS registration.  Tribunal owns
+    // creation, launch-state verification, telemetry, impact evidence, and cleanup.
+    params ["_target", "_label", ["_lateral", 0], ["_height", 0], ["_away", false], ["_minimumTerrainClearance", 0], ["_aimHeight", -1e9]];
+    if (_aimHeight isEqualTo -1e9) then { _aimHeight = _height; };
+    private _targetASL = getPosASL _target;
+    private _origin = _targetASL vectorAdd [90, _lateral, _height];
+    // Aim from the same terrain-cleared origin Tribunal will launch from.
+    // This matters only for the soft-kill descending case (clearance > 0).
+    private _originTerrain = getTerrainHeightASL _origin;
+    if ((_origin # 2) < (_originTerrain + _minimumTerrainClearance)) then { _origin set [2, _originTerrain + _minimumTerrainClearance]; };
+    private _aim = _targetASL vectorAdd [0, _lateral, _aimHeight];
+    private _direction = vectorNormalized (_aim vectorDiff _origin);
+    if (_away) then { _direction = vectorNormalized (_origin vectorDiff _targetASL); };
+    private _launch = ["R_PG32V_F", _origin, _direction, 250, _label, _target, _minimumTerrainClearance] call TRIBUNAL_fnc_directProjectileLaunch;
+    private _projectile = _launch # 0;
+    private _tracked = !isNull _projectile && {[_projectile] call YOSHI_fnc_apsTrackProjectileLocal};
+    [_projectile, _launch # 1, _tracked, _launch # 3, _launch # 2]
+};
+private _apsVehicle = [[3000, 4000, 0], 0] call _newTarget;
+[_apsVehicle, 2] call YOSHI_fnc_apsEnableVehicle;
+[] call YOSHI_fnc_apsEnsureLocalRuntime;
+private _chargesBefore = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
+private _hard = [_apsVehicle, "hardkill"] call _injectThreat;
+private _rocket = _hard # 0;
+private _projectileUid = [_rocket] call YOSHI_fnc_apsProjectileUid;
+["aps.positive.projectileSpawned", !isNull _rocket && {_projectileUid isNotEqualTo ""} && {(_hard # 2)} && {(_hard # 4)} && {local _rocket} && {local _apsVehicle}, format ["uid=%1|tracked=%2|vehicleLocal=%3|projectileLocal=%4|initial=%5", _projectileUid, _hard # 2, local _apsVehicle, local _rocket, _hard # 3]] call _assert;
+private _deadline = diag_tickTime + 4; private _threat = []; private _hardEvent = false;
+waitUntil { uiSleep 0.005; if (!isNull _rocket) then { _threat = [_apsVehicle, _rocket] call YOSHI_fnc_apsEvaluateProjectileThreat; }; _hardEvent = (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) findIf {(_x # 0) isEqualTo (netId _apsVehicle) && {(_x # 1) isEqualTo _projectileUid} && {(_x # 2) isEqualTo "hardkill"}} >= 0; _hardEvent || diag_tickTime > _deadline };
+["aps.positive.collisionCourse", !(_threat isEqualTo []) || _hardEvent, format ["threat=%1|ledgerProvesPredicate=%2", _threat, _hardEvent]] call _assert;
+["aps.positive.engaged", _hardEvent, format ["vehicle=%1|projectile=%2|events=%3", netId _apsVehicle, _projectileUid, missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]]] call _assert;
+private _chargesAfter = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
+["aps.positive.neutralized", _hardEvent && {isNull _rocket}, format ["projectile=%1|null=%2", _projectileUid, isNull _rocket]] call _assert;
+["aps.positive.chargeConsumed", _chargesAfter isEqualTo (_chargesBefore - 1), format ["before=%1|after=%2", _chargesBefore, _chargesAfter]] call _assert;
+["aps.positive.protected", !(missionNamespace getVariable [_hard # 1, false]), format ["impact=%1", missionNamespace getVariable [_hard # 1, false]]] call _assert;
+private _controlVehicle = [[3000, 4200, 0], 0] call _newTarget;
+private _eventsBeforeControl = +(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]);
+private _control = [_controlVehicle, "disabled"] call _injectThreat;
+private _controlRocket = _control # 0; private _controlUid = [_controlRocket] call YOSHI_fnc_apsProjectileUid; private _controlLocal = !isNull _controlRocket && {local _controlRocket};
+private _controlDeadline = diag_tickTime + 4;
+waitUntil { uiSleep 0.01; (missionNamespace getVariable [_control # 1, false]) || isNull _controlRocket || diag_tickTime > _controlDeadline };
+["aps.control.disabledImpact", (missionNamespace getVariable [_control # 1, false]) && {(_control # 2)} && {(_control # 4)} && {_controlLocal} && {local _controlVehicle}, format ["rocket=%1|vehicleLocal=%2|projectileLocal=%3", _controlUid, local _controlVehicle, local _controlRocket]] call _assert;
+["aps.control.disabledNoEngagement", (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) isEqualTo _eventsBeforeControl, "disabled control"] call _assert;
+private _outsideEvents = +(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]); private _outsideCharges = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
+private _outside = [_apsVehicle, "outside", 35, 20] call _injectThreat; private _outsideRocket = _outside # 0; sleep 0.1;
+private _outsideThreat = [_apsVehicle, _outsideRocket] call YOSHI_fnc_apsEvaluateProjectileThreat;
+["aps.control.outsideEnvelope", !isNull _outsideRocket && {vectorMagnitude (velocity _outsideRocket) >= 10} && {(_outside # 2)} && {(_outside # 4)} && {local _outsideRocket} && {_outsideThreat isEqualTo []} && {(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) isEqualTo _outsideEvents} && {([_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount) isEqualTo _outsideCharges}, format ["threat=%1|speed=%2", _outsideThreat, if (isNull _outsideRocket) then {0} else {vectorMagnitude velocity _outsideRocket}]] call _assert;
+if (!isNull _outsideRocket) then {deleteVehicle _outsideRocket};
+private _awayEvents = +(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]); private _awayCharges = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
+private _away = [_apsVehicle, "away", 0, 20, true] call _injectThreat; private _awayRocket = _away # 0; sleep 0.1;
+private _awayThreat = [_apsVehicle, _awayRocket] call YOSHI_fnc_apsEvaluateProjectileThreat;
+["aps.control.directionAway", !isNull _awayRocket && {(_away # 2)} && {(_away # 4)} && {local _awayRocket} && {_awayThreat isEqualTo []} && {(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) isEqualTo _awayEvents} && {([_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount) isEqualTo _awayCharges}, format ["threat=%1|velocity=%2", _awayThreat, if (isNull _awayRocket) then {[]} else {velocity _awayRocket}]] call _assert;
+if (!isNull _awayRocket) then {deleteVehicle _awayRocket};
+private _softVehicle = [[3000, 4400, 0], 1] call _newTarget;
+[_softVehicle, 0] call YOSHI_fnc_apsEnableVehicle; [_softVehicle, false] call YOSHI_fnc_apsSetHardKillState; [_softVehicle, true] call YOSHI_fnc_apsSetSoftKillState;
+private _fuelBefore = fuel _softVehicle; private _soft = [_softVehicle, "softkill", 0, 0, false, 8, 0] call _injectThreat; private _softRocket = _soft # 0; private _softUid = [_softRocket] call YOSHI_fnc_apsProjectileUid; private _lastPreEventVelocity = []; private _velocityBefore = []; private _velocityAfter = []; private _softEvent = false; private _eventFrame = -1; private _softDeadline = diag_tickTime + 4;
+diag_log format ["PONTIFEX_APS_FIXTURE|softkill|SAMEFRAME|projectile=%1|exists=%2|position=%3|velocity=%4|speed=%5|local=%6|distance=%7|terrain=%8|clearance=%9", _softUid, !isNull _softRocket, if (isNull _softRocket) then {[]} else {getPosASL _softRocket}, if (isNull _softRocket) then {[]} else {velocity _softRocket}, if (isNull _softRocket) then {0} else {vectorMagnitude velocity _softRocket}, !isNull _softRocket && {local _softRocket}, if (isNull _softRocket) then {-1} else {_softRocket distance _softVehicle}, if (isNull _softRocket) then {-1} else {getTerrainHeightASL (getPosASL _softRocket)}, if (isNull _softRocket) then {-1} else {((getPosASL _softRocket) # 2) - getTerrainHeightASL (getPosASL _softRocket)}];
+waitUntil { uiSleep 0.005; if (!isNull _softRocket && {!_softEvent}) then { _lastPreEventVelocity = velocity _softRocket; private _candidate = [_softVehicle, _softRocket] call YOSHI_fnc_apsEvaluateProjectileThreat; _softEvent = (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) findIf {(_x # 0) isEqualTo (netId _softVehicle) && {(_x # 1) isEqualTo _softUid} && {(_x # 2) isEqualTo "softkill"}} >= 0; if (_softEvent) then { _velocityBefore = _lastPreEventVelocity; _eventFrame = diag_frameNo; diag_log format ["PONTIFEX_APS_FIXTURE|softkill|EVENT|projectile=%1|threat=%2|before=%3|frame=%4", _softUid, _candidate, _velocityBefore, _eventFrame]; }; }; if (_softEvent && {!isNull _softRocket} && {diag_frameNo > _eventFrame} && {_velocityAfter isEqualTo []}) then { _velocityAfter = velocity _softRocket; diag_log format ["PONTIFEX_APS_FIXTURE|softkill|NEXTFRAME|projectile=%1|after=%2|speed=%3|frame=%4", _softUid, _velocityAfter, vectorMagnitude _velocityAfter, diag_frameNo]; }; (_softEvent && {!(_velocityAfter isEqualTo [])}) || diag_tickTime > _softDeadline };
+sleep 0.1; private _postDeflectionPosition = if (isNull _softRocket) then {[]} else {getPosASL _softRocket};
+["aps.softkill.deflection", _softEvent && {!isNull _softRocket} && {(_soft # 2)} && {(_soft # 4)} && {local _softRocket} && {!(_velocityBefore isEqualTo [])} && {!(_velocityAfter isEqualTo [])} && {(_velocityBefore distance _velocityAfter) > 0.1} && {(fuel _softVehicle) isEqualTo (_fuelBefore - YOSHI_APS_SOFTKILL_FUEL_COST)} && {!(missionNamespace getVariable [_soft # 1, false])}, format ["uid=%1|before=%2|after=%3|fuel=%4:%5|postPosition=%6", _softUid, _velocityBefore, _velocityAfter, _fuelBefore, fuel _softVehicle, _postDeflectionPosition]] call _assert;
+if (!isNull _softRocket) then {deleteVehicle _softRocket};
+missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _apsVehicle, _projectileUid], true];
+{if (!isNull _x) then {deleteVehicle _x}} forEach [_apsVehicle, _controlVehicle, _softVehicle];
+'''
+        )
         aps_client = '''
  private _apsDeadline = diag_tickTime + 45;
  waitUntil { uiSleep 0.1; !isNil {missionNamespace getVariable "PONTIFEX_TIER_apsReplication"} || diag_tickTime > _apsDeadline };
@@ -1200,6 +1174,19 @@ def manual_ssh_target() -> str:
     """
     return os.environ.get("PONTIFEX_SSH_TARGET", socket.gethostname())
 
+
+def terminal_results_ready(server_complete: dict | None, client_complete: dict | None, *, manual: bool, live: bool, server_text: str = "", client_text: str = "") -> bool:
+    """Return whether a non-manual run has reached a terminal protocol state.
+
+    PASS and FAIL are both terminal: validation below determines the final exit
+    status.  Only absent/incomplete protocol records consume the safety timeout.
+    Live Mode intentionally waits for its explicit READY markers instead.
+    """
+    if manual or server_complete is None or client_complete is None:
+        return False
+    if live:
+        return "PONTIFEX_LIVE|server|READY" in server_text and "PONTIFEX_LIVE|client-a|READY" in client_text
+    return True
 
 def run_multiplayer(
     force_failure: bool,
@@ -1727,15 +1714,14 @@ def run_multiplayer(
                         manifest["client_process_table"] = container_processes(client_name)
                         manifest["server_process_table"] = container_processes(server_name)
                         dedicated.atomic_json(run_dir / "manifest.json", manifest)
-                if not manual and server_complete and client_complete:
+                if terminal_results_ready(server_complete, client_complete, manual=manual, live=live, server_text=server_text, client_text=client_text):
                     if live:
-                        if "PONTIFEX_LIVE|server|READY" in server_text and "PONTIFEX_LIVE|client-a|READY" in client_text:
-                            reason = "live_ready"
-                            result["status"] = "READY"
-                            break
+                        reason = "live_ready"
+                        result["status"] = "READY"
                     else:
                         reason = "complete"
-                        break
+                    phase("terminal_results_detected", reason=reason, server_status=server_complete["status"], client_status=client_complete["status"])
+                    break
                 if not container_running(server_name):
                     reason = "server_exited"
                     break

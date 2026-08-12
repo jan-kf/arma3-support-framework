@@ -13,10 +13,10 @@ def parse_protocol(text: str, *, prefix: str) -> tuple[list[dict], dict | None]:
     """
     escaped = re.escape(prefix)
     assertion = re.compile(
-        rf"{escaped}\\|(PASS|FAIL)\\|(server|client-a)\\|([^|\\r\\n\\\"]+)(?:\\|([^\\r\\n\\\"]*))?"
+        rf"{escaped}\|(PASS|FAIL)\|(server|client-a)\|([^|\r\n\"]+)(?:\|([^\r\n\"]*))?"
     )
     complete = re.compile(
-        rf"{escaped}\\|COMPLETE\\|(server|client-a)\\|status=(PASS|FAIL)\\|assertions=(\\d+)\\|failures=(\\d+)"
+        rf"{escaped}\|COMPLETE\|(server|client-a)\|status=(PASS|FAIL)\|assertions=(\d+)\|failures=(\d+)"
     )
     records = [
         {"status": match.group(1), "origin": match.group(2), "name": match.group(3), "detail": match.group(4) or ""}

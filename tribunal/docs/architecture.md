@@ -17,3 +17,23 @@ historical run artifacts.
 Future Tribunal runners can add multi-client placement, locality probes,
 latency profiles, visual/audio drivers, and replay while keeping the Scenario
 contract stable.
+
+## Direct-projectile fixture contract
+
+`tribunal.mission.projectiles.direct_fixture_sqf()` supplies generic, server-
+local direct-projectile injection for gameplay scenarios. It owns requested
+launch-state application, same-frame requested-versus-observed evidence,
+locality and trajectory sampling, physical-impact evidence, and cleanup. The
+helper fails closed when the observed position, direction, or velocity is
+outside its explicit tolerances; a scenario must not retry until it happens to
+get a usable projectile.
+
+Feature scenarios own only their feature-specific setup and assertions. For
+example, Pontifex APS explicitly registers the Tribunal-created projectile
+with APS, then correlates its netId with the APS ledger and its own resource
+and protection assertions. This keeps projectile semantics reusable while
+preserving causal, feature-specific evidence.
+
+The runner treats protocol completion as terminal: complete PASS and complete
+FAIL both trigger ordinary teardown immediately. The configured deadline is
+only a fail-closed safety bound for incomplete or hung runs.
