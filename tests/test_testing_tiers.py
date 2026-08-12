@@ -96,6 +96,14 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertEqual(records[0]["detail"], "projectile=2:145")
         self.assertEqual(complete, {"origin": "server", "status": "FAIL", "assertions": 2, "failures": 1})
 
+        records, complete = parse_protocol(
+            "PONTIFEX_TIER|PASS|client-b|replication.visible|ok\n"
+            "PONTIFEX_TIER|COMPLETE|client-b|status=PASS|assertions=1|failures=0",
+            prefix="PONTIFEX_TIER",
+        )
+        self.assertEqual(records[0]["origin"], "client-b")
+        self.assertEqual(complete["origin"], "client-b")
+
     def test_live_command_is_scoped_and_atomically_replaces_the_inbox(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             control = Path(temporary) / "live-control"

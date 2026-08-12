@@ -25,7 +25,8 @@ if str(PROJECT_ROOT) not in sys.path:
 from tribunal.assertions.protocol import validate_origin
 from tribunal.mission.projectiles import direct_fixture_sqf
 from tribunal.discovery import discover
-from tribunal.runner.model import TierPlan as TestPlan
+from tribunal.reporting.evidence import EvidenceAttachment, attach_evidence
+from tribunal.runner.model import ClientIdentity, TierPlan as TestPlan, client_identity_map
 
 import pontifex_server as dedicated
 
@@ -41,6 +42,8 @@ SECCOMP_PROFILE = CLIENT_SECURITY / "pontifex-steam-seccomp.json"
 APPARMOR_PROFILE = CLIENT_SECURITY / "pontifex-steam.apparmor"
 APPARMOR_NAME = "pontifex-steam"
 FEATURE_SCENARIOS = discover([ROOT / "source" / "advanced-systems" / "tests" / "tribunal"])
+FRAMEWORK_SCENARIOS = discover([ROOT / "tribunal" / "scenarios"])
+ALL_SCENARIOS = {**FRAMEWORK_SCENARIOS, **FEATURE_SCENARIOS}
 APS_SCENARIO = FEATURE_SCENARIOS["aps-intercept"]
 STEAM_DLC_CATALOG = ROOT / "server" / "steam-arma3-dlc-catalog.json"
 IMAGE = "pontifex-arma-client:phase3"
@@ -102,12 +105,20 @@ GAMEPLAY_PLAN = TestPlan(
     selected=frozenset({"vehicle-entry", "aps-intercept"}),
     project_mods=True,
 )
+CAPABILITY_PLAN = TestPlan(
+    "capability",
+    SMOKE_PLAN.server_expected | frozenset().union(*(scenario.server_expected for scenario in FRAMEWORK_SCENARIOS.values())),
+    SMOKE_PLAN.client_expected | frozenset().union(*(scenario.client_expected for scenario in FRAMEWORK_SCENARIOS.values())),
+    gameplay=True,
+    selected=frozenset(FRAMEWORK_SCENARIOS),
+)
 LIVE_PLAN = TestPlan("live", SMOKE_PLAN.server_expected, SMOKE_PLAN.client_expected, selected=frozenset({"lifecycle"}), project_mods=True)
-TEST_PLANS = {plan.name: plan for plan in (SMOKE_PLAN, INTEGRATION_PLAN, GAMEPLAY_PLAN, LIVE_PLAN)}
+TEST_PLANS = {plan.name: plan for plan in (SMOKE_PLAN, INTEGRATION_PLAN, GAMEPLAY_PLAN, CAPABILITY_PLAN, LIVE_PLAN)}
 TIER_TESTS = {
     "smoke": frozenset({"lifecycle"}),
     "integration": frozenset({"mission-namespace", "config", "round-trip"}),
     "gameplay": frozenset({"vehicle-entry", "aps-intercept"}),
+    "capability": frozenset(FRAMEWORK_SCENARIOS),
     "live": frozenset({"lifecycle"}),
 }
 
@@ -137,10 +148,15 @@ def select_plan(name: str, selected: str | None = None) -> TestPlan:
         if "aps-intercept" in chosen:
             server.update(APS_SCENARIO.server_expected)
             client.update(APS_SCENARIO.client_expected)
+    elif name == "capability":
+        for identifier in chosen:
+            scenario = FRAMEWORK_SCENARIOS[identifier]
+            server.update(scenario.server_expected)
+            client.update(scenario.expected_for("client-a"))
     return TestPlan(
-        name, frozenset(server), frozenset(client), gameplay=name == "gameplay", selected=chosen,
+        name, frozenset(server), frozenset(client), gameplay=name in {"gameplay", "capability"}, selected=chosen,
         project_mods=name == "gameplay" and any(
-            FEATURE_SCENARIOS[item].requires_project_mods
+            ALL_SCENARIOS[item].requires_project_mods
             for item in chosen.intersection(FEATURE_SCENARIOS)
         ),
     )
@@ -832,7 +848,7 @@ class Mission {{
 '''
     gameplay_server = ""
     gameplay_client = ""
-    if plan.gameplay:
+    if plan.name == "gameplay" and "vehicle-entry" in plan.selected:
         gameplay_server = '''
  private _vehicleDeadline = diag_tickTime + 20;
  waitUntil { uiSleep 0.1; !isNil "PONTIFEX_TIER_vehicle" || diag_tickTime > _vehicleDeadline };
@@ -962,6 +978,8 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
  } >= 0;
  ["aps.replication", (_apsReplication param [0, ""]) isEqualTo _token && {_apsId isNotEqualTo ""} && {_apsProjectile isNotEqualTo ""} && {_apsEvent}, format ["vehicle=%1|projectile=%2|objectResolved=%3|event=%4", _apsId, _apsProjectile, !isNull _apsObject, _apsEvent]] call _assert;
 '''
+    framework_server = "\n".join(ALL_SCENARIOS[item].server_sqf for item in sorted(plan.selected) if item in ALL_SCENARIOS)
+    framework_client = "\n".join(ALL_SCENARIOS[item].sqf_for("client-a") for item in sorted(plan.selected) if item in ALL_SCENARIOS)
     live_server = ""
     live_client = ""
     if live:
@@ -998,6 +1016,7 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
 '''
     init_server = f'''[] spawn {{
  private _token = "{token}";
+ missionNamespace setVariable ["TRIBUNAL_MACHINE_IDENTITY", "server"];
  waitUntil {{ time > 0 }};
  missionNamespace setVariable ["PONTIFEX_TIER_serverResults", []];
  private _assert = {{ params ["_name", "_condition", ["_detail", ""]]; private _status = "FAIL"; if (_condition isEqualTo true) then {{ _status = "PASS"; }}; private _results = missionNamespace getVariable ["PONTIFEX_TIER_serverResults", []]; _results pushBack [_name, _status, _detail]; missionNamespace setVariable ["PONTIFEX_TIER_serverResults", _results]; diag_log format ["PONTIFEX_TEST|%1|server|%2|%3", _status, _name, _detail]; }};
@@ -1013,6 +1032,7 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
  {integration_server}
  {gameplay_server}
  {aps_server}
+ {framework_server}
  private _results = missionNamespace getVariable ["PONTIFEX_TIER_serverResults", []];
  private _failures = {{(_x # 1) isEqualTo "FAIL"}} count _results;
  private _status = "FAIL";
@@ -1024,6 +1044,7 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
 '''
     init_client = f'''[] spawn {{
  private _token = "{token}";
+ missionNamespace setVariable ["TRIBUNAL_MACHINE_IDENTITY", "client-a"];
  private _deadline = diag_tickTime + 150;
  waitUntil {{ uiSleep 0.1; !isNull player && {{hasInterface}} || diag_tickTime > _deadline }};
  missionNamespace setVariable ["PONTIFEX_TIER_clientResults", []];
@@ -1036,6 +1057,7 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
  {integration_client}
  {gameplay_client}
  {aps_client}
+ {framework_client}
  private _ackDeadline = diag_tickTime + 45;
  waitUntil {{ uiSleep 0.1; ((missionNamespace getVariable ["PONTIFEX_TIER_serverAck", []]) param [0, ""]) isEqualTo _token || diag_tickTime > _ackDeadline }};
  private _ack = missionNamespace getVariable ["PONTIFEX_TIER_serverAck", []];
@@ -1200,6 +1222,7 @@ def run_multiplayer(
     # Keep the VNC adapter for diagnostic/manual workflows only; it no longer
     # drives Server Browser / Direct Connect for the production proof.
     native_connect = e2e or plan is not None or os.environ.get("PONTIFEX_NATIVE_CONNECT") == "1"
+    visual_required = bool(plan and "visual-framebuffer" in plan.selected)
     experiment = os.environ.get("PONTIFEX_EXPERIMENT_MISSION")
     experiment_pbo = os.environ.get("PONTIFEX_EXPERIMENT_PBO")
     if (e2e or plan is not None) and (experiment or experiment_pbo):
@@ -1222,6 +1245,7 @@ def run_multiplayer(
     run_dir = RUNS / run_id
     server_dir = run_dir / "server"
     client_dir = run_dir / "client-a"
+    configured_clients = client_identity_map((ClientIdentity("client-a", "PontifexClientA", CLIENT_HOME, 20, 5904),))
     for path in (server_dir / "profile", client_dir / "profile", run_dir / "network"):
         path.mkdir(parents=True, exist_ok=True)
     if live:
@@ -1275,6 +1299,15 @@ def run_multiplayer(
             ["./pontifex", "test", "multiplayer"] + (["--force-failure"] if force_failure else [])
         ),
         "architecture": "two unprivileged Docker containers on one run-scoped bridge; NVIDIA CDI client GPU",
+        "clients": {
+            identity: {
+                "profile_name": client.profile_name,
+                "steam_home": str(client.steam_home),
+                "address_offset": client.address_offset,
+                "diagnostic_vnc_port": client.diagnostic_vnc_port,
+            }
+            for identity, client in configured_clients.items()
+        },
     }
     if e2e_mission:
         manifest["fresh_mission"] = e2e_mission
@@ -1614,7 +1647,7 @@ def run_multiplayer(
                     # This is a compositor-local VNC endpoint for the E2E
                     # join adapter.  Unlike manual mode there is no Docker
                     # publish rule, so it is unreachable from the host.
-                    *( ["--env", "PONTIFEX_COMPOSITOR_VNC=1"] if e2e else [] ),
+                    *( ["--env", "PONTIFEX_COMPOSITOR_VNC=1"] if (e2e or visual_required) else [] ),
                     "--env",
                     "NVIDIA_DRIVER_CAPABILITIES=graphics,display,utility,compat32",
                     "--env",
@@ -1699,6 +1732,8 @@ def run_multiplayer(
             samples = []
             next_sample = 0.0
             join_adapter_attempted = False
+            visual_probe_attempted = False
+            visual_probe_report = None
             reason = "timeout"
             while time.monotonic() < deadline:
                 server_text = container_logs(server_name)
@@ -1722,6 +1757,20 @@ def run_multiplayer(
                         reason = "complete"
                     phase("terminal_results_detected", reason=reason, server_status=server_complete["status"], client_status=client_complete["status"])
                     break
+                if visual_required and not visual_probe_attempted and "TRIBUNAL_VISUAL|ARMED" in client_text:
+                    visual_probe_attempted = True
+                    visual_output = client_dir / "visual-proof.json"
+                    visual_probe = docker(
+                        ["exec", client_name, "python3", "/pontifex/tools/tribunal_visual_probe.py", "--output", "/run/pontifex/visual-proof.json", "--timeout", "30"],
+                        check=False,
+                    )
+                    (client_dir / "visual-proof-console.log").write_text((visual_probe.stdout or "") + (visual_probe.stderr or ""), encoding="utf-8")
+                    if visual_output.is_file():
+                        visual_probe_report = json.loads(visual_output.read_text(encoding="utf-8"))
+                        attach_evidence(result, EvidenceAttachment("framebuffer-transition", "client-a", "visual-framebuffer", visual_output, visual_probe_report))
+                    if visual_probe.returncode != 0 or not visual_probe_report or visual_probe_report.get("status") != "PASS":
+                        reason = "visual_probe_failed"
+                        break
                 if not container_running(server_name):
                     reason = "server_exited"
                     break
@@ -1774,6 +1823,7 @@ def run_multiplayer(
                     },
                     "resource_samples": samples,
                     **({"join_adapter_attempted": join_adapter_attempted} if e2e else {}),
+                    **({"visual_probe_attempted": visual_probe_attempted, "visual_probe": visual_probe_report} if visual_required else {}),
                 }
             )
             if live and reason == "live_ready" and not server_error and not client_error:
@@ -1991,7 +2041,7 @@ def main() -> int:
     e2e = sub.add_parser("e2e")
     e2e.add_argument("--timeout", type=int, default=int(os.environ.get("PONTIFEX_E2E_TIMEOUT", "720")))
     tier = sub.add_parser("tier")
-    tier.add_argument("name", choices=("smoke", "integration", "gameplay"))
+    tier.add_argument("name", choices=("smoke", "integration", "gameplay", "capability"))
     tier.add_argument("--select", help="comma-separated test IDs; defaults to the whole tier")
     tier.add_argument("--timeout", type=int, default=int(os.environ.get("PONTIFEX_TIER_TIMEOUT", "360")))
     live_worker = sub.add_parser("live-worker")

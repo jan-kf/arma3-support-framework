@@ -17,6 +17,7 @@ Usage: ./pontifex COMMAND
   test smoke      Fresh single-client infrastructure smoke test
   test integration Fresh single-boot in-mission integration batch
   test gameplay   Fresh deterministic gameplay scenario suite
+  test capability Fresh Tribunal locality and framebuffer capability probes
   test live       Start durable Developer Live Mode
   test dedicated  Build and run the real dedicated-server integration test
   test multiplayer Build and run server plus one real automated player client
@@ -93,7 +94,7 @@ case "${1:-help}" in
     check) run_check ;;
     build) run_build ;;
     test)
-        if [[ "${2:-}" == "smoke" || "${2:-}" == "integration" || "${2:-}" == "gameplay" ]]; then
+        if [[ "${2:-}" == "smoke" || "${2:-}" == "integration" || "${2:-}" == "gameplay" || "${2:-}" == "capability" ]]; then
             tier="$2"
             shift 2
             exec python3 "$ROOT/tools/pontifex_multiplayer.py" tier "$tier" "$@"
