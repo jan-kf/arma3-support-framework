@@ -9,7 +9,7 @@ TRIBUNAL_fnc_combatObserverStart = {
     params ["_token"];
     private _state = createHashMapFromArray [
         ["token", _token], ["fires", []], ["hits", []], ["damage", []],
-        ["kills", []], ["sources", []], ["targets", []], ["started", diag_tickTime]
+        ["kills", []], ["hitDetails", []], ["sources", []], ["targets", []], ["started", diag_tickTime]
     ];
     missionNamespace setVariable [format ["TRIBUNAL_COMBAT_%1", _token], _state];
     _state
@@ -114,6 +114,25 @@ TRIBUNAL_fnc_combatObserveTarget = {
         private _hits = _state getOrDefault ["hits", []];
         _hits pushBack [diag_tickTime, netId _target, str _this, local _target, owner _target];
         _state set ["hits", _hits];
+        private _details = _state getOrDefault ["hitDetails", []];
+        {
+            private _hitTarget = _x param [0, objNull];
+            private _shooter = _x param [1, objNull];
+            private _projectile = _x param [2, objNull];
+            private _position = _x param [3, []];
+            private _velocity = _x param [4, []];
+            private _ammoInfo = _x param [6, []];
+            _details pushBack (createHashMapFromArray [
+                ["time", diag_tickTime],
+                ["target", if (isNull _hitTarget) then {netId _target} else {netId _hitTarget}],
+                ["shooter", if (isNull _shooter) then {""} else {netId _shooter}],
+                ["projectile", if (isNull _projectile) then {""} else {netId _projectile}],
+                ["projectileClass", if (isNull _projectile) then {""} else {typeOf _projectile}],
+                ["position", _position], ["velocity", _velocity], ["ammoInfo", _ammoInfo],
+                ["targetLocal", local _target], ["targetOwner", owner _target]
+            ]);
+        } forEach _this;
+        _state set ["hitDetails", _details];
         missionNamespace setVariable [format ["TRIBUNAL_COMBAT_%1", _token], _state];
     }];
     private _killedEh = _target addEventHandler ["Killed", {

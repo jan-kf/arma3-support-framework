@@ -794,6 +794,20 @@ def write_tier_mission(destination: Path, token: str, plan: TestPlan, *, live: b
     """
     destination.mkdir(parents=True, exist_ok=False)
     position_x = 4683 + (int(token[-4:], 16) % 30)
+    player_position = [position_x, 16, 2778]
+    requested_spawns = {
+        ALL_SCENARIOS[item].metadata.get("player_spawn")
+        for item in plan.selected.intersection(ALL_SCENARIOS)
+        if ALL_SCENARIOS[item].metadata.get("player_spawn")
+    }
+    if len(requested_spawns) > 1:
+        raise RuntimeError(f"selected scenarios require incompatible player spawns: {sorted(requested_spawns)}")
+    if requested_spawns:
+        parts = [float(value) for value in next(iter(requested_spawns)).split(",")]
+        if len(parts) != 3:
+            raise RuntimeError("scenario player_spawn must contain exactly x,y,z")
+        player_position = parts
+    player_x, player_y, player_z = player_position
     vehicle_entity = ""
     addons = '"A3_Characters_F"'
     metadata = 'items=1; class Item0 { className="A3_Characters_F"; name="Characters"; author="Bohemia Interactive"; };'
@@ -810,13 +824,23 @@ randomSeed={int(token[-8:], 16)};
 class Mission {{
  class Intel {{ year=2035; month=7; day=6; hour=12; minute=0; startWeather=0; forecastWeather=0; }};
  class Entities {{ items={2 if plan.gameplay else 1};
-  class Item0 {{ dataType="Group"; side="West"; class Entities {{ items=1; class Item0 {{ dataType="Object"; class PositionInfo {{ position[]={{ {position_x},16,2778 }}; }}; side="West"; flags=7; class Attributes {{ isPlayer=1; }}; id=1; type="B_Soldier_A_F"; }}; }}; class Attributes {{}}; id=0; }};{vehicle_entity}
+  class Item0 {{ dataType="Group"; side="West"; class Entities {{ items=1; class Item0 {{ dataType="Object"; class PositionInfo {{ position[]={{ {player_x},{player_y},{player_z} }}; }}; side="West"; flags=7; class Attributes {{ isPlayer=1; }}; id=1; type="B_Soldier_A_F"; }}; }}; class Attributes {{}}; id=0; }};{vehicle_entity}
  }};
 }};
 '''
+    requested_respawn = {
+        ALL_SCENARIOS[item].metadata.get("respawn_on_start")
+        for item in plan.selected.intersection(ALL_SCENARIOS)
+        if ALL_SCENARIOS[item].metadata.get("respawn_on_start") is not None
+    }
+    if len(requested_respawn) > 1:
+        raise RuntimeError(f"selected scenarios require incompatible respawn policies: {sorted(requested_respawn)}")
+    respawn_on_start = next(iter(requested_respawn), "1")
+    if respawn_on_start not in {"0", "1"}:
+        raise RuntimeError("scenario respawn_on_start must be 0 or 1")
     description = (
         "class Header { gameType = COOP; minPlayers = 1; maxPlayers = 1; };\n"
-        "skipLobby = 1;\nrespawn = 3;\nrespawnOnStart = 1;\ndisabledAI = 1;\n"
+        f"skipLobby = 1;\nrespawn = 3;\nrespawnOnStart = {respawn_on_start};\ndisabledAI = 1;\n"
     )
     integration_server = ""
     integration_client = ""
@@ -1824,6 +1848,14 @@ def run_multiplayer(
                             "--timeout", "55",
                         ]
                         evidence_kind = "interactive-map-marker-sequence"
+                    elif visual_driver == "designation-input":
+                        probe_args = [
+                            "exec", "-e", "DISPLAY=:0", client_name,
+                            "python3", "/pontifex/tools/tribunal_designation_probe.py",
+                            "--output", f"/run/pontifex/{ui_output.name}",
+                            "--timeout", "300",
+                        ]
+                        evidence_kind = "interactive-designation-sequence"
                     else:
                         raise RuntimeError(f"unsupported Tribunal visual driver: {visual_driver}")
                     ui_probe = docker(probe_args, check=False)

@@ -40,6 +40,14 @@ class X11KeyInput:
             ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong
         ]
         self.xtst.XTestFakeKeyEvent.restype = ctypes.c_int
+        self.xtst.XTestFakeButtonEvent.argtypes = [
+            ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong
+        ]
+        self.xtst.XTestFakeButtonEvent.restype = ctypes.c_int
+        self.xtst.XTestFakeRelativeMotionEvent.argtypes = [
+            ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_ulong
+        ]
+        self.xtst.XTestFakeRelativeMotionEvent.restype = ctypes.c_int
         self.display = self.x11.XOpenDisplay(None)
         if not self.display:
             raise RuntimeError("unable to open the private Xwayland display for input")
@@ -57,6 +65,20 @@ class X11KeyInput:
         for keysym in reversed(keysyms):
             self.key(keysym, False)
             time.sleep(0.05)
+
+    def button(self, button: int = 1) -> None:
+        if not self.xtst.XTestFakeButtonEvent(self.display, button, 1, 0):
+            raise RuntimeError(f"XTest rejected button {button} press")
+        self.x11.XFlush(self.display)
+        time.sleep(0.05)
+        if not self.xtst.XTestFakeButtonEvent(self.display, button, 0, 0):
+            raise RuntimeError(f"XTest rejected button {button} release")
+        self.x11.XFlush(self.display)
+
+    def relative_motion(self, dx: int, dy: int) -> None:
+        if not self.xtst.XTestFakeRelativeMotionEvent(self.display, dx, dy, 0):
+            raise RuntimeError(f"XTest rejected relative motion {dx},{dy}")
+        self.x11.XFlush(self.display)
 
     def close(self) -> None:
         if self.display:

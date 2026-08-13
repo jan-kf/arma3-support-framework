@@ -15,6 +15,8 @@ YSF_FW_ROLE_STRIKE = 1;
 YSF_FW_ROLE_RECON = 2;
 YSF_FW_ROLE_LOGI = 4;
 
+YSF_FW_RTB_TIMEOUT = 300;
+
 YSF_fwSideToId = {
     params ["_side"];
     if (_side isEqualType 0) exitWith {_side};
@@ -280,12 +282,6 @@ YSF_fwSanitizeSnapshotPylons = {
                 if (((_tag find "uk3cb_baf_pylonrack_") >= 0) && {(_tag find "hellfire") >= 0}) then {
                     _row set [1, "PylonRack_4Rnd_LG_scalpel"];
                     _hellfireSwaps = _hellfireSwaps + 1;
-                } else {
-                    private _ammo = getText (configFile >> "CfgMagazines" >> _mag >> "ammo");
-                    if ([_ammo, "LaserBombCore"] call YSF_fwAmmoInheritsFrom) then {
-                        _row set [1, "PylonRack_Bomb_GBU12_x2"];
-                        _laserBombSwaps = _laserBombSwaps + 1;
-                    };
                 };
             };
 
@@ -304,6 +300,10 @@ YOSHI_SET_VEHICLE_PYLONS = {
     {
         if (_x isEqualType [] && {(count _x) >= 3}) then {
             _vehicle setPylonLoadout [_x select 0, _x select 1, true, _x select 2];
+            private _savedAmmo = _x param [3, -1];
+            if (_savedAmmo >= 0) then {
+                _vehicle setAmmoOnPylon [_x select 0, _savedAmmo];
+            };
         };
     } forEach _sanitizedPylons;
 
@@ -372,6 +372,7 @@ YOSHI_PASTE_VEHICLE = {
     _newVehicle setDir _finalDir;
 
     private _swapCounts = [_newVehicle, _ammo] call YOSHI_SET_VEHICLE_PYLONS;
+    _newVehicle setFuel (((_data param [2, 1]) max 0) min 1);
     [_newVehicle, _fullDamageData] call YOSHI_SET_DAMAGE_INFO;
     {
         _newVehicle setObjectTextureGlobal [_forEachIndex, _x];
@@ -761,7 +762,7 @@ YSF_fwDeployAsset = {
 };
 
 YSF_fwFinalizeRtb = {
-    params ["_id", "_vehicle"];
+    params ["_id", "_vehicle", ["_result", "success"]];
     if (!isServer) exitWith {};
 
     private _entry = [_id] call YSF_fwGetEntry;
@@ -788,6 +789,7 @@ YSF_fwFinalizeRtb = {
     [_vehicle] call YSF_fwDeleteVehicleAndCrew;
 
     _entry set ["spawnedVeh", objNull];
+    _entry set ["lastRtbResult", _result];
     _entry set ["lastUpdate", serverTime];
     [_id, _entry] call YSF_fwSetEntry;
 };
@@ -796,20 +798,34 @@ YSF_fwRtbMonitor = {
     params ["_id", "_vehicle", "_exfilPosASL"];
     if (!isServer) exitWith {};
 
+    private _deadline = serverTime + (YSF_FW_RTB_TIMEOUT max 1);
+
     [{
         params ["_args", "_handle"];
-        _args params ["_id", "_vehicle", "_exfilPosASL"];
+        _args params ["_id", "_vehicle", "_exfilPosASL", "_deadline"];
 
         if (isNull _vehicle || {!alive _vehicle}) exitWith {
             [_handle] call CBA_fnc_removePerFrameHandler;
-            [_id, _vehicle] call YSF_fwFinalizeRtb;
+            [_id, _vehicle, "destroyed"] call YSF_fwFinalizeRtb;
         };
 
         if ((_vehicle distance2D _exfilPosASL) < 600) exitWith {
             [_handle] call CBA_fnc_removePerFrameHandler;
-            [_id, _vehicle] call YSF_fwFinalizeRtb;
+            [_id, _vehicle, "success"] call YSF_fwFinalizeRtb;
         };
-    }, 2, [_id, _vehicle, _exfilPosASL]] call CBA_fnc_addPerFrameHandler;
+
+        if (serverTime >= _deadline) exitWith {
+            [_handle] call CBA_fnc_removePerFrameHandler;
+            diag_log format [
+                "[YSF][FW] RTB timed out: id=%1 vehicle=%2 distance=%3 deadline=%4",
+                _id,
+                if (isNull _vehicle) then {"<null>"} else {netId _vehicle},
+                if (isNull _vehicle) then {-1} else {_vehicle distance2D _exfilPosASL},
+                _deadline
+            ];
+            [_id, _vehicle, "timeout"] call YSF_fwFinalizeRtb;
+        };
+    }, 2, [_id, _vehicle, _exfilPosASL, _deadline]] call CBA_fnc_addPerFrameHandler;
 };
 
 YSF_fwRtbAsset = {

@@ -83,6 +83,7 @@ feature documentation rather than growing a general-purpose schema.
 | Vigil artillery | grid request produces exact round count and circle/line geometry; invalid/range/ammo controls do not fire; VLS physically launches/guides/arrives | governor variables, private submit/parser names, Fired-event ordering, observer sample rate | KEEP AS-IS AND SPEC-TEST |
 | Vigil transport | selected crewed transport physically flies, lands and settles at LZ, waits, then physically returns and settles at recorded home; duplicate request is rejected | task IDs/state keys, waypoint/land command sequence, fixture coordinates, observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 | Vigil rotary CAS | selected armed helicopter reaches its requested area, attacks only a valid hostile ground target with correlated real fire and impact, respects its timer, disengages and returns home; no-target and invalid controls fail closed | task/ledger layout, fixture coordinates/classes, LOITER/MOVE details, sensor/reveal and observer cadence | REFINE BEFORE PERMANENT COVERAGE |
+| Vigil fixed-wing strike | registered state reconstructs once, enters the operating area, consumes real client laser/IR designations for two correlated guided impacts, rejects no-designation fire, then physically egresses and cleans up | registry schema, fixture coordinates/classes, waypoint geometry, observer cadence and private helper names | REFINE BEFORE PERMANENT COVERAGE |
 
 ### APS findings
 
@@ -165,6 +166,24 @@ MOVE task returned. Only that reset is an evidence-backed engine
 characterization. Full analysis is in
 [`vigil-cas-review.md`](vigil-cas-review.md).
 
+### Vigil fixed-wing findings
+
+The fixed-wing review proved that registration is serialization rather than a
+persistent parked-aircraft model: the original aircraft and crew are removed,
+then one server-local aircraft is reconstructed at ingress. Fuel and exact
+pylon ammunition were previously lost, a generic laser-bomb rewrite doubled
+native Bomb04 ammunition, and RTB was unbounded. Reconstruction now preserves
+those values, native Bomb04 is retained after physical guidance evidence, and
+RTB records bounded success/destruction/timeout.
+
+Real client input creates both supported designation paths: Arma's handheld
+LaserTarget and Vigil's daylight weapon-IR helper. Tribunal correlates their
+netIds and locality through real server-owned Bomb04 Fired trajectories and
+HitPart/damage, followed by a designation-free control and physical RTB. The
+remaining 3CB Hellfire mapping is NEEDS EXPERIMENTATION because no qualifying
+installed pylon class exists for an honest comparison. Full analysis is in
+[`vigil-fixed-wing-review.md`](vigil-fixed-wing-review.md).
+
 ## Generic Tribunal capability backlog
 
 Already generic: deterministic PBO packaging; assertion/result protocol;
@@ -227,12 +246,11 @@ compatibility work caused by changes to those private functions.
 
 | Priority | Family | Preliminary outcome | Review focus before coverage |
 | --- | --- | --- | --- |
-| 1 | Helicopter transport/reinsertion | NEEDS EXPERIMENTATION | destination contract, dispatch/landing/wait/RTB states, AI locality, terrain-safe LZ, native task alternatives |
+| 1 | Helicopter transport/reinsertion | REFINE BEFORE PERMANENT COVERAGE | completed review and physical outbound/wait/RTB proof |
 | 2 | Rotary-wing CAS | REFINE BEFORE PERMANENT COVERAGE | completed review: hostile/area filtering, correlated fire/impact, timer, invalid/no-target controls and combat RTB |
-| 3 | Fixed-wing strike support | REFINE BEFORE PERMANENT COVERAGE | synchronized asset serialization, ingress/loiter/egress, laser and weapon-IR designation, loadout replacement, actual weapon/ammo compatibility |
-| 4 | Fixed-wing logistics | NEEDS EXPERIMENTATION | manifest authority, cargo construction, parachute deployment, delivery accuracy, cleanup/egress |
+| 3 | Fixed-wing strike support | REFINE BEFORE PERMANENT COVERAGE | completed review: serialization, ingress/loiter/egress, both designation paths, native guided impact, controls and compatibility refinement |
+| 4 | Fixed-wing logistics | NEEDS EXPERIMENTATION | next: manifest authority, cargo construction, parachute deployment, delivery accuracy, cleanup/egress |
 
-Helicopter transport is next because it exercises reusable AI tasking,
-movement, landing, and lifecycle evidence without first requiring the deeper
-munition-compatibility review needed by fixed-wing support. This document does
-not authorize implementing those features; each begins with its own review.
+Fixed-wing logistics is next. It may reuse the now-proven registry,
+serialization, aviation and cleanup adapters, but requires its own delivery
+contract and must not inherit strike-specific assumptions.

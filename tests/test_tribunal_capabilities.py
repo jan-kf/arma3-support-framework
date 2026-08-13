@@ -9,6 +9,7 @@ from pathlib import Path
 from tribunal.discovery import discover
 from tribunal.mission.aviation import aviation_observer_sqf
 from tribunal.mission.combat import combat_observer_sqf
+from tribunal.mission.designation import designation_observer_sqf
 from tribunal.observability.visual import frame_metrics, visual_transition
 from tribunal.observability.ui import Region, changed_pixel_fraction, region_difference, selected_region_index
 from tribunal.network import NETWORK_PROFILES
@@ -31,12 +32,30 @@ class TribunalCapabilityTests(unittest.TestCase):
             'addEventHandler ["HitPart"',
             'addEventHandler ["Killed"',
             'assignedTarget _controller',
+            '["hitDetails", []]',
+            '["projectile", if (isNull _projectile)',
             '["sourceLocal", local _source]',
             '["projectileLocal", !isNull _projectile',
             "TRIBUNAL_fnc_combatObserverStop",
         ):
             self.assertIn(token, source)
         for product_token in ("YOSHI_", "YSF_", "cas_state", "transport_state"):
+            self.assertNotIn(product_token, source)
+
+    def test_designation_observer_is_identity_locality_and_lifetime_generic(self) -> None:
+        source = designation_observer_sqf()
+        for token in (
+            "TRIBUNAL_fnc_designationRecord",
+            "TRIBUNAL_fnc_observeDesignation",
+            "TRIBUNAL_fnc_designationEvidence",
+            '["designation", if (isNull _designation)',
+            '["designationLocal", !isNull _designation',
+            '["designationOwner", if (isNull _designation)',
+            '["positionASL", if (isNull _designation)',
+            '["stableIdentity", (count _identities) isEqualTo 1]',
+        ):
+            self.assertIn(token, source)
+        for product_token in ("YOSHI_", "YSF_", "Vigil", "irFakeLaserTarget"):
             self.assertNotIn(product_token, source)
 
     def test_aviation_observer_is_physical_and_product_neutral(self) -> None:
@@ -126,6 +145,33 @@ class TribunalCapabilityTests(unittest.TestCase):
         self.assertIn('"backend": "x11-xtest"', source)
         self.assertIn("XTestFakeKeyEvent", source)
         self.assertIn("timed out opening UI after", source)
+
+    def test_designation_driver_uses_real_bounded_input_and_state_markers(self) -> None:
+        source = (ROOT / "tools" / "tribunal_designation_probe.py").read_text(encoding="utf-8")
+        for token in (
+            'keyboard.chord(ord("b"))',
+            "keyboard.button(1)",
+            'keyboard.chord(ord("l"))',
+            "keyboard.relative_motion(0, 80)",
+            '"aim": "state-driven-downward"',
+            'while time.monotonic() < deadline and "TRIBUNAL_FIXED_WING|HANDHELD_ACTIVE" not in rpt_text()',
+            '"activation_attempts": handheld_attempts, "state_driven": True',
+            "TRIBUNAL_FIXED_WING|HANDHELD_ACTIVE",
+            "TRIBUNAL_FIXED_WING|HANDHELD_DONE",
+            "TRIBUNAL_FIXED_WING|IR_ACTIVE",
+            "TRIBUNAL_FIXED_WING|IR_DONE",
+            "TRIBUNAL_FIXED_WING|DESIGNATIONS_CLEAN",
+            '"status"] = "PASS"',
+        ):
+            self.assertIn(token, source)
+
+        input_source = (ROOT / "tools" / "tribunal_ui_probe.py").read_text(encoding="utf-8")
+        self.assertIn("XTestFakeRelativeMotionEvent", input_source)
+        button_body = input_source.split("def button", 1)[1].split("def relative_motion", 1)[0]
+        motion_body = input_source.split("def relative_motion", 1)[1].split("def close", 1)[0]
+        self.assertEqual(button_body.count("XTestFakeButtonEvent"), 2)
+        self.assertEqual(motion_body.count("XTestFakeRelativeMotionEvent"), 1)
+        self.assertNotIn("XTestFakeButtonEvent", motion_body)
 
     def test_tabbed_control_reopen_rejects_false_selected_region_on_game_surface(self) -> None:
         source = (ROOT / "tools" / "tribunal_ui_probe.py").read_text(encoding="utf-8")

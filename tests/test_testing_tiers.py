@@ -178,6 +178,64 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn("YSF_CAS_EngagementEvents", server)
         self.assertIn("call YOSHI_taskCAS_submit", client)
 
+    def test_vigil_fixed_wing_preserves_state_and_does_not_rewrite_native_laser_bombs(self) -> None:
+        root = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
+        source = (root / "functions" / "task_fixedWing" / "fn_initFixedWingFunctions.sqf").read_text(encoding="utf-8")
+        self.assertIn("_newVehicle setFuel", source)
+        self.assertIn("_vehicle setAmmoOnPylon", source)
+        self.assertIn("YSF_FW_RTB_TIMEOUT", source)
+        self.assertIn('[_id, _vehicle, "timeout"] call YSF_fwFinalizeRtb', source)
+        self.assertNotIn('_row set [1, "PylonRack_Bomb_GBU12_x2"]', source)
+        self.assertIn('_row set [1, "PylonRack_4Rnd_LG_scalpel"]', source)
+
+    def test_vigil_fixed_wing_scenario_is_causal_repeated_and_cleans_up(self) -> None:
+        plan = multiplayer.select_plan("gameplay", "vigil-fixed-wing")
+        with tempfile.TemporaryDirectory() as temporary:
+            mission = Path(temporary) / "Tier.Stratis"
+            multiplayer.write_tier_mission(mission, "fixed-wing-test-deadbeef", plan)
+            server = (mission / "initServer.sqf").read_text(encoding="ascii")
+            client = (mission / "initPlayerLocal.sqf").read_text(encoding="ascii")
+            mission_sqm = (mission / "mission.sqm").read_text(encoding="ascii")
+            description = (mission / "description.ext").read_text(encoding="ascii")
+        for assertion in (
+            "vigil.fixedWing.registration.snapshot",
+            "vigil.fixedWing.registration.originalRemoved",
+            "vigil.fixedWing.dispatch.reconstructed",
+            "vigil.fixedWing.dispatch.ingress",
+            "vigil.fixedWing.designation.normal",
+            "vigil.fixedWing.strike.normal.release",
+            "vigil.fixedWing.strike.normal.guidance",
+            "vigil.fixedWing.strike.normal.effect",
+            "vigil.fixedWing.designation.ir",
+            "vigil.fixedWing.strike.ir.release",
+            "vigil.fixedWing.strike.ir.guidance",
+            "vigil.fixedWing.strike.ir.effect",
+            "vigil.fixedWing.strike.repeated",
+            "vigil.fixedWing.control.noDesignation",
+            "vigil.fixedWing.egress.flight",
+            "vigil.fixedWing.egress.cleanup",
+        ):
+            self.assertIn(assertion, server)
+        self.assertIn("TRIBUNAL_fnc_designationRecord", server)
+        self.assertIn("TRIBUNAL_fnc_combatObserveSource", server)
+        self.assertIn("TRIBUNAL_fnc_observeFlight", server)
+        self.assertIn('"PylonMissile_1Rnd_Bomb_04_F"', server)
+        self.assertIn('"Bomb_04_F"', server)
+        self.assertIn("TRIBUNAL_FIXED_WING|HANDHELD_ARMED", client)
+        self.assertIn("TRIBUNAL_FIXED_WING|IR_ARMED", client)
+        self.assertIn('call YOSHI_taskFW_deploy', client)
+        self.assertIn('call YOSHI_taskFW_rtb', client)
+        self.assertIn("position[]={ 2000.0,5.0,5600.0 }", mission_sqm)
+        self.assertIn("respawnOnStart = 0", description)
+        self.assertTrue({
+            name for name in plan.server_expected if name.startswith("vigil.fixedWing.")
+        }.issuperset({
+            "vigil.fixedWing.registration.snapshot",
+            "vigil.fixedWing.strike.normal.effect",
+            "vigil.fixedWing.strike.ir.effect",
+            "vigil.fixedWing.egress.cleanup",
+        }))
+
     def test_terminal_lifecycle_outcomes_short_circuit_only_complete_non_live_runs(self) -> None:
         passed = {"status": "PASS", "assertions": 1, "failures": 0}
         failed = {"status": "FAIL", "assertions": 1, "failures": 1}

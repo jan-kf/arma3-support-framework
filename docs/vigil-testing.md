@@ -292,3 +292,27 @@ then completes a no-target request with no new fire, and a separate zero-ammo
 aircraft must fail closed. See
 [`../tribunal/docs/vigil-cas-review.md`](../tribunal/docs/vigil-cas-review.md)
 for the review, experimental comparisons and false-PASS analysis.
+
+## Fixed-wing strike support
+
+`vigil-fixed-wing` validates Vigil's serialized fixed-wing lifecycle rather
+than treating it as rotary CAS. A server-owned A-10 is registered and removed,
+then reconstructed at its configured ingress with class, textures, damage,
+fuel and exact native Bomb04 pylon counts preserved. Tribunal samples its
+physical ingress and records aircraft, pilot and group locality.
+
+The authenticated client creates a real handheld laser with B and mouse input,
+then Vigil requests a native `Bomb_04_Plane_CAS_01_F` release. The same deployed
+aircraft repeats the path using Vigil's weapon-mounted IR helper activated by a
+real L keypress. Each positive correlates designation, aircraft, weapon,
+magazine, ammo, projectile trajectory, intended target, HitPart and damage.
+The no-designation control requires no additional Fired event. Finally the
+aircraft physically travels toward egress and is removed by the bounded RTB
+lifecycle while its reusable registry entry remains.
+
+The review removed a generic laser-bomb replacement after Live comparison
+showed native Bomb04 already guides physically and the replacement doubled the
+round count. Fuel and per-pylon ammunition restoration and a bounded RTB result
+were added before permanent coverage. The remaining 3CB Hellfire mapping is
+explicitly experimental because the installed content cannot exercise it. See
+[`../tribunal/docs/vigil-fixed-wing-review.md`](../tribunal/docs/vigil-fixed-wing-review.md).
