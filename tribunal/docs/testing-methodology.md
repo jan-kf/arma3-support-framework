@@ -82,6 +82,7 @@ feature documentation rather than growing a general-purpose schema.
 | Vigil markers | valid request count/position changes visible preview; stale preview is replaced; clear/close removes it; server has no preview | generated marker names, backing-array layout, exact probe pixels | KEEP AS-IS AND SPEC-TEST |
 | Vigil artillery | grid request produces exact round count and circle/line geometry; invalid/range/ammo controls do not fire; VLS physically launches/guides/arrives | governor variables, private submit/parser names, Fired-event ordering, observer sample rate | KEEP AS-IS AND SPEC-TEST |
 | Vigil transport | selected crewed transport physically flies, lands and settles at LZ, waits, then physically returns and settles at recorded home; duplicate request is rejected | task IDs/state keys, waypoint/land command sequence, fixture coordinates, observer cadence | REFINE BEFORE PERMANENT COVERAGE |
+| Vigil rotary CAS | selected armed helicopter reaches its requested area, attacks only a valid hostile ground target with correlated real fire and impact, respects its timer, disengages and returns home; no-target and invalid controls fail closed | task/ledger layout, fixture coordinates/classes, LOITER/MOVE details, sensor/reveal and observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 
 ### APS findings
 
@@ -147,6 +148,23 @@ Hidden-pad creation plus `land "LAND"` remains a characterization candidate,
 not a frozen requirement: the successful baseline proves the mechanism works,
 but no controlled alternative has yet shown that it is required by Arma.
 
+### Vigil rotary-CAS findings
+
+The CAS review found globally eligible engagement, incorrect effective-side
+resolution, no operating-area filter, guided-only explicit selection, cannon
+range derived from an unrelated guidance property, fire commands without
+physical acknowledgement, and unreliable combat RTB. The refined behavior is
+active-CAS scoped, filters live hostile ground targets to the area, uses
+ammunition-backed weapon fire-mode envelopes, records only matching Fired
+events, and hands timer expiry to the proven transport RTB path.
+
+A controlled SAD experiment attacked an off-area hostile after the requested
+target; BLUE/AWARE plus explicit filtered `fireAtTarget` did not. A controlled
+RTB experiment showed reboot alone remained stuck while reboot plus a fresh
+MOVE task returned. Only that reset is an evidence-backed engine
+characterization. Full analysis is in
+[`vigil-cas-review.md`](vigil-cas-review.md).
+
 ## Generic Tribunal capability backlog
 
 Already generic: deterministic PBO packaging; assertion/result protocol;
@@ -210,7 +228,7 @@ compatibility work caused by changes to those private functions.
 | Priority | Family | Preliminary outcome | Review focus before coverage |
 | --- | --- | --- | --- |
 | 1 | Helicopter transport/reinsertion | NEEDS EXPERIMENTATION | destination contract, dispatch/landing/wait/RTB states, AI locality, terrain-safe LZ, native task alternatives |
-| 2 | Rotary-wing CAS | NEEDS EXPERIMENTATION | hostile selection, friendly exclusion, attack evidence, loiter duration, ammunition and RTB behavior |
+| 2 | Rotary-wing CAS | REFINE BEFORE PERMANENT COVERAGE | completed review: hostile/area filtering, correlated fire/impact, timer, invalid/no-target controls and combat RTB |
 | 3 | Fixed-wing strike support | REFINE BEFORE PERMANENT COVERAGE | synchronized asset serialization, ingress/loiter/egress, laser and weapon-IR designation, loadout replacement, actual weapon/ammo compatibility |
 | 4 | Fixed-wing logistics | NEEDS EXPERIMENTATION | manifest authority, cargo construction, parachute deployment, delivery accuracy, cleanup/egress |
 

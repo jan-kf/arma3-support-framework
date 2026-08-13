@@ -106,6 +106,78 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn('"duplicate_rejected"', task)
         self.assertIn('["waiting", "home"] select', task)
 
+    def test_vigil_cas_is_scoped_fail_closed_and_uses_real_rtb(self) -> None:
+        root = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
+        request = (root / "functions" / "task_cas" / "fn_cas.sqf").read_text(encoding="utf-8")
+        task = (root / "functions" / "task_cas" / "fn_cas_task.sqf").read_text(encoding="utf-8")
+        engage = (root / "functions" / "task_cas" / "fn_airAutoEngage.sqf").read_text(encoding="utf-8")
+        self.assertIn("YSF_taskCASAssignRemote", request)
+        self.assertIn('"duplicate_rejected"', request)
+        self.assertIn("YSF_CAS_TASK_TIMEOUT", task)
+        self.assertIn("YSF_CAS_hasLethalAmmo", task)
+        self.assertIn('getPosATL _v', task)
+        self.assertNotIn('getPosASL _v', task)
+        self.assertIn('YSF_transport_homeATL", _home', task)
+        self.assertIn('[_v] call YOSHI_rebootAI;', task)
+        self.assertIn('[_destPos, 20, true, false, false, "rtb", "YSF_cas_state"]', task)
+        self.assertIn('[_v, _dest, "MOVE", 2]', task)
+        self.assertIn('[_v, _dest, "LOITER", 2]', task)
+        self.assertLess(task.index('[_v, _dest, "MOVE", 2]'), task.index('[_v, _dest, "LOITER", 2]'))
+        self.assertNotIn('[_v, _dest, "SAD"', task)
+        self.assertIn('_group setCombatMode "BLUE"', task)
+        self.assertIn('_group setBehaviourStrong "AWARE"', task)
+        self.assertIn('YSF_cas_state", "on_station"', task)
+        self.assertIn('YSF_cas_state", "returning"', task)
+        self.assertIn('YSF_cas_active", false', task)
+        self.assertIn('YSF_cas_active", false]) exitWith {false}', engage)
+        self.assertIn("YSF_AAE_effectiveSide", engage)
+        self.assertIn("YSF_cas_areaATL", engage)
+        self.assertIn('!(_obj isKindOf "Air")', engage)
+        self.assertIn("YSF_CAS_EngagementEvents", engage)
+        self.assertIn("YSF_AAE_getDirectGunOptions", engage)
+        self.assertIn("YSF_AAE_weaponModeMaxRange", engage)
+        self.assertIn('getNumber (_modeCfg >> "maxRange")', engage)
+        self.assertIn('_maxRange max ([_weapon] call YSF_AAE_weaponModeMaxRange)', engage)
+        self.assertIn('if ("shotbullet" in _simulation)', engage)
+        self.assertIn('missionNamespace getVariable ["YSF_AAE_FIRE_COOLDOWN", 8]', engage)
+        self.assertIn('"shotbullet" in _simulation', engage)
+        self.assertIn('_guns + _missiles', engage)
+        self.assertIn('YSF_AAE_pendingWeapon', engage)
+        self.assertIn('_unit removeEventHandler ["Fired", _thisEventHandler]', engage)
+
+    def test_vigil_cas_scenario_requires_correlated_combat_and_controls(self) -> None:
+        plan = multiplayer.select_plan("gameplay", "vigil-cas")
+        with tempfile.TemporaryDirectory() as temporary:
+            mission = Path(temporary) / "Tier.Stratis"
+            multiplayer.write_tier_mission(mission, "cas-test-deadbeef", plan)
+            server = (mission / "initServer.sqf").read_text(encoding="ascii")
+            client = (mission / "initPlayerLocal.sqf").read_text(encoding="ascii")
+        for assertion in (
+            "vigil.cas.dispatch.accepted",
+            "vigil.cas.dispatch.duplicateRejected",
+            "vigil.cas.transit",
+            "vigil.cas.onStation",
+            "vigil.cas.target.controls",
+            "vigil.cas.attack.fired",
+            "vigil.cas.attack.correlated",
+            "vigil.cas.attack.effect",
+            "vigil.cas.timer",
+            "vigil.cas.disengaged",
+            "vigil.cas.rtb",
+            "vigil.cas.home",
+            "vigil.cas.noTarget",
+            "vigil.cas.noAmmo",
+            "vigil.cas.cleanup",
+        ):
+            self.assertIn(assertion, server)
+        self.assertIn("TRIBUNAL_fnc_observeFlight", server)
+        self.assertIn("TRIBUNAL_fnc_combatObserveSource", server)
+        self.assertIn("TRIBUNAL_fnc_combatObserveTarget", server)
+        self.assertIn('"O_MBT_02_cannon_F" createVehicle _area', server)
+        self.assertIn('"ACE_gatling_20mm_Comanche"', server)
+        self.assertIn("YSF_CAS_EngagementEvents", server)
+        self.assertIn("call YOSHI_taskCAS_submit", client)
+
     def test_terminal_lifecycle_outcomes_short_circuit_only_complete_non_live_runs(self) -> None:
         passed = {"status": "PASS", "assertions": 1, "failures": 0}
         failed = {"status": "FAIL", "assertions": 1, "failures": 1}

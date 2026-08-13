@@ -8,6 +8,7 @@ from pathlib import Path
 
 from tribunal.discovery import discover
 from tribunal.mission.aviation import aviation_observer_sqf
+from tribunal.mission.combat import combat_observer_sqf
 from tribunal.observability.visual import frame_metrics, visual_transition
 from tribunal.observability.ui import Region, changed_pixel_fraction, region_difference, selected_region_index
 from tribunal.network import NETWORK_PROFILES
@@ -19,6 +20,25 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class TribunalCapabilityTests(unittest.TestCase):
+    def test_combat_observer_correlates_fire_damage_and_locality(self) -> None:
+        source = combat_observer_sqf()
+        for token in (
+            "TRIBUNAL_fnc_combatObserverStart",
+            "TRIBUNAL_fnc_combatObserveSource",
+            "TRIBUNAL_fnc_combatObserveTarget",
+            'addEventHandler ["Fired"',
+            'addEventHandler ["HandleDamage"',
+            'addEventHandler ["HitPart"',
+            'addEventHandler ["Killed"',
+            'assignedTarget _controller',
+            '["sourceLocal", local _source]',
+            '["projectileLocal", !isNull _projectile',
+            "TRIBUNAL_fnc_combatObserverStop",
+        ):
+            self.assertIn(token, source)
+        for product_token in ("YOSHI_", "YSF_", "cas_state", "transport_state"):
+            self.assertNotIn(product_token, source)
+
     def test_aviation_observer_is_physical_and_product_neutral(self) -> None:
         source = aviation_observer_sqf()
         for token in (

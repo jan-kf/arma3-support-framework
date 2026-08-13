@@ -9,6 +9,10 @@ YSF_AAE_TARGET_REENGAGE_MAX = 120;
 YSF_AAE_SPAWN_WARMUP = 10;
 YSF_AAE_DEBUG = true;
 
+if (isNil {missionNamespace getVariable "YSF_CAS_EngagementEvents"}) then {
+  missionNamespace setVariable ["YSF_CAS_EngagementEvents", []];
+};
+
 YSF_AAE_dbg = {
   params ["_msg"];
   if !(missionNamespace getVariable ["YSF_AAE_DEBUG", false]) exitWith {};
@@ -32,6 +36,16 @@ YSF_AAE_getFireController = {
   if (isNull _u) then {_u = effectiveCommander _veh;};
   if (isNull _u) then {_u = driver _veh;};
   _u
+};
+
+YSF_AAE_effectiveSide = {
+  params ["_object"];
+  if (isNull _object) exitWith {sideUnknown};
+  if (_object isKindOf "Man") exitWith {side (group _object)};
+  private _commander = effectiveCommander _object;
+  if (!isNull _commander) exitWith {side (group _commander)};
+  private _configured = getNumber (configFile >> "CfgVehicles" >> typeOf _object >> "side");
+  [_configured] call BIS_fnc_sideType
 };
 
 YSF_AAE_isAIPilotedVehicle = {
@@ -78,7 +92,7 @@ YSF_AAE_spawnTempLaser = {
   private _existing = _target getVariable ["YSF_AAE_attachedLaser", objNull];
   if (!isNull _existing && {alive _existing}) exitWith {_existing};
 
-  private _laserCls = [side _veh] call YSF_AAE_laserClassBySide;
+  private _laserCls = [[_veh] call YSF_AAE_effectiveSide] call YSF_AAE_laserClassBySide;
   if !(isClass (configFile >> "CfgVehicles" >> _laserCls)) then {
     _laserCls = "LaserTargetC";
   };
@@ -199,6 +213,20 @@ YSF_AAE_getGuidedOptions = {
   [_bombs, _missiles]
 };
 
+YSF_AAE_getDirectGunOptions = {
+  params ["_veh"];
+  private _options = [];
+  {
+    private _weapon = _x;
+    private _ammoType = [_weapon] call YSF_AAE_weaponAmmoType;
+    private _simulation = toLower getText (configFile >> "CfgAmmo" >> _ammoType >> "simulation");
+    if ("shotbullet" in _simulation && {[_veh, _weapon] call YSF_AAE_weaponAmmoCount > 0}) then {
+      _options pushBackUnique _weapon;
+    };
+  } forEach (weapons _veh);
+  _options
+};
+
 YSF_AAE_normalizeWeaponClass = {
   params ["_value"];
   if (_value isEqualType "") exitWith {_value};
@@ -233,6 +261,21 @@ YSF_AAE_weaponAmmoCount = {
   _count
 };
 
+YSF_AAE_weaponModeMaxRange = {
+  params ["_weapon"];
+  if (_weapon isEqualTo "") exitWith {0};
+
+  private _weaponCfg = configFile >> "CfgWeapons" >> _weapon;
+  private _maxRange = 0;
+  {
+    private _modeCfg = _weaponCfg >> _x;
+    if (isClass _modeCfg) then {
+      _maxRange = _maxRange max getNumber (_modeCfg >> "maxRange");
+    };
+  } forEach getArray (_weaponCfg >> "modes");
+  _maxRange
+};
+
 YSF_AAE_weaponProfile = {
   params ["_veh", "_weapon"];
   private _ammoType = [_weapon] call YSF_AAE_weaponAmmoType;
@@ -247,8 +290,11 @@ YSF_AAE_weaponProfile = {
     _minAlt = 120;
     _maxRange = (_altAGL max 100) * 5;
   } else {
-    // Prefer explicit config range if provided.
+    // maxControlRange describes guidance/control, not the useful firing range
+    // of direct-fire guns.  Include the weapon's configured AI fire-mode
+    // envelope so cannon fire is not incorrectly rejected at normal ranges.
     _maxRange = getNumber (configFile >> "CfgAmmo" >> _ammoType >> "maxControlRange");
+    _maxRange = _maxRange max ([_weapon] call YSF_AAE_weaponModeMaxRange);
     if (_maxRange <= 0) then {_maxRange = 4000;};
   };
 
@@ -260,7 +306,9 @@ YSF_AAE_collectSensorEnemies = {
   private _raw = getSensorTargets _veh;
   if !(_raw isEqualType []) exitWith {[]};
 
-  private _vehSide = side _veh;
+  private _vehSide = [_veh] call YSF_AAE_effectiveSide;
+  private _area = _veh getVariable ["YSF_cas_areaATL", []];
+  private _areaRadius = _veh getVariable ["YSF_cas_targetRadius", 0];
   private _targets = [];
   {
     if (_x isEqualType [] && {(count _x) > 2}) then {
@@ -279,7 +327,7 @@ YSF_AAE_collectSensorEnemies = {
           // Treat unknown contacts as enemy if side relationship is hostile.
           if (_relStr in ["unknown", ""]) then {
             if (!isNull _obj) then {
-              private _objSide = side _obj;
+              private _objSide = [_obj] call YSF_AAE_effectiveSide;
               if !(_objSide isEqualTo sideUnknown) then {
                 _enemy = (_vehSide getFriend _objSide) < 0.6;
               };
@@ -295,7 +343,9 @@ YSF_AAE_collectSensorEnemies = {
           };
         };
       };
-      if (!isNull _obj && {alive _obj} && {_enemy}) then {
+      private _groundTarget = !isNull _obj && {!(_obj isKindOf "Air")};
+      private _insideArea = (_area isEqualTo []) || {_areaRadius > 0 && {_obj distance2D _area <= _areaRadius}};
+      if (!isNull _obj && {alive _obj} && {_enemy} && {_groundTarget} && {_insideArea}) then {
         _targets pushBackUnique _obj;
       };
     };
@@ -403,6 +453,7 @@ YSF_AAE_tryEngageLocal = {
   params ["_veh"];
   if !([_veh] call YSF_AAE_isEligibleAirVehicle) exitWith {false};
   if !(missionNamespace getVariable ["YSF_AAE_ENABLED", true]) exitWith {false};
+  if !(_veh getVariable ["YSF_cas_active", false]) exitWith {false};
 
   private _warmupUntil = _veh getVariable ["YSF_AAE_warmupUntil", -1];
   if (_warmupUntil > serverTime) exitWith {false};
@@ -416,12 +467,13 @@ YSF_AAE_tryEngageLocal = {
   private _opts = [_veh] call YSF_AAE_getGuidedOptions;
   private _bombs = _opts # 0;
   private _missiles = _opts # 1;
-  if ((_bombs isEqualTo []) && (_missiles isEqualTo [])) exitWith {false};
+  private _guns = [_veh] call YSF_AAE_getDirectGunOptions;
+  if ((_bombs isEqualTo []) && (_missiles isEqualTo []) && (_guns isEqualTo [])) exitWith {false};
 
   private _targets = [_veh] call YSF_AAE_collectSensorEnemies;
   if (_targets isEqualTo []) exitWith {false};
 
-  private _pick = [_veh, _targets, _bombs, _missiles] call YSF_AAE_pickEngagement;
+  private _pick = [_veh, _targets, _bombs, _guns + _missiles] call YSF_AAE_pickEngagement;
   private _targetObj = _pick # 0;
   private _weapon = _pick # 1;
   if (isNull _targetObj || {_weapon isEqualTo ""}) exitWith {false};
@@ -447,19 +499,53 @@ YSF_AAE_tryEngageLocal = {
   if (canSuspend) then {uiSleep 0.2;};
 
   _veh setVariable ["YSF_AAE_lastProjectile", objNull, false];
+  _veh setVariable ["YSF_AAE_pendingTarget", _targetObj, false];
+  _veh setVariable ["YSF_AAE_pendingWeapon", _weapon, false];
   private _eh = _veh addEventHandler ["Fired", {
     params ["_unit", "_weapon", "_muzzle", "_mode", "_ammo", "_magazine", "_projectile"];
+    private _pendingWeapon = _unit getVariable ["YSF_AAE_pendingWeapon", ""];
+    if (_pendingWeapon isEqualTo "" || {_weapon isNotEqualTo _pendingWeapon}) exitWith {};
+    private _target = _unit getVariable ["YSF_AAE_pendingTarget", objNull];
     _unit setVariable ["YSF_AAE_lastProjectile", _projectile, false];
+    private _events = missionNamespace getVariable ["YSF_CAS_EngagementEvents", []];
+    _events pushBack [
+      serverTime, netId _unit, if (isNull _target) then {""} else {netId _target}, _weapon,
+      if (isNull _projectile) then {""} else {netId _projectile},
+      local _unit, !isNull _projectile && {local _projectile},
+      if (isNull _target) then {[]} else {getPosATL _target}, _unit getVariable ["YSF_cas_areaATL", []]
+    ];
+    missionNamespace setVariable ["YSF_CAS_EngagementEvents", _events, true];
+    if (!isNull _target) then {
+      private _simulation = toLower getText (configFile >> "CfgAmmo" >> _ammo >> "simulation");
+      private _cooldown = if ("shotbullet" in _simulation) then {
+        missionNamespace getVariable ["YSF_AAE_FIRE_COOLDOWN", 8]
+      } else {
+        missionNamespace getVariable ["YSF_AAE_TARGET_REENGAGE_MAX", 60]
+      };
+      [_unit, _target, _projectile, _cooldown max 1] call YSF_AAE_beginTargetCooldown;
+    };
+    _unit setVariable ["YSF_AAE_pendingTarget", objNull, false];
+    _unit setVariable ["YSF_AAE_pendingWeapon", "", false];
+    _unit removeEventHandler ["Fired", _thisEventHandler];
   }];
 
   private _ok = _fireUnit fireAtTarget [_fireTarget, _weapon];
-  _veh removeEventHandler ["Fired", _eh];
   if (_ok) then {
-    private _proj = _veh getVariable ["YSF_AAE_lastProjectile", objNull];
-    [_veh, _targetObj, _proj, (missionNamespace getVariable ["YSF_AAE_TARGET_REENGAGE_MAX", 60])] call YSF_AAE_beginTargetCooldown;
     _veh setVariable ["YSF_AAE_nextShotAt", serverTime + YSF_AAE_FIRE_COOLDOWN, false];
+    [_veh, _eh] spawn {
+      params ["_vehicle", "_handler"];
+      uiSleep 5;
+      if (!isNull _vehicle && {(_vehicle getVariable ["YSF_AAE_pendingWeapon", ""]) isNotEqualTo ""}) then {
+        _vehicle removeEventHandler ["Fired", _handler];
+        _vehicle setVariable ["YSF_AAE_pendingTarget", objNull, false];
+        _vehicle setVariable ["YSF_AAE_pendingWeapon", "", false];
+      };
+    };
     [format ["[YSF_AAE] fired veh=%1 weapon=%2 target=%3", _veh, _weapon, _targetObj]] call YSF_AAE_dbg;
   } else {
+    _veh removeEventHandler ["Fired", _eh];
+    _veh setVariable ["YSF_AAE_pendingTarget", objNull, false];
+    _veh setVariable ["YSF_AAE_pendingWeapon", "", false];
     _veh setVariable ["YSF_AAE_nextShotAt", serverTime + 2, false];
     [format ["[YSF_AAE] fire rejected veh=%1 weapon=%2 target=%3", _veh, _weapon, _targetObj]] call YSF_AAE_dbg;
   };

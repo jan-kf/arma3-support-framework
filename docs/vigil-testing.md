@@ -272,3 +272,23 @@ client-local controls rendered correctly.
 Each behavioral scenario should keep real input/rendered evidence distinct
 from server-authoritative task effects and must pass from a fresh autonomous
 run after any Live Mode iteration.
+
+## Rotary-wing CAS
+
+`vigil-cas` combines the real client `YOSHI_taskCAS_submit` path with generic
+Tribunal aviation and combat observation. Its server-owned fixture uses a
+crewed `B_Heli_Attack_01_F`, a fully simulated hostile tank in the requested
+area, and widely spaced friendly, civilian and off-area-hostile controls. The
+target's minimum EAST crew supplies native target identity but has all AI
+disabled and fuel removed, preventing anti-air return fire from turning a CAS
+behavior test into a survivability test.
+
+The attack proof requires exact aircraft/hostile correlation in Vigil's Fired
+ledger, real configured cannon/ammunition, ammunition consumption, and HitPart
+on the hostile. Controls require no intentional-target ledger, no HitPart and
+zero damage. Physical trajectory proves dispatch and return; the authoritative
+active window proves timer behavior and no post-expiry fire. The same aircraft
+then completes a no-target request with no new fire, and a separate zero-ammo
+aircraft must fail closed. See
+[`../tribunal/docs/vigil-cas-review.md`](../tribunal/docs/vigil-cas-review.md)
+for the review, experimental comparisons and false-PASS analysis.

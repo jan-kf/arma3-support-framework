@@ -20,7 +20,7 @@ YSF_handlers_transport = {
     ["init", {
       params ["_v","_t","_d"];
 	    format ["[YSF_TransportTask] Initializing transport task for vehicle %1", _v] call YSF_fnc_debugMsg;
-      _d params ["_destATL", ["_maxAlt", 20], ["_enableStabilization", true], ["_ignoreEn", false], ["_playRadio", true], ["_mode", "dispatch"]];
+      _d params ["_destATL", ["_maxAlt", 20], ["_enableStabilization", true], ["_ignoreEn", false], ["_playRadio", true], ["_mode", "dispatch"], ["_completionVariable", ""]];
 
       if !(alive _v && {!isNull driver _v} && {alive driver _v}) exitWith {
         _v setVariable ["YSF_transport_state", "failed", true];
@@ -135,7 +135,7 @@ YSF_handlers_transport = {
     ["finally", {
       params ["_v","_t","_d"];
 
-      _d params ["_destATL", ["_maxAlt", 20], ["_enableStabilization", true], ["_ignoreEn", true], ["_playRadio", true], ["_mode", "dispatch"]];
+      _d params ["_destATL", ["_maxAlt", 20], ["_enableStabilization", true], ["_ignoreEn", true], ["_playRadio", true], ["_mode", "dispatch"], ["_completionVariable", ""]];
 
       if (_enableStabilization) then {
         private _ix = YSF_STABILIZE_HELICOPTERS findIf { _v isEqualTo _x };
@@ -157,6 +157,9 @@ YSF_handlers_transport = {
         ["waiting", "home"] select (_mode isEqualTo "rtb")
       };
       _v setVariable ["YSF_transport_state", _finalState, true];
+      if (_completionVariable isNotEqualTo "") then {
+        _v setVariable [_completionVariable, _finalState, true];
+      };
 
       private _pad = _t getOrDefault ["lzPad", objNull];
       if (!isNull _pad) then { 

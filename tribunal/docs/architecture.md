@@ -89,6 +89,20 @@ The first consumer is Vigil helicopter transport. Its feature review and
 calibrated contract are documented in
 [`vigil-transport-review.md`](vigil-transport-review.md).
 
+### Combat observation
+
+`tribunal.mission.combat.combat_observer_sqf()` supplies product-neutral,
+token-scoped Fired records for source, controller, weapon, ammunition,
+projectile, assigned target and locality; bounded projectile trajectory
+samples; target HitPart, HandleDamage and Killed evidence; and deterministic
+event-handler cleanup. Product scenarios decide what constitutes a valid
+target, appropriate weapon, attributable effect, or prohibited friendly fire.
+The observer never contains Vigil target or task semantics.
+
+The first combined aviation/combat consumer is Vigil rotary-wing CAS. Its
+review, refinements, controls and evidence boundary are documented in
+[`vigil-cas-review.md`](vigil-cas-review.md).
+
 ## Rendered-state observability
 
 The `visual-framebuffer` capability scenario renders and removes a known
