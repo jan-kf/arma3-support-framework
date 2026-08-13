@@ -174,6 +174,7 @@ class Tablet_Page_Assets: YSF_RscControlsGroup {
         // class LblDcl: YSF_RscText { idc=-1; x=0; y=P_TXT_H*4; text="Don't climb before landing:"; };
         // class ChkDcl: YSF_Checkbox { idc=IDC_TASK_TXP_DCL_CHK; x=P_TXT_W*1.75; y=P_TXT_H*4; w=BTN_H; h=BTN_H; onCheckedChanged = "['do_not_climb', _this#0] call YOSHI_setTRN_DoNotClimb;"; };
         class BtnSubmit: YSF_BtnSubmit { action = "call YOSHI_taskTRN_submit;";};
+        class BtnRTB: YSF_RscButton { idc=IDC_TASK_TXP_RTB_BTN; text="RTB"; x=SIZE_HALF-(BTN_W*2+PADDING); y=SIZE_HALF-BTN_H; action="call YOSHI_taskTRN_rtb;"; };
       };
     };
 

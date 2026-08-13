@@ -76,6 +76,19 @@ Generic gameplay fixtures follow one lifecycle:
 Tribunal owns generic Arma mechanics. A project scenario owns the feature-
 specific interpretation of those mechanics.
 
+### Aviation observation
+
+`tribunal.mission.aviation.aviation_observer_sqf()` provides product-neutral
+aircraft snapshots, bounded trajectory collection, and derived movement,
+approach, altitude, ground-contact, settling, crew, and locality evidence. The
+caller supplies its own terminal predicate; Tribunal contains no Vigil task
+states or feature names. Feature scenarios decide whether those physical facts
+mean dispatch, arrival, waiting, or RTB success.
+
+The first consumer is Vigil helicopter transport. Its feature review and
+calibrated contract are documented in
+[`vigil-transport-review.md`](vigil-transport-review.md).
+
 ## Rendered-state observability
 
 The `visual-framebuffer` capability scenario renders and removes a known

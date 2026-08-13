@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from tribunal.discovery import discover
+from tribunal.mission.aviation import aviation_observer_sqf
 from tribunal.observability.visual import frame_metrics, visual_transition
 from tribunal.observability.ui import Region, changed_pixel_fraction, region_difference, selected_region_index
 from tribunal.network import NETWORK_PROFILES
@@ -18,6 +19,20 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class TribunalCapabilityTests(unittest.TestCase):
+    def test_aviation_observer_is_physical_and_product_neutral(self) -> None:
+        source = aviation_observer_sqf()
+        for token in (
+            "TRIBUNAL_fnc_aviationSample",
+            "TRIBUNAL_fnc_observeFlight",
+            "TRIBUNAL_fnc_flightEvidence",
+            "isTouchingGround",
+            "velocity _aircraft",
+            '"landed"',
+        ):
+            self.assertIn(token, source)
+        for product_token in ("YOSHI_", "YSF_", "Vigil", "transport_state"):
+            self.assertNotIn(product_token, source)
+
     def test_clients_are_keyed_without_fixed_count_or_shared_state(self) -> None:
         clients = (
             ClientIdentity("client-a", "Alpha", Path("/state/a"), 20, 5904),

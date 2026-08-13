@@ -72,6 +72,40 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertNotIn('"B_static_AT_F" createVehicle', server)
         self.assertIn("aps.replication", client)
 
+    def test_vigil_transport_requires_physical_round_trip_and_rejects_duplicate(self) -> None:
+        plan = multiplayer.select_plan("gameplay", "vigil-transport")
+        with tempfile.TemporaryDirectory() as temporary:
+            mission = Path(temporary) / "Tier.Stratis"
+            multiplayer.write_tier_mission(mission, "transport-test-deadbeef", plan)
+            server = (mission / "initServer.sqf").read_text(encoding="ascii")
+            client = (mission / "initPlayerLocal.sqf").read_text(encoding="ascii")
+        self.assertIn("TRIBUNAL_fnc_aviationSample", server)
+        self.assertIn("TRIBUNAL_fnc_observeFlight", server)
+        self.assertIn('"duplicate_rejected"', server)
+        self.assertIn("vigil.transport.dispatch.flight", server)
+        self.assertIn("vigil.transport.arrival", server)
+        self.assertIn("vigil.transport.rtb.flight", server)
+        self.assertIn("vigil.transport.home", server)
+        self.assertIn("isTouchingGround _aircraft", server)
+        self.assertIn("call YOSHI_taskTRN_submit", client)
+        self.assertIn("call YOSHI_taskTRN_rtb", client)
+        self.assertIn("!isNull effectiveCommander _aircraft", client)
+
+    def test_vigil_transport_product_refinements_are_fail_closed(self) -> None:
+        root = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
+        core = (root / "functions" / "global" / "fn_core.sqf").read_text(encoding="utf-8")
+        request = (root / "functions" / "task_transport" / "fn_transport.sqf").read_text(encoding="utf-8")
+        task = (root / "functions" / "task_transport" / "fn_transport_task.sqf").read_text(encoding="utf-8")
+        self.assertIn("side (group _commander)", core)
+        self.assertIn("YOSHI_taskTRN_rtb", request)
+        self.assertIn("_ignoreEn, true, \"dispatch\"", request)
+        self.assertIn("YSF_TRX_TASK_TIMEOUT", task)
+        self.assertIn("YSF_TRX_SETTLE_SECONDS", task)
+        self.assertIn("setPosATL _newPadLoc", task)
+        self.assertNotIn("setPosASL _newPadLoc", task)
+        self.assertIn('"duplicate_rejected"', task)
+        self.assertIn('["waiting", "home"] select', task)
+
     def test_terminal_lifecycle_outcomes_short_circuit_only_complete_non_live_runs(self) -> None:
         passed = {"status": "PASS", "assertions": 1, "failures": 0}
         failed = {"status": "FAIL", "assertions": 1, "failures": 1}

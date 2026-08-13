@@ -77,9 +77,21 @@ YOSHI_taskTRN_submit = {
   private _do_not_climb = _s get "do_not_climb";
   private _ignoreEn = _s get "ignore_en";
 
-  private _task = ["transport", _vehicle, _handlers, [_destPos, _maxAlt, _do_not_climb], 10, 3] call YSF_taskNew; 
-  [_vehicle, _task] call YSF_taskAssignRemote; 
+  private _task = ["transport", _vehicle, _handlers, [_destPos, _maxAlt, _do_not_climb, _ignoreEn, true, "dispatch"], 10, 3] call YSF_taskNew;
+  [_vehicle, _task] call YSF_taskTransportAssignRemote;
 
+};
+
+YOSHI_taskTRN_rtb = {
+  private _vehicle = uiNamespace getVariable ["YSF_current_selected_asset", objNull];
+  if (isNull _vehicle) exitWith {"No vehicle selected for transport RTB" call YSF_fnc_debugMsg;};
+  private _home = _vehicle getVariable ["YSF_transport_homeATL", []];
+  if !(_home isEqualType [] && {count _home >= 2}) exitWith {"Transport has no recorded home" call YSF_fnc_debugMsg;};
+  call YSF_submitButtonDebounce;
+  private _s = call YOSHI_taskTransport_GetState;
+  private _handlers = call YSF_handlers_transport;
+  private _task = ["transport", _vehicle, _handlers, [_home, _s get "alt", _s get "do_not_climb", _s get "ignore_en", true, "rtb"], 10, 3] call YSF_taskNew;
+  [_vehicle, _task] call YSF_taskTransportAssignRemote;
 };
 
 YOSHI_findBestLZ = {

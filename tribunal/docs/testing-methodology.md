@@ -81,6 +81,7 @@ feature documentation rather than growing a general-purpose schema.
 | Vigil UI | intended client opens, visibly navigates, closes, cleans up, and reopens in default state; server has no display | IDCs, `uiNamespace` keys, input coordinates, screenshot thresholds | KEEP + CHARACTERIZE ENGINE REQUIREMENT |
 | Vigil markers | valid request count/position changes visible preview; stale preview is replaced; clear/close removes it; server has no preview | generated marker names, backing-array layout, exact probe pixels | KEEP AS-IS AND SPEC-TEST |
 | Vigil artillery | grid request produces exact round count and circle/line geometry; invalid/range/ammo controls do not fire; VLS physically launches/guides/arrives | governor variables, private submit/parser names, Fired-event ordering, observer sample rate | KEEP AS-IS AND SPEC-TEST |
+| Vigil transport | selected crewed transport physically flies, lands and settles at LZ, waits, then physically returns and settles at recorded home; duplicate request is rejected | task IDs/state keys, waypoint/land command sequence, fixture coordinates, observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 
 ### APS findings
 
@@ -130,6 +131,21 @@ controlled A/B proves that direct fire necessarily launches vertically without
 guidance on the current engine build. The permanent test therefore requires
 physical guidance/arrival but does not freeze the handshake. A future isolated
 A/B may promote it to characterization with artifacts.
+
+### Vigil transport findings
+
+The transport review found no distinct reinsertion implementation: the term
+describes the same helicopter transport task. The existing path lacked a user
+RTB request/state, accepted duplicate replacement, lost one request parameter,
+classified crewed BLUFOR aircraft using their civilian vehicle side, created
+fallback pads in the wrong coordinate space, accepted one-tick ground contact,
+and could wait forever. Those were refined before permanent coverage. The
+specification now combines the real client request with independent server
+trajectory, landing, stable-wait, return, locality, and cleanup evidence.
+
+Hidden-pad creation plus `land "LAND"` remains a characterization candidate,
+not a frozen requirement: the successful baseline proves the mechanism works,
+but no controlled alternative has yet shown that it is required by Arma.
 
 ## Generic Tribunal capability backlog
 

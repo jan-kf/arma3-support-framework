@@ -43,7 +43,12 @@ Amen.
 // returns true if config side matches player's side
 YOSHI_cfgSideIsPlayer = {
   params ["_veh"];
-  (((side _veh) call BIS_fnc_sideID) isEqualTo ((side player) call BIS_fnc_sideID))
+  private _vehicleSide = side _veh;
+  if !(_veh isKindOf "Man") then {
+    private _commander = effectiveCommander _veh;
+    if (!isNull _commander) then { _vehicleSide = side (group _commander); };
+  };
+  ((_vehicleSide call BIS_fnc_sideID) isEqualTo ((side player) call BIS_fnc_sideID))
 };
 
 YOSHI_getControl = {

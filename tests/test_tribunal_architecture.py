@@ -77,6 +77,17 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertIn('["done", "ready_for_next"]', artillery.server_sqf)
         self.assertNotIn("laserTarget", artillery.client_sqf)
 
+        transport = scenarios["vigil-transport"]
+        self.assertEqual(transport.metadata["ui_path"], "YOSHI_taskTRN_submit/YOSHI_taskTRN_rtb")
+        self.assertIn("vigil.transport.dispatch.flight", transport.server_expected)
+        self.assertIn("vigil.transport.home", transport.server_expected)
+        self.assertIn("vigil.transport.client.eligible", transport.client_expected)
+        self.assertIn("TRIBUNAL_fnc_observeFlight", transport.server_sqf)
+        self.assertIn("call YOSHI_taskTRN_submit", transport.client_sqf)
+        self.assertIn("call YOSHI_taskTRN_rtb", transport.client_sqf)
+        self.assertEqual(multiplayer.FEATURE_SCENARIOS["vigil-transport"], transport)
+        self.assertIn("vigil-transport", gameplay.selected)
+
     def test_generic_tribunal_sources_do_not_encode_pontifex_features(self) -> None:
         prohibited = ("aps", "iron dome", "vigil", "field utilities", "pontifex")
         for path in (ROOT / "tribunal").rglob("*.py"):
