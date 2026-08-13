@@ -175,6 +175,100 @@ After this MVP, add coverage in this order:
 6. network-profile behavior for task and marker replication;
 7. audible sound capture after Tribunal gains its opt-in audio backend.
 
+## Artillery execution architecture and coverage strategy
+
+Vigil's artillery path is smaller than the tablet's fixed-wing designation
+path. The code-authoritative artillery target is an eight-digit, 10-metre
+grid (either `12345678` or two four-digit components separated by whitespace,
+`-`, `,`, `:`, or `;`). `YOSHI_parseGrid` rejects every other shape and
+`YOSHI_assetCoordChanged` converts the accepted pair to `[x * 10, y * 10, 0]`.
+The artillery page does not consume `laserTarget`, `YSF_irFakeLaserTarget`, or
+any target descriptor. Real designator and weapon-mounted IR-pointer targets
+belong to the fixed-wing strike implementation. They are deliberately not
+claimed as artillery modes by this milestone.
+
+The client owns the dialog, input controls, request construction, and local
+preview markers. Its only strike options are ordnance magazine, spread, round
+count, `circle` or `line`, and line direction. Circle points use a golden-angle
+disk distribution inside `spread`; line points are evenly spaced across the
+full spread and sorted along the requested bearing. There is no separate
+creeping-barrage mode, salvo count, inter-round delay, or source selector.
+Round order on a line is the only sequential spatial progression.
+
+Assets are discovered map-wide, filtered to the player's config side, and
+accepted when a living non-air land vehicle or ship has non-empty
+`getArtilleryAmmo`; `B_Ship_MRLS_01_F` is the one explicit exception. The
+selected asset's effective commander's group supplies all firing vehicles,
+and strike positions are assigned round-robin across them. Thus mortar,
+self-propelled tube, and rocket artillery share Arma's native
+`doArtilleryFire` branch. Their class-specific range, magazines, ballistics,
+dispersion, and cadence come from engine configuration. Vigil does not keep a
+platform whitelist.
+
+`YOSHI_taskArty_submit` sends a task through CORDIS's server-once boundary.
+The dedicated server owns the governor and authoritative task record. It
+rejects an empty position list, empty magazine, or group with no live firing
+vehicle. Each native shot is range-checked again and executed on the effective
+commander's locality. A task is complete only after every firing vehicle
+reports `YSF_arty_mission_completed` as done/dead, followed by the governor's
+final radio/completion stage. Preview range/ETA is advisory and client-local;
+server range checks remain authoritative.
+
+VLS is a separate special case keyed exactly to `B_Ship_MRLS_01_F`. For each
+point it reloads `weapon_VLS_01`, creates a temporary helipad target, reports
+and confirms that sensor target, and calls `fireAtTarget` on the commander's
+machine. A Fired handler supplies launch acknowledgement, with one bounded
+retry. The temporary target lasts 100 seconds. This path bypasses native
+artillery range/ETA checks, does not track missile arrival, and its current
+munition label is diagnostic only. Those properties make VLS materially more
+fragile: a command/`YSF_fired` transition is not proof of vertical launch,
+guided flight, or arrival.
+
+The permanent coverage matrix is branch-oriented rather than Cartesian:
+
+| Scenario | Target/request | Source path | Pattern/count | Physical/control proof |
+| --- | --- | --- | --- | --- |
+| native circle | real grid control and submit | mortar/native artillery | 3-round circle | exact firing source/magazine/projectiles, termination coordinates, centroid/radial bounds, server completion |
+| native line | product task using the same parsed grid | same native branch | 4-round line with large spacing | along-axis span/order and bounded perpendicular error despite dispersion |
+| request controls | invalid grid, zero rounds, out of range, empty ammunition | native validation branches | none | no correlated Fired/ArtilleryShellFired events and explicit failed/skipped state |
+| platform discovery | engine config/runtime inventory | mortar, tube, rocket representatives | n/a | capability and magazine/range evidence without repeating identical firing code |
+| VLS | valid grid/task | custom VLS branch | one cruise missile | exact launcher/missile, vertical phase, guided flight samples, single launch, target-region arrival |
+
+Each strike uses a unique token and a fresh observer window. Tribunal records
+the requested and resolved points, firing platform, weapon, magazine/ammo,
+projectile netId and locality, fire time, sampled trajectory, last observed
+position/termination time, and task state. Spatial assertions tolerate the
+calibrated weapon dispersion but fail on missing rounds, wrong source/ammo,
+stale events, wrong target region, or internal completion without physical
+evidence. Generic collection and geometry live in Tribunal; Vigil scenarios
+retain only product controls, tasks, and expected semantics.
+
+Laser-designator and weapon IR-laser scenarios remain a later fixed-wing
+strike milestone. A future independently authenticated client-b should prove
+that client-a's tablet state stays local while both clients observe the same
+authoritative firing and impact events.
+
+The fresh autonomous proof `20260813T130024Z-4b285268` completed with 22/22
+server and 9/9 client assertions. Its three-round circle terminated 1.94-8.46
+metres from the generated points. Its four-round line covered a 240.4-metre
+along-axis span with 0.27-9.25 metres of perpendicular error. All seven native
+shells correlated to both `Fired` and `ArtilleryShellFired`, and the zero-round,
+out-of-range, and no-ammunition controls produced no shots. The real VLS
+missile (`2:214`) launched at 1.04 metres ASL, climbed to 210.0 metres,
+travelled 2.228 kilometres horizontally, and terminated 4.66 metres from its
+requested region. The fully simulated ship is held at the sea surface only
+until its `Fired` event so cold-run water settling cannot destroy the missile
+at spawn; the missile's position, velocity, guidance, and lifetime are never
+altered by the fixture.
+
+Rendered artillery-tab and dynamic preview evidence remains the responsibility
+of the existing `vigil-ui` and `vigil-markers` scenarios. This execution
+scenario consumes the same product grid parser, pattern generator, task state,
+and submit function, then correlates that backing request with authoritative
+fire and flight evidence. Keeping those proofs separate avoids treating a
+valid framebuffer as evidence of a shot, or a valid shot as evidence that the
+client-local controls rendered correctly.
+
 Each behavioral scenario should keep real input/rendered evidence distinct
 from server-authoritative task effects and must pass from a fresh autonomous
 run after any Live Mode iteration.

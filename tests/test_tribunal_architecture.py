@@ -62,7 +62,17 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertIn("ui_probes_attempted: set[str]", runner_source)
         self.assertNotIn("only one interactive visual scenario", runner_source)
         gameplay = multiplayer.select_plan("gameplay")
-        self.assertTrue({"vigil-ui", "vigil-markers"}.issubset(gameplay.selected))
+        self.assertTrue({"vigil-ui", "vigil-markers", "vigil-artillery"}.issubset(gameplay.selected))
+
+        artillery = scenarios["vigil-artillery"]
+        self.assertEqual(artillery.metadata["targeting_modes"], "grid-only")
+        self.assertEqual(artillery.metadata["patterns"], "circle,line")
+        self.assertIn("vigil.artillery.vls.arrival", artillery.server_expected)
+        self.assertIn("vigil.artillery.grid.invalid", artillery.client_expected)
+        self.assertIn("TRIBUNAL_fnc_artilleryObserverStart", artillery.server_sqf)
+        self.assertIn("call YOSHI_taskArty_submit", artillery.client_sqf)
+        self.assertIn('["done", "ready_for_next"]', artillery.server_sqf)
+        self.assertNotIn("laserTarget", artillery.client_sqf)
 
     def test_generic_tribunal_sources_do_not_encode_pontifex_features(self) -> None:
         prohibited = ("aps", "iron dome", "vigil", "field utilities", "pontifex")
