@@ -1,6 +1,6 @@
 """A generic rendered-presence/removal probe for the framebuffer backend."""
 
-from tribunal.runner.model import Scenario
+from tribunal.runner.model import Scenario, ScenarioReview
 
 
 TRIBUNAL_SCENARIO = Scenario(
@@ -22,4 +22,13 @@ uiSleep 2;
 ''',
     requires_project_mods=False,
     metadata={"capability": "visual", "observability_backend": "authenticated-rfb"},
+    review=ScenarioReview(
+        test_type="tooling",
+        behavior_contract="Tribunal can capture and distinguish the presence and removal of a known rendered element on the live Arma framebuffer.",
+        outcome="KEEP AS-IS AND SPEC-TEST",
+        rationale="This validates a reusable evidence backend and contains no product-specific meaning.",
+        dependencies=("loopback-only authenticated RFB", "live Arma surface"),
+        evidence_types=frozenset({"framebuffer", "rendered-transition"}),
+        locality_requirements="The rendered probe and captured surface belong to client-a only.",
+    ),
 )

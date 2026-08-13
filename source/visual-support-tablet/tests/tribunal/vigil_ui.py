@@ -1,6 +1,6 @@
 """Permanent Tier 3 contract for VIGIL's client-local tablet UI."""
 
-from tribunal.runner.model import Scenario
+from tribunal.runner.model import CharacterizedBehavior, Scenario, ScenarioReview
 
 
 TAB_REGIONS = (
@@ -119,4 +119,20 @@ diag_log "TRIBUNAL_VIGIL|REOPENED_STATE";
         "visual_target_index": 1,
         "future_client_isolation": "client-b must retain displayNull and unchanged uiNamespace state",
     },
+    review=ScenarioReview(
+        test_type="specification",
+        behavior_contract="The equipped client can open Vigil, navigate visible tabs, close it cleanly, and reopen at a reset default state without creating server UI state.",
+        outcome="KEEP + CHARACTERIZE ENGINE REQUIREMENT",
+        rationale="Assertions combine real framebuffer transitions with client-local backing state; control IDs are adapter anchors, not the user contract.",
+        dependencies=("Tribunal authenticated framebuffer input", "Vigil terminal item", "Arma UI scheduler"),
+        evidence_types=frozenset({"framebuffer", "input", "client-ui-state", "locality"}),
+        locality_requirements="All display/input state exists only on client-a; the dedicated server retains displayNull.",
+        characterized_behaviors=(CharacterizedBehavior(
+            description="Reopen Vigil from a fresh scheduled script after Escape destroys the prior display.",
+            reason="This Arma build silently fails to recreate the dialog from the same scheduled worker that observed its destruction.",
+            evidence="Controlled failed/successive UI runs preceding 20260812T211714Z-358dbef7; the fresh worker produced stable closed-to-reopened framebuffer and backing-state transitions.",
+            alternative_tested="Call YSF_UI_OpenTablet in the original close-observer worker.",
+            outcome="The same-worker call did not recreate the dialog; a fresh scheduled context did.",
+        ),),
+    ),
 )

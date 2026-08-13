@@ -104,17 +104,33 @@ def main() -> int:
         artifact = transport.write_capture(args.output.with_name(f"{args.output.stem}-{label}.ppm"), rfb, pixels)
         return rgb, artifact
 
-    def wait_selected(expected: int, label: str, deadline: float) -> tuple[bytes, bytes, list]:
+    def wait_selected(
+        expected: int,
+        label: str,
+        deadline: float,
+        *,
+        reference_rgb: bytes | None = None,
+        minimum_changed_fraction: float = 0.0,
+    ) -> tuple[bytes, bytes, list]:
         last_metrics = []
+        last_changed_fraction = 0.0
         while time.monotonic() < deadline:
             pixels = rfb.frame()
             rgb = transport.pixels_to_rgb(rfb, pixels)
             selected, metrics = selected_region_index(rgb, rfb.width, rfb.height, regions)
             last_metrics = [item.as_dict() for item in metrics]
-            if selected == expected:
+            last_changed_fraction = (
+                changed_pixel_fraction(reference_rgb, rgb)
+                if reference_rgb is not None
+                else 1.0
+            )
+            if selected == expected and last_changed_fraction >= minimum_changed_fraction:
                 return pixels, rgb, last_metrics
             time.sleep(0.1)
-        raise RuntimeError(f"timed out waiting for selected region {expected}; metrics={last_metrics}")
+        raise RuntimeError(
+            f"timed out waiting for selected region {expected}; "
+            f"changed_fraction={last_changed_fraction}; metrics={last_metrics}"
+        )
 
     try:
         keyboard = X11KeyInput()
@@ -225,7 +241,13 @@ def main() -> int:
         report["closed_region_diagnostic"] = closed_selected
         report["close_input"] = {"type": "escape", "attempts": close_attempts}
 
-        reopened_pixels, reopened_rgb, reopened_metrics = wait_selected(args.initial_index, "reopened", deadline)
+        reopened_pixels, reopened_rgb, reopened_metrics = wait_selected(
+            args.initial_index,
+            "reopened",
+            deadline,
+            reference_rgb=closed_rgb,
+            minimum_changed_fraction=0.50,
+        )
         _, report["reopened_capture"] = capture("reopened", reopened_pixels)
         report["reopened_metrics"] = reopened_metrics
         report["closed_to_reopened_changed_fraction"] = changed_pixel_fraction(closed_rgb, reopened_rgb)

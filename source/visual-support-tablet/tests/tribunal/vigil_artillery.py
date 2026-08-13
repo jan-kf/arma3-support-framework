@@ -1,7 +1,7 @@
 """Causal Tier 3 coverage for Vigil native artillery and VLS execution."""
 
 from tribunal.mission.artillery import artillery_observer_sqf
-from tribunal.runner.model import Scenario
+from tribunal.runner.model import Scenario, ScenarioReview
 
 
 TRIBUNAL_SCENARIO = Scenario(
@@ -286,4 +286,13 @@ waitUntil {
         "patterns": "circle,line",
         "sources": "native-artillery,vls",
     },
+    review=ScenarioReview(
+        test_type="specification",
+        behavior_contract="A valid grid request fires exactly the requested circle/line rounds near their intended geometry; invalid requests do not fire; VLS launches, guides, and reaches its target region.",
+        outcome="KEEP AS-IS AND SPEC-TEST",
+        rationale="The scenario correlates product requests with physical projectiles and outcomes while avoiding promises about private governor variables, event order, or VLS handshake internals.",
+        dependencies=("Tribunal artillery observer", "Vigil task governor", "Arma native artillery", "Arma VLS"),
+        evidence_types=frozenset({"fire-event", "trajectory", "spatial-distribution", "negative-control", "locality"}),
+        locality_requirements="Client-a owns request/UI state; server owns task, platforms, projectiles, trajectory evidence, and completion.",
+    ),
 )

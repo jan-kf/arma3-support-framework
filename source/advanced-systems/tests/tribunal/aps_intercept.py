@@ -5,7 +5,7 @@ boundary migration so historical autonomous artifacts remain byte-for-byte
 comparable. Its assertions and ownership now live with the APS feature.
 """
 
-from tribunal.runner.model import Scenario
+from tribunal.runner.model import Scenario, ScenarioReview
 
 
 TRIBUNAL_SCENARIO = Scenario(
@@ -30,4 +30,13 @@ TRIBUNAL_SCENARIO = Scenario(
     server_sqf="",
     client_sqf="",
     metadata={"product": "advanced-systems", "feature": "active-protection-system"},
+    review=ScenarioReview(
+        test_type="specification",
+        behavior_contract="APS intercepts qualifying inbound threats, preserves disabled/outside/away controls, consumes the correct resource, and replicates the authoritative result.",
+        outcome="KEEP AS-IS AND SPEC-TEST",
+        rationale="The matrix asserts causal player-visible protection and resource behavior; ledger and exact projectile identities are supplemental correlation rather than the public contract.",
+        dependencies=("Tribunal direct-projectile fixture", "server-authoritative APS", "one authenticated client"),
+        evidence_types=frozenset({"trajectory", "impact", "authoritative-state", "replication", "locality"}),
+        locality_requirements="APS tracking, threat projectile, and authoritative ledger execute on the server; client-a observes replicated state.",
+    ),
 )

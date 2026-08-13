@@ -92,6 +92,15 @@ class TribunalCapabilityTests(unittest.TestCase):
         self.assertIn("XTestFakeKeyEvent", source)
         self.assertIn("timed out opening UI after", source)
 
+    def test_tabbed_control_reopen_rejects_false_selected_region_on_game_surface(self) -> None:
+        source = (ROOT / "tools" / "tribunal_ui_probe.py").read_text(encoding="utf-8")
+        self.assertIn("reference_rgb=closed_rgb", source)
+        self.assertIn("minimum_changed_fraction=0.50", source)
+        self.assertIn(
+            "selected == expected and last_changed_fraction >= minimum_changed_fraction",
+            source,
+        )
+
     def test_evidence_attachments_extend_existing_result_schema(self) -> None:
         result = {"schema": 2, "status": "PASS", "assertions": []}
         with tempfile.TemporaryDirectory() as temporary:

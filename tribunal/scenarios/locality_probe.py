@@ -1,7 +1,7 @@
 """Runtime proof that declared server/client ownership is actually achieved."""
 
 from tribunal.locality import locality_fixture_sqf
-from tribunal.runner.model import Scenario
+from tribunal.runner.model import CharacterizedBehavior, Scenario, ScenarioReview
 
 
 TRIBUNAL_SCENARIO = Scenario(
@@ -70,4 +70,20 @@ private _record = [_localityObject, "client-a"] call TRIBUNAL_fnc_localityRecord
 ''',
     requires_project_mods=False,
     metadata={"capability": "locality", "ownership": "server->client-a->server"},
+    review=ScenarioReview(
+        test_type="tooling",
+        behavior_contract="Tribunal can transfer a network object server-to-client-to-server and execute exactly once on the declared owner.",
+        outcome="KEEP + CHARACTERIZE ENGINE REQUIREMENT",
+        rationale="This is reusable ownership/execution evidence with no product semantics; its server-registration wait reflects observed engine behavior.",
+        dependencies=("Arma network object ownership", "one authenticated client"),
+        evidence_types=frozenset({"locality", "remote-execution", "ownership-transition"}),
+        locality_requirements="The fixture must observe server, client-a, then restored server ownership in order.",
+        characterized_behaviors=(CharacterizedBehavior(
+            description="Wait for a newly created network object to report stable server ownership before setOwner.",
+            reason="This dedicated engine build ignores ownership transfer requested while the new object still reports owner 0.",
+            evidence="Controlled locality-probe development observed owner 0 immediately after creation and reliable transfer only after owner 2 registration.",
+            alternative_tested="Call setOwner immediately after createVehicle.",
+            outcome="Immediate transfer was ignored; bounded wait for source owner 2 made server-to-client-to-server transfer deterministic.",
+        ),),
+    ),
 )

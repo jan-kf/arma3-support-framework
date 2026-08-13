@@ -1,6 +1,6 @@
 """Dynamic client-local map-marker contract for VIGIL's artillery preview."""
 
-from tribunal.runner.model import Scenario
+from tribunal.runner.model import Scenario, ScenarioReview
 
 
 TAB_REGIONS = (
@@ -70,6 +70,11 @@ if (_mapReady) then {
     ctrlMapAnimCommit _map;
     _gridControl ctrlSetText "0468-0277";
     [_gridControl] call YOSHI_assetCoordChanged;
+    // Establish this fixture's own geometry instead of inheriting state from
+    // an earlier artillery scenario in a composed suite.
+    ["pattern", "circle"] call YOSHI_taskArty_Set;
+    ["spread", 50] call YOSHI_taskArty_Set;
+    ["dir", 0] call YOSHI_taskArty_Set;
     _countControl ctrlSetText "0";
     ["count", _countControl] call YOSHI_setCount;
 };
@@ -138,4 +143,13 @@ private _closed = isNull (uiNamespace getVariable ["YSF_Tablet_Display", display
         "map_expected_anchor": {"x": 0.5, "y": 0.5},
         "future_client_isolation": "client-b must retain an empty local marker namespace",
     },
+    review=ScenarioReview(
+        test_type="specification",
+        behavior_contract="Changing a valid artillery request updates the visible client-local preview count and position, replaces stale preview state, and removes it on clear/close.",
+        outcome="KEEP AS-IS AND SPEC-TEST",
+        rationale="Backing marker names and arrays are used only to disambiguate stale rendering; the stable contract is visible spatial/count lifecycle and cleanup.",
+        dependencies=("Tribunal framebuffer/map observer", "Vigil artillery preview"),
+        evidence_types=frozenset({"framebuffer", "map-position", "client-ui-state", "cleanup"}),
+        locality_requirements="Preview controls and markers are client-a-local; the dedicated server must have neither display nor preview state.",
+    ),
 )

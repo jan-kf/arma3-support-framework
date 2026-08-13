@@ -1,5 +1,9 @@
 # Tribunal architecture
 
+Permanent scenario design and review follow the taxonomy and evidence rules in
+[`testing-methodology.md`](testing-methodology.md). Architecture describes who
+owns a mechanism; methodology decides which behavior deserves a durable test.
+
 Tribunal is a generic Arma mod-validation framework. It owns deterministic
 mission packaging, assertion parsing, lifecycle/reporting contracts, tier
 metadata, and scenario discovery. It does not know individual mod features.

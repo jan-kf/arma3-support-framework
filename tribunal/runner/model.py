@@ -8,6 +8,56 @@ from types import MappingProxyType
 from typing import Mapping
 
 
+TEST_TYPES = frozenset({"specification", "characterization", "tooling"})
+REVIEW_OUTCOMES = frozenset({
+    "KEEP AS-IS AND SPEC-TEST",
+    "KEEP + CHARACTERIZE ENGINE REQUIREMENT",
+    "REFINE BEFORE PERMANENT COVERAGE",
+    "REWRITE BEFORE PERMANENT COVERAGE",
+    "NEEDS EXPERIMENTATION",
+    "DEFER / insufficient value",
+})
+
+
+@dataclass(frozen=True)
+class CharacterizedBehavior:
+    """A mechanism frozen only because evidence proves it is necessary."""
+
+    description: str
+    reason: str
+    evidence: str
+    alternative_tested: str
+    outcome: str
+
+    def __post_init__(self) -> None:
+        if not all((self.description, self.reason, self.evidence, self.alternative_tested, self.outcome)):
+            raise ValueError("characterized behavior requires description, reason, evidence, alternative, and outcome")
+
+
+@dataclass(frozen=True)
+class ScenarioReview:
+    """Small, durable record of why a permanent scenario exists."""
+
+    test_type: str
+    behavior_contract: str
+    outcome: str
+    rationale: str
+    dependencies: tuple[str, ...] = ()
+    evidence_types: frozenset[str] = frozenset()
+    locality_requirements: str = ""
+    characterized_behaviors: tuple[CharacterizedBehavior, ...] = ()
+
+    def __post_init__(self) -> None:
+        if self.test_type not in TEST_TYPES:
+            raise ValueError(f"invalid Tribunal test type: {self.test_type}")
+        if self.outcome not in REVIEW_OUTCOMES:
+            raise ValueError(f"invalid Tribunal review outcome: {self.outcome}")
+        if not self.behavior_contract or not self.rationale:
+            raise ValueError("scenario review requires a behavior contract and rationale")
+        if self.test_type == "characterization" and not self.characterized_behaviors:
+            raise ValueError("characterization scenarios require evidence-backed characterized behavior")
+
+
 @dataclass(frozen=True)
 class ClientIdentity:
     """Stable logical identity for one independently authenticated client."""
@@ -63,6 +113,7 @@ class Scenario:
     metadata: dict[str, str] = field(default_factory=dict)
     client_expected_by_identity: Mapping[str, frozenset[str]] = field(default_factory=dict)
     client_sqf_by_identity: Mapping[str, str] = field(default_factory=dict)
+    review: ScenarioReview | None = None
 
     def expected_for(self, identity: str) -> frozenset[str]:
         """Return identity-specific assertions, retaining client-a compatibility."""
