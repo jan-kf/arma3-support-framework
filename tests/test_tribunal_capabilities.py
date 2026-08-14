@@ -10,6 +10,7 @@ from tribunal.discovery import discover
 from tribunal.mission.aviation import aviation_observer_sqf
 from tribunal.mission.combat import combat_observer_sqf
 from tribunal.mission.designation import designation_observer_sqf
+from tribunal.mission.delivery import delivery_observer_sqf
 from tribunal.observability.visual import frame_metrics, visual_transition
 from tribunal.observability.ui import Region, changed_pixel_fraction, region_difference, selected_region_index
 from tribunal.network import NETWORK_PROFILES
@@ -70,6 +71,28 @@ class TribunalCapabilityTests(unittest.TestCase):
         ):
             self.assertIn(token, source)
         for product_token in ("YOSHI_", "YSF_", "Vigil", "transport_state"):
+            self.assertNotIn(product_token, source)
+
+    def test_delivery_observer_normalizes_inventory_and_correlates_parachute(self) -> None:
+        source = delivery_observer_sqf()
+        for token in (
+            "TRIBUNAL_fnc_inventoryRecord",
+            "TRIBUNAL_fnc_inventoryPayload",
+            "getWeaponCargo",
+            "getMagazineCargo",
+            "getItemCargo",
+            "getBackpackCargo",
+            "TRIBUNAL_fnc_deliverySample",
+            "TRIBUNAL_fnc_observeDelivery",
+            "TRIBUNAL_fnc_deliveryEvidence",
+            'attachedTo _cargo',
+            '"chuteLocalities"',
+            '"chuteOwners"',
+            "getTerrainHeightASL _cargoASL",
+            '"deliveryError"',
+        ):
+            self.assertIn(token, source)
+        for product_token in ("YOSHI_", "YSF_", "Vigil", "FieldUtils"):
             self.assertNotIn(product_token, source)
 
     def test_clients_are_keyed_without_fixed_count_or_shared_state(self) -> None:

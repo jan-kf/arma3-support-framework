@@ -407,37 +407,184 @@ YFU_assetsAirdropAnnounce = {
     [_speaker, _msg] call YFU_fnc_emitSideChat;
 };
 
+YFU_airdropResultVariable = {
+    params ["_taskId", "_index"];
+    format ["YFU_AIRDROP_RESULT_%1_%2", _taskId, _index]
+};
+
+YFU_beginPhysicalAirdrop = {
+    params [
+        "_container",
+        "_targetATL",
+        "_releaseASL",
+        "_taskId",
+        ["_index", 0],
+        ["_deployAltitude", 160]
+    ];
+
+    if (!isServer || {isNull _container} || {!local _container}) exitWith {false};
+    if !(_targetATL isEqualType [] && {(count _targetATL) >= 3}) exitWith {false};
+    if !(_releaseASL isEqualType [] && {(count _releaseASL) >= 3}) exitWith {false};
+
+    private _resultVariable = [_taskId, _index] call YFU_airdropResultVariable;
+    missionNamespace setVariable [_resultVariable, nil, false];
+    _container setVariable ["YFU_airdropTaskId", _taskId, true];
+    _container setVariable ["YFU_airdropState", "released", true];
+    _container setVariable ["YFU_airdropChute", objNull, true];
+    detach _container;
+    _container setPosASL _releaseASL;
+    _container setVectorUp [0, 0, 1];
+
+    private _releaseATL = ASLToATL _releaseASL;
+    private _fallDistance = ((_releaseATL # 2) - _deployAltitude) max 10;
+    private _fallTime = sqrt ((2 * _fallDistance) / 9.81);
+    private _targetASL = ATLToASL _targetATL;
+    private _horizontal = [
+        ((_targetASL # 0) - (_releaseASL # 0)) / (_fallTime max 0.1),
+        ((_targetASL # 1) - (_releaseASL # 1)) / (_fallTime max 0.1),
+        0
+    ];
+    private _horizontalSpeed = vectorMagnitude _horizontal;
+    if (_horizontalSpeed > 70) then {
+        _horizontal = _horizontal vectorMultiply (70 / _horizontalSpeed);
+    };
+    private _launchVelocity = [_horizontal # 0, _horizontal # 1, 0];
+    _container setVelocity _launchVelocity;
+    _container setVariable ["YFU_airdropLaunchState", [_releaseASL, _targetATL, _launchVelocity, local _container, owner _container], true];
+
+    [_container, _targetATL, _releaseASL, _taskId, _index, _deployAltitude, _resultVariable] spawn {
+        params ["_container", "_targetATL", "_releaseASL", "_taskId", "_index", "_deployAltitude", "_resultVariable"];
+        private _samples = [];
+        private _deadline = diag_tickTime + 150;
+        private _chute = objNull;
+        private _chuteId = "";
+        private _deployASL = [];
+        private _terminal = "";
+        private _deployAt = diag_tickTime + 0.75;
+
+        waitUntil {
+            if (!isNull _container) then {
+                _samples pushBack [diag_tickTime, getPosATL _container, getPosASL _container, velocity _container, local _container, owner _container];
+            };
+            uiSleep 0.05;
+            isNull _container
+            || {!alive _container}
+            || {((getPosATL _container) # 2) <= _deployAltitude}
+            || {diag_tickTime >= _deployAt}
+            || {diag_tickTime > _deadline}
+        };
+
+        if (isNull _container || {!alive _container}) then {
+            _terminal = "cargo_lost_before_chute";
+        } else {
+            if (diag_tickTime > _deadline) then {
+                _terminal = "chute_timeout";
+            } else {
+                _deployASL = getPosASL _container;
+                private _verticalSpeed = ((velocity _container) # 2) min -3;
+                _chute = createVehicle ["B_Parachute_02_F", ASLToATL _deployASL, [], 0, "CAN_COLLIDE"];
+                _chute setPosASL _deployASL;
+                _chute setDir getDir _container;
+                _chute allowDamage false;
+                _chute setVelocity [0, 0, _verticalSpeed];
+                _container attachTo [_chute, [0, 0, -1.2]];
+                _chuteId = netId _chute;
+                _container setVariable ["YFU_airdropChute", _chute, true];
+                _container setVariable ["YFU_airdropState", "under_chute", true];
+                _chute setVariable ["YFU_airdropTaskId", _taskId, true];
+                diag_log format ["YFU_AIRDROP|%1|chute_created|cargo=%2|chute=%3|asl=%4|atl=%5|height=%6|local=%7/%8|alive=%9", _taskId, netId _container, _chuteId, getPosASL _chute, getPosATL _chute, ((getPosASL _chute) # 2) - (getTerrainHeightASL getPosASL _chute), local _chute, owner _chute, alive _chute];
+
+                private _groundReached = false;
+                waitUntil {
+                    if (!isNull _container) then {
+                        _samples pushBack [diag_tickTime, getPosATL _container, getPosASL _container, velocity _container, local _container, owner _container];
+                    };
+                    uiSleep 0.1;
+                    if (!isNull _chute && {(((getPosASL _chute) # 2) - (getTerrainHeightASL getPosASL _chute)) <= 3}) then {
+                        _groundReached = true;
+                    };
+                    isNull _container
+                    || {!alive _container}
+                    || {isNull _chute}
+                    || {_groundReached}
+                    || {diag_tickTime > _deadline}
+                };
+
+                if (isNull _container || {!alive _container}) then {
+                    _terminal = "cargo_lost_under_chute";
+                } else {
+                    if (isNull _chute && {!_groundReached}) then {
+                        _terminal = "chute_lost";
+                    } else {
+                    if (diag_tickTime > _deadline) then {
+                        _terminal = "landing_timeout";
+                    } else {
+                        detach _container;
+                        _container setVelocity [0, 0, 0];
+                        _container setVectorUp [0, 0, 1];
+                        _container setVariable ["YFU_airdropState", "landed", true];
+                        _terminal = "landed";
+                    };
+                    };
+                };
+                diag_log format ["YFU_AIRDROP|%1|chute_terminal|terminal=%2|ground=%3|cargoAsl=%4|cargoAtl=%5|chuteNull=%6|chuteAsl=%7|chuteAtl=%8", _taskId, _terminal, _groundReached, getPosASL _container, getPosATL _container, isNull _chute, if (isNull _chute) then {[]} else {getPosASL _chute}, if (isNull _chute) then {[]} else {getPosATL _chute}];
+            };
+        };
+
+        private _result = [
+            _taskId,
+            _terminal,
+            if (isNull _container) then {""} else {netId _container},
+            _chuteId,
+            _releaseASL,
+            _deployASL,
+            if (isNull _container) then {[]} else {getPosATL _container},
+            if (isNull _container) then {1} else {damage _container},
+            _samples,
+            if (isNull _container) then {false} else {local _container},
+            if (isNull _container) then {-1} else {owner _container}
+        ];
+        missionNamespace setVariable [_resultVariable, _result, false];
+        if (!isNull _container) then {
+            // Keep high-frequency trajectory samples server-private. Only the
+            // compact terminal record crosses the network boundary.
+            private _summary = [_result # 0, _result # 1, _result # 2, _result # 3, _result # 4, _result # 5, _result # 6, _result # 7, _result # 9, _result # 10];
+            _container setVariable ["YFU_airdropResult", _summary, true];
+        };
+        diag_log format ["YFU_AIRDROP|%1|%2|cargo=%3|chute=%4|release=%5|landing=%6|damage=%7|samples=%8", _taskId, _terminal, _result # 2, _result # 3, _releaseASL, _result # 6, _result # 7, count _samples];
+        if (!isNull _chute) then {
+            uiSleep 2;
+            deleteVehicle _chute;
+        };
+    };
+
+    true
+};
+
 YFU_assetsFinalizeDeliveryAirdrop = {
     params ["_caller", "_airAsset", "_containers", "_targetATL"];
     if (_containers isEqualTo []) exitWith {false};
     if (isNull _airAsset) exitWith {false};
+    if (isNil "YSF_fwRequestLogistics") exitWith {false};
 
-    private _assetASL = getPosASL _airAsset;
-    private _bb = boundingBoxReal _airAsset;
-    private _assetHeight = abs (((_bb # 1) # 2) - ((_bb # 0) # 2));
-    private _dropASLBase = _assetASL vectorAdd [0, 0, -((_assetHeight / 2) + 3)];
+    private _requestId = format ["LOGI_%1_%2_%3", clientOwner, floor (diag_tickTime * 1000), floor random 1000000];
+    private _ackVariable = format ["YSF_FW_LOGISTICS_ACK_%1", _requestId];
+    missionNamespace setVariable [_ackVariable, nil, false];
+    private _containerRefs = _containers apply {netId _x};
+    [netId _airAsset, _containerRefs, _targetATL, _requestId, netId _caller] remoteExecCall ["YSF_fwRequestLogistics", 2];
 
-
-    private _targetMarker = "Sign_Sphere10cm_F" createVehicle [0, 0, 0];
-    _targetMarker setPosATL _targetATL;
-    _targetMarker hideObjectGlobal true;
-
-    {
-        private _container = _x;
-        if (!isNull _container) then {
-            private _offset = [(_forEachIndex mod 2) * 1.5, floor (_forEachIndex / 2) * 1.5, 0];
-            _container setPosASL (_dropASLBase vectorAdd _offset);
-            _container setVectorUp [0, 0, 1];
-            [_container, _targetMarker, -2] call YOSHI_FLING_THING;
-            if (_forEachIndex < ((count _containers) - 1)) then {
-                uiSleep 3;
-            };
-        };
-    } forEach _containers;
-
-    deleteVehicle _targetMarker;
-    [_airAsset, _targetATL, count _containers, _dropASLBase] call YFU_assetsAirdropAnnounce;
-    true
+    private _deadline = diag_tickTime + 20;
+    waitUntil {
+        uiSleep 0.05;
+        !isNil {missionNamespace getVariable _ackVariable} || {diag_tickTime > _deadline}
+    };
+    private _ack = missionNamespace getVariable [_ackVariable, []];
+    private _accepted = (_ack param [0, false]) isEqualTo true;
+    uiNamespace setVariable ["YFU_last_airdrop_request", [_requestId, _airAsset, _containers, _targetATL, _ack]];
+    if (_accepted) then {
+        [_airAsset, _targetATL, count _containers, getPosASL _airAsset] call YFU_assetsAirdropAnnounce;
+    };
+    _accepted
 };
 
 YFU_assetsSubmitDismiss = {

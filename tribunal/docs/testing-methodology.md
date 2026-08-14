@@ -184,6 +184,10 @@ remaining 3CB Hellfire mapping is NEEDS EXPERIMENTATION because no qualifying
 installed pylon class exists for an honest comparison. Full analysis is in
 [`vigil-fixed-wing-review.md`](vigil-fixed-wing-review.md).
 
+### Vigil fixed-wing logistics findings
+
+The logistics review found that the old path opened the real Field Utilities physical-object queue but then reported success from a client-local fling with no authoritative task, ingress gate, duplicate protection, physical completion, or RTB. The refined path transfers the packed object tree to the server, flies the shared registered aircraft to a bounded release gate, uses a real parachute, proves exact weapon/magazine/item/backpack inventory after landing, and then uses the shared bounded RTB lifecycle. No capacity feature exists, so no capacity contract was invented. Full analysis is in [`vigil-fixed-wing-logistics-review.md`](vigil-fixed-wing-logistics-review.md).
+
 ## Generic Tribunal capability backlog
 
 Already generic: deterministic PBO packaging; assertion/result protocol;
@@ -249,8 +253,6 @@ compatibility work caused by changes to those private functions.
 | 1 | Helicopter transport/reinsertion | REFINE BEFORE PERMANENT COVERAGE | completed review and physical outbound/wait/RTB proof |
 | 2 | Rotary-wing CAS | REFINE BEFORE PERMANENT COVERAGE | completed review: hostile/area filtering, correlated fire/impact, timer, invalid/no-target controls and combat RTB |
 | 3 | Fixed-wing strike support | REFINE BEFORE PERMANENT COVERAGE | completed review: serialization, ingress/loiter/egress, both designation paths, native guided impact, controls and compatibility refinement |
-| 4 | Fixed-wing logistics | NEEDS EXPERIMENTATION | next: manifest authority, cargo construction, parachute deployment, delivery accuracy, cleanup/egress |
+| 4 | Fixed-wing logistics | REFINE BEFORE PERMANENT COVERAGE | completed review: authoritative physical manifest, bounded ingress/drop/parachute/landing, exact inventory, locality, controls and RTB |
 
-Fixed-wing logistics is next. It may reuse the now-proven registry,
-serialization, aviation and cleanup adapters, but requires its own delivery
-contract and must not inherit strike-specific assumptions.
+Fixed-wing logistics now reuses the proven registry, serialization, aviation and cleanup adapters while retaining a separate physical-delivery contract. Its review is complete; fixed-wing reconnaissance is the recommended next feature family.

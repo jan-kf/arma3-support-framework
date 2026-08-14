@@ -316,3 +316,18 @@ round count. Fuel and per-pylon ammunition restoration and a bounded RTB result
 were added before permanent coverage. The remaining 3CB Hellfire mapping is
 explicitly experimental because the installed content cannot exercise it. See
 [`../tribunal/docs/vigil-fixed-wing-review.md`](../tribunal/docs/vigil-fixed-wing-review.md).
+
+## Fixed-wing logistics
+
+`vigil-fixed-wing-logistics` drives the real Vigil-to-Field-Utilities interface,
+submits a physical mixed-category manifest, and correlates the resulting
+server-authoritative aircraft, pallet and parachute through ingress, release,
+descent, accurate intact landing, exact delivered inventory, RTB and cleanup.
+The empty-manifest and concurrent-duplicate paths fail closed. There is no
+capacity/weight implementation, so the scenario does not invent one.
+
+Generic inventory-tree and cargo/parachute evidence lives in Tribunal; Vigil
+role, request, task and reuse semantics remain product-side. See
+[`../tribunal/docs/vigil-fixed-wing-logistics-review.md`](../tribunal/docs/vigil-fixed-wing-logistics-review.md)
+for the architecture review, engine characterizations, Live calibration and
+false-PASS analysis.

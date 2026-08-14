@@ -16,6 +16,11 @@ YSF_FW_ROLE_RECON = 2;
 YSF_FW_ROLE_LOGI = 4;
 
 YSF_FW_RTB_TIMEOUT = 300;
+YSF_FW_LOGISTICS_INGRESS_TIMEOUT = 180;
+YSF_FW_LOGISTICS_DELIVERY_TIMEOUT = 180;
+YSF_FW_LOGISTICS_RELEASE_RADIUS = 25;
+YSF_FW_LOGISTICS_FLIGHT_HEIGHT = 180;
+YSF_FW_LOGISTICS_RELEASE_ALTITUDE_TOLERANCE = 60;
 
 YSF_fwSideToId = {
     params ["_side"];
@@ -759,6 +764,214 @@ YSF_fwDeployAsset = {
     [_id, _veh, _caller, 500, 10] call YSF_fwMonitorCallerLoiter;
 
     _veh
+};
+
+YSF_fwLogisticsAck = {
+    params ["_requestId", "_accepted", "_reason", ["_owner", 0], ["_assetId", ""]];
+    if (!isServer || {_requestId isEqualTo ""}) exitWith {};
+    private _payload = [_accepted isEqualTo true, _reason, _assetId, serverTime];
+    missionNamespace setVariable [format ["YSF_FW_LOGISTICS_ACK_%1", _requestId], _payload, _owner];
+};
+
+YSF_fwLogisticsEvent = {
+    params ["_taskId", "_phase", "_assetId", "_aircraft", "_containers", "_targetATL", ["_details", []]];
+    if (!isServer) exitWith {};
+    private _event = [
+        _taskId,
+        _phase,
+        _assetId,
+        if (isNull _aircraft) then {""} else {netId _aircraft},
+        _containers apply {if (isNull _x) then {""} else {netId _x}},
+        _targetATL,
+        _details,
+        serverTime
+    ];
+    private _history = missionNamespace getVariable ["YSF_FW_LOGISTICS_EVENTS", []];
+    _history pushBack _event;
+    missionNamespace setVariable ["YSF_FW_LOGISTICS_EVENTS", _history, false];
+    // Keep high-frequency ingress evidence server-private. Clients need the
+    // physical identities and terminal state, not every trajectory sample.
+    private _publicDetails = _details;
+    if (_phase isEqualTo "released") then {
+        _publicDetails = [_details param [0, []], count (_details param [1, []])];
+    };
+    if (_phase isEqualTo "failed") then {
+        _publicDetails = [_details param [0, "unknown"]];
+    };
+    private _publicEvent = +_event;
+    _publicEvent set [6, _publicDetails];
+    missionNamespace setVariable ["YSF_FW_LOGISTICS_LAST_EVENT", _publicEvent, true];
+    diag_log format ["YSF_FW_LOGISTICS|%1|%2|asset=%3|aircraft=%4|cargo=%5|target=%6|details=%7", _taskId, _phase, _assetId, _event # 3, _event # 4, _targetATL, _publicDetails];
+};
+
+YSF_fwLogisticsSetIdle = {
+    params ["_assetId", "_taskId", "_result"];
+    if (!isServer) exitWith {};
+    private _entry = [_assetId] call YSF_fwGetEntry;
+    if !(typeName _entry isEqualTo "HASHMAP") exitWith {};
+    if ((_entry getOrDefault ["logisticsTaskId", ""]) isEqualTo _taskId) then {
+        _entry set ["logisticsActive", false];
+        _entry set ["logisticsTaskId", ""];
+        _entry set ["lastLogisticsResult", _result];
+        _entry set ["lastUpdate", serverTime];
+        [_assetId, _entry] call YSF_fwSetEntry;
+    };
+};
+
+YSF_fwRunLogisticsTask = {
+    params ["_assetId", "_taskId", "_aircraft", "_containers", "_targetATL"];
+    if (!isServer) exitWith {};
+
+    [_assetId, _taskId, _aircraft, _containers, _targetATL] spawn {
+        params ["_assetId", "_taskId", "_aircraft", "_containers", "_targetATL"];
+        private _fail = {
+            params ["_reason", ["_details", []]];
+            [_taskId, "failed", _assetId, _aircraft, _containers, _targetATL, [_reason, _details]] call YSF_fwLogisticsEvent;
+            [_assetId, _taskId, [false, _reason]] call YSF_fwLogisticsSetIdle;
+            [_assetId] call YSF_fwRtbAsset;
+        };
+
+        private _ownershipDeadline = diag_tickTime + 15;
+        {
+            private _tree = [_x] + attachedObjects _x;
+            { _x setOwner 2; } forEach _tree;
+        } forEach _containers;
+        waitUntil {
+            uiSleep 0.05;
+            (_containers findIf {!local _x || {(attachedObjects _x) findIf {!local _x} >= 0}}) < 0
+            || {diag_tickTime > _ownershipDeadline}
+        };
+        if ((_containers findIf {isNull _x || {!local _x} || {(attachedObjects _x) findIf {!local _x} >= 0}}) >= 0) exitWith {
+            ["cargo_locality_timeout", _containers apply {[netId _x, local _x, owner _x, attachedObjects _x apply {[netId _x, local _x, owner _x]}]}] call _fail;
+        };
+
+        private _group = group _aircraft;
+        if (isNull _group) exitWith {["aircraft_group_missing"] call _fail};
+        for "_i" from (count waypoints _group - 1) to 0 step -1 do {
+            deleteWaypoint [_group, _i];
+        };
+        private _waypoint = _group addWaypoint [[_targetATL # 0, _targetATL # 1, 0], 0];
+        _waypoint setWaypointType "MOVE";
+        _waypoint setWaypointSpeed "NORMAL";
+        _group setCurrentWaypoint _waypoint;
+        _group setBehaviourStrong "CARELESS";
+        _group setCombatMode "BLUE";
+        _aircraft flyInHeight YSF_FW_LOGISTICS_FLIGHT_HEIGHT;
+        private _targetASLAltitude = (getTerrainHeightASL _targetATL) + YSF_FW_LOGISTICS_FLIGHT_HEIGHT;
+        _aircraft flyInHeightASL [_targetASLAltitude, _targetASLAltitude, _targetASLAltitude];
+        [_taskId, "ingress", _assetId, _aircraft, _containers, _targetATL, [getPosASL _aircraft, local _aircraft, owner _aircraft, count crew _aircraft]] call YSF_fwLogisticsEvent;
+
+        private _ingressSamples = [];
+        private _ingressDeadline = diag_tickTime + YSF_FW_LOGISTICS_INGRESS_TIMEOUT;
+        waitUntil {
+            if (!isNull _aircraft) then {
+                _ingressSamples pushBack [diag_tickTime, getPosATL _aircraft, getPosASL _aircraft, velocity _aircraft, _aircraft distance2D _targetATL, local _aircraft, owner _aircraft];
+            };
+            uiSleep 0.1;
+            isNull _aircraft
+            || {!alive _aircraft}
+            || {
+                _aircraft distance2D _targetATL <= YSF_FW_LOGISTICS_RELEASE_RADIUS
+                && {((getPosASL _aircraft) # 2) - (getTerrainHeightASL getPosASL _aircraft) <= (YSF_FW_LOGISTICS_FLIGHT_HEIGHT + YSF_FW_LOGISTICS_RELEASE_ALTITUDE_TOLERANCE)}
+            }
+            || {diag_tickTime > _ingressDeadline}
+        };
+        if (isNull _aircraft || {!alive _aircraft}) exitWith {["aircraft_lost", _ingressSamples] call _fail};
+        if (diag_tickTime > _ingressDeadline) exitWith {["ingress_timeout", _ingressSamples] call _fail};
+        if (isNil "YFU_beginPhysicalAirdrop") exitWith {["airdrop_api_missing"] call _fail};
+
+        private _aircraftBox = boundingBoxReal _aircraft;
+        private _aircraftHeight = abs (((_aircraftBox # 1) # 2) - ((_aircraftBox # 0) # 2));
+        private _releaseBase = (getPosASL _aircraft) vectorAdd [0, 0, -((_aircraftHeight / 2) + 4)];
+        private _releaseRows = [];
+        private _launchOk = true;
+        {
+            private _offset = [(_forEachIndex mod 2) * 1.5, floor (_forEachIndex / 2) * 1.5, 0];
+            private _releaseASL = _releaseBase vectorAdd _offset;
+            private _ok = [_x, _targetATL, _releaseASL, _taskId, _forEachIndex, 160] call YFU_beginPhysicalAirdrop;
+            _launchOk = _launchOk && {_ok};
+            _releaseRows pushBack [netId _x, _releaseASL, local _x, owner _x];
+            if (_forEachIndex < ((count _containers) - 1)) then {uiSleep 1};
+        } forEach _containers;
+        [_taskId, "released", _assetId, _aircraft, _containers, _targetATL, [_releaseRows, _ingressSamples]] call YSF_fwLogisticsEvent;
+        if (!_launchOk) exitWith {["release_failed", _releaseRows] call _fail};
+
+        private _deliveryDeadline = diag_tickTime + YSF_FW_LOGISTICS_DELIVERY_TIMEOUT;
+        private _results = [];
+        waitUntil {
+            _results = [];
+            {
+                private _resultVariable = [_taskId, _forEachIndex] call YFU_airdropResultVariable;
+                private _result = missionNamespace getVariable [_resultVariable, []];
+                if (_result isNotEqualTo []) then {_results pushBack _result};
+            } forEach _containers;
+            uiSleep 0.1;
+            (count _results) isEqualTo (count _containers)
+            || {diag_tickTime > _deliveryDeadline}
+        };
+        if ((count _results) isNotEqualTo (count _containers)) exitWith {["delivery_timeout", _results] call _fail};
+        if ((_results findIf {(_x param [1, ""]) isNotEqualTo "landed"}) >= 0) exitWith {["delivery_failed", _results] call _fail};
+
+        private _resultSummary = _results apply {[_x # 0, _x # 1, _x # 2, _x # 3, _x # 4, _x # 5, _x # 6, _x # 7, _x # 9, _x # 10]};
+        [_taskId, "completed", _assetId, _aircraft, _containers, _targetATL, _resultSummary] call YSF_fwLogisticsEvent;
+        [_assetId, _taskId, [true, "completed", _resultSummary]] call YSF_fwLogisticsSetIdle;
+        [_assetId] call YSF_fwRtbAsset;
+    };
+};
+
+YSF_fwRequestLogistics = {
+    params ["_aircraftRef", "_containerRefs", "_targetATL", "_requestId", ["_requesterRef", ""]];
+    if (!isServer) exitWith {
+        [_aircraftRef, _containerRefs, _targetATL, _requestId, _requesterRef] remoteExecCall ["YSF_fwRequestLogistics", 2];
+        false
+    };
+
+    private _requestOwner = remoteExecutedOwner;
+    private _reject = {
+        params ["_reason", ["_assetId", ""]];
+        [_requestId, false, _reason, _requestOwner, _assetId] call YSF_fwLogisticsAck;
+        false
+    };
+    if !(_requestId isEqualType "" && {_requestId isNotEqualTo ""}) exitWith {false};
+    if !(_targetATL isEqualType [] && {(count _targetATL) >= 3}) exitWith {["invalid_destination"] call _reject};
+    if ((_targetATL # 0) < 0 || {(_targetATL # 1) < 0} || {(_targetATL # 0) > worldSize} || {(_targetATL # 1) > worldSize}) exitWith {["invalid_destination"] call _reject};
+    if !(_containerRefs isEqualType [] && {_containerRefs isNotEqualTo []}) exitWith {["empty_manifest"] call _reject};
+
+    private _aircraft = [_aircraftRef] call YSF_fwResolveObjectRef;
+    if (isNull _aircraft || {!alive _aircraft}) exitWith {["aircraft_unavailable"] call _reject};
+    private _requester = [_requesterRef] call YSF_fwResolveObjectRef;
+    if (isNull _requester || {!isPlayer _requester} || {owner _requester isNotEqualTo _requestOwner}) exitWith {["invalid_requester"] call _reject};
+
+    private _registry = call YSF_fwEnsureRegistry;
+    private _assetId = "";
+    private _entry = objNull;
+    {
+        private _candidate = _y;
+        if (typeName _candidate isEqualTo "HASHMAP" && {(_candidate getOrDefault ["spawnedVeh", objNull]) isEqualTo _aircraft}) exitWith {
+            _assetId = _x;
+            _entry = _candidate;
+        };
+    } forEach _registry;
+    if (_assetId isEqualTo "" || {typeName _entry isNotEqualTo "HASHMAP"}) exitWith {["aircraft_not_registered"] call _reject};
+    if ((_entry getOrDefault ["state", ""]) isNotEqualTo YSF_FW_STATE_ON_STATION) exitWith {["aircraft_not_on_station", _assetId] call _reject};
+    private _roleMask = _entry getOrDefault ["roleMask", 0];
+    if ((((floor (_roleMask / YSF_FW_ROLE_LOGI)) mod 2) isNotEqualTo 1)) exitWith {["aircraft_not_logistics", _assetId] call _reject};
+    if ((_entry getOrDefault ["side", sideUnknown]) isNotEqualTo side _requester) exitWith {["wrong_side", _assetId] call _reject};
+    if (_entry getOrDefault ["logisticsActive", false]) exitWith {["duplicate_active_task", _assetId] call _reject};
+
+    private _containers = _containerRefs apply {[_x] call YSF_fwResolveObjectRef};
+    if ((_containers findIf {isNull _x || {!alive _x}}) >= 0) exitWith {["invalid_manifest_object", _assetId] call _reject};
+    private _containerIds = _containers apply {netId _x};
+    if ((count (_containerIds arrayIntersect _containerIds)) isNotEqualTo (count _containerIds)) exitWith {["duplicate_manifest_object", _assetId] call _reject};
+
+    _entry set ["logisticsActive", true];
+    _entry set ["logisticsTaskId", _requestId];
+    _entry set ["lastUpdate", serverTime];
+    [_assetId, _entry] call YSF_fwSetEntry;
+    [_requestId, true, "accepted", _requestOwner, _assetId] call YSF_fwLogisticsAck;
+    [_requestId, "accepted", _assetId, _aircraft, _containers, _targetATL, [netId _requester, _requestOwner]] call YSF_fwLogisticsEvent;
+    [_assetId, _requestId, _aircraft, _containers, _targetATL] call YSF_fwRunLogisticsTask;
+    true
 };
 
 YSF_fwFinalizeRtb = {

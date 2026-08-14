@@ -236,6 +236,66 @@ class TierFrameworkTests(unittest.TestCase):
             "vigil.fixedWing.egress.cleanup",
         }))
 
+    def test_vigil_logistics_is_authoritative_bounded_and_fail_closed(self) -> None:
+        vigil_root = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
+        field_root = ROOT / "source" / "field-utilities" / "addons" / "FieldUtils"
+        fixed_wing = (vigil_root / "functions" / "task_fixedWing" / "fn_initFixedWingFunctions.sqf").read_text(encoding="utf-8")
+        assets = (field_root / "functions" / "fabricator" / "fn_assets.sqf").read_text(encoding="utf-8")
+        self.assertIn("YSF_fwRequestLogistics", fixed_wing)
+        self.assertIn("YSF_fwRunLogisticsTask", fixed_wing)
+        self.assertIn('"duplicate_active_task"', fixed_wing)
+        self.assertIn("YSF_FW_LOGISTICS_INGRESS_TIMEOUT", fixed_wing)
+        self.assertIn("YSF_FW_LOGISTICS_DELIVERY_TIMEOUT", fixed_wing)
+        self.assertIn("setOwner 2", fixed_wing)
+        self.assertIn('if (_phase isEqualTo "released")', fixed_wing)
+        self.assertIn('missionNamespace setVariable ["YSF_FW_LOGISTICS_LAST_EVENT", _publicEvent, true]', fixed_wing)
+        self.assertIn('[true, "completed", _resultSummary]', fixed_wing)
+        self.assertNotIn('[true, "completed", _results]', fixed_wing)
+        self.assertIn("YFU_beginPhysicalAirdrop", fixed_wing)
+        self.assertIn('[_assetId] call YSF_fwRtbAsset', fixed_wing)
+        self.assertIn("YFU_beginPhysicalAirdrop", assets)
+        self.assertIn('"B_Parachute_02_F"', assets)
+        self.assertIn('attachTo [_chute', assets)
+        self.assertIn('setVariable ["YFU_airdropResult"', assets)
+        self.assertIn('remoteExecCall ["YSF_fwRequestLogistics", 2]', assets)
+        self.assertNotIn("YOSHI_FLING_THING;", assets.split("YFU_assetsFinalizeDeliveryAirdrop", 1)[1])
+
+    def test_vigil_logistics_scenario_correlates_manifest_drop_and_egress(self) -> None:
+        plan = multiplayer.select_plan("gameplay", "vigil-fixed-wing-logistics")
+        with tempfile.TemporaryDirectory() as temporary:
+            mission = Path(temporary) / "Tier.Stratis"
+            multiplayer.write_tier_mission(mission, "logistics-test-deadbeef", plan)
+            server = (mission / "initServer.sqf").read_text(encoding="ascii")
+            client = (mission / "initPlayerLocal.sqf").read_text(encoding="ascii")
+        for assertion in (
+            "vigil.logistics.registration",
+            "vigil.logistics.request.accepted",
+            "vigil.logistics.control.duplicateRejected",
+            "vigil.logistics.ingress",
+            "vigil.logistics.release",
+            "vigil.logistics.parachute",
+            "vigil.logistics.descent",
+            "vigil.logistics.accuracy",
+            "vigil.logistics.survival",
+            "vigil.logistics.manifest",
+            "vigil.logistics.locality",
+            "vigil.logistics.egress",
+        ):
+            self.assertIn(assertion, server)
+        for category in ("addWeaponCargoGlobal", "addMagazineCargoGlobal", "addItemCargoGlobal", "addBackpackCargoGlobal"):
+            self.assertIn(category, server)
+        self.assertIn("TRIBUNAL_fnc_inventoryPayload", server)
+        self.assertIn("TRIBUNAL_fnc_observeDelivery", server)
+        self.assertIn('getOrDefault ["chuteLocalities", []]', server)
+        self.assertIn("private _dropSummary", server)
+        self.assertIn("TRIBUNAL_fnc_observeFlight", server)
+        self.assertIn("call YOSHI_taskFW_logiStub", client)
+        self.assertIn("call YFU_assetsSubmitOrder", client)
+        self.assertIn("vigil.logistics.client.emptyRejected", client)
+        self.assertIn("vigil.logistics.client.replication", client)
+        self.assertIn("vigil.logistics.client.inventory", client)
+        self.assertIn("vigil.logistics.client.locality", client)
+
     def test_terminal_lifecycle_outcomes_short_circuit_only_complete_non_live_runs(self) -> None:
         passed = {"status": "PASS", "assertions": 1, "failures": 0}
         failed = {"status": "FAIL", "assertions": 1, "failures": 1}
