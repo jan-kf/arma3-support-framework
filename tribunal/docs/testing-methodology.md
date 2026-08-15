@@ -43,39 +43,27 @@ project production mod never depends on Tribunal.
 
 ## Feature review procedure
 
-Before substantial permanent coverage, write a short review that answers:
+The single canonical 12-question review, classification gates, feature-specific
+fill-in section, execution phases, and acceptance rules are in
+[`feature-review-program.md`](feature-review-program.md). Apply that program
+before substantial permanent feature coverage; do not maintain a second local
+variant of its checklist.
 
-1. What should the user observe?
-2. What does the feature do now, including negative paths?
-3. Which machines and code paths implement it?
-4. Which mechanics are generic Arma, ACE, or CBA behavior?
-5. Which behavior is project-specific?
-6. Which unusual details have controlled evidence that they are required?
-7. Which details look accidental, legacy, fragile, or need experimentation?
-8. Is a better native mechanism available, and has it been proven?
-9. What is the stable behavioral contract?
-10. Which implementation details must remain free to change?
-11. Which mechanisms genuinely deserve characterization?
-12. Which repeated mechanics should be promoted into Tribunal?
-
-Assign one outcome: `KEEP AS-IS AND SPEC-TEST`, `KEEP + CHARACTERIZE ENGINE
-REQUIREMENT`, `REFINE BEFORE PERMANENT COVERAGE`, `REWRITE BEFORE PERMANENT
-COVERAGE`, `NEEDS EXPERIMENTATION`, or `DEFER / insufficient value`. Proposals
-to replace working code require a controlled comparison before implementation.
-
-The workflow is:
+In compact form, the workflow remains:
 
 ```text
-feature -> review -> behavioral contract -> generic tools
-        -> experiment/refine uncertain mechanics
-        -> specification tests (+ evidence-backed characterization only)
-        -> Live iteration -> fresh autonomous proof -> commit
+inventory -> feature-specific scope -> canonical review -> contract/classification
+          -> controlled experiment or evidence-supported refinement when needed
+          -> generic tooling boundary -> permanent scenario when justified
+          -> Live iteration -> fresh autonomous proof -> validation
+          -> inventory update -> commit/clean closeout
 ```
 
-`ScenarioReview` is intentionally small. It records the primary test type,
-contract, outcome, rationale, dependencies, evidence types, locality, and any
-evidence-backed characterization. Detailed engineering notes remain here or in
-feature documentation rather than growing a general-purpose schema.
+`ScenarioReview` is intentionally small. It records the canonical program's
+primary test type, contract, outcome, rationale, dependencies, evidence types,
+locality, and any evidence-backed characterization. Detailed engineering notes
+remain here or in feature documentation rather than growing a general-purpose
+schema.
 
 ## Existing coverage audit
 

@@ -5,6 +5,11 @@ It is an inventory, not a roadmap or a promise that every source surface is
 intended to survive. It records what exists so later reviews can choose stable
 behavioral contracts before permanent Tribunal coverage is added.
 
+Reviews selected from this inventory follow Tribunal's
+[`feature-review-program.md`](feature-review-program.md). A completed review
+updates the affected inventory status; the inventory itself does not invent or
+establish product semantics.
+
 ## Reading the inventory
 
 Implementation state:
