@@ -4,6 +4,10 @@ Tribunal separates the behavior a project promises from the mechanics used to
 prove it. Existing code is evidence: it is neither presumed correct nor
 presumed obsolete. A permanent test must say which boundary it protects.
 
+The repository-wide capability and coverage map is maintained in
+[`pontifex-feature-inventory.md`](pontifex-feature-inventory.md). That inventory
+identifies review candidates; it does not itself create behavioral contracts.
+
 ## Taxonomy
 
 ### Specification tests

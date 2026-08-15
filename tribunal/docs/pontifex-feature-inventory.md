@@ -1,0 +1,537 @@
+# Pontifex feature inventory
+
+This is a repository-grounded map of the Pontifex runtime at commit `a55d2d1`.
+It is an inventory, not a roadmap or a promise that every source surface is
+intended to survive. It records what exists so later reviews can choose stable
+behavioral contracts before permanent Tribunal coverage is added.
+
+## Reading the inventory
+
+Implementation state:
+
+* **Implemented** — an active registration/startup path reaches substantive behavior.
+* **Partial** — meaningful behavior exists, but a named workflow has a missing,
+  fragile, or explicitly unfinished stage.
+* **Scaffolded** — types, state, or UI exist without an executable end-to-end capability.
+* **Disabled/unreachable** — a guard, missing action, or absent registration blocks normal use.
+* **Obsolete/dead** — a path appears superseded or unreachable. This is a review
+  finding, not authorization to delete it.
+* **Unclear** — repository evidence does not establish supported-product intent.
+
+Coverage status:
+
+* **COVERED** — a permanent scenario has a reviewed specification contract.
+* **PARTIALLY COVERED** — only part has a contract, or a composite feature covers
+  it while adjacent behavior remains uncovered.
+* **REVIEWED / DEFERRED** — formal review found no current testable contract or
+  insufficient value.
+* **REVIEWED / NEEDS EXPERIMENTATION** — formal review retained an unresolved
+  engine or compatibility question requiring controlled evidence.
+* **NOT YET REVIEWED** — implementation exists without formal review/permanent coverage.
+* **UNKNOWN** — intent or reachability is too unclear for a stronger status.
+
+“Incidentally exercised” never means specification-covered. Static checks,
+smoke assertions, and execution as a dependency are useful regression evidence,
+but do not establish a user-facing contract.
+
+## Top-level map
+
+Five top-level runtime families are present:
+
+| Family | Purpose | Primary locations | Overall state | Coverage summary |
+| --- | --- | --- | --- | --- |
+| CORDIS shared runtime | Authority routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Implemented, with reserved bootstrap files | **NOT YET REVIEWED**; heavily exercised incidentally |
+| Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS strong, CBR/Iron Dome uncovered |
+| Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
+| Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fixed-wing logistics only |
+| Cross-mod composition | Contracts joining CORDIS, Vigil, Field Utilities, ACE/CBA, and editor/Zeus surfaces | calls across all addons/configs | Implemented, some optional/degraded paths | **PARTIALLY COVERED**; one composite path direct, most incidental |
+
+Tribunal/Pontifex validation is documented separately below. It is substantial
+repository architecture, but is not counted as a shipped product family.
+
+## 1. CORDIS shared runtime
+
+CORDIS is the common operational runtime, not standalone gameplay. Primary
+locations are `source/core/addons/CORDIS/config.cpp` and `functions/`.
+
+### 1.1 Authority-aware execution
+
+* **Server routing** calls a named function locally when authoritative or sends
+  it to owner `2`. **Implemented; NOT YET REVIEWED.** Vigil transport/CAS/task
+  management exercise it incidentally.
+* **Object-owner routing** executes on the machine local to a projectile,
+  vehicle, UAV, or cargo object. **Implemented; NOT YET REVIEWED.** APS, Vigil
+  strike, FPV actions, and towing consume it.
+* **Group-owner routing** routes AI waypoint/group mutations to `groupOwner`.
+  **Implemented; NOT YET REVIEWED.** Vigil tasking consumes it.
+* **Once-only routed execution** combines authority routes with server TTL keys.
+  **Implemented; NOT YET REVIEWED.** Duplicate rejection is covered in Vigil
+  scenarios, but CORDIS itself is only an evidence dependency.
+
+A future review should separate public routing guarantees from generic Arma
+ownership behavior already proven by Tribunal's `locality-probe`.
+
+### 1.2 Deduplication and fan-out
+
+* **Server/local TTL caches** claim and prune once keys. **Implemented; NOT YET
+  REVIEWED.** The server cache underpins current public fan-out.
+* **Recipient resolution** handles all players, a side, a player object, or a
+  list while filtering dead/non-player units. **Implemented; NOT YET REVIEWED.**
+* **Scoped emit** performs server-deduplicated dispatch to resolved recipients.
+  **Implemented; NOT YET REVIEWED.** Chat/radio wrappers use it.
+
+### 1.3 Feedback, diagnostics, and bootstrap
+
+* **Side chat/radio** provide setting-aware scoped messages, speaker
+  normalization, and `CfgRadio` lookup. **Implemented; NOT YET REVIEWED.** Audio
+  is not proven while automated clients use `-noSound`.
+* **Curator notifications** and **debug logging** provide deduplicated hints and
+  server-normalized logs/optional `systemChat`. **Implemented; NOT YET REVIEWED.**
+* **Server cache initialization** and **client initialized marker** are
+  implemented and incidentally smoke-covered, not feature contracts.
+* `fn_initSettings.sqf` and `fn_utils.sqf` contain no behavior. **Scaffolded;
+  UNKNOWN.** Do not test them unless a public capability is added.
+
+## 2. Advanced Systems
+
+Primary locations: `source/advanced-systems/addons/AdvSys/config.cpp` and
+`functions/{aps,cbr,iron_dome}`. Dependencies: CORDIS, CBA, ACE interaction,
+and Arma vehicle/projectile locality.
+
+### 2.1 LORICA Active Protection System
+
+The permanent `aps-intercept` scenario proves causal hard/soft outcomes, exact
+tracked threats, disabled/outside/away controls, resource consumption,
+locality, and client replication.
+
+#### 2.1.1 Threat acquisition and arbitration
+
+* **Local discovery/tracking** uses CBA Fired class handlers and a local
+  per-frame projectile set. **Implemented; COVERED as part of APS**, although
+  handler names/cadence are not specification.
+* **Threat predicate** rejects untrackable, disabled, non-closing, excessive-
+  TTI, off-bearing, or miss-distance threats. **Implemented; COVERED.**
+* **Response selection** chooses charged hard kill, then fuel-backed soft kill.
+  **Implemented; COVERED.** Private selection mechanics remain replaceable.
+* **Authoritative ledger/deduplication** correlates vehicle/projectile/mode and
+  prevents duplicate consumption. **Implemented; PARTIALLY COVERED.** Exact
+  identities are evidence; ledger representation is not contract.
+
+#### 2.1.2 Hard kill
+
+* **Interception** stops/deletes the exact inbound projectile before impact.
+  **Implemented; COVERED** with identity, neutralization, no-impact, and
+  protected-outcome evidence.
+* **Charge inventory/fallback** counts, tops up, consumes one, and transitions
+  offline/fallback on depletion. **Implemented; COVERED for consumption and
+  fallback outcome.** Every inventory class is not specified.
+* **Disabled control** lets the same threat impact without engagement or
+  consumption. **Implemented; COVERED.**
+
+#### 2.1.3 Soft kill
+
+* **Deflection** changes the same live tracked projectile's velocity without
+  deleting it. **Implemented; COVERED** with pre/post velocity, survival,
+  trajectory, no impact, and ledger correlation.
+* **Fuel resource** consumes the configured amount and disables on insufficient
+  power. **Implemented; COVERED for one successful decrement/result;** broader
+  threshold/status behavior is not direct coverage.
+
+#### 2.1.4 Installation, controls, and feedback
+
+* **Eden synchronized enable module** and **Zeus per-vehicle toggle** install or
+  toggle APS. **Implemented; PARTIALLY COVERED** for API state, but real module/
+  curator activation and invalid selection are **NOT YET REVIEWED**.
+* **Enable/disable lifecycle** initializes resources/runtime, publishes state,
+  starts/stops drone work, and registers/removes actions. **Implemented;
+  PARTIALLY COVERED.** Combat outcomes are direct; JIP/action cleanup is not.
+* **ACE menu** provides hard-kill off/reboot, soft-kill on/off, status, voice,
+  and anti-drone actions. **Implemented; NOT YET REVIEWED.** It needs the future
+  real ACE interaction adapter.
+* **Beam/particle animation** and **voice/status sequences** expose engagement,
+  charge, fuel, and errors. **Implemented; NOT YET REVIEWED.** The scenario
+  proves world outcome, not rendering or audible playback.
+
+#### 2.1.5 Experimental anti-drone
+
+Detects nearby fast sub-1000 kg airborne UAVs, consumes soft-kill fuel,
+destroys the UAV, schedules cleanup, and exposes ACE controls/status.
+**Implemented; NOT YET REVIEWED.** It is outside projectile APS coverage and
+removes many event handlers from the UAV, making locality, collateral handler
+removal, and resource semantics high-risk review topics.
+
+### 2.2 Counter Battery Radar
+
+* **Artillery detection/prediction** assigns shell UIDs, tracks airborne rounds,
+  projects fall time/position, and sends owner-local updates serverward.
+  **Implemented; NOT YET REVIEWED.**
+* **Impact clustering/warnings** groups predictions, updates red zone/count/ETA
+  markers, warns by side, and prunes expiry. **Implemented; NOT YET REVIEWED.**
+* **Origin estimation** narrows repeated launch origins into a search marker.
+  **Implemented; NOT YET REVIEWED.** Confidence, randomness, scope, and expiry
+  need review.
+* **Eden enable / Zeus toggle** start, stop, reset, and report the system.
+  **Implemented; NOT YET REVIEWED.**
+
+This is a high-value review because existing Tribunal artillery, map,
+trajectory, and cleanup tools cover most generic mechanics.
+
+### 2.3 OPHANIM / Iron Dome
+
+* **Launcher asset/registry** registers enabled `YAS_OPHANIM_box` instances.
+  **Implemented; NOT YET REVIEWED.** The server initializes it every run.
+* **Shell tasks/assignment** deduplicate threats, select in-range launchers,
+  schedule launcher spacing, and retry within shot limits. **Implemented; NOT
+  YET REVIEWED.** Concurrency and stale tasks are architectural risks.
+* **Interceptor/terminal monitoring** creates a Jian missile, guides/monitors
+  it, detonates near the shell, and records retry/end reasons. **Implemented;
+  NOT YET REVIEWED.** No causal physical proof exists.
+* **Range setting/launch audio** expose CBA configuration and randomized sound.
+  **Implemented; NOT YET REVIEWED.** Audible proof needs opt-in audio capture.
+
+### 2.4 Common Advanced Systems utilities
+
+Beam effects, positional helpers, server `say3D`, number-to-voice tokenization,
+and CORDIS-backed debug/radio/curator wrappers are **implemented; NOT YET
+REVIEWED standalone**. Review only when a consumer establishes user-visible
+behavior.
+
+## 3. Vigil support tablet
+
+Primary locations: `source/visual-support-tablet/addons/VIGIL/config.cpp`,
+`ui/`, and `functions/`. Vigil depends on CORDIS/CBA and optionally Field
+Utilities for fixed-wing airdrop.
+
+### 3.1 Tablet access, shell, and navigation
+
+* **Items/access rule/keybind** provide three side terminal variants, optional
+  tablet requirement, and Ctrl+Home open. **Implemented; PARTIALLY COVERED.**
+  `vigil-ui` proves the BLU path; side variants, rejection, and override are not.
+* **Open/theme/intro/close/reopen** selects skin/colors, initializes, cleans up,
+  and resets. **Implemented; COVERED** with real input/framebuffer/locality.
+* **Tabbed navigation** registers Home, Assets, and task views. **Implemented;
+  PARTIALLY COVERED.** Visible artillery navigation is direct, not every page.
+* **Homepage task list** renders managers and navigates to a selected task.
+  **Implemented; NOT YET REVIEWED.** Task scenarios do not use this path.
+
+### 3.2 Asset discovery and whitelist
+
+* **Live asset browser** discovers friendly manned assets, classifies artillery,
+  rotary CAS, transport, fixed-wing/recon, and renders status/actions.
+  **Implemented; PARTIALLY COVERED.** Fixtures prove specific eligibility, not
+  mixed-fleet refresh/presentation.
+* **Eden whitelist** restricts the source to synchronized objects; **Zeus toggle**
+  adds/removes a selected object. **Implemented; NOT YET REVIEWED.**
+
+### 3.3 Coordinates, vehicle tasking, and governor
+
+* Grid parse/format, map clicks/previews, nearest helipad, waypoints, hard stop/
+  AI reboot, engine/landing mode, and safe/transit AI presets are **implemented;
+  PARTIALLY COVERED** through artillery/flight outcomes. Helpers are replaceable.
+* The **task governor** manages vehicle-keyed init/start/mission/end/finally
+  stages, outcomes, stale retries, cancellation, completion, and a CBA
+  dispatcher. **Implemented; PARTIALLY COVERED.** Transport/artillery/CAS prove
+  several success, duplicate, bounded failure, and cleanup outcomes, but no
+  independent governor contract exists.
+
+### 3.4 Artillery and VLS
+
+* **Request UI/preview markers** render grid/ordnance/spread/count/direction and
+  circle/line state client-locally. **Implemented; COVERED** by `vigil-markers`
+  for updates, stale replacement, rendering, locality, and cleanup.
+* **Native artillery execution** fires exact physical circle/line counts and
+  rejects zero, out-of-range, and no-ammo requests. **Implemented; COVERED** by
+  `vigil-artillery` for authority, trajectories, geometry, locality, and cleanup.
+* **VLS execution** launches vertically, guides, and reaches the target region.
+  **Implemented; COVERED.** Its target-report handshake is **REVIEWED / NEEDS
+  EXPERIMENTATION** because no retained A/B proves it engine-required.
+
+### 3.5 Helicopter transport / reinsertion
+
+* **Eligibility/request** captures destination, altitude, ignore-enemy, and
+  do-not-climb state. **Implemented; PARTIALLY COVERED.** Eligibility/locality is
+  direct; the latter option semantics are not explicit assertions.
+* **Outbound/LZ/landing/wait** dispatches once, rejects duplicates, and reaches/
+  settles at the LZ. **Implemented; COVERED** by `vigil-transport`.
+* **RTB/reinsertion** returns to recorded home, settles, and cleans resources.
+  **Implemented; COVERED.** Reinsertion is not a separate implementation.
+* Hidden-pad plus `land "LAND"` is **REVIEWED / NEEDS EXPERIMENTATION** as a
+  characterization candidate; visible landing is covered without freezing it.
+
+### 3.6 Rotary-wing CAS
+
+* **Dispatch/area/timer/RTB** validates crewed armed aircraft, rejects duplicate/
+  unavailable requests, transits on-station, disengages, and returns.
+  **Implemented; COVERED** by `vigil-cas`.
+* **Target/combat selection** filters hostile ground targets to area, excludes
+  friendly/neutral/outside controls, selects real ammunition, and correlates
+  fire/projectile/impact plus no-target/no-ammo controls. **Implemented;
+  COVERED.** Sensor/reveal dependence is **REVIEWED / NEEDS EXPERIMENTATION**.
+* **Combat RTB reset** (reboot plus fresh MOVE) is an evidence-backed engine
+  characterization. **COVERED / CHARACTERIZED.**
+
+### 3.7 Fixed-wing shared lifecycle
+
+* **Editor/Zeus registration** configures asset, ingress, exfil, and Zeus add.
+  **Implemented; PARTIALLY COVERED.** Direct API registration is covered; real
+  module activation is not.
+* **Snapshot serialization** retains class, side, crew, fuel, damage, pylons,
+  ammunition, role, and points while deleting the source and publishing a
+  sanitized registry. **Implemented; COVERED for strike/logistics state.** Exact
+  schema is not contract.
+* **Deploy/reconstruct/loiter** and **bounded RTB/egress** create one server-owned
+  aircraft/crew, restore state, enter operating space, then record outcome and
+  clean resources while retaining registration. **Implemented; COVERED** for
+  strike/logistics.
+* **Fixed-wing UAV deploy** is rejected by an explicit unstable guard.
+  **Disabled/unreachable; REVIEWED / NEEDS EXPERIMENTATION.**
+
+### 3.8 Fixed-wing strike
+
+* **Payload selection/guards**, **normal laser designation**, and **weapon IR
+  designation** produce two exact guided munitions, effects, repeat use,
+  no-designation rejection, and cleanup. **Implemented; COVERED** by
+  `vigil-fixed-wing`.
+* **IR helper** creates/cleans a side-correct fake laser target. Designation is
+  covered; beam rendering/color/compatibility are **PARTIALLY COVERED**.
+* **3CB Hellfire mapping** has no qualifying installed pylon row for comparison.
+  **Implemented-looking; REVIEWED / NEEDS EXPERIMENTATION.**
+* `fn_fwLaserTest.sqf` is substantial manual diagnostics with no normal product
+  action found. **Unclear; UNKNOWN.**
+
+### 3.9 Fixed-wing logistics / aerial delivery
+
+* **Vigil-to-Fabricator order** opens Field Utilities with aircraft/grid/airdrop
+  context and rejects empty/concurrent orders. **Implemented; COVERED** by
+  `vigil-fixed-wing-logistics` as a composite feature.
+* **Manifest/authority transfer** expands/packs objects, transfers them
+  serverward, and preserves weapon/magazine/item/backpack contents.
+  **Implemented; COVERED for this path.** General Fabricator use is not.
+* **Ingress/release/parachute/descent/landing** releases exact cargo, lands it
+  intact/accurately, replicates outcome, and egresses/cleans up. **Implemented;
+  COVERED.**
+* **Capacity/weight limits** do not exist. **Absent; REVIEWED / DEFERRED.**
+
+### 3.10 Reconnaissance
+
+* **RECON role bit/label** is **scaffolded; REVIEWED / DEFERRED** because
+  semantics are undefined.
+* **Grid/altitude/radius form state** is **scaffolded/unreachable; REVIEWED /
+  DEFERRED**: no reachable tab/submit and `fn_recon_task.sqf` is empty.
+* **Task, sensors, contacts/imagery/report, persistence, cleanup, replication/**
+  **JIP** are absent and **REVIEWED / DEFERRED**. Define the information product
+  and lifecycle first.
+
+### 3.11 Other Vigil support systems
+
+* **Helicopter stabilization** has sampling/force code, but aircraft registration
+  is commented out. **Disabled/unreachable; UNKNOWN.** Review intent first.
+* **Radio/chat/debug/curator feedback** wraps CORDIS. **Implemented; NOT YET
+  REVIEWED.** Task state does not prove visible/audible feedback.
+
+## 4. Field Utilities
+
+Primary locations: `source/field-utilities/addons/FieldUtils/config.cpp`,
+`functions/`, and `ui/`. Dependencies: CORDIS, CBA, ACE, ZEN, optionally Vigil.
+
+### 4.1 Virtual Storage and Fabricator
+
+* **Mission-maker registration** uses synchronized storage objects and designated
+  Fabricator stations, optionally with nearby ZEN inventory. **Implemented; NOT
+  YET REVIEWED.** Real module sync/misconfiguration are uncovered.
+* **Fabricator UI/queue** lists assets/images/quantities, ordered queue, grid,
+  progress, success/failure, and may reuse Vigil skins. **Implemented; PARTIALLY
+  COVERED.** Airdrop context/manifest/result is covered; normal browsing, local
+  orders, invalid grids, and styling are not.
+* **Single local fabrication** clones one stored object near the player.
+  **Implemented; NOT YET REVIEWED.** Its older globally named helper is active,
+  so do not label it obsolete without review.
+* **Multi-item packing** clones objects, computes bounds/orientations, packs
+  containers/pallets, preserves inventory, and delivers locally. **Implemented;
+  PARTIALLY COVERED.** Packing/manifest fidelity is covered in airdrop; arbitrary
+  classes, capacity edges, placement, and failure cleanup are not.
+* **Airdrop handoff** calls Vigil delivery and observes authoritative parachute
+  results. **Implemented; COVERED as a cross-mod composite.** Missing API fails
+  closed.
+
+### 4.2 Bridge Builder
+
+* **Construction box/ACE entry** exposes “Open Bridge Builder.” **Implemented;
+  NOT YET REVIEWED.** Recommended first ACE adapter consumer.
+* **Planning UI** selects layout, ramp, orientation, clipping, counts, pitch,
+  offsets, and auto calculation. **Implemented; NOT YET REVIEWED.**
+* **Preview** computes/caches queues and renders validity colors. **Implemented;
+  NOT YET REVIEWED.** Can reuse framebuffer/spatial evidence.
+* **Build/removal** incrementally creates deduplicated segments with configured
+  delay and removes chains. **Implemented; NOT YET REVIEWED.** Authority,
+  collision, interruption, resources, cleanup are gaps.
+* **Direct chain-extension actions** coexist with plan UI. **Implemented-looking;
+  UNKNOWN.** Review supported-versus-legacy ownership.
+
+### 4.3 Logistics and object handling
+
+* **Automatic pallet/container handling** makes existing/new pallets draggable/
+  carryable and adds box collision/load behavior. **Implemented; NOT YET
+  REVIEWED.** Active server/EntityCreated hooks exist.
+* **Nearby supply actions** expose supplies around pallets, boxes, vehicles, and
+  small UAVs. **Implemented; NOT YET REVIEWED.**
+* **Safe-fall/fling/attach helpers** support delivery/packing. **Implemented;
+  PARTIALLY COVERED** only in fixed-wing cargo.
+
+### 4.4 Towing and sling ropes
+
+* **Tow points/rope deployment** use configured or geometry-derived points and
+  owner-local tow parent. **Partial; NOT YET REVIEWED.** TODOs cover filtering,
+  tow-parent behavior, and reset after rope loss.
+* **ACE tow/stow actions** are registered on vehicles. **Implemented; NOT YET
+  REVIEWED.** Menu, locality, movement, breakage, cleanup are uncovered.
+* **Four-point helicopter sling helper** computes lift corners and attaches/
+  stows ropes. **Implemented; UNKNOWN reachability** because no normal action
+  invoking it was found.
+
+### 4.5 FPV/UAV field modifications
+
+* **Small-UAV profile** adds owner-local engine attach/detach, drag/carry, fuel,
+  and camouflage behavior. **Implemented; NOT YET REVIEWED.**
+* **IED payload** attaches/detonates a charge and creates effects on UAV death.
+  **Implemented; NOT YET REVIEWED.** Destructive locality/collateral effects
+  need causal review.
+* **Mortar/grenade payloads** grant finite counts, create physical ordnance, and
+  decrement counts. **Implemented; NOT YET REVIEWED.** Impact, depletion,
+  duplicate, and ownership controls are uncovered.
+* **Click/shuffle feedback** is **implemented; NOT YET REVIEWED**; audio unproven.
+
+### 4.6 Shared libraries
+
+* **Geometry/packing primitives** provide bounds, transforms, lift corners,
+  orientations, and placement. **Implemented; PARTIALLY COVERED incidentally**
+  by logistics, not standalone specification.
+* **Map helpers** provide ID/location markers, direction labels, and fall time.
+  **Implemented; NOT YET REVIEWED.** Overlap with Vigil leaves ownership unclear.
+* **Sound, global ACE registration, debug/chat wrappers** are **implemented; NOT
+  YET REVIEWED.** Current callers remain; do not label them dead.
+
+## 5. Cross-mod composition and integration
+
+### 5.1 CORDIS consumer contract
+
+All feature addons declare CORDIS and use authority, dedupe, feedback, or
+logging. **Implemented; PARTIALLY COVERED incidentally.** APS/Vigil multiplayer
+success proves use, but no scenario promises CORDIS behavior across owners,
+sides, JIP, disconnects, or multiple clients.
+
+### 5.2 Vigil–Field Utilities logistics bridge
+
+Vigil invokes Fabricator UI; Field Utilities packages manifests and calls
+Vigil's authoritative request; Vigil calls Field Utilities parachute mechanics
+and returns one result. **Implemented; COVERED** for reviewed fixed-wing
+airdrop. General fabrication is outside the contract.
+
+### 5.3 Shared UI and interaction
+
+* Field Utilities reuses Vigil display/terminal skins while keeping separate
+  state. **Implemented; PARTIALLY COVERED incidentally** by logistics. Nested
+  lifecycle, styling, and use without Vigil are not reviewed.
+* APS and Field Utilities register many ACE object/class actions. **Implemented;
+  NOT YET REVIEWED as a suite boundary.** No product scenario proves real
+  ACE-menu availability/activation.
+
+### 5.4 Eden/Zeus and CBA configuration
+
+* APS/CBR, whitelist, fixed-wing points/assets, Virtual Storage, and Fabricator
+  Eden modules plus Zeus tools are **implemented; NOT YET REVIEWED**. Scenarios
+  call APIs directly, not real synchronization/curator paths.
+* CBA startup/settings cover access, feedback, colors, timing, and range.
+  **Implemented; PARTIALLY COVERED incidentally.** Cold init is proven, not each
+  default/scope/change/combination.
+
+### 5.5 State, serialization, and persistence
+
+* Replicated object/mission variables carry APS, task, registry, cargo-result,
+  whitelist, and config state. **Implemented; PARTIALLY COVERED** by one-client
+  replication scenarios.
+* No durable campaign/database persistence exists in the four mods.
+* **JIP/multi-client semantics** are **NOT YET REVIEWED**. One authenticated
+  client is the proof boundary; future identities are architecture, not proof.
+
+## Validation architecture (not a product family)
+
+Tribunal owns mission/PBO construction, discovery, contracts/reviews, generic
+projectile/artillery/aviation/combat/delivery/designation/locality/visual
+evidence, fail-closed assertions, artifacts, and terminal lifecycle. Pontifex
+owns builds, Steam/Proton/server runtime, private network/security, Live Mode,
+and feature scenarios. Locations include `tribunal/`, `tools/`, and
+`source/*/tests/tribunal`.
+
+Permanent feature scenarios discovered by the runtime adapter are:
+
+| Scenario | Reviewed behavior |
+| --- | --- |
+| `aps-intercept` | APS hard/soft kill, controls, locality, resources, replication |
+| `vigil-ui` | real tablet open/navigation/close/reopen and UI locality |
+| `vigil-markers` | artillery preview rendering/state lifecycle and cleanup |
+| `vigil-artillery` | circle/line artillery, controls, VLS, locality/cleanup |
+| `vigil-transport` | helicopter outbound/LZ/wait/RTB lifecycle |
+| `vigil-cas` | rotary CAS filtering, attack, timer, controls, RTB |
+| `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
+| `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
+
+Framework `locality-probe` and `visual-framebuffer` scenarios prove Tribunal,
+not product features. Promote generic backlog mechanics only for a concrete
+consumer.
+
+One discoverability inconsistency is recorded, not changed here:
+`tools/pontifex_multiplayer.py` discovers Advanced Systems and Vigil roots,
+while `tribunal.project.json` lists only Advanced Systems for the generic CLI.
+This is a future harness review item, not a product defect or missing runtime
+coverage.
+
+## Deferred, incomplete, disabled, and unclear areas
+
+| Area | Classification | Repository-grounded reason |
+| --- | --- | --- |
+| Vigil reconnaissance | **REVIEWED / DEFERRED** | role/state only; unreachable form, no submit, empty task, no sensor/output/lifecycle |
+| Fixed-wing UAV deploy | **REVIEWED / NEEDS EXPERIMENTATION** | explicitly rejected as unstable |
+| Helicopter stabilizer | **UNKNOWN / disabled** | implementation exists; aircraft registration commented out |
+| 3CB Hellfire mapping | **REVIEWED / NEEDS EXPERIMENTATION** | no compatible installed pylon row for A/B |
+| VLS target handshake | **REVIEWED / NEEDS EXPERIMENTATION** | physical outcome covered; internal necessity unproven |
+| Transport hidden-pad landing | **REVIEWED / NEEDS EXPERIMENTATION** | landing works; exact mechanism necessity unproven |
+| Developer laser harness | **UNKNOWN** | substantive diagnostic code, no normal entry found |
+| APS anti-drone | **NOT YET REVIEWED** | active experimental behavior outside projectile contract |
+| CBR/origin estimation | **NOT YET REVIEWED** | active substantial code, no contract/scenario |
+| Iron Dome | **NOT YET REVIEWED** | active server subsystem, no causal proof |
+| Field towing | **Partial / NOT YET REVIEWED** | source TODOs identify parent/cleanup gaps |
+| Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |
+| Bridge direct extension vs plan UI | **UNKNOWN** | both paths coexist; ownership undocumented |
+| Core settings/utils files | **Scaffolded / UNKNOWN** | reserved files contain no behavior |
+| Multi-client/JIP | **NOT YET REVIEWED** | one authenticated-client proof boundary |
+
+## Prioritized next feature reviews
+
+1. **Field Utilities Bridge Builder.** Large player-visible workflow with
+   construction/removal authority and collision/cleanup risk; best first reuse
+   of Tribunal ACE interaction, spawn/settle, UI, and spatial evidence.
+2. **Advanced Systems Counter Battery Radar.** High operational value and no
+   coverage despite prediction, clustering, warnings, markers, and origin
+   estimation; reuses artillery/map/trajectory/cleanup tools.
+3. **Field Utilities Fabricator and Virtual Storage**, excluding covered
+   fixed-wing airdrop. Review module sync, queue UI, cloning, packing,
+   inventory, authority, and cleanup.
+4. **OPHANIM / Iron Dome.** Always-started server subsystem with physical
+   interceptors, concurrent assignment, retries, and stale-task risk; reuses
+   artillery/projectile/combat evidence.
+5. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
+   user-visible and multiplayer-sensitive; separate UAV profile, IED, mortar,
+   and grenade contracts during review.
+
+Then consider APS anti-drone, CORDIS public routing/dedupe semantics, suite
+editor/Zeus modules, and towing. Do not resume reconnaissance until the product
+decisions in `vigil-fixed-wing-recon-review.md` are answered.
+
+## Evidence sources
+
+This inventory was derived from all four addon configs/function trees and
+`UPSTREAM_README.md` files; feature scenarios and `ScenarioReview` metadata;
+and durable reviews in this directory. Testing distinctions remain in
+[`testing-methodology.md`](testing-methodology.md), with runtime/tool ownership
+in [`architecture.md`](architecture.md).
