@@ -331,3 +331,13 @@ role, request, task and reuse semantics remain product-side. See
 [`../tribunal/docs/vigil-fixed-wing-logistics-review.md`](../tribunal/docs/vigil-fixed-wing-logistics-review.md)
 for the architecture review, engine characterizations, Live calibration and
 false-PASS analysis.
+
+## Fixed-wing reconnaissance
+
+Fixed-wing reconnaissance is not currently a testable product feature. The
+registry can label UAV planes `RECON`, but those aircraft are explicitly blocked
+from deployment and no request, sensor collection, user-visible result, task
+lifecycle or multiplayer propagation exists. The disconnected Recon form has no
+submit action and an empty task implementation. Tribunal therefore adds no
+gameplay scenario until the information product and lifecycle are decided. See
+[`../tribunal/docs/vigil-fixed-wing-recon-review.md`](../tribunal/docs/vigil-fixed-wing-recon-review.md).

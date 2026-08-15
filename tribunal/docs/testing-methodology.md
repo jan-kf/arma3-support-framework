@@ -255,4 +255,14 @@ compatibility work caused by changes to those private functions.
 | 3 | Fixed-wing strike support | REFINE BEFORE PERMANENT COVERAGE | completed review: serialization, ingress/loiter/egress, both designation paths, native guided impact, controls and compatibility refinement |
 | 4 | Fixed-wing logistics | REFINE BEFORE PERMANENT COVERAGE | completed review: authoritative physical manifest, bounded ingress/drop/parachute/landing, exact inventory, locality, controls and RTB |
 
-Fixed-wing logistics now reuses the proven registry, serialization, aviation and cleanup adapters while retaining a separate physical-delivery contract. Its review is complete; fixed-wing reconnaissance is the recommended next feature family.
+Fixed-wing logistics now reuses the proven registry, serialization, aviation and cleanup adapters while retaining a separate physical-delivery contract. Its review is complete. Fixed-wing reconnaissance was reviewed next and deferred because no executable product contract exists.
+
+### Vigil fixed-wing reconnaissance finding
+
+The reconnaissance review found only a UAV-derived fixed-wing role bit and UI
+label. Fixed-wing UAV deployment is explicitly disabled as unstable, the
+separate Recon form is unreachable and has no submit action, its task file is
+empty, and no sensor, contact, imagery, reporting, persistence or multiplayer
+result path exists. Because the player-visible information product is undefined,
+the feature is DEFERRED rather than completed by inference. See
+[`vigil-fixed-wing-recon-review.md`](vigil-fixed-wing-recon-review.md).
