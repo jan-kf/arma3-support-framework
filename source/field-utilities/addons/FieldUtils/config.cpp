@@ -6,7 +6,7 @@ class CfgPatches {
         units[] = {"YFU_Bridge_Box"};
         weapons[] = {};
         requiredVersion = 2.20;
-        requiredAddons[] = {"cba_main", "YCD_CORDIS", "ace_main", "ace_common", "zen_main","A3_Data_F", "A3_UI_F", "A3_Props_F_Exp_A", "A3_Weapons_F"};
+        requiredAddons[] = {"cba_main", "YCD_CORDIS", "ace_main", "ace_common", "zen_main","A3_Data_F", "A3_UI_F", "A3_Props_F_Exp_A", "A3_Weapons_F", "A3_Structures_F_Exp_Civilian_Accessories"};
         version = "1.0";
         author = "Yoshi";
     };

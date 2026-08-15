@@ -4,8 +4,8 @@ YFU_bridge_getClassProfile = {
 	params ["_className"];
 
 	switch (_className) do {
-		case "FootBridge_0_ACR": {
-			[4.8, 1.1, 0.2, 0]
+		case "Land_Plank_01_4m_F": {
+			[4.1792, 0.8982, 0.1311, 0]
 		};
 		default {
 			[]
@@ -86,8 +86,8 @@ YFU_bridge_getSegmentMetrics = {
 	private _bbMin = _bounds select 0;
 	private _bbMax = _bounds select 1;
 
-	private _length = abs ((_bbMax select 0) - (_bbMin select 0));
-	private _width = abs ((_bbMax select 1) - (_bbMin select 1));
+	private _length = abs ((_bbMax select 1) - (_bbMin select 1));
+	private _width = abs ((_bbMax select 0) - (_bbMin select 0));
 	private _height = abs ((_bbMax select 2) - (_bbMin select 2));
 	private _centerZ = ((_bbMin select 2) + (_bbMax select 2)) * 0.5;
 
@@ -218,6 +218,36 @@ YFU_bridge_getPerPlankBuildDelay = {
 	(missionNamespace getVariable ["YFU_bridge_perPlankBuildDelay", 1]) max 0
 };
 
+YFU_bridge_newRequestId = {
+	params [["_action", "operation"]];
+	format ["bridge-%1-%2-%3-%4", _action, clientOwner, round (diag_tickTime * 1000), floor (random 1000000)]
+};
+
+YFU_bridge_validateServerRequest = {
+	params ["_boxObject", "_requester", "_requestOwner"];
+
+	if (!isServer) exitWith {[false, "not_server"]};
+	if (isNull _boxObject || {typeOf _boxObject isNotEqualTo "YFU_Bridge_Box"} || {!alive _boxObject}) exitWith {[false, "invalid_box"]};
+	if (isNull _requester || {!isPlayer _requester} || {!alive _requester}) exitWith {[false, "invalid_requester"]};
+	if (_requestOwner > 0 && {owner _requester isNotEqualTo _requestOwner}) exitWith {[false, "requester_owner_mismatch"]};
+	if ((_requester distance _boxObject) >= 8) exitWith {[false, "requester_out_of_range"]};
+
+	[true, "accepted"]
+};
+
+YFU_bridge_publishResult = {
+	params ["_boxObject", "_requestId", "_action", "_status", "_reason", ["_objectIds", []], ["_requestOwner", 0]];
+	if (isNull _boxObject) exitWith {};
+	_boxObject setVariable ["YFU_bridge_last_result", [_requestId, _action, _status, _reason, _objectIds, serverTime, _requestOwner], true];
+};
+
+YFU_bridge_segmentBelongsToBox = {
+	params ["_segment", "_boxObject"];
+	!isNull _segment
+	&& {!isNull _boxObject}
+	&& {(_segment getVariable ["YFU_bridge_builder_box", ""]) isEqualTo netId _boxObject}
+};
+
 YFU_bridge_getManualPlankCount = {
 	params ["_boxObject"];
 
@@ -232,7 +262,7 @@ YFU_bridge_getPitchOffsetDegrees = {
 };
 
 YFU_bridge_getPreviewSurfaceOffset = {
-	params [["_className", "FootBridge_0_ACR"]];
+	params [["_className", "Land_Plank_01_4m_F"]];
 
 	private _metrics = [_className] call YFU_bridge_getClassMetrics;
 	(_metrics select 2) * 0.5
@@ -428,12 +458,12 @@ YFU_bridge_dialogAutoCalculate = {
 
 	private _widthwise = _boxObject getVariable ["YFU_bridge_plan_widthwise", false];
 	private _planRange = [_boxObject] call YFU_bridge_getPlanRange;
-	private _plan = [_boxObject, "FootBridge_0_ACR", _widthwise, _planRange] call YFU_bridge_computePlan;
+	private _plan = [_boxObject, "Land_Plank_01_4m_F", _widthwise, _planRange] call YFU_bridge_computePlan;
 	if (_plan isEqualTo []) exitWith {};
 
 	private _segmentCount = _plan select 11;
 	private _hasEndHit = _plan select 12;
-	private _queue = [_boxObject, _segmentCount, "FootBridge_0_ACR", _widthwise, _hasEndHit] call YFU_bridge_buildQueueFromObject;
+	private _queue = [_boxObject, _segmentCount, "Land_Plank_01_4m_F", _widthwise, _hasEndHit] call YFU_bridge_buildQueueFromObject;
 	_boxObject setVariable ["YFU_bridge_manual_plank_count", count _queue, true];
 	[_boxObject] call YFU_bridge_invalidatePlanPreviewCache;
 	call YFU_bridge_dialogRefresh;
@@ -604,7 +634,7 @@ YFU_bridge_getEffectivePlanCount = {
 };
 
 YFU_bridge_computePlan = {
-	params ["_sourceObject", ["_className", "FootBridge_0_ACR"], ["_widthwise", false], ["_maxDistance", 500]];
+	params ["_sourceObject", ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_maxDistance", 500]];
 
 	if (isNull _sourceObject) exitWith {[]};
 
@@ -688,7 +718,7 @@ YFU_bridge_debugPlanPreview = {
 	};
 
 	private _widthwise = _boxObject getVariable ["YFU_bridge_plan_widthwise", false];
-	private _plan = [_boxObject, "FootBridge_0_ACR", _widthwise, 500] call YFU_bridge_computePlan;
+	private _plan = [_boxObject, "Land_Plank_01_4m_F", _widthwise, 500] call YFU_bridge_computePlan;
 	if (_plan isEqualTo []) exitWith {
 		systemChat "Bridge preview debug: no plan";
 	};
@@ -737,7 +767,7 @@ YFU_bridge_getPlannedQueue = {
 
 	private _widthwise = _boxObject getVariable ["YFU_bridge_plan_widthwise", false];
 	private _planRange = [_boxObject] call YFU_bridge_getPlanRange;
-	private _plan = [_boxObject, "FootBridge_0_ACR", _widthwise, _planRange] call YFU_bridge_computePlan;
+	private _plan = [_boxObject, "Land_Plank_01_4m_F", _widthwise, _planRange] call YFU_bridge_computePlan;
 	if (_plan isEqualTo []) exitWith {[]};
 
 	private _segmentCount = _plan select 11;
@@ -748,11 +778,11 @@ YFU_bridge_getPlannedQueue = {
 	};
 	if (_segmentCount <= 0) exitWith {[]};
 
-	[_boxObject, _segmentCount, "FootBridge_0_ACR", _widthwise, _hasEndHit] call YFU_bridge_buildQueueFromObject
+	[_boxObject, _segmentCount, "Land_Plank_01_4m_F", _widthwise, _hasEndHit] call YFU_bridge_buildQueueFromObject
 };
 
 YFU_bridge_getRemovalQueue = {
-	params ["_boxObject", ["_className", "FootBridge_0_ACR"]];
+	params ["_boxObject", ["_className", "Land_Plank_01_4m_F"]];
 
 	if (isNull _boxObject) exitWith {[]};
 
@@ -764,8 +794,8 @@ YFU_bridge_getRemovalQueue = {
 	private _searchRadius = _boxObject getVariable ["YFU_bridge_chain_search_radius", 600];
 	private _boxPos = getPosASL _boxObject;
 	private _kickoffRadius = 5;
-	private _kickoffCandidates = nearestObjects [ASLToAGL _boxPos, [_className], _kickoffRadius, true];
-	private _candidates = nearestObjects [ASLToAGL _boxPos, [_className], _searchRadius, true];
+	private _kickoffCandidates = nearestObjects [ASLToAGL _boxPos, [_className], _kickoffRadius, true] select {[_x, _boxObject] call YFU_bridge_segmentBelongsToBox};
+	private _candidates = nearestObjects [ASLToAGL _boxPos, [_className], _searchRadius, true] select {[_x, _boxObject] call YFU_bridge_segmentBelongsToBox};
 	private _nearestStart = objNull;
 	private _nearestDistance = 1e9;
 	private _aligned = [];
@@ -886,103 +916,134 @@ YFU_bridge_getCachedPlannedQueue = {
 };
 
 YFU_bridge_startBuildFromPlan = {
-	params ["_boxObject"];
+	params ["_boxObject", ["_requester", objNull], ["_requestId", ""]];
 
-	if (isNull _boxObject) exitWith {};
-	if (_boxObject getVariable ["YFU_bridge_building", false]) exitWith {
-		systemChat "Bridge builder is already building";
+	if (!isServer) exitWith {
+		if (!isNull (missionNamespace getVariable ["YFU_bridge_active_plan_box", objNull])) then {call YFU_bridge_endPlanPreview;};
+		if (_requestId isEqualTo "") then {_requestId = ["build"] call YFU_bridge_newRequestId;};
+		missionNamespace setVariable ["YFU_bridge_last_request", [_requestId, "build", netId _boxObject]];
+		[_boxObject, player, _requestId] remoteExecCall ["YFU_bridge_startBuildFromPlan", 2];
+		true
+	};
+
+	private _requestOwner = remoteExecutedOwner;
+	if (_requestId isEqualTo "") then {_requestId = ["build"] call YFU_bridge_newRequestId;};
+	private _validation = [_boxObject, _requester, _requestOwner] call YFU_bridge_validateServerRequest;
+	if !(_validation # 0) exitWith {
+		[_boxObject, _requestId, "build", "failed", _validation # 1, [], _requestOwner] call YFU_bridge_publishResult;
+		false
+	};
+	if (_boxObject getVariable ["YFU_bridge_building", false] || {_boxObject getVariable ["YFU_bridge_removing", false]}) exitWith {
+		[_boxObject, _requestId, "build", "failed", "operation_in_progress", [], _requestOwner] call YFU_bridge_publishResult;
+		false
 	};
 
 	private _widthwise = _boxObject getVariable ["YFU_bridge_plan_widthwise", false];
 	private _planRange = [_boxObject] call YFU_bridge_getPlanRange;
-	private _plan = [_boxObject, "FootBridge_0_ACR", _widthwise, _planRange] call YFU_bridge_computePlan;
-	if (_plan isEqualTo []) exitWith {};
+	private _plan = [_boxObject, "Land_Plank_01_4m_F", _widthwise, _planRange] call YFU_bridge_computePlan;
+	if (_plan isEqualTo []) exitWith {
+		[_boxObject, _requestId, "build", "failed", "invalid_plan", [], _requestOwner] call YFU_bridge_publishResult;
+		false
+	};
 
 	private _segmentCount = _plan select 11;
 	private _hasEndHit = _plan select 12;
 	private _manualCount = [_boxObject] call YFU_bridge_getManualPlankCount;
-	if (_manualCount > 0) then {
-		_segmentCount = _manualCount;
-	};
+	if (_manualCount > 0) then {_segmentCount = _manualCount;};
 	if (_segmentCount <= 0) exitWith {
-		systemChat "No valid bridge plan to build";
+		[_boxObject, _requestId, "build", "failed", "empty_plan", [], _requestOwner] call YFU_bridge_publishResult;
+		false
 	};
 
-	private _queue = [_boxObject, _segmentCount, "FootBridge_0_ACR", _widthwise, _hasEndHit] call YFU_bridge_buildQueueFromObject;
-	if ((count _queue) <= 0) exitWith {
-		systemChat "No valid bridge queue to build";
+	private _queue = [_boxObject, _segmentCount, "Land_Plank_01_4m_F", _widthwise, _hasEndHit] call YFU_bridge_buildQueueFromObject;
+	if (_queue isEqualTo []) exitWith {
+		[_boxObject, _requestId, "build", "failed", "empty_queue", [], _requestOwner] call YFU_bridge_publishResult;
+		false
 	};
 	private _buildDelay = call YFU_bridge_getPerPlankBuildDelay;
-
-	if ((missionNamespace getVariable ["YFU_bridge_active_plan_box", objNull]) isEqualTo _boxObject) then {
-		call YFU_bridge_endPlanPreview;
-	};
-
 	_boxObject setVariable ["YFU_bridge_chain_search_radius", (_planRange + 100) max 600, true];
 	_boxObject setVariable ["YFU_bridge_building", true, true];
+	_boxObject setVariable ["YFU_bridge_operation_id", _requestId, true];
+	[_boxObject, _requestId, "build", "accepted", "accepted", [], _requestOwner] call YFU_bridge_publishResult;
 
-	[_boxObject, _queue, _buildDelay] spawn {
-		params ["_boxObject", "_queue", "_buildDelay"];
-
+	[_boxObject, _queue, _buildDelay, _requestId, _requestOwner] spawn {
+		params ["_boxObject", "_queue", "_buildDelay", "_requestId", "_requestOwner"];
+		private _created = [];
 		{
 			if (isNull _boxObject) exitWith {};
 			_x params ["_positionASL", "_className", "_segmentDir", "_up", "_dedupeRadius"];
-			[_positionASL, _className, _segmentDir, _up, _dedupeRadius] call YFU_bridge_spawnPlacedSegment;
-			if (_forEachIndex < ((count _queue) - 1)) then {
-				uiSleep _buildDelay;
-			};
+			private _segment = [_positionASL, _className, _segmentDir, _up, _dedupeRadius, _boxObject, _requestId] call YFU_bridge_spawnPlacedSegment;
+			if (!isNull _segment) then {_created pushBack _segment;};
+			if (_forEachIndex < ((count _queue) - 1)) then {uiSleep _buildDelay;};
 		} forEach _queue;
 
 		if (!isNull _boxObject) then {
+			private _complete = (count _created) isEqualTo (count _queue);
+			private _ids = _created apply {netId _x};
+			if (!_complete) then {{if (!isNull _x) then {deleteVehicle _x;};} forEach _created;};
 			_boxObject setVariable ["YFU_bridge_building", false, true];
-			if ((missionNamespace getVariable ["YFU_bridge_active_plan_box", objNull]) isEqualTo _boxObject) then {
-				call YFU_bridge_endPlanPreview;
-			};
+			_boxObject setVariable ["YFU_bridge_operation_id", "", true];
+			[_boxObject, _requestId, "build", ["failed", "complete"] select _complete, ["segment_creation_incomplete", "complete"] select _complete, _ids, _requestOwner] call YFU_bridge_publishResult;
 		};
 	};
+	true
 };
 
 YFU_bridge_startRemoveFromBox = {
-	params ["_boxObject"];
+	params ["_boxObject", ["_requester", objNull], ["_requestId", ""]];
 
-	if (isNull _boxObject) exitWith {};
-	if (_boxObject getVariable ["YFU_bridge_building", false]) exitWith {
-		systemChat "Bridge builder is currently building";
-	};
-	if (_boxObject getVariable ["YFU_bridge_removing", false]) exitWith {
-		systemChat "Bridge removal is already in progress";
-	};
-
-	private _queue = [_boxObject, "FootBridge_0_ACR"] call YFU_bridge_getRemovalQueue;
-	if ((count _queue) <= 0) exitWith {
-		systemChat "No bridge segments found to remove";
+	if (!isServer) exitWith {
+		if (!isNull (missionNamespace getVariable ["YFU_bridge_active_plan_box", objNull])) then {call YFU_bridge_endPlanPreview;};
+		if (_requestId isEqualTo "") then {_requestId = ["remove"] call YFU_bridge_newRequestId;};
+		missionNamespace setVariable ["YFU_bridge_last_request", [_requestId, "remove", netId _boxObject]];
+		[_boxObject, player, _requestId] remoteExecCall ["YFU_bridge_startRemoveFromBox", 2];
+		true
 	};
 
+	private _requestOwner = remoteExecutedOwner;
+	if (_requestId isEqualTo "") then {_requestId = ["remove"] call YFU_bridge_newRequestId;};
+	private _validation = [_boxObject, _requester, _requestOwner] call YFU_bridge_validateServerRequest;
+	if !(_validation # 0) exitWith {
+		[_boxObject, _requestId, "remove", "failed", _validation # 1, [], _requestOwner] call YFU_bridge_publishResult;
+		false
+	};
+	if (_boxObject getVariable ["YFU_bridge_building", false] || {_boxObject getVariable ["YFU_bridge_removing", false]}) exitWith {
+		[_boxObject, _requestId, "remove", "failed", "operation_in_progress", [], _requestOwner] call YFU_bridge_publishResult;
+		false
+	};
+
+	private _queue = [_boxObject, "Land_Plank_01_4m_F"] call YFU_bridge_getRemovalQueue;
+	if (_queue isEqualTo []) exitWith {
+		[_boxObject, _requestId, "remove", "failed", "no_owned_segments", [], _requestOwner] call YFU_bridge_publishResult;
+		false
+	};
 	private _removeDelay = (call YFU_bridge_getPerPlankBuildDelay) * 0.5;
-
-	if ((missionNamespace getVariable ["YFU_bridge_active_plan_box", objNull]) isEqualTo _boxObject) then {
-		call YFU_bridge_endPlanPreview;
-	};
-
+	private _ids = _queue apply {netId _x};
 	_boxObject setVariable ["YFU_bridge_removing", true, true];
+	_boxObject setVariable ["YFU_bridge_operation_id", _requestId, true];
+	[_boxObject, _requestId, "remove", "accepted", "accepted", _ids, _requestOwner] call YFU_bridge_publishResult;
 
-	[_boxObject, _queue, _removeDelay] spawn {
-		params ["_boxObject", "_queue", "_removeDelay"];
-
+	[_boxObject, _queue, _removeDelay, _requestId, _requestOwner, _ids] spawn {
+		params ["_boxObject", "_queue", "_removeDelay", "_requestId", "_requestOwner", "_ids"];
 		{
 			if (isNull _boxObject) exitWith {};
-			if (!isNull _x) then {
-				deleteVehicle _x;
-			};
-			if ((_forEachIndex < ((count _queue) - 1)) && (_removeDelay > 0)) then {
-				uiSleep _removeDelay;
-			};
+			if (!isNull _x) then {deleteVehicle _x;};
+			if ((_forEachIndex < ((count _queue) - 1)) && {_removeDelay > 0}) then {uiSleep _removeDelay;};
 		} forEach _queue;
 
 		if (!isNull _boxObject) then {
+			private _deleteDeadline = diag_tickTime + 2;
+			waitUntil {
+				uiSleep 0.01;
+				(_queue findIf {!isNull _x}) < 0 || {diag_tickTime >= _deleteDeadline}
+			};
+			private _complete = (_queue findIf {!isNull _x}) < 0;
 			_boxObject setVariable ["YFU_bridge_removing", false, true];
+			_boxObject setVariable ["YFU_bridge_operation_id", "", true];
+			[_boxObject, _requestId, "remove", ["failed", "complete"] select _complete, ["segment_removal_incomplete", "complete"] select _complete, _ids, _requestOwner] call YFU_bridge_publishResult;
 		};
 	};
+	true
 };
 
 YFU_bridge_initPlanRenderer = {
@@ -998,8 +1059,8 @@ YFU_bridge_initPlanRenderer = {
 		private _queue = [_boxObject] call YFU_bridge_getCachedPlannedQueue;
 		if ((count _queue) <= 0) exitWith {};
 
-		private _bridgeMetrics = ["FootBridge_0_ACR"] call YFU_bridge_getClassMetrics;
-		private _surfaceOffset = ["FootBridge_0_ACR"] call YFU_bridge_getPreviewSurfaceOffset;
+		private _bridgeMetrics = ["Land_Plank_01_4m_F"] call YFU_bridge_getClassMetrics;
+		private _surfaceOffset = ["Land_Plank_01_4m_F"] call YFU_bridge_getPreviewSurfaceOffset;
 		private _boundSpacing = if (_widthwise) then { _bridgeMetrics select 0 } else { _bridgeMetrics select 1 };
 		private _start = (_queue select 0) select 0;
 		private _end = (_queue select ((count _queue) - 1)) select 0;
@@ -1146,7 +1207,7 @@ YFU_bridge_getRampOrientation = {
 };
 
 YFU_bridge_buildQueueFromObject = {
-	params ["_sourceObject", ["_segmentCount", 1], ["_className", "FootBridge_0_ACR"], ["_widthwise", false], ["_finalizeEnd", false]];
+	params ["_sourceObject", ["_segmentCount", 1], ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_finalizeEnd", false]];
 
 	if (isNull _sourceObject) exitWith {[]};
 
@@ -1218,7 +1279,7 @@ YFU_bridge_buildQueueFromObject = {
 };
 
 YFU_bridge_getBuildModeData = {
-	params ["_sourceObject", ["_widthwise", false], ["_className", "FootBridge_0_ACR"]];
+	params ["_sourceObject", ["_widthwise", false], ["_className", "Land_Plank_01_4m_F"]];
 
 	private _bridgeMetrics = [_className] call YFU_bridge_getClassMetrics;
 	private _bridgeLength = _bridgeMetrics select 0;
@@ -1233,7 +1294,7 @@ YFU_bridge_getBuildModeData = {
 };
 
 YFU_bridge_getObjectForwardPlacement = {
-	params ["_sourceObject", ["_stepIndex", 0], ["_className", "FootBridge_0_ACR"]];
+	params ["_sourceObject", ["_stepIndex", 0], ["_className", "Land_Plank_01_4m_F"]];
 
 	private _bridgeMetrics = [_className] call YFU_bridge_getClassMetrics;
 	private _bridgeLength = _bridgeMetrics select 0;
@@ -1249,7 +1310,7 @@ YFU_bridge_getObjectForwardPlacement = {
 };
 
 YFU_bridge_getObjectBuildPlacement = {
-	params ["_sourceObject", ["_stepIndex", 0], ["_className", "FootBridge_0_ACR"], ["_widthwise", false]];
+	params ["_sourceObject", ["_stepIndex", 0], ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false]];
 
 	private _modeData = [_sourceObject, _widthwise, _className] call YFU_bridge_getBuildModeData;
 	private _buildDir = _modeData select 0;
@@ -1269,7 +1330,7 @@ YFU_bridge_hasNearbySegment = {
 };
 
 YFU_bridge_spawnPlacedSegment = {
-	params ["_positionASL", "_className", "_segmentDir", "_up", ["_dedupeRadius", 0.5]];
+	params ["_positionASL", "_className", "_segmentDir", "_up", ["_dedupeRadius", 0.5], ["_builderBox", objNull], ["_operationId", ""]];
 
 	if ([_className, _positionASL, _dedupeRadius max 0.5] call YFU_bridge_hasNearbySegment) exitWith {
 		objNull
@@ -1281,6 +1342,10 @@ YFU_bridge_spawnPlacedSegment = {
 	_segment setDamage 0;
 	_segment allowDamage false;
 	_segment enableSimulationGlobal false;
+	if (!isNull _builderBox) then {
+		_segment setVariable ["YFU_bridge_builder_box", netId _builderBox, true];
+		_segment setVariable ["YFU_bridge_operation_id", _operationId, true];
+	};
 
 	_segment
 };
@@ -1322,7 +1387,7 @@ YFU_bridge_extendStraight = {
 };
 
 YFU_bridge_findNearbyChainEnd = {
-	params ["_sourceObject", ["_className", "FootBridge_0_ACR"], ["_widthwise", false], ["_radius", 40]];
+	params ["_sourceObject", ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_radius", 40]];
 
 	if (isNull _sourceObject) exitWith {objNull};
 
@@ -1331,6 +1396,9 @@ YFU_bridge_findNearbyChainEnd = {
 	private _segmentDir = _modeData select 1;
 	private _step = _modeData select 3;
 	private _candidates = nearestObjects [ASLToAGL (getPosASL _sourceObject), [_className], _radius, true];
+	if (typeOf _sourceObject isEqualTo "YFU_Bridge_Box") then {
+		_candidates = _candidates select {[_x, _sourceObject] call YFU_bridge_segmentBelongsToBox};
+	};
 	private _best = objNull;
 	private _bestForward = -1e9;
 
@@ -1358,7 +1426,7 @@ YFU_bridge_findNearbyChainEnd = {
 };
 
 YFU_bridge_buildFromObject = {
-	params ["_sourceObject", ["_segmentCount", 1], ["_className", "FootBridge_0_ACR"], ["_widthwise", false], ["_finalizeEnd", false]];
+	params ["_sourceObject", ["_segmentCount", 1], ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_finalizeEnd", false]];
 
 	if (isNull _sourceObject) exitWith {[]};
 
@@ -1504,10 +1572,14 @@ YFU_bridge_attachActionsToBuilderBox = {
 			{(_caller distance _target) < 8} &&
 			{!(_target getVariable ["YFU_bridge_building", false])} &&
 			{!(_target getVariable ["YFU_bridge_removing", false])}
-		}
+		},
+		{},
+		[],
+		[0, 0, 0],
+		8
 	] call ace_interact_menu_fnc_createAction;
 
-	["YFU_box_bridge_open_ui", _boxObject, _openUiAction, 0, ["ACE_MainActions"]] call YOSHI_addActionToObjectForEveryClient;
+	["YFU_box_bridge_open_ui", _boxObject, _openUiAction, 0, []] call YOSHI_addActionToObjectForEveryClient;
 };
 
 YFU_initBridgeActions = {
@@ -1527,8 +1599,12 @@ YFU_initBridgeActions = {
 			{(_caller distance _target) < 8} &&
 			{!(_target getVariable ["YFU_bridge_building", false])} &&
 			{!(_target getVariable ["YFU_bridge_removing", false])}
-		}
+		},
+		{},
+		[],
+		[0, 0, 0],
+		8
 	] call ace_interact_menu_fnc_createAction;
 
-	["YFU_Bridge_Box", 0, ["ACE_MainActions"], _openUiAction] call ace_interact_menu_fnc_addActionToClass;
+	["YFU_Bridge_Box", 0, [], _openUiAction] call ace_interact_menu_fnc_addActionToClass;
 };

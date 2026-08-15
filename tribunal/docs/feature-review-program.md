@@ -155,8 +155,12 @@ stop condition below.
 * **Investigate:** inputs, eligibility, authoritative action, visible/physical
   result, controls, resource changes, replication, bounded completion,
   repeatability, and cleanup.
-* **Evidence:** favor real input, physical movement/fire/impact/damage,
-  framebuffer/audio when relevant, exact identity, and authoritative state.
+* **Evidence:** favor engine-visible data, exact identity, authoritative state,
+  and physical movement/fire/impact/damage. Use real input, framebuffer, audio,
+  or animation capture when the contract is inherently about that interface or
+  no reliable data oracle exists. Once a generic framework interaction is
+  proven, feature scenarios may verify its registered/active action and invoke
+  that exact statement rather than repeatedly automating camera/menu input.
   Internal flags/ledgers correlate a result rather than replace it.
 * **Decide:** write a concise mechanism-neutral contract and evidence matrix
   pairing each claim with an independent oracle and useful controls.

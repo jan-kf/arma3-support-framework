@@ -186,19 +186,28 @@ Already generic: deterministic PBO packaging; assertion/result protocol;
 direct projectile launch; artillery/weapon-fire trajectory observation;
 spatial evidence; locality transfer; remote execution; authenticated
 framebuffer/input; map/marker observation; evidence attachments; named network
-profiles.
+profiles; version-bounded ACE interaction discovery plus authenticated real
+input.
+
+Tribunal is data-first. Prefer engine-visible configuration, identities,
+locality, state transitions, physical contacts and authoritative results over
+pixels or synthetic input whenever those observations prove the contract.
+Framebuffer/VNC evidence is reserved for behavior whose contract is itself
+visual (for example dialog layout, Draw3D, map rendering, or an animation with
+no reliable state proxy). Once a generic framework interaction mechanism is
+proven, feature scenarios should not repeatedly automate its camera, key and
+menu mechanics merely to reach product code.
 
 Promote only on first concrete consumer or clear reuse:
 
-1. ACE interaction discovery/activation;
-2. vanilla action-menu discovery/activation;
-3. reusable spawn/settle and damage probes;
-4. AI creation/tasking and vehicle movement/landing evidence;
-5. module synchronization/Eden-like fixtures;
-6. weapon selection and real fire;
-7. opt-in audio and animation evidence.
+1. vanilla action-menu discovery/activation;
+2. reusable spawn/settle and damage probes;
+3. AI creation/tasking and vehicle movement/landing evidence;
+4. module synchronization/Eden-like fixtures;
+5. weapon selection and real fire;
+6. opt-in audio and animation evidence.
 
-## ACE interaction recommendation
+## ACE interaction adapter
 
 `AceInteractionRequest` is the product-neutral prototype: actor identity,
 target identity, external/self type, action path, expected availability, and
@@ -211,23 +220,27 @@ not automatically include `ace_common_fnc_canInteractWith`. ACE's internal
 object/class children; its key-release path rechecks the condition immediately
 before running the statement. Both functions are marked private by ACE.
 
-Therefore the recommended executor has two layers:
+The implemented capability has two layers:
 
 1. an ACE-version adapter on the actor client enumerates the same active tree,
    records action IDs/path/display names, and verifies the requested action is
-   genuinely actor-available (including global can-interact, distance/LOS/menu
-   context, action condition, modifiers, and dynamic children);
+   genuinely actor-available, including the registered condition, modifiers
+   and dynamic children;
 2. authenticated framebuffer/input opens the real ACE menu and selects the
-   verified path; the adapter records the selected callback and the feature
-   test independently verifies resulting world state.
+   verified path when ACE rendering/input itself is the subject of the proof.
 
-Directly calling an action statement is permitted only as a lower-level
-tooling probe and must not be called real-user interaction. Depending on ACE's
-private arrays should be isolated behind a version check and fail closed when
-the installed ACE layout differs. First runtime consumer should be a small
-Field Utilities bridge action: assert absent while out of range/busy, present
-when alive and within 8 m, activate “Open Bridge Builder” with real input, then
-assert the dialog/preview separately.
+Feature specifications normally use the first layer, then invoke the statement
+from the exact registered action node and validate the resulting product state.
+That is deliberately described as registered-statement execution, not
+real-user input. Depending on ACE's private arrays is isolated behind
+installed-version evidence and fails closed when the expected action tree is
+unavailable. The Field Utilities Bridge Builder specification follows this
+boundary: it proves absence while out of range/busy, presence when alive and
+within 8 m, invokes the registered “Open Bridge Builder” statement, and then
+asserts dialog state, preview, authoritative construction and physical outcome
+through data. The generic authenticated input adapter remains available for a
+single compatibility proof or an inherently visual interaction requirement;
+it is not part of every ACE feature scenario.
 
 Primary references for that design are ACE's
 [Interaction Menu framework documentation](https://ace3.acemod.org/wiki/framework/interactionmenu-framework.html),

@@ -1,0 +1,202 @@
+# Field Utilities Bridge Builder review
+
+Primary review outcome: **REWRITE BEFORE PERMANENT COVERAGE**.
+
+## Behavioral contract
+
+For an alive player within eight metres of a `YFU_Bridge_Box`, ACE resolves the
+registered **Open Bridge Builder** action as active. Invoking that exact action
+statement opens Bridge Builder, exposes the physical preview plan, and submits
+a bounded plan. The dedicated server validates the requester, creates a tagged
+server-owned chain of supported bridge segments, publishes a bounded result,
+and permits the player to traverse the replicated structure. Removal deletes
+only segments created for that construction box and publishes a separate
+bounded result. Missing identity, invalid authority, incomplete construction,
+failed physical traversal, unrelated-object deletion, or incomplete cleanup is
+failure.
+
+This review covers the construction-box entry, one lengthwise flat plan,
+preview, server-authoritative build, physical traversal, box-scoped removal,
+replication to client-a, and cleanup. It does not claim coverage of wide mode,
+ramps, pitch/orientation controls, automatic distance planning, clipping
+policy, interruption/destruction, simultaneous builders, direct segment
+extension, client-b, disconnect/reconnect, or JIP.
+
+## Canonical review questions
+
+### 1. What should the user or integrator observe?
+
+The shipped construction box and ACE class action establish a coherent entry:
+an eligible nearby player sees **Open Bridge Builder**, opens a planning dialog,
+sees the proposed bridge in-world, builds it, can cross it, and can remove that
+box's bridge. The UI and source also advertise orientation, width, ramp, count,
+pitch and automatic planning controls, but those separable capabilities remain
+outside this first stable contract.
+
+### 2. What did the feature actually do before review?
+
+The ACE condition correctly rejected dead, distant, building, and removing
+states. Dialog and preview logic were reachable and coherent. Construction and
+removal ran on the requesting client while using global create/delete commands.
+The configured `FootBridge_0_ACR` class did not exist in either the authenticated
+client or dedicated runtime, producing `Cannot create non-ai vehicle`; therefore
+the positive path could never produce a bridge. Removal searched aligned class
+instances without construction-box ownership and could consume unrelated
+objects. Direct chain-extension helpers existed, but their attachment function
+was empty and no reachable product entry was found.
+
+### 3. Which machines and lifecycle stages own the behavior?
+
+Client-a owns ACE discovery, active-tree evaluation, execution of the exact
+registered statement, the dialog, preview and request. The
+dedicated server validates `remoteExecutedOwner`, requester identity, life,
+class and distance; exclusively creates/removes segments; tags each segment
+with box and operation identity; and publishes terminal results. The client
+observes nonlocal segment identities and physical collision. This proves only
+one authenticated client's request/replication boundary. Client-b and JIP are
+explicit future work.
+
+### 4. Which mechanics are generic?
+
+ACE action-adapter mechanics, exact netIds, locality records, spatial sampling
+and cleanup reporting are Tribunal concerns. The installed-version adapter
+evaluates ACE's active tree and contains no Field Utilities or bridge semantics.
+Authenticated RFB/input remains a generic capability for inherently visual
+contracts, but the permanent Bridge scenario does not depend on pixels or
+camera/menu input.
+
+### 5. Which behavior is product-owned?
+
+Field Utilities owns box eligibility, planning state, supported segment class,
+placement geometry, per-segment delay, operation exclusion, requester
+validation, box-scoped ownership, result lifecycle and removal semantics. The
+product does not currently define a resource cost, persistence policy,
+multi-user conflict policy, or supported contract for direct extension.
+
+### 6. Are unusual engine requirements proven?
+
+No engine workaround is characterized. Runtime inspection proved only that the
+legacy class is absent and the Apex `Land_Plank_01_4m_F` class is installed,
+constructible and physically collidable. The supported plank has observed model
+dimensions 4.1792 m by 0.8982 m by 0.1311 m, so placement uses model-Y length and
+model-X width. That is configuration evidence, not a claim that a private
+algorithm is engine-required.
+
+### 7. Which details were accidental, fragile, or incomplete?
+
+The absent ACR class, reversed generic length/width interpretation,
+client-authoritative world mutation, unowned chain discovery/removal, and
+unbounded result ambiguity blocked permanent coverage and were rewritten.
+Control IDs, screen points, plan-cache layout, request-ID spelling, exact
+coordinates and polling cadence remain evidence-adapter details. Direct
+extension is **DEFER** because it has no reachable action or coherent ownership
+contract. Uncovered planning modes remain implemented-looking but unreviewed.
+
+### 8. Was a better existing mechanism available?
+
+The installed first-party Apex plank is the narrow supported replacement for
+the absent ACR asset. Existing ACE interaction remains the real entry rather
+than inventing a second menu. Arma remote execution plus server-local creation
+provides the authority boundary; no new network service was added. No broader
+native bridge-building mechanism was shown to replace the product workflow.
+
+### 9. What is the stable contract and causal proof?
+
+The permanent scenario correlates one run token, box netId, request ID, four
+segment netIds and removal result. It proves out-of-range/busy/idle ACE active
+states, invokes the exact registered statement, verifies dialog controls and
+preview data, server request ownership, exact
+class/tag/count, 4.1792 m spacing, direction and height, server locality,
+physical player movement over exact segment collision surfaces, removal of all
+owned identities, survival of a deliberately nearby untagged control plank,
+replication, lifecycle reset and cleanup. An internal result alone cannot pass
+the traversal or scoped-removal claims.
+
+### 10. Which implementation details remain free to change?
+
+Private SQF function and variable names, cache structure, operation-ID format,
+segment class behind an equivalent supported product contract, placement
+algorithm, delays, control IDs, sampling thresholds
+and result representation may change. The promised behavior is eligibility,
+visible planning, validated server authority, usable replicated construction,
+box-scoped removal, bounded completion and cleanup.
+
+### 11. Which mechanisms deserve characterization?
+
+None. The review records the failed legacy class as baseline evidence and the
+supported class/config measurements as fixture selection. It does not freeze
+the old local mutation, direct-extension scaffolding, exact ACE private layout,
+or current placement implementation as engine requirements.
+
+### 12. Which mechanics should be promoted into Tribunal?
+
+The generic ACE active-tree adapter is promoted because it is a product-neutral
+registration/availability mechanism with this concrete first consumer. The
+authenticated real-input driver remains a separate Tribunal compatibility and
+visual-evidence tool rather than a dependency of each feature specification.
+Bridge eligibility, registered-statement result, dialog meaning, planning,
+construction, traversal success and removal meaning remain in the Field
+Utilities scenario. Production code has no dependency on Tribunal.
+
+## Classification and permanent coverage
+
+| Subsystem | Classification | Resolution |
+| --- | --- | --- |
+| construction-box ACE entry | KEEP AS-IS AND SPEC-TEST | registered action plus ACE active-tree out-of-range, busy and eligible states |
+| dialog and flat preview | KEEP AS-IS AND SPEC-TEST | registered statement opens dialog; enabled Build control and exact four-item preview state |
+| legacy construction asset | REWRITE BEFORE PERMANENT COVERAGE | absent `FootBridge_0_ACR` replaced with installed first-party `Land_Plank_01_4m_F` and explicit dependency |
+| build authority/result | REWRITE BEFORE PERMANENT COVERAGE | validated client request, server-only mutation, bounded terminal result |
+| physical bridge outcome | REFINE BEFORE PERMANENT COVERAGE | corrected length/width metrics and causal traversal over exact segments |
+| removal scope | REFINE BEFORE PERMANENT COVERAGE | box tags and ownership filtering preserve nearby unowned control |
+| wide/ramp/pitch/auto/clipping | NOT YET REVIEWED | excluded from first permanent contract |
+| direct chain extension | DEFER | helpers exist but attachment entry is empty and intent/authority are undefined |
+| client-b/JIP/concurrency | DEFER | one-client run must not overclaim these boundaries |
+
+The permanent `fieldutils-bridge-builder` Tier 3 scenario is a specification
+test owned beside Field Utilities. It deliberately retains the primary review
+outcome in `ScenarioReview`: the scenario became admissible only after the
+broken positive path and authority model were rewritten.
+
+## False-PASS controls and evidence
+
+The scenario fails on absent action path, wrong ACE version/layout, missing
+dialog, disabled Build control, missing request/result, wrong requester,
+missing or wrong-class segments, wrong spacing/direction/height, client-local
+mutation, inadequate movement, insufficient exact collision samples, missing
+removal acknowledgment, surviving owned segments, deleted foreign control,
+stale operation flags, missing replication or incomplete cleanup. Every wait is
+bounded. The foreign plank is placed close enough to tempt chain discovery and
+removal but has no box tag; its survival proves scoping rather than mere empty
+cleanup.
+
+Live calibration established once that the generic real-input ACE path opens
+the dialog and renders the preview. Permanent feature coverage instead
+evaluates ACE's active tree, invokes that exact registered statement and
+observes a fresh `bridge-build-*` request.
+
+Fresh cold run `20260815T172201Z-cda47faf` passed 24/24 assertions with zero
+failures and complete container/network/state cleanup. Its token was
+`gameplay-20260815T172201Z-cda47faf-5c8694385775`; mission SHA-256 was
+`4209f1a3e4d2d1aea46325f3a0d7160cb58731c47d98f86543f608a231be347a` and
+PBO SHA-256 was
+`2acdc03eb899c60daff6eeb364832ec8f4ab6c1125eb52524671cae1efa4715f`
+with a valid deterministic footer. The server created four tagged local
+segments at 4.18203/4.18007/4.178 m spacing. Physical traversal produced 101
+exact segment-contact samples; all four owned netIds were removed, the nearby
+untagged control survived until fixture cleanup, and client/server cleanup
+acknowledgment completed.
+
+## Security and compatibility
+
+The permanent Bridge proof requires no VNC actor. The optional generic visual
+adapter still connects only to Weston's authenticated loopback endpoint inside
+the confined client namespace. Nothing publishes VNC, weakens TLS, exposes
+host X11/D-Bus, adds capabilities, or changes AppArmor, seccomp,
+no-new-privileges, Steam/CEF or namespace confinement. The only new official
+content dependency is the already-enabled first-party Apex accessories addon.
+
+## Next review
+
+Review Advanced Systems Counter Battery Radar next. Bridge wide/ramp/automatic
+planning and direct extension remain separate follow-ups rather than silently
+expanding this contract.

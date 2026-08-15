@@ -43,6 +43,7 @@ APPARMOR_PROFILE = CLIENT_SECURITY / "pontifex-steam.apparmor"
 APPARMOR_NAME = "pontifex-steam"
 FEATURE_SCENARIOS = discover([
     ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
+    ROOT / "source" / "field-utilities" / "tests" / "tribunal",
     ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
 ])
 FRAMEWORK_SCENARIOS = discover([ROOT / "tribunal" / "scenarios"])
@@ -1856,6 +1857,35 @@ def run_multiplayer(
                             "--timeout", "300",
                         ]
                         evidence_kind = "interactive-designation-sequence"
+                    elif visual_driver == "ace-interaction":
+                        interaction_point = ui_scenario.metadata["interaction_point"]
+                        point_marker = ui_scenario.metadata.get("interaction_point_marker")
+                        if point_marker:
+                            matches = re.findall(
+                                re.escape(str(point_marker)) + r"(\[[^\]]+\])",
+                                client_text,
+                            )
+                            if matches:
+                                interaction_point = json.loads(matches[-1])
+                        probe_args = [
+                            "exec", "-e", "DISPLAY=:0", client_name,
+                            "python3", "/pontifex/tools/tribunal_ace_probe.py",
+                            "--output", f"/run/pontifex/{ui_output.name}",
+                            "--interaction-point", json.dumps(
+                                interaction_point, separators=(",", ":")
+                            ),
+                            "--activation-region", json.dumps(
+                                ui_scenario.metadata["activation_region"], separators=(",", ":")
+                            ),
+                            "--minimum-mean-luma", str(
+                                ui_scenario.metadata.get("minimum_mean_luma", 0)
+                            ),
+                            "--maximum-frame-delta", str(
+                                ui_scenario.metadata.get("maximum_frame_delta", 0.12)
+                            ),
+                            "--timeout", "60",
+                        ]
+                        evidence_kind = "interactive-ace-sequence"
                     else:
                         raise RuntimeError(f"unsupported Tribunal visual driver: {visual_driver}")
                     ui_probe = docker(probe_args, check=False)

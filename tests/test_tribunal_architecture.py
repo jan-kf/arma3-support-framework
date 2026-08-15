@@ -26,6 +26,7 @@ class TribunalArchitectureTests(unittest.TestCase):
     def test_feature_scenarios_are_discovered_outside_tribunal(self) -> None:
         scenarios = discover([
             ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
+            ROOT / "source" / "field-utilities" / "tests" / "tribunal",
             ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
         ])
         aps = scenarios["aps-intercept"]
@@ -87,6 +88,14 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertIn("call YOSHI_taskTRN_rtb", transport.client_sqf)
         self.assertEqual(multiplayer.FEATURE_SCENARIOS["vigil-transport"], transport)
         self.assertIn("vigil-transport", gameplay.selected)
+
+        bridge = scenarios["fieldutils-bridge-builder"]
+        self.assertNotIn("visual_driver", bridge.metadata)
+        self.assertIn("bridge.traversal.authoritative", bridge.server_expected)
+        self.assertIn("bridge.interaction.registration", bridge.client_expected)
+        self.assertIn("bridge.interaction.conditions", bridge.client_expected)
+        self.assertEqual(multiplayer.FEATURE_SCENARIOS["fieldutils-bridge-builder"], bridge)
+        self.assertIn("fieldutils-bridge-builder", gameplay.selected)
 
     def test_generic_tribunal_sources_do_not_encode_pontifex_features(self) -> None:
         prohibited = ("aps", "iron dome", "vigil", "field utilities", "pontifex")

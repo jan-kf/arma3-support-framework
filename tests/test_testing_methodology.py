@@ -20,6 +20,7 @@ class TestingMethodologyTests(unittest.TestCase):
         scenarios = discover([
             ROOT / "tribunal" / "scenarios",
             ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
+            ROOT / "source" / "field-utilities" / "tests" / "tribunal",
             ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
         ])
         self.assertTrue(scenarios)

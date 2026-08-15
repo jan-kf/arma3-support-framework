@@ -48,7 +48,7 @@ Five top-level runtime families are present:
 | CORDIS shared runtime | Authority routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Implemented, with reserved bootstrap files | **NOT YET REVIEWED**; heavily exercised incidentally |
 | Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS strong, CBR/Iron Dome uncovered |
 | Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
-| Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fixed-wing logistics only |
+| Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fixed-wing logistics and the reviewed Bridge Builder core |
 | Cross-mod composition | Contracts joining CORDIS, Vigil, Field Utilities, ACE/CBA, and editor/Zeus surfaces | calls across all addons/configs | Implemented, some optional/degraded paths | **PARTIALLY COVERED**; one composite path direct, most incidental |
 
 Tribunal/Pontifex validation is documented separately below. It is substantial
@@ -362,16 +362,25 @@ Primary locations: `source/field-utilities/addons/FieldUtils/config.cpp`,
 ### 4.2 Bridge Builder
 
 * **Construction box/ACE entry** exposes “Open Bridge Builder.” **Implemented;
-  NOT YET REVIEWED.** Recommended first ACE adapter consumer.
+  COVERED.** The exact class action is registered and ACE's active tree proves
+  its out-of-range, busy, and eligible states; the permanent feature proof then
+  invokes that registered statement without per-feature VNC automation.
 * **Planning UI** selects layout, ramp, orientation, clipping, counts, pitch,
-  offsets, and auto calculation. **Implemented; NOT YET REVIEWED.**
+  offsets, and auto calculation. **PARTIALLY COVERED.** Flat lengthwise manual
+  planning is covered; wide/ramp/pitch/auto/clipping remain unreviewed.
 * **Preview** computes/caches queues and renders validity colors. **Implemented;
-  NOT YET REVIEWED.** Can reuse framebuffer/spatial evidence.
+  PARTIALLY COVERED.** Calibration captured the real rendered four-segment flat
+  preview; permanent regression validates its exact planning state through
+  data. Other modes remain unreviewed.
 * **Build/removal** incrementally creates deduplicated segments with configured
-  delay and removes chains. **Implemented; NOT YET REVIEWED.** Authority,
-  collision, interruption, resources, cleanup are gaps.
+  delay and removes chains. **COVERED for the reviewed flat contract.** Server
+  authority, exact geometry/locality, physical traversal, box-scoped removal,
+  bounded results and cleanup are proven; interruption/resources are not.
 * **Direct chain-extension actions** coexist with plan UI. **Implemented-looking;
-  UNKNOWN.** Review supported-versus-legacy ownership.
+  DEFERRED.** Helpers exist but action attachment is empty and no supported
+  intent/authority contract was established.
+
+Full analysis: [`field-utilities-bridge-builder-review.md`](field-utilities-bridge-builder-review.md).
 
 ### 4.3 Logistics and object handling
 
@@ -507,25 +516,22 @@ coverage.
 | Iron Dome | **NOT YET REVIEWED** | active server subsystem, no causal proof |
 | Field towing | **Partial / NOT YET REVIEWED** | source TODOs identify parent/cleanup gaps |
 | Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |
-| Bridge direct extension vs plan UI | **UNKNOWN** | both paths coexist; ownership undocumented |
+| Bridge direct extension | **DEFERRED** | helpers exist, but no reachable action or supported ownership contract was established |
 | Core settings/utils files | **Scaffolded / UNKNOWN** | reserved files contain no behavior |
 | Multi-client/JIP | **NOT YET REVIEWED** | one authenticated-client proof boundary |
 
 ## Prioritized next feature reviews
 
-1. **Field Utilities Bridge Builder.** Large player-visible workflow with
-   construction/removal authority and collision/cleanup risk; best first reuse
-   of Tribunal ACE interaction, spawn/settle, UI, and spatial evidence.
-2. **Advanced Systems Counter Battery Radar.** High operational value and no
+1. **Advanced Systems Counter Battery Radar.** High operational value and no
    coverage despite prediction, clustering, warnings, markers, and origin
    estimation; reuses artillery/map/trajectory/cleanup tools.
-3. **Field Utilities Fabricator and Virtual Storage**, excluding covered
+2. **Field Utilities Fabricator and Virtual Storage**, excluding covered
    fixed-wing airdrop. Review module sync, queue UI, cloning, packing,
    inventory, authority, and cleanup.
-4. **OPHANIM / Iron Dome.** Always-started server subsystem with physical
+3. **OPHANIM / Iron Dome.** Always-started server subsystem with physical
    interceptors, concurrent assignment, retries, and stale-task risk; reuses
    artillery/projectile/combat evidence.
-5. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
+4. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
    user-visible and multiplayer-sensitive; separate UAV profile, IED, mortar,
    and grenade contracts during review.
 
