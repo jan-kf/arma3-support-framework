@@ -19,6 +19,8 @@ YOSHI_CB_nextUid = 0;
 YOSHI_CB_airborneShells = [];
 
 YOSHI_CB_CENTER_UPDATE_DIST = 25;
+YOSHI_CB_PREDICT_STEP = 0.1;
+YOSHI_CB_PREDICT_MAX_TIME = 180;
 YOSHI_CB_LOCAL_UID_COUNTER = 0;
 YOSHI_CB_LOCAL_EH_ID = -1;
 
@@ -283,6 +285,13 @@ YOSHI_CB_getShellUid = {
 };
 
 
+// The impact surface is the ground under the projected point, not sea level.
+// Clamped at the waterline so shells falling into the sea still terminate.
+YOSHI_CB_groundHeightAt = {
+	params ["_position"];
+	0 max (getTerrainHeightASL [_position select 0, _position select 1, 0])
+};
+
 YOSHI_predictFallTimeAndPos = {
 	params["_projectile"];
 
@@ -290,12 +299,14 @@ YOSHI_predictFallTimeAndPos = {
 	private _velocity = velocity _projectile;
 	private _gravity = [0,0,-9.81];
 	private _time = 0;
+	private _ground = [_position] call YOSHI_CB_groundHeightAt;
 
-	while {_position select 2 >= 0} do {
-		_position = _position vectorAdd (_velocity vectorMultiply 0.1);
-		_velocity = _velocity vectorAdd (_gravity vectorMultiply 0.1);
+	while {(_position select 2) > _ground && {_time < YOSHI_CB_PREDICT_MAX_TIME}} do {
+		_position = _position vectorAdd (_velocity vectorMultiply YOSHI_CB_PREDICT_STEP);
+		_velocity = _velocity vectorAdd (_gravity vectorMultiply YOSHI_CB_PREDICT_STEP);
 
-		_time = _time + 0.1;
+		_time = _time + YOSHI_CB_PREDICT_STEP;
+		_ground = [_position] call YOSHI_CB_groundHeightAt;
 	};
 
 	[round _time, _position]

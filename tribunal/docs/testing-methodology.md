@@ -76,6 +76,7 @@ schema.
 | Vigil transport | selected crewed transport physically flies, lands and settles at LZ, waits, then physically returns and settles at recorded home; duplicate request is rejected | task IDs/state keys, waypoint/land command sequence, fixture coordinates, observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 | Vigil rotary CAS | selected armed helicopter reaches its requested area, attacks only a valid hostile ground target with correlated real fire and impact, respects its timer, disengages and returns home; no-target and invalid controls fail closed | task/ledger layout, fixture coordinates/classes, LOITER/MOVE details, sensor/reveal and observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 | Vigil fixed-wing strike | registered state reconstructs once, enters the operating area, consumes real client laser/IR designations for two correlated guided impacts, rejects no-designation fire, then physically egresses and cleans up | registry schema, fixture coordinates/classes, waypoint geometry, observer cadence and private helper names | REFINE BEFORE PERMANENT COVERAGE |
+| Counter Battery Radar | enabled detection draws an impact zone on the ground the shells actually strike, with count/ETA, a narrowing then confirmed origin at the real gun, a side-filtered launch warning, expiry, replication and full reset on stop; disabled produces nothing | cluster/member layout, uid format, marker names and index counters, link distance/leeway/hysteresis, integration step and cadence | REFINE BEFORE PERMANENT COVERAGE |
 
 ### APS findings
 
@@ -180,12 +181,32 @@ installed pylon class exists for an honest comparison. Full analysis is in
 
 The logistics review found that the old path opened the real Field Utilities physical-object queue but then reported success from a client-local fling with no authoritative task, ingress gate, duplicate protection, physical completion, or RTB. The refined path transfers the packed object tree to the server, flies the shared registered aircraft to a bounded release gate, uses a real parachute, proves exact weapon/magazine/item/backpack inventory after landing, and then uses the shared bounded RTB lifecycle. No capacity feature exists, so no capacity contract was invented. Full analysis is in [`vigil-fixed-wing-logistics-review.md`](vigil-fixed-wing-logistics-review.md).
 
+### Counter Battery Radar findings
+
+The CBR review found a working detection, clustering, warning and origin
+pipeline with one material defect: impact prediction integrated the projectile
+to sea level rather than to the ground under the projected point, biasing the
+drawn impact zone downrange for every target above the waterline. A one-variable
+A/B on the same live shells measured 46.65 m and 53.76 m error at 219 m and
+167 m elevation against 2.15 m and 6.06 m for a terrain-aware solution, and
+identical results at sea level. Only that termination condition was corrected,
+plus an explicit bound on the previously unbounded integration loop; the
+prediction mechanism itself is not frozen by the contract.
+
+A suspected defect was disproved and deliberately left unchanged: deleting from
+`YOSHI_originTrack` while iterating it removed all five expired entries in one
+pass. Marker sharing policy is a genuine open product decision — zone and origin
+markers are global while the radio warning is side-filtered — and no test
+asserts a preferred answer. Full analysis is in
+[`advanced-systems-counter-battery-radar-review.md`](advanced-systems-counter-battery-radar-review.md).
+
 ## Generic Tribunal capability backlog
 
 Already generic: deterministic PBO packaging; assertion/result protocol;
 direct projectile launch; artillery/weapon-fire trajectory observation;
 spatial evidence; locality transfer; remote execution; authenticated
-framebuffer/input; map/marker observation; evidence attachments; named network
+framebuffer/input; map/marker observation, including a product-neutral marker
+property/census/lifecycle observer; evidence attachments; named network
 profiles; version-bounded ACE interaction discovery plus authenticated real
 input.
 

@@ -2066,12 +2066,32 @@ def live_state() -> dict:
     return state
 
 
+# A live snippet is delivered through the extension and executed with `call
+# compile`, which performs no preprocessing, and it is returned through Arma's
+# fixed callExtension output buffer.  Both limits were measured against the
+# running dedicated server: a 20000-byte snippet round-trips, 24000 truncates,
+# and a `//` comment raises "Invalid number in expression" at the comment.
+# Rejecting them here turns two confusing engine syntax errors into one clear
+# message.  Mission .sqf files are preprocessed normally and are not affected.
+LIVE_COMMAND_MAX_BYTES = 19 * 1024
+
+
 def write_live_command(endpoint: str, source: str) -> Path:
     """Atomically publish one explicit developer command to one mission VM."""
     if endpoint not in {"server", "client"}:
         raise RuntimeError("live endpoint must be server or client")
-    if not source.strip() or len(source.encode("utf-8")) > 32 * 1024:
-        raise RuntimeError("live command must be non-empty and at most 32 KiB")
+    if not source.strip():
+        raise RuntimeError("live command must be non-empty")
+    if len(source.encode("utf-8")) > LIVE_COMMAND_MAX_BYTES:
+        raise RuntimeError(
+            f"live command must be at most {LIVE_COMMAND_MAX_BYTES} bytes; Arma's callExtension "
+            "output buffer silently truncates larger snippets. Split it into smaller commands."
+        )
+    if "//" in source or "/*" in source:
+        raise RuntimeError(
+            "live commands are executed with `call compile`, which does not run the preprocessor, "
+            "so // and /* */ comments are syntax errors. Remove the comments."
+        )
     state = live_state()
     control = Path(state["live_control"])
     command_id = uuid.uuid4().hex

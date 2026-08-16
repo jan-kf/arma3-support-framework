@@ -37,6 +37,13 @@ Live Mode first completes the smoke protocol, then deliberately retains its alre
 
 The server command channel is intentionally narrow. A runtime-only Arma extension can read exactly one run-scoped, read-only mounted SQF inbox and exposes no networking, process execution, directory traversal, or writes. Client snippets are relayed through the existing authenticated mission RPC channel. Commands are atomically replaced, size-limited, and audited in the run's `live-control/commands.jsonl`. `live stop` is the only command that tears down the retained containers and bridge.
 
+Two properties of that channel constrain what a live snippet may contain, and both are enforced by `write_live_command` so they fail with an explicit message instead of an obscure engine error:
+
+* Snippets are executed with `call compile`, which does **not** run the preprocessor, so `//` and `/* */` comments are syntax errors. The engine reports this as `Invalid number in expression` pointing at the comment.
+* Snippets are returned through Arma's fixed `callExtension` output buffer. Measured against the running dedicated server, 20000 bytes round-trips and 24000 bytes is silently truncated, which surfaces as `Missing }` or `Missing "`. Split larger probes into several commands; function definitions persist between them.
+
+Mission `.sqf` files are preprocessed normally, so permanent scenario SQF is unaffected by either limit.
+
 No Git remote is configured. Source commits remain local-only until a remote URL and authentication are supplied.
 
 ## Architecture

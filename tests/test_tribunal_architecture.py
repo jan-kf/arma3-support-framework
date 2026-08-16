@@ -89,6 +89,15 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertEqual(multiplayer.FEATURE_SCENARIOS["vigil-transport"], transport)
         self.assertIn("vigil-transport", gameplay.selected)
 
+        radar = scenarios["advsys-counter-battery-radar"]
+        self.assertNotIn("visual_driver", radar.metadata)
+        self.assertIn("cbr.prediction.impactAccuracy", radar.server_expected)
+        self.assertIn("cbr.control.disabledNoDetection", radar.server_expected)
+        self.assertIn("cbr.client.warningDelivered", radar.client_expected)
+        self.assertIn("TRIBUNAL_fnc_markerCensus", radar.server_sqf)
+        self.assertEqual(multiplayer.FEATURE_SCENARIOS["advsys-counter-battery-radar"], radar)
+        self.assertIn("advsys-counter-battery-radar", gameplay.selected)
+
         bridge = scenarios["fieldutils-bridge-builder"]
         self.assertNotIn("visual_driver", bridge.metadata)
         self.assertIn("bridge.traversal.authoritative", bridge.server_expected)

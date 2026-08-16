@@ -46,7 +46,7 @@ Five top-level runtime families are present:
 | Family | Purpose | Primary locations | Overall state | Coverage summary |
 | --- | --- | --- | --- | --- |
 | CORDIS shared runtime | Authority routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Implemented, with reserved bootstrap files | **NOT YET REVIEWED**; heavily exercised incidentally |
-| Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS strong, CBR/Iron Dome uncovered |
+| Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS and Counter Battery Radar strong, Iron Dome uncovered |
 | Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
 | Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fixed-wing logistics and the reviewed Bridge Builder core |
 | Cross-mod composition | Contracts joining CORDIS, Vigil, Field Utilities, ACE/CBA, and editor/Zeus surfaces | calls across all addons/configs | Implemented, some optional/degraded paths | **PARTIALLY COVERED**; one composite path direct, most incidental |
@@ -167,19 +167,34 @@ removal, and resource semantics high-risk review topics.
 
 ### 2.2 Counter Battery Radar
 
+The permanent `advsys-counter-battery-radar` scenario proves enabled detection,
+ground-accurate impact prediction, zone/icon markers, origin narrowing and
+confirmation, the side-filtered launch warning, expiry, replication, locality,
+and the disabled and stop controls.
+
 * **Artillery detection/prediction** assigns shell UIDs, tracks airborne rounds,
   projects fall time/position, and sends owner-local updates serverward.
-  **Implemented; NOT YET REVIEWED.**
+  **Implemented; COVERED.** Prediction previously integrated to sea level and was
+  refined to resolve the ground under the projected point; per-shell predicted
+  versus real impact is now asserted. The integration mechanism is not contract.
 * **Impact clustering/warnings** groups predictions, updates red zone/count/ETA
-  markers, warns by side, and prunes expiry. **Implemented; NOT YET REVIEWED.**
+  markers, warns by side, and prunes expiry. **Implemented; COVERED** for one
+  launcher, including same-side and out-of-radius warning controls. Multi-launcher
+  and multi-cluster arbitration are **NOT YET REVIEWED**.
 * **Origin estimation** narrows repeated launch origins into a search marker.
-  **Implemented; NOT YET REVIEWED.** Confidence, randomness, scope, and expiry
-  need review.
+  **Implemented; COVERED** for narrowing and confirmation at the real gun
+  position. Confirmed-origin persistence is **REVIEWED / DEFERRED** pending a
+  product decision.
+* **Marker sharing policy** publishes zone and origin markers globally while the
+  radio warning is side-filtered. **Implemented; REVIEWED / DEFERRED** as an open
+  product decision; no test asserts a preferred answer.
 * **Eden enable / Zeus toggle** start, stop, reset, and report the system.
-  **Implemented; NOT YET REVIEWED.**
+  **Implemented; PARTIALLY COVERED.** The start/stop lifecycle is directly
+  covered through the API; real module and curator activation are **NOT YET
+  REVIEWED**.
 
-This is a high-value review because existing Tribunal artillery, map,
-trajectory, and cleanup tools cover most generic mechanics.
+Full analysis:
+[`advanced-systems-counter-battery-radar-review.md`](advanced-systems-counter-battery-radar-review.md).
 
 ### 2.3 OPHANIM / Iron Dome
 
@@ -489,6 +504,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-cas` | rotary CAS filtering, attack, timer, controls, RTB |
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
+| `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
 
 Framework `locality-probe` and `visual-framebuffer` scenarios prove Tribunal,
 not product features. Promote generic backlog mechanics only for a concrete
@@ -512,7 +528,9 @@ coverage.
 | Transport hidden-pad landing | **REVIEWED / NEEDS EXPERIMENTATION** | landing works; exact mechanism necessity unproven |
 | Developer laser harness | **UNKNOWN** | substantive diagnostic code, no normal entry found |
 | APS anti-drone | **NOT YET REVIEWED** | active experimental behavior outside projectile contract |
-| CBR/origin estimation | **NOT YET REVIEWED** | active substantial code, no contract/scenario |
+| CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
+| CBR confirmed-origin persistence | **REVIEWED / DEFERRED** | confirmed fix never expires; decay policy undecided |
+| CBR module/Zeus activation | **NOT YET REVIEWED** | lifecycle covered through the API, not real module/curator paths |
 | Iron Dome | **NOT YET REVIEWED** | active server subsystem, no causal proof |
 | Field towing | **Partial / NOT YET REVIEWED** | source TODOs identify parent/cleanup gaps |
 | Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |
@@ -522,22 +540,21 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **Advanced Systems Counter Battery Radar.** High operational value and no
-   coverage despite prediction, clustering, warnings, markers, and origin
-   estimation; reuses artillery/map/trajectory/cleanup tools.
-2. **Field Utilities Fabricator and Virtual Storage**, excluding covered
+1. **Field Utilities Fabricator and Virtual Storage**, excluding covered
    fixed-wing airdrop. Review module sync, queue UI, cloning, packing,
    inventory, authority, and cleanup.
-3. **OPHANIM / Iron Dome.** Always-started server subsystem with physical
+2. **OPHANIM / Iron Dome.** Always-started server subsystem with physical
    interceptors, concurrent assignment, retries, and stale-task risk; reuses
-   artillery/projectile/combat evidence.
-4. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
+   artillery/projectile/combat evidence, and now the generic marker observer.
+3. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
    user-visible and multiplayer-sensitive; separate UAV profile, IED, mortar,
    and grenade contracts during review.
 
 Then consider APS anti-drone, CORDIS public routing/dedupe semantics, suite
 editor/Zeus modules, and towing. Do not resume reconnaissance until the product
-decisions in `vigil-fixed-wing-recon-review.md` are answered.
+decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume
+CBR marker scoping or confirmed-origin persistence until the product decisions
+in `advanced-systems-counter-battery-radar-review.md` are answered.
 
 ## Evidence sources
 

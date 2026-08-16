@@ -103,6 +103,25 @@ The first combined aviation/combat consumer is Vigil rotary-wing CAS. Its
 review, refinements, controls and evidence boundary are documented in
 [`vigil-cas-review.md`](vigil-cas-review.md).
 
+### Marker observation
+
+`tribunal.mission.markers.marker_observer_sqf()` supplies product-neutral marker
+evidence: one marker's property record, a prefix-scoped census, a census diff,
+a bounded observation loop driven by a caller-supplied terminal predicate, and
+derived appear/peak/clear lifecycle evidence. Tribunal records which markers
+exist, where they are and how they are drawn; it never decides what a marker
+means. The observed prefix and its interpretation belong to the calling
+scenario, so the same mechanics serve any mod that annotates the map.
+
+This complements the authenticated map-marker framebuffer driver: use the
+rendered driver when the contract is that a marker is visibly painted, and this
+data observer when the contract is that the right marker set exists, replicates
+and is cleaned up.
+
+The first consumer is Advanced Systems Counter Battery Radar, whose review and
+evidence boundary are documented in
+[`advanced-systems-counter-battery-radar-review.md`](advanced-systems-counter-battery-radar-review.md).
+
 ## Rendered-state observability
 
 The `visual-framebuffer` capability scenario renders and removes a known
