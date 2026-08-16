@@ -195,10 +195,26 @@ prediction mechanism itself is not frozen by the contract.
 
 A suspected defect was disproved and deliberately left unchanged: deleting from
 `YOSHI_originTrack` while iterating it removed all five expired entries in one
-pass. Marker sharing policy is a genuine open product decision — zone and origin
-markers are global while the radio warning is side-filtered — and no test
-asserts a preferred answer. Full analysis is in
+pass. Marker sharing policy, confirmed-origin persistence and warning coverage
+are genuine open product decisions — zone and origin markers are global while
+the radio warning is side-filtered — and no test asserts a preferred answer.
+
+An independent audit of the first coverage attempt produced two structural
+corrections worth generalising. A negative control must independently prove that
+the stimulus it withholds a response to actually occurred: the disabled-path
+control originally fired a round and asserted only that no detection state
+appeared, so it would have passed had the gun never fired at all. It now proves
+the shell launched, flew and impacted before CBR's silence means anything.
+Likewise, a scenario must exercise the real pipeline rather than the helper at
+its end: the warning coverage originally invoked the side-filter helper
+directly, proving filtering but not launch-to-receipt. Positive and both
+negative controls are now real artillery launches. Full analysis is in
 [`advanced-systems-counter-battery-radar-review.md`](advanced-systems-counter-battery-radar-review.md).
+
+A run that ends `FAIL (timeout)` is not evidence of success for the assertions it
+did emit. Assertions simply stop arriving at the deadline, so a scenario is
+proven only by a `PASS (complete)` run whose emitted set matches the plan's
+expected set.
 
 ## Generic Tribunal capability backlog
 

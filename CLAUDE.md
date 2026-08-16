@@ -91,25 +91,32 @@ security boundary), [`docs/dedicated-testing.md`](docs/dedicated-testing.md),
 [`docs/vigil-testing.md`](docs/vigil-testing.md).
 
 Live Mode snippets run through `call compile`, which does **not** preprocess:
-`//` comments are a syntax error, and payloads above ~20 KB are silently
-truncated by Arma's `callExtension` buffer. Both are rejected up front with a
-clear message. Permanent scenario SQF lives in preprocessed mission files and is
-unaffected. Live Mode is a development aid, never proof.
+`//` and `/* */` comments are syntax errors, and payloads above ~20 KB are
+silently truncated by Arma's `callExtension` buffer. Both are rejected up front
+with a clear message — comment detection ignores string literals, and the size
+check measures the *delivered* payload, since a client snippet is relay-wrapped
+with every quote doubled and can roughly double in size. Permanent scenario SQF
+lives in preprocessed mission files and is unaffected. Live Mode is a
+development aid, never proof.
 
 Conventions:
 
 * Each run is retained under `runs/<run-id>/`; `runs/latest` symlinks the newest.
 * **A fresh autonomous proof is a single-scenario `--select` run.** That is how
-  every milestone to date was proven. The whole `gameplay` tier in one boot now
-  expects ~120 server assertions and does **not** fit the default 720 s
-  `--timeout`; it dies partway through and reports `FAIL (timeout)` with later
-  scenarios simply absent. That is a budget limit, not a behavioral regression —
-  check *which* assertions failed before concluding you broke something, and
-  raise `--timeout` if you genuinely need the combined run.
-* Physical-combat assertions that depend on `HitPart` (notably
-  `vigil.cas.attack.effect`) are known to be occasionally flaky under a loaded
-  combined run while passing standalone. Isolate with `--select` before treating
-  one as a regression.
+  every milestone to date was proven.
+* **Know your timeout.** `./pontifex test gameplay` dispatches to the `tier`
+  subcommand, whose default is **360 s** (`PONTIFEX_TIER_TIMEOUT`). The 720 s
+  default belongs to the unrelated `test`/`e2e` subcommands — do not confuse
+  them. Longer scenarios need an explicit `--timeout`.
+* **A `FAIL (timeout)` run proves nothing, even if every emitted assertion
+  passed.** Assertions simply stop arriving at the deadline, so absence of
+  failure is not evidence of success. Always check `status`/`reason` and compare
+  emitted assertions against the plan's expected set before drawing any
+  conclusion.
+* The composed `gameplay` tier expects ~120 server assertions and does not fit
+  360 s. At an explicit 720 s it gets much further but still times out, with
+  genuine unrelated failures in fixed-wing IR strike and logistics. Treat those
+  as independent follow-ups; do not raise timeouts to hide them.
 * Assertion prefix is `PONTIFEX_TEST`; assertion IDs are dotted and
   feature-scoped (`aps.positive.engaged`, `vigil.artillery.circle.roundCount`).
 * Product SQF uses the historical `YOSHI_`/`YSF_`/`YAS_`/`YFU_` prefixes.

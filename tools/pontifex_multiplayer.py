@@ -2069,32 +2069,49 @@ def live_state() -> dict:
 # A live snippet is delivered through the extension and executed with `call
 # compile`, which performs no preprocessing, and it is returned through Arma's
 # fixed callExtension output buffer.  Both limits were measured against the
-# running dedicated server: a 20000-byte snippet round-trips, 24000 truncates,
+# running dedicated server: a 20000-byte payload round-trips, 24000 truncates,
 # and a `//` comment raises "Invalid number in expression" at the comment.
 # Rejecting them here turns two confusing engine syntax errors into one clear
 # message.  Mission .sqf files are preprocessed normally and are not affected.
 LIVE_COMMAND_MAX_BYTES = 19 * 1024
 
 
-def write_live_command(endpoint: str, source: str) -> Path:
-    """Atomically publish one explicit developer command to one mission VM."""
-    if endpoint not in {"server", "client"}:
-        raise RuntimeError("live endpoint must be server or client")
-    if not source.strip():
-        raise RuntimeError("live command must be non-empty")
-    if len(source.encode("utf-8")) > LIVE_COMMAND_MAX_BYTES:
-        raise RuntimeError(
-            f"live command must be at most {LIVE_COMMAND_MAX_BYTES} bytes; Arma's callExtension "
-            "output buffer silently truncates larger snippets. Split it into smaller commands."
-        )
-    if "//" in source or "/*" in source:
-        raise RuntimeError(
-            "live commands are executed with `call compile`, which does not run the preprocessor, "
-            "so // and /* */ comments are syntax errors. Remove the comments."
-        )
-    state = live_state()
-    control = Path(state["live_control"])
-    command_id = uuid.uuid4().hex
+def strip_sqf_string_literals(source: str) -> str:
+    """Blank out SQF string literals so comment detection cannot match inside one.
+
+    SQF quotes with either delimiter and escapes by doubling it, so `"a""b"` and
+    `'a''b'` are single strings.  A URL or a quoted `/*` is ordinary data, not a
+    comment, and must not be rejected.
+    """
+
+    out: list[str] = []
+    quote: str | None = None
+    index = 0
+    while index < len(source):
+        char = source[index]
+        if quote is None:
+            if char in ('"', "'"):
+                quote = char
+                out.append(" ")
+            else:
+                out.append(char)
+            index += 1
+            continue
+        # Inside a literal: a doubled delimiter is an escaped quote, not the end.
+        if char == quote:
+            if index + 1 < len(source) and source[index + 1] == quote:
+                out.append("  ")
+                index += 2
+                continue
+            quote = None
+        out.append(" ")
+        index += 1
+    return "".join(out)
+
+
+def build_live_payload(endpoint: str, source: str, command_id: str) -> str:
+    """Return the exact bytes the mission will receive for one live command."""
+
     if endpoint == "client":
         # The live server is the only endpoint granted file patching.  It
         # relays explicitly requested client snippets over the mission's
@@ -2106,10 +2123,36 @@ def write_live_command(endpoint: str, source: str) -> Path:
             f'if (_owner > 0) then {{ ["{escaped}", "{command_id}"] remoteExecCall ["PONTIFEX_LIVE_fnc_exec", _owner]; }} '
             f'else {{ diag_log "PONTIFEX_LIVE|client-a|NO_OWNER"; }};'
         )
-        target_endpoint = "server"
-    else:
-        target_endpoint = endpoint
-    payload = f'diag_log "PONTIFEX_LIVE|{endpoint}|COMMAND|{command_id}";\n{source.rstrip()}\n'
+    return f'diag_log "PONTIFEX_LIVE|{endpoint}|COMMAND|{command_id}";\n{source.rstrip()}\n'
+
+
+def write_live_command(endpoint: str, source: str) -> Path:
+    """Atomically publish one explicit developer command to one mission VM."""
+    if endpoint not in {"server", "client"}:
+        raise RuntimeError("live endpoint must be server or client")
+    if not source.strip():
+        raise RuntimeError("live command must be non-empty")
+    if "//" in strip_sqf_string_literals(source) or "/*" in strip_sqf_string_literals(source):
+        raise RuntimeError(
+            "live commands are executed with `call compile`, which does not run the preprocessor, "
+            "so // and /* */ comments are syntax errors. Remove the comments."
+        )
+    state = live_state()
+    control = Path(state["live_control"])
+    command_id = uuid.uuid4().hex
+    # Measure what the mission actually receives.  A client snippet is wrapped in
+    # a relay and has every quote doubled, so a source comfortably under the
+    # bound can still deliver an oversized, silently truncated payload.
+    payload = build_live_payload(endpoint, source, command_id)
+    payload_bytes = len(payload.encode("utf-8"))
+    if payload_bytes > LIVE_COMMAND_MAX_BYTES:
+        raise RuntimeError(
+            f"live command delivers a {payload_bytes}-byte payload, over the "
+            f"{LIVE_COMMAND_MAX_BYTES}-byte limit; Arma's callExtension output buffer silently "
+            "truncates larger payloads. Split it into smaller commands "
+            f"(source was {len(source.encode('utf-8'))} bytes before relay wrapping and quote escaping)."
+        )
+    target_endpoint = "server" if endpoint == "client" else endpoint
     target = control / f"{target_endpoint}.sqf"
     temporary = target.with_suffix(".sqf.new")
     temporary.write_text(payload, encoding="utf-8")

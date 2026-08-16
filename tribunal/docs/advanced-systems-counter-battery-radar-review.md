@@ -136,14 +136,36 @@ prediction, which is acceptable at the 0.5 s per-shell cadence.
 
 The permanent scenario correlates one run token, one launcher, eight tracked
 shells and their real terminal positions. Each shell's predicted impact is
-compared with **that same shell's** engine-observed terminal position, so the
-accuracy claim is dispersion-free and each shell is its own control. The drawn
-zone centre is separately compared with the real impact centroid. Marker
-identity, shape, colour, type and text are captured while the zone is live.
-Origin radii are sampled across the whole engagement and the confirmed fix is
-required to be a `mil_triangle` within 5 m of the actual gun. The warning is
-proven by delivery to client-a's radio playback path with a same-side control
-and an out-of-radius control that must add no further warning.
+compared with **that same shell's** terminal position, so the accuracy claim is
+dispersion-free and each shell is its own control. The launch and trajectory
+oracle is Tribunal's artillery observer; the per-shell terminal-position poll
+that pairs a prediction to its own projectile is scenario-local, and this review
+previously described that poll as Tribunal-owned in error. The drawn zone centre
+is separately compared with the real impact centroid. Marker identity, shape,
+colour, type and label are captured while the zone is live, and the label must
+equal the count and remaining-time the product itself holds, with that time
+consistent with the flights Tribunal measured. Origin radii are sampled across
+the whole engagement and the confirmed fix is required to be a `mil_triangle`
+within 5 m of the actual gun.
+
+Every warning claim travels the real pipeline — native launch,
+`ArtilleryShellFired`, the product handler, emission, client receipt — and the
+scenario never invokes the warning helper directly:
+
+* **positive:** a real hostile three-shell salvo landing 100–1000 m from the
+  declared observer delivers **exactly one** warning, which also proves the
+  once-per-airborne-cycle rule;
+* **out-of-radius control:** the elevated accuracy salvo is real hostile
+  artillery kilometres away and must deliver nothing;
+* **same-side control:** a real friendly salvo onto the same impact point must
+  deliver nothing.
+
+Because a warning is emitted only for the first shell of an airborne cycle, each
+phase asserts that the tracker was genuinely idle beforehand; otherwise a control
+would pass for the wrong reason. The client correlates the exact authoritative
+zone and icon names, position, shape, colour and size published by the server,
+rather than accepting any two markers sharing the product prefix, and separately
+requires the origin marker to replicate.
 
 Assertion strength was verified rather than assumed: run against the
 **un-refined** build the accuracy assertion failed with a worst error of
@@ -216,6 +238,81 @@ These are recorded rather than invented, and no test asserts a preferred answer:
    airborne cycle, positioned on the first round only, at a fixed 1000 m radius.
    Whether a walking barrage should re-warn is undecided.
 
+## Corrective review after independent audit
+
+An independent audit of the first coverage attempt raised four blocking
+findings. All four were verified against the repository and runtime and all four
+were correct.
+
+**The disabled control could pass without a shot.** It fired one round, waited,
+and asserted only that no detection state appeared. Had the gun failed to fire —
+no ammunition, out of range, dead crew — every assertion would still have passed.
+The control now proves the shell through Tribunal's observer before CBR's silence
+is allowed to mean anything: one `Fired` event from the expected source and
+magazine, an `ArtilleryShellFired` correlation, a sampled trajectory, termination,
+and an impact within 250 m of the aim point. Silence is asserted as
+`_disabledOk = _controlShotOk && ...`, so the shot evidence gates the control.
+
+**Warning coverage bypassed the real pipeline.** The scenario invoked
+`YOSHI_fnc_cbrWarnSidePlayers` directly, which proved the helper's side and
+radius filtering but never proved launch → `ArtilleryShellFired` → product
+handler → emission → client receipt. The helper is no longer invoked anywhere in
+the scenario. The positive is a real hostile three-shell salvo inside the radius;
+the out-of-radius control is a real hostile salvo placed at runtime to be
+unambiguously outside it; the same-side control is a real friendly salvo onto the
+same impact point. The three-shell positive also proves the once-per-airborne-cycle
+rule, which was previously unproven. Emission and receipt are recorded separately —
+a transparent recorder on the server captures what the product decided to warn
+about and who qualified, and the client records receipt — so a future failure
+localises to one side instead of being ambiguous.
+
+**The live-command guards were wrong for generic SQF.** Scanning raw text for
+`//` and `/*` rejected valid string literals such as a URL or a quoted `/*`, and
+the size check ran before the client relay wrapper and quote doubling, so a
+compliant source could still deliver an oversized, silently truncated payload.
+Comment detection now blanks string literals first (handling both delimiters and
+doubled-quote escapes) and the size check measures the delivered payload. A
+17,012-byte client source that previously passed is now correctly rejected at
+26,340 delivered bytes.
+
+**Gameplay-tier documentation misstated the evidence.** Corrected in full above.
+
+Two further defects were found in the scenario itself during remediation, both
+of which had produced misleading results:
+
+* **A boundary-distance control.** The elevated accuracy target doubled as the
+  out-of-radius warning control, but at ~999 m from the focused-run observer it
+  sat exactly on the 1000 m warning radius. The tier mission derives the player's
+  x-coordinate from the run token, so the control silently flipped between inside
+  and outside across runs. The elevated target is now chosen at runtime from
+  high-terrain candidates by maximum separation from the declared observer, and
+  the emission record makes the separation explicit.
+* **A salvo-overlap race.** Each warning phase must begin from an idle tracker,
+  because only the first shell of an airborne cycle warns. The idle check
+  accepted the transient gap *between rounds of a still-firing salvo*, so the
+  preceding volley sometimes still owned the cycle and the salvo under test
+  produced no warning at all. Recorded handler decisions showed the two guns
+  interleaved, with `first=true` going to whichever won the race. The confirm
+  volley is now drained to termination through its own observer, and idle
+  requires stable emptiness rather than an instantaneous sample.
+
+Neither was a product defect; both were defects in the coverage, and both would
+have produced an intermittently green scenario.
+
+A third source of nondeterminism was observed and is recorded honestly rather
+than claimed solved: on one run the near-warning gun fired zero rounds, with the
+same class, position and target that fired normally on the run before and after.
+Two speculative fixture changes were tried to suppress it and both were reverted
+because they made matters worse: disabling the crew's `TARGET`/`AUTOTARGET`/`FSM`
+AI stops an AI gunner accepting `doArtilleryFire` at all, and even a milder
+`CARELESS`/`BLUE`/captive variant broke the tracked salvo. Requiring flat ground
+outright left phases unplaced and silently skipped, so terrain flatness is now
+*preferred* and progressively relaxed instead of required. The fixture is back to
+simply arming the gun. The scenario now records `warnGunState` — gun identity,
+crew presence, artillery ammunition, damage, position, range and
+`inRangeOfArtillery` — captured immediately before firing, so if this recurs the
+run diagnoses itself rather than requiring another investigation from scratch.
+
 ## False-PASS controls and evidence
 
 The scenario fails closed on: a zone that never appears; markers read after
@@ -228,42 +325,65 @@ or beyond the radius; a second warning counted from a control; detection while
 the system is disabled; surviving markers or clusters after stop; and any
 unbounded wait. Every wait has an explicit deadline.
 
-Two structural false-PASS risks were found and closed during Live calibration.
-Marker type and text were originally read at assertion time, after the zone had
-already been pruned, which reported an empty type; they are now captured while
-the zone is live. The disabled-path control consumed a round from the magazine,
-so the tracked salvo silently fired seven of eight shells; the magazine is now
-restored before the tracked salvo. A sea-level-only target would have been a
-third false PASS, since it cannot distinguish the two impact solutions, so the
-scenario asserts its target is above 100 m ASL.
+Structural false-PASS risks found and closed during Live calibration and the
+corrective review:
+
+* marker type and text were read at assertion time, after the zone had already
+  been pruned, reporting an empty type; they are now captured while it is live;
+* the disabled-path control consumed a round, so the tracked salvo silently
+  fired seven of eight shells; the magazine is restored before the salvo;
+* a sea-level-only target cannot distinguish the two impact solutions, so the
+  scenario asserts its target is above 100 m ASL;
+* the disabled control asserted absence without proving the stimulus occurred;
+* the warning positive and controls exercised the helper rather than the pipeline;
+* the out-of-radius control sat on the radius boundary and flipped between runs;
+* the idle precondition accepted a transient gap inside a firing salvo, which
+  could make a warning phase vacuous rather than causal.
+
+The last four are the ones that matter most for method: a negative control is
+only meaningful if the stimulus it withholds a response to is independently
+proven to have happened, and a precondition sampled instantaneously is not a
+precondition at all.
 
 ## Fresh autonomous proof
 
-Cold run `20260816T153345Z-cb3ff3cb` passed 16/16 server and 9/9 client
-assertions with zero failures and complete container/network/state cleanup. Its
-token was `gameplay-20260816T153345Z-cb3ff3cb-1582c1ac41b1`; mission SHA-256 was
-`af29252e89fd36234bc13ae25e6df6a78f278efa2671876d171b37736f0d1f65` and PBO
+Cold run `20260816T212035Z-f6d0d968` passed 29/29 assertions with zero failures
+and complete container/network/state cleanup. Its token was
+`gameplay-20260816T212035Z-f6d0d968-ec3bc85cc6f3`; mission SHA-256 was
+`0ccc9de686032a72b5923db677be99a7cf8207f599d157d1498d920be4d6bf91` and PBO
 SHA-256 was
-`01b37c01c5c19ce48f71eb756897482305a48c937178bc4a5f966862836d96f2`
+`65c061c47334b39cdb743f8d62b870e50bd345ea090d958c4cdc61e9fe5ffe2d`
 with a valid deterministic footer.
 
-All eight tracked shells correlated to `Fired` and produced per-shell impact
-errors of 2.12, 3.04, 3.87, 3.90, 4.17, 4.30, 4.38 and 4.54 m against a 219.44 m
-target, with a worst ETA error of 0.095 s. The same assertion run against the
-pre-refinement build failed at 44.73–45.35 m, so the bound is meaningful rather
-than merely satisfied. The drawn zone `YOSHI_cb_zone_0` was a `ColorRed`
-`ELLIPSE` of 121.00 m radius centred 3.98 m from the real impact centroid, and
-its icon read `8 shells | ETA 15-27s`. The origin estimate narrowed
-1000 → 500 → 250 → 125 → 62.5 → 31.25 → 15.625 → 7.8125 m and was promoted to
-`YOSHI_origin_confirm_1`, a `mil_triangle` at `[3500.39, 4000.54]` against a real
-gun position of `[3500.38, 4000.55]`. Both zone markers were observed being
-removed on expiry, client-a observed the replicated zone across 45 samples,
-received exactly one launch warning, and gained no further warning from either
-the same-side or out-of-radius control.
+The disabled-path control fired a real shell, sampled 445 trajectory points,
+terminated, and impacted 14.2 m from its aim point while producing no cluster,
+no marker and no origin track. All eight tracked shells produced per-shell
+impact errors of 3.04-3.45 m against a 167.19 m target with a worst ETA error of
+0.12 s; the same assertion against the pre-refinement build failed at
+44.73-45.35 m. The drawn zone centre sat 8.35 m from the real impact centroid.
 
-An earlier equivalent cold run, `20260816T151550Z-33b28dbe`, passed the same
-16/16 and 9/9 before a line-ending normalisation in the edited source was
-reverted; the run above is the authoritative proof of the committed bytes.
+Four warning emissions were recorded, all from real launches:
+
+| Emission | Side | Impact | Observer distance | Recipients |
+| --- | --- | --- | --- | --- |
+| accuracy salvo | EAST | `[3000,2000]` | 1873 m | none |
+| confirm volley | EAST | `[3000,2000]` | 1873 m | none |
+| **positive** | EAST | `[4424,2778]` | **280 m** | **observer** |
+| same-side control | WEST | `[4424,2778]` | 280 m | none |
+
+Exactly one emission named the observer, it was the hostile salvo inside the
+radius, and the client received exactly one warning from three shells in that
+airborne cycle. Cleanup left no fixtures, no residual markers, no scenario state
+and no retained observer token.
+
+Repeatability was demonstrated by an immediately following identical cold run,
+`20260816T212927Z-d80fe834`, token
+`gameplay-20260816T212927Z-d80fe834-b5a007bb77e7`, which also passed 29/29 with
+zero failures, again recorded exactly one emission naming the observer, produced
+per-shell impact errors of 3.30-3.54 m, and cleaned up completely. Repeated
+execution within a single retained session is still not demonstrated; the
+`cbr.cleanup` assertion proves the scenario leaves no fixtures, markers or
+scenario state behind, which is the property a repeat run would depend on.
 
 ## Harness findings
 
@@ -276,19 +396,44 @@ silently, producing an equally confusing "Missing }". `write_live_command` now
 rejects both cases with an explicit message. Mission `.sqf` files are
 preprocessed normally, so scenario SQF is unaffected.
 
-Separately, the combined `gameplay` tier has outgrown its default 720 s bound.
-A full-tier run performed during this review reached 94 assertions — the highest
-recorded for this repository — and then terminated as `FAIL (timeout)` partway
-through rotary CAS, with fixed-wing, logistics, markers, transport and UI never
-reached. Every milestone's fresh autonomous proof to date has been a
-single-scenario `--select` run, so this is a budget limit rather than a
-behavioral regression, but it should be raised deliberately rather than
-discovered again. That same combined run recorded one
-`vigil.cas.attack.effect` failure with an empty `HitPart` list while fire
-correlation and damage events passed; the identical scenario passed standalone
-immediately afterwards (`20260816T152724Z-342d0e5b`, zero failures), and no
-Vigil source references any CBR symbol, so it is pre-existing sensitivity in
-that oracle rather than an effect of this review.
+## What the composed gameplay tier does and does not prove
+
+The `tier` subcommand that `./pontifex test gameplay` dispatches to defaults to
+**360 s** (`PONTIFEX_TIER_TIMEOUT`). The 720 s default belongs to the separate
+`test` and `e2e` subcommands. An earlier revision of this review misread the
+latter and stated 360 s as 720 s; that is corrected here.
+
+A `FAIL (timeout)` run proves nothing on its own. Assertions stop arriving at the
+deadline, so "no failure among the assertions that were emitted" is not evidence
+that a scenario passed. Two runs during this review were misread that way and are
+retracted:
+
+* `20260816T151957Z-c7e7de23` — composed tier at the 360 s default, 94
+  assertions, `FAIL (timeout)`, one `vigil.cas.attack.effect` failure.
+* `20260816T152724Z-342d0e5b` — `vigil-cas` alone at the 360 s default, `FAIL
+  (timeout)`, missing `cleanup`, `noAmmo` and `noTarget`. This was previously
+  cited as a standalone pass and as evidence that rotary CAS was a pre-existing
+  over-budget scenario last completing on 2026-08-13. That conclusion was wrong.
+
+An independent composed run at an explicit 720 s, `20260816T164010Z-79113df4`,
+settles it: all 17 CBR assertions passed, and **rotary CAS completed in full**,
+including `vigil.cas.attack.effect` with real `HitPart`, plus `noTarget`,
+`noAmmo` and `cleanup`. So CAS is neither broken nor chronically over budget; the
+360 s runs simply had insufficient time.
+
+That run still terminated as `FAIL (timeout)` after 142 assertions, with genuine
+failures in `vigil.fixedWing.strike.ir.guidance`,
+`vigil.fixedWing.strike.ir.effect` and `vigil.logistics.request.accepted`. The
+logistics failure carried destination `[6910,2770,0]` rather than the server
+fixture's expected destination, which suggests sequential UI/state leakage
+between composed scenarios. Those are real, unrelated to Counter Battery Radar,
+and are recorded as independent follow-up work; they are not to be resolved by
+raising timeouts.
+
+The honest current position is therefore: **the composed tier has never been run
+to completion**, so it proves nothing about scenarios after the point it stops.
+Per-scenario `--select` runs remain the acceptance method, as they have been for
+every milestone in this repository.
 
 ## Security and compatibility
 
@@ -297,6 +442,49 @@ requirement: it replaces one loop termination condition and adds a time bound.
 The scenario requires no VNC actor and no framebuffer evidence. Nothing changes
 AppArmor, seccomp, capabilities, no-new-privileges, Steam/CEF confinement, or
 VNC publication.
+
+## Appendix: retained A/B and pre-refinement evidence
+
+Run artifacts live under the git-ignored `runs/` tree, so the raw measurements
+behind the two central claims are retained verbatim here. Both were produced in
+Live session `20260816T143021Z-8b039b18` against the pre-refinement build.
+
+The A/B computed both solutions on the *same* live projectile — the shipped
+sea-level termination and a candidate terrain-aware termination — and compared
+each against that projectile's own observed impact:
+
+```text
+CBRAB|target|[4000,3500,0]|terrainH=219.44|nativeETA=27.0243
+CBRAB|shell|actual=[4005.54,3504.75,221.58]|flight=27.045
+  |CURRENT pos=[4038.79,3472.03,-11.9968] eta=29 err=46.6498 etaErr=1.95496
+  |TERRAIN pos=[4007.05,3503.22,219.807] eta=27 err=2.15144 etaErr=-0.0450439
+CBRAB|target|[3000,2000,0]|terrainH=167.19|nativeETA=38.8904
+CBRAB|shell|actual=[3000.42,2000.18,167.174]|flight=38.915
+  |CURRENT pos=[2987.47,1948,-16.0723] eta=40 err=53.7629 etaErr=1.08496
+  |TERRAIN pos=[2999.03,1994.28,158.438] eta=39 err=6.06433 etaErr=0.0849609
+CBRAB|target|[2200,5600,0]|terrainH=6.14|nativeETA=21.7405
+CBRAB|shell|actual=[2190.43,5603.68,9.14028]|flight=21.741
+  |CURRENT pos=[2179.22,5617.66,-3.84399] eta=22 err=17.9232 etaErr=0.259033
+  |TERRAIN pos=[2179.22,5617.66,-3.84399] eta=22 err=17.9232 etaErr=0.259033
+```
+
+The negative `CURRENT` z values are the sea-level termination made visible. The
+sea-level case is byte-identical between the two solutions, which is why the
+correction carries no regression there.
+
+The permanent scenario's accuracy assertion was then run against that same
+pre-refinement build to confirm the bound has teeth rather than merely being
+satisfied:
+
+```text
+CBRCAL|cbr.prediction.impactAccuracy|FAIL|samples=7|worstMetres=45.351
+  |worstEtaSeconds=1.93994|targetHeightASL=219.44
+  |errors=[45.3051,44.7344,44.731,45.1227,45.351,44.8193,44.9811]
+```
+
+The tight 44.73–45.35 m spread is the systematic bias, not dispersion. To
+reproduce, revert `YOSHI_predictFallTimeAndPos` to its sea-level termination and
+re-run the scenario; the assertion fails at ~45 m against its 20 m bound.
 
 ## Next review
 

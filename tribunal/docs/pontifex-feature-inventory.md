@@ -179,8 +179,11 @@ and the disabled and stop controls.
   versus real impact is now asserted. The integration mechanism is not contract.
 * **Impact clustering/warnings** groups predictions, updates red zone/count/ETA
   markers, warns by side, and prunes expiry. **Implemented; COVERED** for one
-  launcher, including same-side and out-of-radius warning controls. Multi-launcher
-  and multi-cluster arbitration are **NOT YET REVIEWED**.
+  launcher. The zone label is asserted against the product's own count and
+  remaining time, and every warning claim travels the real launch pipeline with
+  real hostile-far and friendly-near negative controls, including the
+  once-per-airborne-cycle rule. Multi-launcher and multi-cluster arbitration are
+  **NOT YET REVIEWED**.
 * **Origin estimation** narrows repeated launch origins into a search marker.
   **Implemented; COVERED** for narrowing and confirmation at the real gun
   position. Confirmed-origin persistence is **REVIEWED / DEFERRED** pending a
@@ -530,6 +533,7 @@ coverage.
 | APS anti-drone | **NOT YET REVIEWED** | active experimental behavior outside projectile contract |
 | CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
 | CBR confirmed-origin persistence | **REVIEWED / DEFERRED** | confirmed fix never expires; decay policy undecided |
+| CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; re-warning for a walking barrage undecided |
 | CBR module/Zeus activation | **NOT YET REVIEWED** | lifecycle covered through the API, not real module/curator paths |
 | Iron Dome | **NOT YET REVIEWED** | active server subsystem, no causal proof |
 | Field towing | **Partial / NOT YET REVIEWED** | source TODOs identify parent/cleanup gaps |

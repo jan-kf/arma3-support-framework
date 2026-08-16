@@ -30,6 +30,24 @@ class TestingMethodologyTests(unittest.TestCase):
             self.assertTrue(scenario.review.evidence_types, scenario.identifier)
             self.assertTrue(scenario.review.locality_requirements, scenario.identifier)
 
+    def test_scenario_sqf_is_ascii_encodable(self) -> None:
+        """Mission .sqf files are written as ASCII; a stray dash breaks the tier."""
+
+        scenarios = discover([
+            ROOT / "tribunal" / "scenarios",
+            ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
+            ROOT / "source" / "field-utilities" / "tests" / "tribunal",
+            ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
+        ])
+        for scenario in scenarios.values():
+            fragments = {"server": scenario.server_sqf, "client": scenario.client_sqf}
+            fragments.update(
+                {f"client:{identity}": text for identity, text in scenario.client_sqf_by_identity.items()}
+            )
+            for origin, text in fragments.items():
+                offending = sorted({character for character in text if ord(character) > 127})
+                self.assertFalse(offending, f"{scenario.identifier} {origin}: {offending}")
+
     def test_characterization_requires_complete_evidence_record(self) -> None:
         with self.assertRaises(ValueError):
             CharacterizedBehavior("mechanism", "", "evidence", "alternative", "outcome")

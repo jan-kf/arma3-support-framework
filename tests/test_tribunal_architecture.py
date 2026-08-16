@@ -94,6 +94,7 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertIn("cbr.prediction.impactAccuracy", radar.server_expected)
         self.assertIn("cbr.control.disabledNoDetection", radar.server_expected)
         self.assertIn("cbr.client.warningDelivered", radar.client_expected)
+        self.assertIn("cbr.warning.launchPipeline", radar.server_expected)
         self.assertIn("TRIBUNAL_fnc_markerCensus", radar.server_sqf)
         self.assertEqual(multiplayer.FEATURE_SCENARIOS["advsys-counter-battery-radar"], radar)
         self.assertIn("advsys-counter-battery-radar", gameplay.selected)

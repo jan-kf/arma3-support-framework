@@ -76,12 +76,97 @@ class CounterBatteryRadarContractTests(unittest.TestCase):
         # Marker properties are captured live, not read after cleanup.
         self.assertIn("_peakType = markerType", server)
         self.assertNotIn("{(markerType _peakIcon) isEqualTo", server)
-        # Both warning controls are present on the client.
-        self.assertIn("cbr.client.warningControls", client)
         self.assertIn("TRIBUNAL_CBR_ORIGINAL_RADIO", client)
         self.assertIn("YCD_fnc_playSideRadioLocal = TRIBUNAL_CBR_ORIGINAL_RADIO", client)
         for scope in (server, client):
             self.assertNotIn("while {true}", scope)
+
+    def test_disabled_control_independently_proves_a_real_shot(self) -> None:
+        """Without shot evidence the control passes even if the gun never fires."""
+
+        server = self.scenario.server_sqf
+        self.assertIn("cbr.control.disabledShotProven", self.scenario.server_expected)
+        control = server[server.index("cbr-control"):server.index("cbr.control.disabledNoDetection")]
+        # The shell must be seen to launch, fly, and terminate near the target.
+        self.assertIn('_controlEvent getOrDefault ["artilleryEvent", false]', control)
+        self.assertIn('_controlEvent getOrDefault ["terminated", false]', control)
+        self.assertIn('(_controlLast distance2D _target) < 250', control)
+        self.assertIn('(count (_controlEvent getOrDefault ["samples", []])) > 10', control)
+        # Silence is only meaningful once the shot itself is proven.
+        self.assertIn("private _disabledOk = _controlShotOk", server)
+
+    def test_warning_travels_the_real_launch_pipeline(self) -> None:
+        """Positive and both controls must be real launches, not helper calls."""
+
+        server = self.scenario.server_sqf
+        client = self.scenario.client_sqf
+        # The scenario may wrap the warning helper to observe emissions, but must
+        # never invoke it: a warning has to be produced by a real launch.
+        self.assertNotIn("call YOSHI_fnc_cbrWarnSidePlayers", server)
+        self.assertNotIn("YOSHI_fnc_cbrWarnSidePlayers", client)
+        # The wrap must delegate to the saved original and be restored again.
+        self.assertIn("_this call TRIBUNAL_CBR_WARN_ORIGINAL", server)
+        self.assertIn("YOSHI_fnc_cbrWarnSidePlayers = TRIBUNAL_CBR_WARN_ORIGINAL", server)
+        self.assertIn("cbr.warning.launchPipeline", self.scenario.server_expected)
+        # Hostile and friendly launches, each proven to raise ArtilleryShellFired.
+        self.assertIn('"O_Mortar_01_F" createVehicle _warnGunPos', server)
+        self.assertIn('"B_Mortar_01_F" createVehicle _warnGunPos', server)
+        self.assertIn('{_x getOrDefault ["artilleryEvent", false]} count _warnEvents', server)
+        self.assertIn("(side (group (gunner _warnGun))) isEqualTo east", server)
+        self.assertIn("(side (group (gunner _sameGun))) isEqualTo west", server)
+        # A warning fires only on the first shell of a cycle, so each phase must
+        # begin from a proven-idle tracker or the control is vacuous.
+        self.assertIn("TRIBUNAL_CBR_fnc_waitIdle", server)
+        # Transient emptiness between rounds of a still-firing salvo must not count.
+        self.assertIn("_stableFor", server)
+        self.assertIn("_stableSince = -1", server)
+        # Fixture guns must be firing platforms, not combatants.
+        self.assertIn("TRIBUNAL_CBR_fnc_firingPlatform", server)
+        # Disabling TARGET/FSM stops an AI gunner accepting doArtilleryFire.
+        self.assertNotIn('disableAI "AUTOTARGET"', server)
+        self.assertNotIn('disableAI "FSM"', server)
+        self.assertIn("{_farIdle} && {_warnIdle} && {_sameIdle}", server)
+        # Emission and receipt are recorded separately so a failure localises.
+        self.assertIn("TRIBUNAL_CBR_WARN_CALLS", server)
+        self.assertIn("YOSHI_fnc_cbrWarnSidePlayers = TRIBUNAL_CBR_WARN_ORIGINAL", server)
+        self.assertIn("(count _naming) isEqualTo 1", server)
+        # Impact must be inside the warning radius but clear of the observer.
+        self.assertIn("_warnDistance > 100", server)
+        self.assertIn("_warnDistance < 1000", server)
+        # Once-per-cycle: several shells, exactly one warning.
+        self.assertIn("_warnShells = 3", server)
+        self.assertIn("(count _afterWarn) isEqualTo 1", client)
+        self.assertIn("_warnShells > 1", client)
+        self.assertIn("(count _afterFar) isEqualTo 0", client)
+        self.assertIn("(count _afterSame) isEqualTo (count _afterWarn)", client)
+
+    def test_client_correlates_exact_authoritative_markers(self) -> None:
+        client = self.scenario.client_sqf
+        self.assertIn("TRIBUNAL_CBR_ZONE_RECORD", client)
+        self.assertIn("_expectedZone in _seen", client)
+        self.assertIn("_expectedIcon in _seen", client)
+        self.assertIn('distance2D _expectedCentre) < 1', client)
+        self.assertIn('_zoneRecord getOrDefault ["color", ""]) isEqualTo "ColorRed"', client)
+        self.assertIn("TRIBUNAL_CBR_ORIGIN_SEEN", client)
+        self.assertIn('(_originSeen findIf {(_x find "YOSHI_origin") isEqualTo 0}) >= 0', client)
+
+    def test_icon_label_matches_authoritative_count_and_timing(self) -> None:
+        server = self.scenario.server_sqf
+        self.assertIn('_expectedText = format ["%1 shells | ETA %2-%3s", _peakMembers, _peakEtaMin, _peakEtaMax]', server)
+        self.assertIn("_peakText isEqualTo _expectedText", server)
+        self.assertIn("_peakEtaMax <= (_maximumFlight + 2)", server)
+
+    def test_scenario_is_client_identity_keyed_and_cleans_up(self) -> None:
+        self.assertEqual(set(self.scenario.client_expected_by_identity), {"client-a"})
+        self.assertEqual(set(self.scenario.client_sqf_by_identity), {"client-a"})
+        self.assertEqual(self.scenario.expected_for("client-b"), frozenset())
+        server = self.scenario.server_sqf
+        # The observer is a declared identity, not whichever player sorts first.
+        self.assertNotIn("allPlayers select {isPlayer _x}", server)
+        self.assertIn("TRIBUNAL_CBR_OBSERVER_client-a", server)
+        self.assertIn("cbr.cleanup", self.scenario.server_expected)
+        self.assertIn("deleteVehicleCrew _x; deleteVehicle _x", server)
+        self.assertIn('scriptDone (missionNamespace getVariable ["YOSHI_CBR_ORIGIN_THREAD", scriptNull])', server)
 
     def test_scenario_joins_gameplay_tier_and_shares_the_tier_player_spawn(self) -> None:
         gameplay = multiplayer.select_plan("gameplay")
@@ -116,6 +201,38 @@ class CounterBatteryRadarContractTests(unittest.TestCase):
             multiplayer.write_live_command("server", 'diag_log "x"; /* comment */')
         with self.assertRaises(RuntimeError):
             multiplayer.write_live_command("server", "x" * (multiplayer.LIVE_COMMAND_MAX_BYTES + 1))
+
+    def test_comment_guard_does_not_reject_string_literals(self) -> None:
+        """A URL or a quoted /* is data, not a comment, and must survive the guard."""
+
+        strip = multiplayer.strip_sqf_string_literals
+        for literal in (
+            'diag_log "https://example.invalid/path";',
+            'diag_log "literal /* text */";',
+            "diag_log 'http://example.invalid';",
+            'diag_log "a""b//c";',
+        ):
+            stripped = strip(literal)
+            self.assertNotIn("//", stripped, literal)
+            self.assertNotIn("/*", stripped, literal)
+        for commented in ('diag_log "x"; // c', '/* c */ diag_log "x";'):
+            stripped = strip(commented)
+            self.assertTrue("//" in stripped or "/*" in stripped, commented)
+        # Blanking preserves offsets so reported positions stay meaningful.
+        self.assertEqual(len(strip('diag_log "a""b";')), len('diag_log "a""b";'))
+
+    def test_size_guard_measures_the_delivered_payload_not_the_source(self) -> None:
+        """Client relay wrapping plus quote doubling can double a compliant source."""
+
+        source = 'diag_log "' + ("a" * 4000) + '";' + ('"' * 9000) + ("x" * 4000)
+        self.assertLess(len(source.encode()), multiplayer.LIVE_COMMAND_MAX_BYTES)
+        delivered = multiplayer.build_live_payload("client", source, "0" * 32)
+        self.assertGreater(len(delivered.encode()), multiplayer.LIVE_COMMAND_MAX_BYTES)
+        # The same source is fine on the server endpoint, which has no relay.
+        self.assertLess(
+            len(multiplayer.build_live_payload("server", source, "0" * 32).encode()),
+            multiplayer.LIVE_COMMAND_MAX_BYTES,
+        )
 
 
 if __name__ == "__main__":
