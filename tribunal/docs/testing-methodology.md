@@ -208,13 +208,24 @@ the shell launched, flew and impacted before CBR's silence means anything.
 Likewise, a scenario must exercise the real pipeline rather than the helper at
 its end: the warning coverage originally invoked the side-filter helper
 directly, proving filtering but not launch-to-receipt. Positive and both
-negative controls are now real artillery launches. Full analysis is in
+negative controls are now real artillery launches.
+
+A third round found the marker count/ETA assertion partially self-confirming:
+the expected label was computed from the same authoritative fields that render
+the displayed one, so the comparison proved formatting rather than behavior. The
+count and remaining flight time are now derived from independently observed
+physical projectiles at the recorded instant the label was read, compared under
+a justified asymmetric tolerance. Two runs were also misread as partial
+successes despite ending in timeout. Full analysis is in
 [`advanced-systems-counter-battery-radar-review.md`](advanced-systems-counter-battery-radar-review.md).
 
-A run that ends `FAIL (timeout)` is not evidence of success for the assertions it
-did emit. Assertions simply stop arriving at the deadline, so a scenario is
-proven only by a `PASS (complete)` run whose emitted set matches the plan's
-expected set.
+The general rules drawn from that audit — a negative control proving its own
+stimulus, driving a contract from its real entry point, controls placed clear of
+their thresholds, expected values derived independently, preconditions held over
+an interval, assertions observed to fail before they are trusted, and a
+timed-out run proving nothing — are recorded once in
+[`feature-review-program.md`](feature-review-program.md) rather than restated
+here.
 
 ## Generic Tribunal capability backlog
 

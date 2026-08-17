@@ -41,7 +41,10 @@ validate, update the inventory, commit, and report the final state.
 Inspect the owning mod's configuration, UI, functions, initialization paths,
 documentation, history where it clarifies intent, existing scenarios/reviews,
 shared dependencies, and current inventory entry. Trace real entry points; a
-file or function name alone does not prove reachable or intended behavior.
+file or function name alone does not prove reachable or intended behavior. The
+same applies to the validation harness itself: read a default, budget, or flag
+from the subcommand the run actually dispatches to, not from a similarly named
+neighbour.
 
 Record reviewed scope and explicit non-scope. If the named feature contains
 separable capabilities, classify them independently and name the primary
@@ -161,7 +164,12 @@ stop condition below.
   no reliable data oracle exists. Once a generic framework interaction is
   proven, feature scenarios may verify its registered/active action and invoke
   that exact statement rather than repeatedly automating camera/menu input.
-  Internal flags/ledgers correlate a result rather than replace it.
+  Internal flags/ledgers correlate a result rather than replace it. Drive the
+  contract from its real entry point: calling a helper near the end of the
+  owning mod's own pipeline proves that helper, not the path a user or
+  integrator takes. The framework-interaction allowance above is narrow — it
+  substitutes a proven generic input mechanism for the same registered action
+  node; it does not license skipping the owning mod's stages.
 * **Decide:** write a concise mechanism-neutral contract and evidence matrix
   pairing each claim with an independent oracle and useful controls.
 * **Stop:** missing causal evidence/controls, ambiguous identity, or success
@@ -243,6 +251,32 @@ resource change without effect, effect without exact identity, one-frame
 contact, missing result treated as success, cleanup hiding failure, and internal
 state agreeing with itself.
 
+These rules follow from that enumeration and apply to every scenario:
+
+* **A negative control must prove its own stimulus.** Asserting that nothing
+  happened means something only once the run has independently proven, through a
+  separate oracle, that the input the feature was supposed to ignore actually
+  occurred. Otherwise a fixture that silently failed to act passes the control.
+* **A control must sit unambiguously on its side of every threshold it tests.**
+  Fixture geometry derived from run-varying inputs is resolved at runtime and
+  recorded in the evidence; a control left at the boundary tests the run rather
+  than the feature.
+* **Derive expected values from independent observation, never from the state
+  that produced the observed value.** Comparing a rendered or reported value
+  against an expectation computed from the same fields proves formatting, not
+  behavior. Where the comparison is against a rounded, sampled, or deliberately
+  stale presentation, state an explicit tolerance, justify each bound from a
+  named mechanism, and make it asymmetric when the error has a known direction.
+* **A precondition sampled once is not a precondition.** Quiescence, emptiness,
+  idleness and similar states that a concurrent process can transiently satisfy
+  must be required to hold across a bounded interval, and preceding activity
+  must be drained through its own oracle rather than assumed finished.
+
+Assertions earn their place by failing. Where a review refines a proven defect,
+run the new assertion against the unrefined build and record that it fails and
+by what margin. An assertion never observed to fail is not yet evidence that it
+protects anything.
+
 Assertions fail closed. Nil/empty values, missing identity/evidence, exceptions,
 unexpected termination, missing assertions/acknowledgment, and timeout are
 failures. Only literal verified conditions pass. Evidence attachments must be
@@ -292,6 +326,20 @@ Terminal success requires all declared server/client assertions, zero failures,
 complete acknowledgments/results, prompt teardown, and cleanup. Terminal
 failure reports the first concrete blocker; do not reopen unrelated layers
 without evidence.
+
+Two rules govern how a run is read:
+
+* **A run that ends in timeout proves nothing, including for the assertions it
+  did emit.** Assertions stop arriving at the deadline, so absence of failure is
+  not evidence of success. Compare the emitted set against the plan's expected
+  set before drawing any conclusion, and never raise a time budget to conceal an
+  unrelated failure — scope that failure as separate work instead.
+* **Do not chase intermittent behavior with speculative fixture changes.** An
+  unexplained non-reproduction is evidence to be captured, not a defect to be
+  guessed at. Revert any change not shown to address a confirmed cause, add
+  diagnostics that capture the deciding state at the moment of use so a
+  recurrence diagnoses itself, and record residual nondeterminism honestly
+  rather than declaring it solved.
 
 ### Required review outputs
 
