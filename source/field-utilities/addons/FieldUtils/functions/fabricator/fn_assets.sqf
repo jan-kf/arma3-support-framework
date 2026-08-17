@@ -927,9 +927,14 @@ YFU_assetsSubmitOrder = {
 
                 private _pack = [_tempSpawned] call YOSHI_spawnContainersNearObjectsAndPackMulti;
                 _success = _pack # 0;
-                if (_success) then {
-                    _containers = _pack # 1;
-                };
+                _containers = _pack # 1;
+                // Anything the packer could not fit stays loose at the staging
+                // position. Delete it here: the order is refused below, and an
+                // orphaned clone would otherwise sit under the map for the rest
+                // of the mission.
+                {
+                    if (!isNull _x) then {deleteVehicle _x;};
+                } forEach (_pack param [3, []]);
             } else {
                 _success = false;
             };

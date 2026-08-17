@@ -359,20 +359,41 @@ Primary locations: `source/field-utilities/addons/FieldUtils/config.cpp`,
 
 ### 4.1 Virtual Storage and Fabricator
 
+Reviewed in [`field-utilities-fabricator-review.md`](field-utilities-fabricator-review.md);
+primary outcome **REFINE BEFORE PERMANENT COVERAGE**. Registration through both
+module logics, ACE action registration, storage discovery and cargo fidelity were
+all reached and proven at runtime; no permanent scenario is added until the four
+product decisions below are answered.
+
 * **Mission-maker registration** uses synchronized storage objects and designated
-  Fabricator stations, optionally with nearby ZEN inventory. **Implemented; NOT
-  YET REVIEWED.** Real module sync/misconfiguration are uncovered.
+  Fabricator stations, optionally with nearby ZEN inventory. **Implemented;
+  REVIEWED / KEEP AS-IS AND SPEC-TEST.** Module setters run server-side and
+  `publicVariable` both logics, so discovery is server-owned and JIP-safe.
 * **Fabricator UI/queue** lists assets/images/quantities, ordered queue, grid,
   progress, success/failure, and may reuse Vigil skins. **Implemented; PARTIALLY
   COVERED.** Airdrop context/manifest/result is covered; normal browsing, local
-  orders, invalid grids, and styling are not.
+  orders, invalid grids, and styling are not. The progress bar is cosmetic — all
+  work completes before it starts — so no contract may promise it tracks work.
 * **Single local fabrication** clones one stored object near the player.
-  **Implemented; NOT YET REVIEWED.** Its older globally named helper is active,
-  so do not label it obsolete without review.
+  **Implemented; REVIEWED / KEEP AS-IS AND SPEC-TEST.** `YOSHI_SPAWN_SAVED_ITEM_ACTION`
+  is the live clone primitive for both delivery modes and copies weapon, magazine,
+  item and backpack cargo exactly. The separate `YOSHI_addItemsToFabricator` is
+  **unreachable repository-wide**; it is recorded, not deleted, because it is
+  globally named and may be a mission-maker entry point.
 * **Multi-item packing** clones objects, computes bounds/orientations, packs
   containers/pallets, preserves inventory, and delivers locally. **Implemented;
-  PARTIALLY COVERED.** Packing/manifest fidelity is covered in airdrop; arbitrary
-  classes, capacity edges, placement, and failure cleanup are not.
+  REVIEWED / REFINED.** It reported success while silently dropping items too
+  large for any container and orphaning their clones under the map. The packer now
+  returns the skipped objects and succeeds only when nothing was skipped; the
+  caller deletes anything unpacked and the order is refused.
+* **Local virtual-inventory toggle** (`Fabricator_Module_EnableLocalArsenal`) is
+  declared with a tooltip and default but **never read**; the action is added
+  unconditionally on every client. **REVIEWED / REFINE BEFORE COVERAGE.**
+* **Order authority** is entirely client-side: the ordering client `createVehicle`s
+  the copies and owns them, with no server request, validation, or limit. Only the
+  airdrop branch is server-authoritative. **REVIEWED / DEFERRED** pending a product
+  decision, together with storage depletion, partial-fulfilment policy, and the
+  `ReammoBox_F` mass cap.
 * **Airdrop handoff** calls Vigil delivery and observes authoritative parachute
   results. **Implemented; COVERED as a cross-mod composite.** Missing API fails
   closed.
@@ -536,6 +557,11 @@ coverage.
 | CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; re-warning for a walking barrage undecided |
 | CBR module/Zeus activation | **NOT YET REVIEWED** | lifecycle covered through the API, not real module/curator paths |
 | Iron Dome | **NOT YET REVIEWED** | active server subsystem, no causal proof |
+| Fabricator order authority | **REVIEWED / DEFERRED** | fabrication is client-authoritative and unvalidated; only airdrop is server-owned |
+| Fabricator storage depletion | **REVIEWED / DEFERRED** | virtual storage is an unlimited catalogue; stock/cost/cooldown undecided |
+| Fabricator partial fulfilment | **REVIEWED / DEFERRED** | an unpackable order is now refused; deliver-what-fits plus a dropped-item manifest is undecided |
+| Fabricator mass cap | **REVIEWED / DEFERRED** | `ReammoBox_F` clones above mass 200 are capped, so a copy is not physically identical to its source |
+| Fabricator staging depths | **REVIEWED / NEEDS EXPERIMENTATION** | underground staging and the settle tick have no retained controlled alternative |
 | Field towing | **Partial / NOT YET REVIEWED** | source TODOs identify parent/cleanup gaps |
 | Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |
 | Bridge direct extension | **DEFERRED** | helpers exist, but no reachable action or supported ownership contract was established |
@@ -544,13 +570,10 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **Field Utilities Fabricator and Virtual Storage**, excluding covered
-   fixed-wing airdrop. Review module sync, queue UI, cloning, packing,
-   inventory, authority, and cleanup.
-2. **OPHANIM / Iron Dome.** Always-started server subsystem with physical
+1. **OPHANIM / Iron Dome.** Always-started server subsystem with physical
    interceptors, concurrent assignment, retries, and stale-task risk; reuses
    artillery/projectile/combat evidence, and now the generic marker observer.
-3. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
+2. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
    user-visible and multiplayer-sensitive; separate UAV profile, IED, mortar,
    and grenade contracts during review.
 
@@ -558,7 +581,9 @@ Then consider APS anti-drone, CORDIS public routing/dedupe semantics, suite
 editor/Zeus modules, and towing. Do not resume reconnaissance until the product
 decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume
 CBR marker scoping or confirmed-origin persistence until the product decisions
-in `advanced-systems-counter-battery-radar-review.md` are answered.
+in `advanced-systems-counter-battery-radar-review.md` are answered. Fabricator
+coverage likewise waits on the four product decisions in
+`field-utilities-fabricator-review.md`; the review itself is complete.
 
 ## Evidence sources
 

@@ -76,6 +76,7 @@ schema.
 | Vigil transport | selected crewed transport physically flies, lands and settles at LZ, waits, then physically returns and settles at recorded home; duplicate request is rejected | task IDs/state keys, waypoint/land command sequence, fixture coordinates, observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 | Vigil rotary CAS | selected armed helicopter reaches its requested area, attacks only a valid hostile ground target with correlated real fire and impact, respects its timer, disengages and returns home; no-target and invalid controls fail closed | task/ledger layout, fixture coordinates/classes, LOITER/MOVE details, sensor/reveal and observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 | Vigil fixed-wing strike | registered state reconstructs once, enters the operating area, consumes real client laser/IR designations for two correlated guided impacts, rejects no-designation fire, then physically egresses and cleans up | registry schema, fixture coordinates/classes, waypoint geometry, observer cadence and private helper names | REFINE BEFORE PERMANENT COVERAGE |
+| Fabricator / Virtual Storage | registered storage is browsable at a registered station; a submitted order delivers real copies carrying the source's cargo; an order that cannot be filled is refused and leaves nothing behind | queue/`uiNamespace` layout, IDCs, container classes and packing order, staging depths, progress cadence, drop radii | REFINE BEFORE PERMANENT COVERAGE |
 | Counter Battery Radar | enabled detection draws an impact zone on the ground the shells actually strike, with count/ETA, a narrowing then confirmed origin at the real gun, a side-filtered launch warning, expiry, replication and full reset on stop; disabled produces nothing | cluster/member layout, uid format, marker names and index counters, link distance/leeway/hysteresis, integration step and cadence | REFINE BEFORE PERMANENT COVERAGE |
 
 ### APS findings
@@ -226,6 +227,27 @@ an interval, assertions observed to fail before they are trusted, and a
 timed-out run proving nothing — are recorded once in
 [`feature-review-program.md`](feature-review-program.md) rather than restated
 here.
+
+### Field Utilities Fabricator findings
+
+The Fabricator review reached and proved the whole positive path — module
+registration, ACE action registration, storage discovery, and exact cargo
+fidelity — and then stopped short of permanent coverage. Local fabrication is
+entirely client-authoritative: the ordering client creates and owns the copies,
+and the server never sees a request. Only the already-covered airdrop branch is
+server-owned. Because a scenario asserting order success would have to choose an
+authority model, and one asserting queue accounting would have to choose a
+depletion policy, coverage is gated on four product decisions rather than
+answered by the test author.
+
+One defect was refined because it is wrong under every one of those decisions:
+the packer reported success while silently dropping items too large for any
+container and orphaning their clones under the map, so an order could report
+"Success", deliver less than was asked, and leak objects for the rest of the
+mission. It now reports what it skipped, the caller cleans up, and the order is
+refused. An unreachable helper and an Eden module attribute that nothing reads
+were recorded rather than deleted or guessed at. Full analysis is in
+[`field-utilities-fabricator-review.md`](field-utilities-fabricator-review.md).
 
 ## Generic Tribunal capability backlog
 

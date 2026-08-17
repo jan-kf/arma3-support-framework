@@ -359,6 +359,18 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn('PONTIFEX_LIVE|server|POLL', server)
         self.assertIn('PONTIFEX_LIVE|server|POLLER_REGISTERED', server)
 
+    def test_live_poller_isolates_operator_snippets_from_its_own_loop(self) -> None:
+        """A snippet that throws must not kill the inbox that delivers `live reset`."""
+
+        with tempfile.TemporaryDirectory() as temporary:
+            mission = Path(temporary) / "Live.Stratis"
+            multiplayer.write_tier_mission(mission, "live-test-deadbeef", multiplayer.LIVE_PLAN, live=True)
+            server = (mission / "initServer.sqf").read_text(encoding="ascii")
+        # Called inline, an SQF error inside the snippet terminates the enclosing
+        # scheduled loop permanently and no further command is ever polled.
+        self.assertIn('[_payload] spawn { call compile (_this select 0); };', server)
+        self.assertNotIn('\n         call compile _payload;', server)
+
 
 if __name__ == "__main__":
     unittest.main()

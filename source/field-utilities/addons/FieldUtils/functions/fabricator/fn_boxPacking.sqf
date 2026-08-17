@@ -752,5 +752,8 @@ YOSHI_spawnContainersNearObjectsAndPackMulti = {
 		_allocOut pushBack [_container, _class, _refs, _packResult];
 	} forEach _allocs;
 
-	[true, _containers, _allocOut]
+	// An item too large for any container is dropped, not packed. Report that
+	// rather than only logging it: the caller owns the clones and cannot
+	// clean up or refuse an under-filled order it was never told about.
+	[(count _skipped) isEqualTo 0, _containers, _allocOut, _skipped]
 };

@@ -1033,7 +1033,10 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
      if (_payload isNotEqualTo "" && {_payload isNotEqualTo _last}) then {
          missionNamespace setVariable ["PONTIFEX_LIVE_last", _payload];
          diag_log "PONTIFEX_LIVE|server|EXEC";
-         call compile _payload;
+         // Run the snippet in its own script. Called inline, a runtime error in
+         // an operator snippet terminates this loop for good, and `live reset`
+         // cannot recover it because reset arrives through this same inbox.
+         [_payload] spawn { call compile (_this select 0); };
      };
      sleep 0.5;
  };
