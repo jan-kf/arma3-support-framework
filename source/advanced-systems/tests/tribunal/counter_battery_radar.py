@@ -133,8 +133,10 @@ private _expectedZone = _authoritative param [0, ""];
 private _expectedIcon = _authoritative param [1, ""];
 private _expectedCentre = _authoritative param [2, []];
 private _expectedSize = _authoritative param [3, []];
+private _expectedCount = _authoritative param [4, -1];
 private _seen = _zoneEvidence getOrDefault ["everSeen", []];
 private _matched = createHashMap;
+private _iconTexts = [];
 {
     private _records = _x getOrDefault ["records", createHashMap];
     private _zoneRecord = _records getOrDefault [_expectedZone, createHashMap];
@@ -148,8 +150,17 @@ private _matched = createHashMap;
     private _iconRecord = _records getOrDefault [_expectedIcon, createHashMap];
     if ((count _iconRecord) > 0 && {(_iconRecord getOrDefault ["type", ""]) isEqualTo "mil_warning"}) then {
         _matched set ["icon", true];
+        private _text = _iconRecord getOrDefault ["text", ""];
+        if (_text isNotEqualTo "") then {_iconTexts pushBackUnique _text};
     };
 } forEach _samples;
+// The label itself must replicate, not merely a marker of the right type. The
+// count field is asserted exactly against the authoritative peak; the countdown
+// digits are not, because they change every product tick and this client samples
+// at a fixed interval.
+private _countPrefix = format ["%1 shells | ETA ", _expectedCount];
+private _labelSeen = _expectedCount > 0
+    && {(_iconTexts findIf {(_x find _countPrefix) isEqualTo 0 && {(_x select [(count _x) - 1]) isEqualTo "s"}}) >= 0};
 private _originDeadline = diag_tickTime + 20;
 waitUntil {uiSleep 0.25; (scriptDone _originWorker) || diag_tickTime > _originDeadline};
 private _originSeen = TRIBUNAL_CBR_ORIGIN_SEEN;
@@ -159,8 +170,9 @@ private _replicatedOk = (_expectedZone isNotEqualTo "")
     && {_matched getOrDefault ["zone", false]}
     && {_matched getOrDefault ["icon", false]}
     && {_zoneEvidence getOrDefault ["cleared", false]}
-    && {(_originSeen findIf {(_x find "YOSHI_origin") isEqualTo 0}) >= 0};
-["cbr.client.markersReplicated", _replicatedOk, format ["identity=%1|expectedZone=%2|expectedIcon=%3|everSeen=%4|zoneMatched=%5|iconMatched=%6|cleared=%7|originReplicated=%8|samples=%9", _identity, _expectedZone, _expectedIcon, _seen, _matched getOrDefault ["zone", false], _matched getOrDefault ["icon", false], _zoneEvidence getOrDefault ["cleared", false], _originSeen, count _samples]] call _assert;
+    && {(_originSeen findIf {(_x find "YOSHI_origin") isEqualTo 0}) >= 0}
+    && {_labelSeen};
+["cbr.client.markersReplicated", _replicatedOk, format ["identity=%1|expectedZone=%2|expectedIcon=%3|everSeen=%4|zoneMatched=%5|iconMatched=%6|cleared=%7|originReplicated=%8|samples=%9|expectedCount=%10|labelSeen=%11|iconTexts=%12", _identity, _expectedZone, _expectedIcon, _seen, _matched getOrDefault ["zone", false], _matched getOrDefault ["icon", false], _zoneEvidence getOrDefault ["cleared", false], _originSeen, count _samples, _expectedCount, _labelSeen, _iconTexts]] call _assert;
 
 private _completionDeadline = diag_tickTime + 240;
 waitUntil {uiSleep 0.25; (missionNamespace getVariable ["TRIBUNAL_CBR_COMPLETE", ""]) isEqualTo _token || diag_tickTime > _completionDeadline};
@@ -423,6 +435,7 @@ private _peakColour = "";
 private _peakSize = [];
 private _peakEtaMin = -1;
 private _peakEtaMax = -1;
+private _peakAt = -1;
 private _originRadii = [];
 private _confirmedSeen = false;
 
@@ -446,6 +459,9 @@ waitUntil {
             _peakSize = markerSize (_x select 5);
             _peakEtaMin = _x select 3;
             _peakEtaMax = _x select 4;
+            // The instant the label was read, so the shells that were really in
+            // the air at that moment can be recovered from their own timings.
+            _peakAt = diag_tickTime;
         };
     } forEach YOSHI_CB_clusters;
     {
@@ -460,7 +476,7 @@ _gun removeEventHandler ["Fired", _predictEh];
 private _fireState = [_fireToken] call TRIBUNAL_fnc_artilleryObserverStop;
 private _events = _fireState getOrDefault ["events", []];
 private _predictions = missionNamespace getVariable ["TRIBUNAL_CBR_PREDICTIONS", []];
-missionNamespace setVariable ["TRIBUNAL_CBR_ZONE_RECORD", [_peakZone, _peakIcon, _peakCentre, _peakSize], true];
+missionNamespace setVariable ["TRIBUNAL_CBR_ZONE_RECORD", [_peakZone, _peakIcon, _peakCentre, _peakSize, _peakMembers], true];
 
 private _clusterOk = _observed && {(count _events) isEqualTo _rounds} && {_peakMembers >= 2};
 ["cbr.detection.cluster", _clusterOk, format ["observed=%1|firedEvents=%2|peakMembers=%3|rounds=%4", _observed, count _events, _peakMembers, _rounds]] call _assert;
@@ -475,12 +491,66 @@ private _zoneOk = _peakZone isNotEqualTo "" && {_peakShape isEqualTo "ELLIPSE"} 
 // and that time must be consistent with the flights Tribunal measured.
 private _flights = _predictions apply {_x # 4};
 private _maximumFlight = if (_flights isEqualTo []) then {0} else {selectMax _flights};
+// Independent physical oracle for the label. Comparing the drawn text with the
+// cluster fields that generated it only proves the product formats its own state
+// consistently, so the count and remaining time are instead recovered from the
+// projectiles Tribunal observed: which ones were genuinely in the air when the
+// label was read, and how much flight each of them actually had left, measured
+// from its own terminal timestamp.
+//
+// Boundary band: a shell can be counted slightly before its first track update
+// reaches the server, and a landed shell lingers about a second until its
+// member entry expires, so membership is asserted as a range between the shells
+// that were definitely airborne and those that could still have been.
+private _band = 1.5;
+private _strictLive = [];
+private _looseLive = [];
+private _remaining = [];
+{
+    // A shell is not a network object, so netId reports "0:0" for all of them.
+    // The observer's own event index is the stable identity of one physically
+    // observed projectile, carried with its class and real launch/impact times.
+    private _identity = [_x getOrDefault ["index", -1], _x getOrDefault ["projectileClass", ""]];
+    private _firedAt = _x getOrDefault ["firedAt", -1];
+    private _endedAt = _x getOrDefault ["terminatedAt", -1];
+    if (_firedAt >= 0 && {_endedAt > 0} && {_x getOrDefault ["terminated", false]}) then {
+        if (_firedAt <= (_peakAt - _band) && {_endedAt >= (_peakAt + _band)}) then {
+            _strictLive pushBack [_identity, _firedAt, _endedAt, _endedAt - _peakAt];
+            _remaining pushBack (_endedAt - _peakAt);
+        };
+        if (_firedAt <= (_peakAt + _band) && {_endedAt >= (_peakAt - _band)}) then {
+            _looseLive pushBack _identity;
+        };
+    };
+} forEach _events;
+private _derivedMin = if (_remaining isEqualTo []) then {-1} else {selectMin _remaining};
+private _derivedMax = if (_remaining isEqualTo []) then {-1} else {selectMax _remaining};
+// The tolerance is deliberately asymmetric, because the error has a direction.
+// A displayed ETA is computed from a track update up to 0.5 s old, is rounded up
+// to whole seconds, and is read by a 0.25 s poll, so it legitimately runs *ahead*
+// of the truth; under load the product's per-shell update spawns lag further
+// still, and a measured run showed +2.17 s. Over-reporting is therefore allowed
+// 4 s. Nothing makes a displayed ETA legitimately *shorter* than the real
+// remaining flight except rounding and the ~0.13 s prediction error, so
+// under-reporting is held to 1.5 s. Both bounds sit far below the ~27 s flight
+// they describe, and the prediction defect itself is guarded by the 20 m
+// position bound in cbr.prediction.impactAccuracy rather than by this label check.
+private _etaOverTolerance = 4;
+private _etaUnderTolerance = 1.5;
+private _countOk = (count _strictLive) >= 4
+    && {_peakMembers >= (count _strictLive)}
+    && {_peakMembers <= (count _looseLive)};
+private _minDelta = _peakEtaMin - _derivedMin;
+private _maxDelta = _peakEtaMax - _derivedMax;
+private _etaOk = (count _remaining) >= 4
+    && {_minDelta <= _etaOverTolerance} && {_minDelta >= -_etaUnderTolerance}
+    && {_maxDelta <= _etaOverTolerance} && {_maxDelta >= -_etaUnderTolerance};
 private _expectedText = format ["%1 shells | ETA %2-%3s", _peakMembers, _peakEtaMin, _peakEtaMax];
 private _iconOk = _peakIcon isNotEqualTo "" && {_peakType isEqualTo "mil_warning"}
     && {_peakText isEqualTo _expectedText}
     && {_peakEtaMin >= 0} && {_peakEtaMin <= _peakEtaMax}
-    && {_peakEtaMax <= (_maximumFlight + 2)};
-["cbr.detection.iconMarker", _iconOk, format ["icon=%1|type=%2|text=%3|expectedText=%4|etaMin=%5|etaMax=%6|maxObservedFlight=%7", _peakIcon, _peakType, _peakText, _expectedText, _peakEtaMin, _peakEtaMax, _maximumFlight]] call _assert;
+    && {_countOk} && {_etaOk};
+["cbr.detection.iconMarker", _iconOk, format ["icon=%1|type=%2|text=%3|peakAt=%4|shownCount=%5|liveDefinite=%6|livePossible=%7|shownEta=%8-%9|derivedEta=%10-%11|delta=%12/%13|tolerance=+%14/-%15|liveDetail=%16", _peakIcon, _peakType, _peakText, _peakAt, _peakMembers, count _strictLive, count _looseLive, _peakEtaMin, _peakEtaMax, _derivedMin, _derivedMax, _minDelta, _maxDelta, _etaOverTolerance, _etaUnderTolerance, _strictLive]] call _assert;
 
 private _errors = [];
 private _etaErrors = [];

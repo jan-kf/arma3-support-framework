@@ -142,9 +142,47 @@ oracle is Tribunal's artillery observer; the per-shell terminal-position poll
 that pairs a prediction to its own projectile is scenario-local, and this review
 previously described that poll as Tribunal-owned in error. The drawn zone centre
 is separately compared with the real impact centroid. Marker identity, shape,
-colour, type and label are captured while the zone is live, and the label must
-equal the count and remaining-time the product itself holds, with that time
-consistent with the flights Tribunal measured. Origin radii are sampled across
+colour, type and label are captured while the zone is live.
+
+The label's numbers are checked against an independent physical oracle rather
+than against the state that produced them. An earlier revision compared the drawn
+text with the cluster's own count and ETA fields, which proves only that the
+product formats its own state consistently. The scenario now records the instant
+the peak label was read, then recovers from Tribunal's observed projectiles
+which shells were genuinely in the air at that instant and how much flight each
+had left, measured from its own terminal timestamp:
+
+* **count** is asserted as a range between the shells that were definitely
+  airborne and those that could still have been, using a 1.5 s boundary band. A
+  shell can be counted slightly before its first track update reaches the server,
+  and a landed shell lingers about a second until its member entry expires, so an
+  exact equality would be a race rather than a contract;
+* **remaining time** compares the displayed ETA minimum and maximum against the
+  minimum and maximum of those independently derived remaining lifetimes;
+* the exact projectile identities behind the derived count are retained in the
+  assertion evidence.
+
+The ETA tolerance is **asymmetric**, because the error has a direction. A
+displayed ETA is computed from a track update up to 0.5 s old, is rounded up to
+whole seconds, and is read by a 0.25 s poll, so it legitimately runs *ahead* of
+the truth; under load the product's per-shell update spawns lag further still,
+and a measured run showed +2.45 s. Over-reporting is therefore allowed **4 s**.
+Nothing makes a displayed ETA legitimately *shorter* than the real remaining
+flight except rounding and the ~0.13 s prediction error, so under-reporting is
+held to **1.5 s**. Both bounds sit far below the ~27 s flight they describe. The
+prediction defect itself is guarded by the 20 m position bound in
+`cbr.prediction.impactAccuracy`, not by this label check.
+
+Shell identity is the observer's own event index paired with the projectile
+class, not `netId`: a shell is not a network object, so `netId` reports `0:0`
+for every one of them, which an earlier revision of this oracle recorded as
+useless evidence.
+
+Label replication is asserted on the client too: the authoritative peak count is
+published and the client must observe an icon whose text carries that exact count
+and the product's countdown format. The countdown digits themselves are not
+matched, because they change on every product tick while the client samples at a
+fixed interval; requiring a specific transient string would be a race. Origin radii are sampled across
 the whole engagement and the confirmed fix is required to be a `mil_triangle`
 within 5 m of the actual gun.
 
@@ -347,43 +385,54 @@ precondition at all.
 
 ## Fresh autonomous proof
 
-Cold run `20260816T212035Z-f6d0d968` passed 29/29 assertions with zero failures
+Cold run `20260817T200638Z-36fa1d1b` passed 29/29 assertions with zero failures
 and complete container/network/state cleanup. Its token was
-`gameplay-20260816T212035Z-f6d0d968-ec3bc85cc6f3`; mission SHA-256 was
-`0ccc9de686032a72b5923db677be99a7cf8207f599d157d1498d920be4d6bf91` and PBO
+`gameplay-20260817T200638Z-36fa1d1b-998157d0b56a`; mission SHA-256 was
+`c113c3e8ba8b443223568f99c4060a2dfa699cc34eae68dbacae1af46fb4e5a0` and PBO
 SHA-256 was
-`65c061c47334b39cdb743f8d62b870e50bd345ea090d958c4cdc61e9fe5ffe2d`
+`8dfcfc731d8a941fd1b6bc06f0ef0790da743111f5979237ebc11e2f5688a1a2`
 with a valid deterministic footer.
 
-The disabled-path control fired a real shell, sampled 445 trajectory points,
-terminated, and impacted 14.2 m from its aim point while producing no cluster,
-no marker and no origin track. All eight tracked shells produced per-shell
-impact errors of 3.04-3.45 m against a 167.19 m target with a worst ETA error of
-0.12 s; the same assertion against the pre-refinement build failed at
-44.73-45.35 m. The drawn zone centre sat 8.35 m from the real impact centroid.
+The label read `8 shells | ETA 14-27s` at `peakAt=106.229`. Seven projectiles
+were definitely airborne at that instant and an eighth was inside the boundary
+band, so the shown count of 8 sits in the required `[7, 8]` range. Each
+definitely-airborne shell contributed its own launch time, terminal timestamp
+and derived remaining flight:
 
-Four warning emissions were recorded, all from real launches:
+| Shell | Launched | Impacted | Remaining at label |
+| --- | --- | --- | --- |
+| `0 Sh_82mm_AMOS` | 93.066 | 119.959 | 13.73 s |
+| `1 Sh_82mm_AMOS` | 94.858 | 121.746 | 15.52 s |
+| `2 Sh_82mm_AMOS` | 96.667 | 123.561 | 17.33 s |
+| `3 Sh_82mm_AMOS` | 98.477 | 125.353 | 19.12 s |
+| `4 Sh_82mm_AMOS` | 100.292 | 127.162 | 20.93 s |
+| `5 Sh_82mm_AMOS` | 102.100 | 129.013 | 22.78 s |
+| `6 Sh_82mm_AMOS` | 103.912 | 130.782 | 24.55 s |
 
-| Emission | Side | Impact | Observer distance | Recipients |
-| --- | --- | --- | --- | --- |
-| accuracy salvo | EAST | `[3000,2000]` | 1873 m | none |
-| confirm volley | EAST | `[3000,2000]` | 1873 m | none |
-| **positive** | EAST | `[4424,2778]` | **280 m** | **observer** |
-| same-side control | WEST | `[4424,2778]` | 280 m | none |
+The independently derived remaining-time range is therefore 13.73-24.55 s
+against a displayed 14-27 s: deltas of +0.27 s and +2.45 s, both in the expected
+over-reporting direction and inside the +4/-1.5 s bounds.
 
-Exactly one emission named the observer, it was the hostile salvo inside the
-radius, and the client received exactly one warning from three shells in that
-airborne cycle. Cleanup left no fixtures, no residual markers, no scenario state
-and no retained observer token.
+The disabled-path control fired a real shell, sampled its trajectory, terminated
+and impacted near its aim point while producing no cluster, marker or origin
+track. Per-shell impact errors and the four real warning emissions (one naming
+the observer, the distant and friendly controls naming nobody) were as recorded
+below. Client-a observed the authoritative zone and icon, the origin marker, and
+an icon label carrying the exact authoritative count of 8 in the product's
+countdown format.
 
-Repeatability was demonstrated by an immediately following identical cold run,
-`20260816T212927Z-d80fe834`, token
-`gameplay-20260816T212927Z-d80fe834-b5a007bb77e7`, which also passed 29/29 with
-zero failures, again recorded exactly one emission naming the observer, produced
-per-shell impact errors of 3.30-3.54 m, and cleaned up completely. Repeated
-execution within a single retained session is still not demonstrated; the
-`cbr.cleanup` assertion proves the scenario leaves no fixtures, markers or
-scenario state behind, which is the property a repeat run would depend on.
+Repeatability was demonstrated by an immediately following identical cold run of
+the same revision, `20260817T201712Z-4bf8932a`, token
+`gameplay-20260817T201712Z-4bf8932a-b3178fc22722`, which also passed 29/29 with
+zero failures. Its label read `15-27 s` against an independently derived
+`14.15-24.96 s`, deltas of +0.85 s and +2.04 s: the same over-reporting direction
+and the same order of magnitude, which is what a stale-and-rounded countdown
+should look like. Two earlier consecutive runs of the preceding revision,
+`20260816T212035Z-f6d0d968` and `20260816T212927Z-d80fe834`, likewise both passed
+29/29. Repeated execution within a single retained session is still not
+demonstrated; the `cbr.cleanup` assertion proves the scenario leaves no fixtures,
+markers or scenario state behind, which is the property a repeat run would depend
+on.
 
 ## Harness findings
 

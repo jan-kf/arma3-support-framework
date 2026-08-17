@@ -150,11 +150,39 @@ class CounterBatteryRadarContractTests(unittest.TestCase):
         self.assertIn("TRIBUNAL_CBR_ORIGIN_SEEN", client)
         self.assertIn('(_originSeen findIf {(_x find "YOSHI_origin") isEqualTo 0}) >= 0', client)
 
-    def test_icon_label_matches_authoritative_count_and_timing(self) -> None:
+    def test_icon_label_is_checked_against_an_independent_physical_oracle(self) -> None:
+        """Comparing the label with the fields that drew it only proves self-consistency."""
+
         server = self.scenario.server_sqf
-        self.assertIn('_expectedText = format ["%1 shells | ETA %2-%3s", _peakMembers, _peakEtaMin, _peakEtaMax]', server)
+        client = self.scenario.client_sqf
+        # Well-formedness against product state is retained, but is not the proof.
         self.assertIn("_peakText isEqualTo _expectedText", server)
-        self.assertIn("_peakEtaMax <= (_maximumFlight + 2)", server)
+        # The count and remaining time come from observed projectiles instead.
+        self.assertIn("_peakAt = diag_tickTime", server)
+        self.assertIn('_firedAt = _x getOrDefault ["firedAt", -1]', server)
+        self.assertIn('_endedAt = _x getOrDefault ["terminatedAt", -1]', server)
+        self.assertIn("_remaining pushBack (_endedAt - _peakAt)", server)
+        self.assertIn("_peakMembers >= (count _strictLive)", server)
+        self.assertIn("_peakMembers <= (count _looseLive)", server)
+        # Asymmetric: a stale/rounded label may run ahead of truth, not behind.
+        self.assertIn("_minDelta <= _etaOverTolerance", server)
+        self.assertIn("_minDelta >= -_etaUnderTolerance", server)
+        self.assertIn("_maxDelta <= _etaOverTolerance", server)
+        self.assertIn("_maxDelta >= -_etaUnderTolerance", server)
+        self.assertIn("_countOk", server)
+        self.assertIn("_etaOk", server)
+        # The superseded one-sided total-flight check must not come back.
+        self.assertNotIn("_peakEtaMax <= (_maximumFlight + 2)", server)
+        # Tolerance is explicit and justified in-place, not an unexplained number.
+        self.assertIn("_etaOverTolerance = 4", server)
+        self.assertIn("_etaUnderTolerance = 1.5", server)
+        self.assertIn("deliberately asymmetric", server)
+        # Shell identity is the observer's event index: netId is "0:0" for shells.
+        self.assertIn('_identity = [_x getOrDefault ["index", -1]', server)
+        self.assertIn("liveDetail=%16", server)
+        # The label itself must replicate to the client.
+        self.assertIn("_countPrefix = format [\"%1 shells | ETA \", _expectedCount]", client)
+        self.assertIn("_labelSeen", client)
 
     def test_scenario_is_client_identity_keyed_and_cleans_up(self) -> None:
         self.assertEqual(set(self.scenario.client_expected_by_identity), {"client-a"})
