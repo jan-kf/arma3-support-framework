@@ -59,7 +59,11 @@ YFU_initVirtualInventoryActions = {
 			params ["_target", "_caller", "_actionId", "_arguments"];
 			// Conditional Code
 			private _isNearFabricator = false;
-			private _fabricatorConfigured = !(isNil "YOSHI_FABRICATOR");
+			// The Fabricator module's "Enable local virtual inventory" attribute
+			// gates this. It is the escape hatch for stock a mission maker forgot
+			// to synchronize, so it is deliberately optional per mission.
+			private _inventoryEnabled = missionNamespace getVariable ["YOSHI_FABRICATOR_LOCAL_INVENTORY", true];
+			private _fabricatorConfigured = !(isNil "YOSHI_FABRICATOR") && {_inventoryEnabled};
 			if (_fabricatorConfigured) then {
 				private _syncedFabricatorObjects = synchronizedObjects YOSHI_FABRICATOR;
 				{

@@ -1,3 +1,31 @@
+// Delivery crates must stay light enough for a player to pick up. An object
+// only reports a real mass once it has settled at a position inside the map, so
+// this has to be re-applied after a staged clone is placed: capping it while it
+// is still staged out of sight silently does nothing.
+YOSHI_capDeliveryMass = {
+    params ["_object", ["_settleTimeout", 10]];
+    if (isNull _object) exitWith {false};
+    if !(_object isKindOf "ReammoBox_F") exitWith {false};
+
+    // A newly created object reports no mass for a while. Reading it straight
+    // away returns ~0, so the cap silently never fires and the delivery keeps a
+    // degenerate mass. Wait for a real value first, when the caller can wait.
+    if (canSuspend) then {
+        private _deadline = diag_tickTime + _settleTimeout;
+        waitUntil {
+            uiSleep 0.25;
+            (getMass _object) > 0 || {diag_tickTime > _deadline}
+        };
+    };
+
+    if ((getMass _object) > 200) then {
+        _object setMass 200;
+        true
+    } else {
+        false
+    };
+};
+
 YOSHI_SPAWN_SAVED_ITEM_ACTION = {
     params ["_target", "_caller", "_params"];
     private _fabricator = _params select 0;
@@ -53,9 +81,7 @@ YOSHI_SPAWN_SAVED_ITEM_ACTION = {
         _newObject addBackpackCargoGlobal [_backpackType, _backpackCount];
     } forEach (_backpacks select 0);
 
-    if (_newObject isKindOf "ReammoBox_F" && getMass _newObject > 200) then {
-        _newObject setMass 200;
-    };
+    [_newObject] call YOSHI_capDeliveryMass;
 
     _newObject
 };

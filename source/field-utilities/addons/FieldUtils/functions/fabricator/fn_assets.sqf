@@ -318,32 +318,42 @@ YFU_assetsFindSafeDropPos = {
         _z = _center # 2;
     };
 
-    if ((typeName _pos2D) isEqualTo "ARRAY" && {(count _pos2D) >= 2}) then {
-        [_pos2D # 0, _pos2D # 1, _z]
+    private _fallbackCenter = if ((typeName _center) isEqualTo "ARRAY" && {(count _center) >= 2}) then {
+        _center
     } else {
-        if ((typeName _center) isEqualTo "ARRAY" && {(count _center) >= 3}) then {
-            _center
-        } else {
-            [0, 0, 0]
+        [0, 0, 0]
+    };
+
+    // BIS_fnc_findSafePos answers a failed search with a random position
+    // somewhere on the map, which would deliver an order kilometres from the
+    // player who ordered it. A drop that is not near the requested centre is not
+    // a drop; fall back to a deterministic ring around the centre instead.
+    private _candidate = [];
+    if ((typeName _pos2D) isEqualTo "ARRAY" && {(count _pos2D) >= 2}) then {
+        private _offset = [(_pos2D # 0) - (_fallbackCenter # 0), (_pos2D # 1) - (_fallbackCenter # 1), 0];
+        if ((vectorMagnitude _offset) <= (_radiusMax + 5)) then {
+            _candidate = [_pos2D # 0, _pos2D # 1, _z];
         };
-    }
+    };
+
+    if (_candidate isEqualTo []) then {
+        private _bearing = (_attempt * 47) % 360;
+        _candidate = [
+            (_fallbackCenter # 0) + (_radiusMin * sin _bearing),
+            (_fallbackCenter # 1) + (_radiusMin * cos _bearing),
+            _z
+        ];
+    };
+
+    _candidate
 };
 
-YFU_assetsFinalizeDeliverySingle = {
-    params ["_caller", "_obj"];
-    if (isNull _obj) exitWith {false};
-    private _drop = [getPosATL _caller, 3, 0] call YFU_assetsFindSafeDropPos;
-    _obj setPosATL _drop;
-    [_caller, _obj] call ace_dragging_fnc_startCarry;
-    true
-};
-
-YFU_assetsFinalizeDeliveryMulti = {
-    params ["_caller", "_containers"];
-    if (_containers isEqualTo []) exitWith {false};
+// Placement is the server's; this only tells the player where its work landed.
+YFU_assetsAnnounceDelivery = {
+    params ["_caller", "_positions"];
+    if (_positions isEqualTo []) exitWith {false};
 
     private _center = getPosATL _caller;
-    private _deliveredPositions = [];
     private _relativeLines = [];
 
     private _dirLabelFromPos = {
@@ -359,20 +369,11 @@ YFU_assetsFinalizeDeliveryMulti = {
     };
 
     {
-        private _c = _x;
-        if (!isNull _c) then {
-            private _drop = [_center, 4, _forEachIndex] call YFU_assetsFindSafeDropPos;
-            _c setPosATL _drop;
-            _c setVectorUp [0, 0, 1];
-            _deliveredPositions pushBack _drop;
+        private _dist = round (_center distance2D _x);
+        private _dirLabel = [_center, _x] call _dirLabelFromPos;
+        _relativeLines pushBack format ["%1. %2m %3", (_forEachIndex + 1), _dist, _dirLabel];
+    } forEach _positions;
 
-            private _dist = round (_center distance2D _drop);
-            private _dirLabel = [_center, _drop] call _dirLabelFromPos;
-            _relativeLines pushBack format ["%1. %2m %3", (_forEachIndex + 1), _dist, _dirLabel];
-        };
-    } forEach _containers;
-
-    uiNamespace setVariable ["YFU_last_delivery_positions", _deliveredPositions];
     if !(_relativeLines isEqualTo []) then {
         hint format ["Containers delivered at:\n%1", _relativeLines joinString "\n"];
     };
@@ -891,95 +892,80 @@ YFU_assetsSubmitOrder = {
         } else {
             uiNamespace getVariable ["YFU_delivery_target_pos", []]
         };
-        private _sourceObjects = call YFU_assetsQueueExpandedObjects;
-        private _totalCount = count _sourceObjects;
+        private _entries = (call YFU_assetsQueueEntries) apply {[_x # 0, _x # 2]};
+        private _totalCount = count (call YFU_assetsQueueExpandedObjects);
         uiNamespace setVariable ["YFU_last_submit_payload", [_fabricator, _grid, _isAirdrop]];
 
         [true, "Processing Order", "Initializing...", 0, false] call YFU_assetsSetSubmitOverlay;
 
-        private _mode = "error";
-        private _success = false;
-        private _singleObj = objNull;
-        private _containers = [];
-        private _tempSpawned = [];
-
-        if (!_isAirdrop && {_totalCount isEqualTo 1}) then {
-            private _stash = (getPosATL _caller) vectorAdd [0, 0, -40];
-            _singleObj = [objNull, _caller, [_fabricator, _sourceObjects # 0, _stash]] call YOSHI_SPAWN_SAVED_ITEM_ACTION;
-            _success = !(isNull _singleObj);
-            _mode = "single";
-        } else {
-            private _stashBase = [0, 0, -200];
-
-            {
-                private _stash = _stashBase vectorAdd [(_forEachIndex mod 5) * 1.5, floor (_forEachIndex / 5) * 1.5, 0];
-                private _obj = [objNull, _caller, [_fabricator, _x, _stash]] call YOSHI_SPAWN_SAVED_ITEM_ACTION;
-                if (!isNull _obj) then {_tempSpawned pushBack _obj;};
-            } forEach _sourceObjects;
-
-            if ((count _tempSpawned) isEqualTo _totalCount) then {
-                // Let newly spawned objects finish one simulation tick so raycast sizing is stable.
-                {
-                    _x setVectorUp [0, 0, 1];
-                    _x setVelocity [0, 0, 0];
-                } forEach _tempSpawned;
-                uiSleep 0.1;
-
-                private _pack = [_tempSpawned] call YOSHI_spawnContainersNearObjectsAndPackMulti;
-                _success = _pack # 0;
-                _containers = _pack # 1;
-                // Anything the packer could not fit stays loose at the staging
-                // position. Delete it here: the order is refused below, and an
-                // orphaned clone would otherwise sit under the map for the rest
-                // of the mission.
-                {
-                    if (!isNull _x) then {deleteVehicle _x;};
-                } forEach (_pack param [3, []]);
-            } else {
-                _success = false;
-            };
-            _mode = (["multi", "airdrop"] select _isAirdrop);
-        };
+        // The terminal asks; the server decides and builds. Nothing on this
+        // machine creates a fabricated object.
+        private _requestId = format ["YFU_%1_%2_%3", clientOwner, floor (diag_tickTime * 1000), floor random 1000000];
+        private _resultKey = format ["YFU_ORDER_RESULT_%1", _requestId];
+        missionNamespace setVariable [_resultKey, nil, false];
+        uiNamespace setVariable ["YFU_last_order_request", [_requestId, netId _fabricator, _entries, _isAirdrop]];
+        [_requestId, netId _caller, netId _fabricator, _entries, _isAirdrop] remoteExecCall ["YFU_fnc_fabricateOrder", 2];
 
         private _duration = _totalCount max 1;
         private _start = diag_tickTime;
         private _nextStatusAt = _start;
-        while {(diag_tickTime - _start) < _duration} do {
+        private _deadline = _start + 30;
+        private _result = [];
+        waitUntil {
+            uiSleep 0.05;
+            _result = missionNamespace getVariable [_resultKey, []];
             private _elapsed = diag_tickTime - _start;
-            private _p = _elapsed / _duration;
+            private _p = (_elapsed / _duration) min 1;
             if (diag_tickTime >= _nextStatusAt) then {
                 [true, "Processing Order", selectRandom YFU_FABRICATOR_MESSAGES, _p, false] call YFU_assetsSetSubmitOverlay;
                 _nextStatusAt = diag_tickTime + 2;
             } else {
                 [true, "", "", _p, false] call YFU_assetsSetSubmitOverlay;
             };
-            uiSleep 0.05;
+            // Hold the overlay for the nominal duration so a fast order still
+            // reads as work, but never wait past the deadline for a silent server.
+            (!(_result isEqualTo []) && {_elapsed >= _duration}) || {diag_tickTime > _deadline}
         };
 
         [true, "", "", 1, false] call YFU_assetsSetSubmitOverlay;
 
-        if (_success) then {
-            private _delivered = false;
+        private _accepted = (_result param [1, false]) isEqualTo true;
+        private _mode = _result param [2, "timeout"];
+        private _containers = (_result param [4, []]) apply {objectFromNetId _x};
+        private _positions = _result param [5, []];
+        uiNamespace setVariable ["YFU_last_order_result", _result];
+
+        private _success = _accepted;
+        if (_accepted) then {
             switch (_mode) do {
                 case "single": {
-                    _delivered = [_caller, _singleObj] call YFU_assetsFinalizeDeliverySingle;
+                    private _single = objectFromNetId (_result param [3, ""]);
+                    if (isNull _single) then {
+                        _success = false;
+                    } else {
+                        [_caller, _single] call ace_dragging_fnc_startCarry;
+                        uiNamespace setVariable ["YFU_last_delivery_positions", _positions];
+                    };
                 };
                 case "multi": {
-                    _delivered = [_caller, _containers] call YFU_assetsFinalizeDeliveryMulti;
+                    uiNamespace setVariable ["YFU_last_delivery_positions", _positions];
+                    [_caller, _positions] call YFU_assetsAnnounceDelivery;
                 };
                 case "airdrop": {
-                    _delivered = [_caller, _fabricator, _containers, _targetATL] call YFU_assetsFinalizeDeliveryAirdrop;
+                    _success = [_caller, _fabricator, _containers, _targetATL] call YFU_assetsFinalizeDeliveryAirdrop;
+                    // Vigil owns the aircraft and the cargo from here. Only the
+                    // server may undo its own work if the handoff is refused.
+                    if (!_success) then {
+                        [_requestId] remoteExecCall ["YFU_fnc_fabricatorDiscardOrder", 2];
+                    };
                 };
                 default {
-                    _delivered = false;
+                    _success = false;
                 };
             };
-            _success = _delivered;
         };
 
         if (!_success) then {
-            { if (!isNull _x) then { deleteVehicle _x; }; } forEach _tempSpawned;
-            { if (!isNull _x) then { deleteVehicle _x; }; } forEach _containers;
             [true, "Order Failed", "Unable to complete order. Click anywhere to continue.", 1, true] call YFU_assetsSetSubmitOverlay;
             uiNamespace setVariable ["YFU_submit_success", false];
         } else {

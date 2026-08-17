@@ -76,7 +76,7 @@ schema.
 | Vigil transport | selected crewed transport physically flies, lands and settles at LZ, waits, then physically returns and settles at recorded home; duplicate request is rejected | task IDs/state keys, waypoint/land command sequence, fixture coordinates, observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 | Vigil rotary CAS | selected armed helicopter reaches its requested area, attacks only a valid hostile ground target with correlated real fire and impact, respects its timer, disengages and returns home; no-target and invalid controls fail closed | task/ledger layout, fixture coordinates/classes, LOITER/MOVE details, sensor/reveal and observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 | Vigil fixed-wing strike | registered state reconstructs once, enters the operating area, consumes real client laser/IR designations for two correlated guided impacts, rejects no-designation fire, then physically egresses and cleans up | registry schema, fixture coordinates/classes, waypoint geometry, observer cadence and private helper names | REFINE BEFORE PERMANENT COVERAGE |
-| Fabricator / Virtual Storage | registered storage is browsable at a registered station; a submitted order delivers real copies carrying the source's cargo; an order that cannot be filled is refused and leaves nothing behind | queue/`uiNamespace` layout, IDCs, container classes and packing order, staging depths, progress cadence, drop radii | REFINE BEFORE PERMANENT COVERAGE |
+| Fabricator / Virtual Storage | a player at a registered station orders copies of registered stock; the server validates and builds; an order that cannot be produced in full is refused whole and leaves nothing | queue/`uiNamespace` layout, IDCs, container classes and packing order, staging, progress cadence, drop radii | REFINE BEFORE PERMANENT COVERAGE (refined; covered) |
 | Counter Battery Radar | enabled detection draws an impact zone on the ground the shells actually strike, with count/ETA, a narrowing then confirmed origin at the real gun, a side-filtered launch warning, expiry, replication and full reset on stop; disabled produces nothing | cluster/member layout, uid format, marker names and index counters, link distance/leeway/hysteresis, integration step and cadence | REFINE BEFORE PERMANENT COVERAGE |
 
 ### APS findings
@@ -246,7 +246,21 @@ container and orphaning their clones under the map, so an order could report
 "Success", deliver less than was asked, and leak objects for the rest of the
 mission. It now reports what it skipped, the caller cleans up, and the order is
 refused. An unreachable helper and an Eden module attribute that nothing reads
-were recorded rather than deleted or guessed at. Full analysis is in
+were recorded rather than deleted or guessed at.
+
+The product decisions then landed - server-authoritative orders, an unlimited
+catalogue, atomic fulfilment, an intentional carryability mass cap, and a real
+local virtual-inventory toggle - and the feature is now covered by
+`fieldutils-fabricator`. Proving the contract surfaced two further pre-existing
+defects that only a user-visible assertion could catch: a delivery could be
+placed kilometres from the player, because the placement helper trusted
+`BIS_fnc_findSafePos`, which answers a failed search with a random map position;
+and orders were assembled inside terrain. One clause resisted proof entirely. A
+fabricated crate reports `getMass = 1e-12` and never gains a real mass on a
+dedicated server, so the intended cap never fires; an intermediate assertion
+passed on that value because `1e-12 > 0` and `1e-12 <= 200` were both true, which
+was a false PASS and was removed rather than kept. The scenario now asserts
+nothing about mass and the gap is recorded as open. Full analysis is in
 [`field-utilities-fabricator-review.md`](field-utilities-fabricator-review.md).
 
 ## Generic Tribunal capability backlog

@@ -360,10 +360,12 @@ Primary locations: `source/field-utilities/addons/FieldUtils/config.cpp`,
 ### 4.1 Virtual Storage and Fabricator
 
 Reviewed in [`field-utilities-fabricator-review.md`](field-utilities-fabricator-review.md);
-primary outcome **REFINE BEFORE PERMANENT COVERAGE**. Registration through both
-module logics, ACE action registration, storage discovery and cargo fidelity were
-all reached and proven at runtime; no permanent scenario is added until the four
-product decisions below are answered.
+primary outcome **REFINE BEFORE PERMANENT COVERAGE**; refinement is complete and
+the feature is now **COVERED** by `fieldutils-fabricator`. Orders are
+server-authoritative and atomic, the catalogue is an unlimited template source,
+and the local virtual-inventory toggle is restored. The delivery mass cap is
+preserved but could not be validated at runtime and is asserted by nothing - see
+the review.
 
 * **Mission-maker registration** uses synchronized storage objects and designated
   Fabricator stations, optionally with nearby ZEN inventory. **Implemented;
@@ -528,6 +530,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-cas` | rotary CAS filtering, attack, timer, controls, RTB |
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
+| `fieldutils-fabricator` | server-authoritative atomic orders, catalogue fidelity, refusals, cleanup |
 | `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
 
 Framework `locality-probe` and `visual-framebuffer` scenarios prove Tribunal,
@@ -557,10 +560,7 @@ coverage.
 | CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; re-warning for a walking barrage undecided |
 | CBR module/Zeus activation | **NOT YET REVIEWED** | lifecycle covered through the API, not real module/curator paths |
 | Iron Dome | **NOT YET REVIEWED** | active server subsystem, no causal proof |
-| Fabricator order authority | **REVIEWED / DEFERRED** | fabrication is client-authoritative and unvalidated; only airdrop is server-owned |
-| Fabricator storage depletion | **REVIEWED / DEFERRED** | virtual storage is an unlimited catalogue; stock/cost/cooldown undecided |
-| Fabricator partial fulfilment | **REVIEWED / DEFERRED** | an unpackable order is now refused; deliver-what-fits plus a dropped-item manifest is undecided |
-| Fabricator mass cap | **REVIEWED / DEFERRED** | `ReammoBox_F` clones above mass 200 are capped, so a copy is not physically identical to its source |
+| Fabricator delivery mass cap | **REVIEWED / OPEN DEFECT** | a fabricated crate reports `getMass = 1e-12` and never gains a real mass, so the intended carryability cap never fires |
 | Fabricator staging depths | **REVIEWED / NEEDS EXPERIMENTATION** | underground staging and the settle tick have no retained controlled alternative |
 | Field towing | **Partial / NOT YET REVIEWED** | source TODOs identify parent/cleanup gaps |
 | Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |

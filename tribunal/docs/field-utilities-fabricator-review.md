@@ -2,7 +2,10 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Primary outcome: `REFINE BEFORE PERMANENT COVERAGE`.**
+**Primary outcome: `REFINE BEFORE PERMANENT COVERAGE`. Refinement is now done and
+permanent coverage exists** (`fieldutils-fabricator`), following the product
+decisions recorded below. One clause could not be proven and is deliberately not
+asserted; see *Mass cap: preserved but unprovable*.
 
 ## Scope
 
@@ -231,23 +234,18 @@ items were dropped. Delivering partially would require inventing that UI.
 explicit manifest of what it could not, is a genuine product decision* and is
 listed below.
 
-## Product decisions required
+## Product decisions (answered)
 
-1. **Order authority.** Fabrication is client-authoritative and unvalidated. Any
-   client can create any registered object, in any quantity, at any rate. Is that
-   intended for a cooperative-trust environment, or should orders go through the
-   server the way airdrop already does?
-2. **Depletion.** Virtual storage is an unlimited catalogue; nothing is consumed.
-   Is there meant to be a stock, cost, or cooldown?
-3. **Partial fulfilment.** Refuse an order that cannot be packed in full (current,
-   post-refinement), or deliver what fits with a manifest of what was dropped?
-4. **Mass cap.** `ReammoBox_F` clones above mass 200 are capped to 200, so a copy
-   is not physically identical to its source. Intended carryability affordance, or
-   an accident?
-
-Until 1 and 2 are answered, no permanent scenario should assert an authority
-model or a depletion policy, because either assertion would freeze a decision the
-product has not made.
+1. **Order authority: server-authoritative.** The client owns the terminal and
+   the queue; validation and creation belong to the server.
+2. **Depletion: none.** Virtual storage is an unlimited catalogue and template
+   source. Fabricating never consumes or alters a registered object.
+3. **Partial fulfilment: atomic.** An order that cannot be produced in full is
+   refused whole and produces nothing. No partial-delivery semantics and no
+   missing-items UI were invented.
+4. **Mass cap: intentional.** Fabricated delivery crates are capped so a player
+   can still carry them. Carryability is the contract, not source-mass fidelity.
+5. **Local virtual inventory: a real feature, restored.** See below.
 
 ## Coverage gate
 
@@ -288,6 +286,30 @@ error: on the fixed build the identical `count`-on-Number error is logged and th
 **next** command still executes (`YFUPOLL|after-error-still-alive`), where on the
 previous build the loop was dead. Covered by
 `test_live_poller_isolates_operator_snippets_from_its_own_loop`.
+
+## Fresh autonomous proof
+
+Cold run `20260817T224129Z-658ff682` passed **25/25** assertions with zero
+failures and complete container/network/state cleanup, driving every order
+through the terminal submit path with no human input.
+
+Selected evidence from that run and the ones that shaped it:
+
+* single order delivered server-owned and beside the player -
+  `result=[...,true,"single","2:158",[],[[9.98,12.31,137.99]]]|localOnServer=true|owner=2`;
+* packed order - `containers=1|attached=2|allLocal=true`;
+* atomic refusal of an unpackable order - `result=[...,false,"unpackable"]` with
+  `censusBefore` equal to `censusAfter` and zero staged objects;
+* `unregistered`, `out-of-range` and `no-storage` refusals, each census-matched;
+* client stations - `clientStations=["2:148","2:149"]|registry=["2:148","2:149"]|idempotent=true`;
+* teardown - `census=[0,0]`.
+
+Nine earlier cold runs were needed to reach it, and the failures were real
+rather than flaky: an unstable player position at fixture time (the anchor was
+sampled the instant the player object appeared, before it had been placed), the
+6,168 m delivery, the deep-staging and hidden-object mass readings, unscheduled
+`uiSleep`, and the client reading editor synchronization before it had
+replicated. Each was diagnosed from run evidence and fixed at its cause.
 
 ## Evidence index
 

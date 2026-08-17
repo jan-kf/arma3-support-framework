@@ -60,6 +60,7 @@ class CfgFunctions {
         };
         class Server {
             file = "\FieldUtils\functions\server";
+            class fabricatorServer { preInit = 1; };
             class initServer { postInit = 1; };
         };
     };
