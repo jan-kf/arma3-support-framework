@@ -392,10 +392,21 @@ the review.
   the ZEN inventory action used to add stock that was never synchronized. The
   module setter now publishes it and the action condition honours it, default
   enabled. **Implemented; REVIEWED / REFINED.**
-* **Order authority** is server-authoritative. The client sends a request bound to
-  `remoteExecutedOwner`, and the server claims the request id, validates the order
-  schema, station registration and proximity, and is the only machine that creates
-  or deletes a fabricated object. **Implemented; COVERED.**
+* **Order authority** is server-authoritative through one client-facing endpoint.
+  Identity comes from `remoteExecutedOwner`; internal helpers are gated on an
+  unpublished per-machine token; transaction state is keyed `owner#request` for
+  claim, result, ledger, discard and retirement; orders are atomic with a
+  watchdog finalizer scoped to the transaction's own objects. **Implemented;
+  COVERED**, including runtime adversarial controls for worker bypass, duplicate
+  request, unauthorized airdrop, malformed and oversized orders, and discarding
+  another owner's transaction.
+* **Airdrop authorization** is server-side: the trusted entry refuses remote
+  callers, and a client-originated airdrop order is accepted only for an aircraft
+  present in Vigil's `YSF_FW_REGISTRY`. **Implemented; COVERED.**
+* **Delivery placement** is contracted only as *server-owned delivery within a
+  bounded distance of the recipient*. Terrain/water/obstruction suitability is
+  **REVIEWED / NEEDS EXPERIMENTATION**; the earlier `surfaceIsWater` failure was
+  caused by the fixture spawning at the map origin over water, not by the world.
 * **Airdrop handoff** calls Vigil delivery and observes authoritative parachute
   results. **Implemented; COVERED as a cross-mod composite.** Missing API fails
   closed.
@@ -560,7 +571,9 @@ coverage.
 | CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; re-warning for a walking barrage undecided |
 | CBR module/Zeus activation | **NOT YET REVIEWED** | lifecycle covered through the API, not real module/curator paths |
 | Iron Dome | **NOT YET REVIEWED** | active server subsystem, no causal proof |
-| Fabricator delivery mass cap | **REVIEWED / OPEN DEFECT** | a fabricated crate reports `getMass = 1e-12` and never gains a real mass, so the intended carryability cap never fires |
+| Fabricator delivery mass cap | **REVIEWED / OPEN DEFECT** | a fabricated crate reported `getMass = 1e-12` across six runs, so the carryability cap never fires; those runs were over water and it has not been re-measured on land |
+| Fabricator placement suitability | **REVIEWED / NEEDS EXPERIMENTATION** | delivery is bounded to the recipient; water/gradient/obstruction unproven |
+| Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
 | Fabricator staging depths | **REVIEWED / NEEDS EXPERIMENTATION** | underground staging and the settle tick have no retained controlled alternative |
 | Field towing | **Partial / NOT YET REVIEWED** | source TODOs identify parent/cleanup gaps |
 | Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |

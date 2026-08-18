@@ -306,43 +306,110 @@ All runtime evidence came from Developer Live Mode sessions
 development aid; none of it is a fresh autonomous proof, and none is claimed as
 one. The fresh autonomous proof is recorded above.
 
-## Independent audit remediation
+## Current implementation (supersedes the historical sections above)
 
-An independent audit of the first coverage attempt returned eight blocking
-findings. All eight were verified and correct.
+Everything above this line describes what the feature *was* and how it was
+reviewed. This section is what it *is*.
 
-**Fixed.** Caller identity now comes from `remoteExecutedOwner` and never from
-the payload, so a client can no longer submit another player's identity. A
-request id is claimed before anything is built, so a replayed or concurrent
-request is refused. Order entries are schema- and integer-bounds-checked before
-expansion. The `_isAirdrop` flag can no longer skip validation outright: an
-airdrop order must at least name an `Air` object, which is what the Vigil
-composite path supplies. A published result and its ledger entry now retire
-together, so neither accumulates and a stale entry cannot resolve a recycled net
-id. Mass was removed from the permanent behavior contract and from the declared
-evidence types, matching the fact that nothing about mass is asserted. The
-refusal and cleanup census compares sorted net-id sets rather than counts, and
-additionally asserts the catalogue sources survive, so a leaked clone and a
-deleted source can no longer cancel out. The review and inventory no longer
-contain their pre-refinement conclusions.
+**Authority.** One function is reachable by a client: `YFU_fnc_fabricateOrder`.
+Identity comes from `remoteExecutedOwner` at that entry point and never from the
+payload. Every internal helper - worker, track, finalize, publish, refuse, set
+state, retire - is gated on `YFU_FABRICATOR_TOKEN`, a secret each machine
+generates at init and never publishes, so a remote-executed call to any of them
+carries the wrong value and does nothing. A discard rebuilds the transaction id
+from the owner the transport reports, so naming another owner's request reaches
+nothing.
 
-**Confirmed and deferred, with evidence.** *Placement suitability.* The audit is
-right that bounding a delivery to the player is not the same as proving the spot
-is clear. An attempt to reject unsuitable positions using `surfaceIsWater` was
-made and reverted: the validation tier runs `-world=empty`, where that test
-refused every position and the whole scenario failed with `no-placement`. A real
-suitability check needs terrain the validation world does not have, so the
-fallback is documented in the source as bounded-but-unverified rather than
-approximated. *Transaction finalizer.* Cleanup is proven for the failures the
-server detects; a general finalizer covering script errors, result-publication
-failure and client timeout is not implemented. *Malicious runtime controls.* The
-refusals above are guarded by static contracts only; no runtime control exercises
-a spoofed caller, a replay, an airdrop bypass or a malformed order. *Live snippet
-supervision.* The poller no longer dies, but spawned snippets still have no
-result, timeout, or concurrency bound.
+An earlier attempt used `remoteExecutedOwner isEqualTo 0` as the internal guard.
+That is wrong on this build: measured in run `20260818T194317Z-773b507b`, the
+value stays non-zero inside a script spawned from a remote-executed frame, so the
+guard blocked the server's own worker - the transaction was claimed
+(`knownTx=["4#YFU_4_83155_176009"]`) but no result was ever published. The token
+replaced it.
 
-These four remain open and this feature should not be treated as having a proven
-adversarial boundary.
+**Airdrop.** A client cannot select airdrop mode into a bypass. `YFU_fnc_fabricateAuthorizedOrder`
+is the trusted server-internal entry and refuses any remote caller outright. A
+client-originated airdrop order is authorized only if the named aircraft appears
+in Vigil's server-side `YSF_FW_REGISTRY` as a `spawnedVeh`, which is the same
+authoritative source Vigil's own logistics request consults. Naming an arbitrary
+`Air` object authorizes nothing.
+
+**Transaction identity.** One id, `owner#request`, keys the claim, the published
+result, the ledger of created objects, finalization, discard and retirement. Two
+owners using the same client-generated id cannot collide. A claim is taken before
+the worker is scheduled, so a duplicate is refused rather than built, and a
+terminal result is written once so a late or duplicate writer cannot overwrite the
+outcome an in-progress transaction already reached.
+
+**Schema.** The complete top-level and nested schema is validated before anything
+is claimed, scheduled, expanded or created: request id, station ref, Boolean mode,
+entry structure, string refs, finite positive integer quantities, per-entry and
+total bounds. A malformed payload produces an explicit refusal, not an SQF error.
+
+**Atomicity.** Objects are tracked into the transaction ledger as they are
+created, not only at known failure branches, and every refusal runs one path that
+finalizes before it publishes. The finalizer deletes exactly the net ids the
+transaction itself recorded and can reach nothing else. A watchdog finalizes any
+transaction that has not reached a terminal state within its build deadline, which
+covers unexpected script failure and stalls as well as the anticipated branches.
+The boundary is defined as: from claim to terminal result, on the server, over the
+objects that transaction created. Client disconnect mid-order is *not* separately
+handled beyond that watchdog, and no claim is made about it.
+
+## Runtime adversarial controls
+
+Static contracts are not evidence for a remote boundary, so these are proven in
+the fresh autonomous run with exact before/after identity sets:
+
+| Control | Evidence |
+| --- | --- |
+| Direct worker invocation | `result=[]`, census identical, `txState=unknown` |
+| Duplicate identical request | one order only: `created=["2:182"]`, `delivered=2:182` |
+| Client-selected airdrop on an unregistered aircraft | `airdrop-unauthorized`, census identical |
+| Malformed quantity | `malformed-quantity`, census identical |
+| Oversized order | `too-large`, census identical |
+| Discarding another owner's transaction | victim `2:181` alive, its ledger intact, census identical |
+
+The foreign-discard control uses a server-owned transaction rather than a second
+authenticated player, because this scenario has one client. **The client-b case -
+one player discarding another player's transaction - remains unproven**, and the
+boundary is built to be client-N ready: the observer declares its own unit by net
+id rather than being taken from `allPlayers` ordering.
+
+## Placement contract
+
+The permanent contract is narrowed to what is proven: **a server-owned delivery
+placed within a bounded distance of the recipient**. Terrain, water, obstruction
+and settling suitability are *not* claimed.
+
+The earlier `surfaceIsWater` experiment was reported as failing because the tier
+runs `-world=empty`. That explanation was wrong and is withdrawn: `-world=empty`
+is only the server's startup world, and the mission itself is `.Stratis`. The real
+cause was the fixture. The scenario did not set `respawn_on_start`, so the player
+respawned at the map origin - open water on Stratis - and every delivery in every
+earlier run was made over the sea. `surfaceIsWater` was correctly refusing every
+candidate. With `respawn_on_start = "0"` the observer is on land and deliveries
+land at real positions such as `[4705.07, 2780.97, 0.0025]`. Re-testing a
+suitability check on land is now the obvious next step and is left as follow-up
+rather than claimed here.
+
+## Unresolved
+
+* **Delivery mass cap.** Preserved as one named rule and asserted by nothing. A
+  fabricated crate reported `getMass = 1e-12` and never gained a real mass across
+  six runs. Note that those runs were also over water; whether a crate delivered
+  on land reports a real mass has not been re-measured.
+* **Terrain suitability**, per the section above.
+* **Client-b and JIP.** One authenticated client is the proof boundary.
+* **ACE-side action presence.** ACE 3.21 stores object actions where neither an
+  object variable nor the class-keyed `ace_interact_menu_ActNamespace` exposes
+  them, so the scenario proves the module handshake reaches the client and the
+  registrar is idempotent, not that ACE holds the action.
+* **Runtime editor synchronization.** `synchronizedObjects` does not replicate to
+  clients for sync created at runtime, so per-station client-side registration
+  cannot be proven with a runtime-built fixture.
+* **Live snippet supervision** is separate Tribunal infrastructure work, not a
+  Fabricator concern.
 
 ## Next review
 

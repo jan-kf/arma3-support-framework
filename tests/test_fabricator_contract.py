@@ -36,82 +36,109 @@ class FabricatorAuthorityTests(unittest.TestCase):
     def test_the_order_terminal_never_creates_a_fabricated_object(self) -> None:
         """The client asks; only the server builds."""
 
-        submit = read(ASSETS)
-        start = submit.index("YFU_assetsSubmitOrder = {")
-        body = submit[start:]
+        body = read(ASSETS)[read(ASSETS).index("YFU_assetsSubmitOrder = {"):]
         self.assertNotIn("YOSHI_SPAWN_SAVED_ITEM_ACTION", body)
         self.assertNotIn("YOSHI_spawnContainersNearObjectsAndPackMulti", body)
         self.assertNotIn("createVehicle", body)
-        # ...and it must not undo the server's work either.
         self.assertNotIn("deleteVehicle", body)
         self.assertIn('remoteExecCall ["YFU_fnc_fabricateOrder", 2]', body)
-        # The client says what it wants built, never who is asking.
-        self.assertNotIn("netId _caller, netId _fabricator", body)
 
-    def test_the_server_order_path_refuses_to_run_anywhere_else(self) -> None:
+    def test_exactly_one_endpoint_is_reachable_by_a_client(self) -> None:
+        """Every other consequential helper refuses a remote caller."""
+
         server = read(SERVER)
-        for function in ("YFU_fnc_fabricateOrder", "YFU_fnc_fabricateOrderWorker", "YFU_fnc_fabricatorDiscardOrder"):
+        # The secret is generated per machine and never published, so a client
+        # compiling the same file cannot produce a matching value.
+        self.assertIn('YFU_FABRICATOR_TOKEN = format ["yfu-%1-%2-%3"', server)
+        self.assertNotIn('publicVariable "YFU_FABRICATOR_TOKEN"', server)
+        guarded = (
+            "YFU_fnc_fabricateOrderWorker", "YFU_fnc_fabricatorTrack", "YFU_fnc_fabricatorFinalize",
+            "YFU_fnc_fabricatorPublishResult", "YFU_fnc_fabricatorRefuse", "YFU_fnc_fabricatorSetState",
+            "YFU_fnc_fabricatorRetire",
+        )
+        for function in guarded:
             body = server[server.index(f"{function} = {{"):]
-            self.assertIn("if (!isServer) exitWith {};", body[:400], function)
-
-    def test_an_order_is_assembled_in_a_scheduled_script(self) -> None:
-        """remoteExecCall arrives unscheduled, where uiSleep is a no-op."""
-
-        server = read(SERVER)
-        self.assertIn("(_this + [_owner]) spawn YFU_fnc_fabricateOrderWorker;", server)
-
-    def test_an_order_is_validated_against_the_registered_catalogue_and_station(self) -> None:
-        server = read(SERVER)
-        for reason in ("no-storage", "no-station", "out-of-range", "unregistered", "too-large", "caller"):
-            self.assertIn(f'"{reason}"', server, reason)
-        self.assertIn("YFU_FABRICATOR_ORDER_RANGE", server)
-        self.assertIn("_source in _catalogue", server)
+            self.assertIn("if (_token isNotEqualTo YFU_FABRICATOR_TOKEN) exitWith", body[:400], function)
+        # The trusted airdrop entry point may use remoteExecutedOwner: it is
+        # evaluated in the remote-executed frame, where it is meaningful.
+        authorized = server[server.index("YFU_fnc_fabricateAuthorizedOrder = {"):]
+        self.assertIn("if (remoteExecutedOwner isNotEqualTo 0) exitWith {};", authorized[:400])
 
     def test_caller_identity_comes_from_the_transport_not_the_payload(self) -> None:
         server = read(SERVER)
         self.assertIn("private _owner = remoteExecutedOwner;", server)
-        self.assertIn("(_this + [_owner]) spawn YFU_fnc_fabricateOrderWorker;", server)
-        # The worker resolves the player from the owner id it was handed.
         self.assertIn("if ((owner _x) isEqualTo _owner) exitWith {_caller = _x};", server)
         self.assertNotIn("_callerId", server)
 
-    def test_a_request_id_is_claimed_before_anything_is_built(self) -> None:
-        server = read(SERVER)
-        claim = server.index("_claims set [_claimKey, true];")
-        build = server.index("call YOSHI_SPAWN_SAVED_ITEM_ACTION")
-        self.assertLess(claim, build)
-        self.assertIn('[_requestId, false, "replay"]', server)
+    def test_transaction_state_is_owner_bound_everywhere(self) -> None:
+        """Two owners with the same client-generated id cannot collide."""
 
-    def test_the_airdrop_flag_alone_cannot_skip_validation(self) -> None:
         server = read(SERVER)
-        self.assertIn('_stationVerdict = "not-an-air-asset";', server)
-        self.assertIn('!(_station isKindOf "Air")', server)
+        self.assertIn('format ["%1#%2", _owner, _requestId]', server)
+        self.assertIn('format ["YFU_ORDER_RESULT_%1", _txId]', server)
+        # Claim, result, ledger, finalize and retire are all keyed by the same id.
+        for function in ("YFU_fnc_fabricatorTrack", "YFU_fnc_fabricatorFinalize", "YFU_fnc_fabricatorRetire"):
+            body = server[server.index(f"{function} = {{"):]
+            self.assertIn("_txId", body[:400], function)
+        # The terminal waits on the owner-bound key.
+        self.assertIn('format ["YFU_ORDER_RESULT_%1#%2", clientOwner, _requestId]', read(ASSETS))
 
-    def test_order_entries_are_schema_checked_before_expansion(self) -> None:
+    def test_a_discard_only_reaches_the_callers_own_transaction(self) -> None:
         server = read(SERVER)
-        for guard in ("(_x # 1) isEqualType 0", "(_x # 1) isEqualTo (floor (_x # 1))", "(_x # 0) isEqualType \"\""):
-            self.assertIn(guard, server, guard)
+        body = server[server.index("YFU_fnc_fabricatorDiscardOrder = {"):]
+        self.assertIn("private _owner = remoteExecutedOwner;", body)
+        self.assertIn("[_owner, _requestId] call YFU_fnc_fabricatorTxId;", body)
 
-    def test_a_result_and_its_ledger_entry_retire_together(self) -> None:
+    def test_a_claim_precedes_scheduling_and_a_duplicate_cannot_overwrite(self) -> None:
         server = read(SERVER)
-        block = server[server.index("YFU_fnc_fabricatorPublishResult = {"):server.index("YFU_fnc_fabricatorCatalogue = {")]
-        self.assertIn("_ledger deleteAt _requestId;", block)
-        self.assertIn("missionNamespace setVariable [_key, nil, true];", block)
+        accept = server[server.index("YFU_fnc_fabricatorAccept = {"):]
+        claim = accept.index('_tx set ["claimed", true];')
+        schedule = accept.index("spawn YFU_fnc_fabricateOrderWorker;")
+        self.assertLess(claim, schedule)
+        self.assertIn('exitWith {\n\t\t// The original transaction keeps its result', accept)
+        # A terminal result is written once.
+        publish = server[server.index("YFU_fnc_fabricatorPublishResult = {"):]
+        self.assertIn('if (_state in ["delivered", "refused", "finalized"]) exitWith {_state};', publish)
+
+    def test_the_schema_is_validated_before_claim_scheduling_or_creation(self) -> None:
+        server = read(SERVER)
+        accept = server[server.index("YFU_fnc_fabricatorAccept = {"):]
+        validate = accept.index("call YFU_fnc_fabricatorValidateRequest;")
+        claim = accept.index('_tx set ["claimed", true];')
+        self.assertLess(validate, claim)
+        for reason in ("malformed-request-id", "malformed-station", "malformed-mode",
+                       "malformed-entries", "malformed-quantity", "too-large"):
+            self.assertIn(f'"{reason}"', server, reason)
+
+    def test_airdrop_mode_is_not_a_client_choice(self) -> None:
+        """A client naming an arbitrary Air object authorizes nothing."""
+
+        server = read(SERVER)
+        self.assertIn('_stationVerdict = "airdrop-unauthorized";', server)
+        self.assertIn("call YFU_fnc_fabricatorAirAssetAuthorized", server)
+        # Authorization is Vigil's server-side registry, not the payload.
+        auth = server[server.index("YFU_fnc_fabricatorAirAssetAuthorized = {"):]
+        self.assertIn("call YSF_fwEnsureRegistry", auth)
+        self.assertIn('getOrDefault ["spawnedVeh", objNull]', auth)
+
+    def test_a_finalizer_covers_failures_the_code_does_not_anticipate(self) -> None:
+        server = read(SERVER)
+        # Objects are tracked as they are created, not only at known failures.
+        worker = server[server.index("YFU_fnc_fabricateOrderWorker = {"):]
+        self.assertIn("[YFU_FABRICATOR_TOKEN, _txId, [_clone]] call YFU_fnc_fabricatorTrack;", worker)
+        # A watchdog finalizes a transaction that never reaches a terminal state.
+        self.assertIn('_txId, "abandoned"] call YFU_fnc_fabricatorRefuse;', server)
+        # The finalizer can only reach ids the transaction itself recorded.
+        finalize = server[server.index("YFU_fnc_fabricatorFinalize = {"):]
+        self.assertIn('_tx getOrDefault ["created", []]', finalize)
+        self.assertIn("objectFromNetId _x", finalize)
 
     def test_delivery_placement_is_bounded_but_not_yet_suitability_checked(self) -> None:
-        """Bounded to the player; water/gradient/obstruction remain unverified."""
+        """Bounded to the recipient; terrain suitability is not claimed."""
 
         assets = read(ASSETS)
         self.assertIn("(vectorMagnitude _offset) <= (_radiusMax + 5)", assets)
         self.assertIn("It is NOT a suitability", assets)
-
-    def test_station_verdict_is_not_returned_from_inside_a_then_block(self) -> None:
-        """`exitWith` in a `then` block exits the block, not the function."""
-
-        server = read(SERVER)
-        branch = server[server.index("private _stationVerdict"):server.index('if (_stationVerdict isNotEqualTo ""')]
-        self.assertNotIn("exitWith", branch)
-        self.assertIn('if (_stationVerdict isNotEqualTo "") exitWith {', server)
 
 
 class FabricatorProductDecisionTests(unittest.TestCase):
@@ -119,12 +146,15 @@ class FabricatorProductDecisionTests(unittest.TestCase):
         """A short order produces nothing, and nothing is left staged."""
 
         server = read(SERVER)
-        self.assertIn('[_requestId, false, "clone-failed"]', server)
-        self.assertIn('[_requestId, false, "unpackable"]', server)
-        # Both refusal paths delete what was already built.
-        for marker in ('"clone-failed"', '"unpackable"'):
-            block = server[: server.index(marker)]
-            self.assertIn("call _abort;", block.rsplit("exitWith", 1)[-1], marker)
+        # Every refusal goes through one path that finalizes before it publishes.
+        for reason in ("clone-failed", "unpackable", "caller", "no-storage",
+                       "unregistered", "abandoned"):
+            self.assertIn(f'_txId, "{reason}"] call YFU_fnc_fabricatorRefuse;', server, reason)
+        # Station verdicts (no-station / out-of-range / airdrop-unauthorized)
+        # travel through one variable to the same refusal path.
+        self.assertIn("[YFU_FABRICATOR_TOKEN, _txId, _stationVerdict] call YFU_fnc_fabricatorRefuse;", server)
+        refuse = server[server.index("YFU_fnc_fabricatorRefuse = {"):]
+        self.assertIn("call YFU_fnc_fabricatorFinalize;", refuse[:400])
 
     def test_the_packer_reports_what_it_could_not_fit(self) -> None:
         packing = read(PACKING)
@@ -207,9 +237,15 @@ class FabricatorScenarioTests(unittest.TestCase):
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         client = module.CLIENT_SQF
-        self.assertIn("call YFU_assetsSubmitOrder;", client)
-        self.assertNotIn("YFU_fnc_fabricateOrder", client)
+        # Honest orders go through the terminal.
+        honest = client[client.index("TRIBUNAL_FAB_fnc_order = {"):client.index("TRIBUNAL_FAB_fnc_rawSend = {")]
+        self.assertIn("call YFU_assetsSubmitOrder;", honest)
+        self.assertNotIn("remoteExecCall", honest)
+        # Adversarial controls deliberately speak to the remote boundary, because
+        # that is what an attacker does, and they never build anything locally.
+        self.assertIn("TRIBUNAL_FAB_fnc_rawSend", client)
         self.assertNotIn("YOSHI_SPAWN_SAVED_ITEM_ACTION", client)
+        self.assertNotIn("createVehicle", client)
 
     def test_the_scenario_proves_absence_mission_wide_not_near_the_player(self) -> None:
         import importlib.util

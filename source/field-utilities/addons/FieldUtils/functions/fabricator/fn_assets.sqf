@@ -906,7 +906,9 @@ YFU_assetsSubmitOrder = {
         // The terminal asks; the server decides and builds. Nothing on this
         // machine creates a fabricated object.
         private _requestId = format ["YFU_%1_%2_%3", clientOwner, floor (diag_tickTime * 1000), floor random 1000000];
-        private _resultKey = format ["YFU_ORDER_RESULT_%1", _requestId];
+        // Transaction state is owner-bound, so the key this terminal waits on
+        // includes its own owner id.
+        private _resultKey = format ["YFU_ORDER_RESULT_%1#%2", clientOwner, _requestId];
         missionNamespace setVariable [_resultKey, nil, false];
         uiNamespace setVariable ["YFU_last_order_request", [_requestId, netId _fabricator, _entries, _isAirdrop]];
         [_requestId, netId _fabricator, _entries, _isAirdrop] remoteExecCall ["YFU_fnc_fabricateOrder", 2];

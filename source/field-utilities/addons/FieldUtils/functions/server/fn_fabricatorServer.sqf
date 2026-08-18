@@ -1,61 +1,138 @@
 /*
 Fabrication is consequential: it creates real objects out of nothing.
 The client owns the terminal and the queue; this file owns the decision.
-A client asks, the server checks the ask against the registered catalogue and
-station, and only the server ever creates anything.
+
+There is exactly one function a client may call: YFU_fnc_fabricateOrder. Every
+other function here refuses to run for a remote caller, so a client that
+remote-executes a worker, a ledger write, or a discard changes nothing.
+
+Identity is taken from the transport (remoteExecutedOwner), never from the
+payload, and every piece of transaction state is keyed by owner#request so two
+owners cannot collide on a client-generated id.
 */
 
-// A player must be at the station they are ordering from. Airdrop orders come
-// from Vigil's aircraft context instead and are authorized by Vigil.
 YFU_FABRICATOR_ORDER_RANGE = 25;
 YFU_FABRICATOR_MAX_ORDER = 30;
 YFU_FABRICATOR_RESULT_TTL = 120;
+YFU_FABRICATOR_BUILD_DEADLINE = 60;
+
+// remoteExecutedOwner is reliable at an entry point but NOT inside a script the
+// entry point spawns: measured on this build it stays non-zero there, so using it
+// as an internal guard blocks the server's own worker. Internal helpers are
+// instead gated on a secret this machine generates at init and never publishes.
+// A client compiles the same file and gets its own unrelated value, so a
+// remote-executed call carries the wrong secret and does nothing.
+YFU_FABRICATOR_TOKEN = format ["yfu-%1-%2-%3", diag_tickTime, random 1e9, random 1e9];
+
+YFU_fnc_fabricatorTxId = {
+	params ["_owner", "_requestId"];
+	format ["%1#%2", _owner, _requestId]
+};
 
 YFU_fnc_fabricatorResultKey = {
-	params ["_requestId"];
-	format ["YFU_ORDER_RESULT_%1", _requestId]
+	params ["_txId"];
+	format ["YFU_ORDER_RESULT_%1", _txId]
 };
 
-// What the server built for one order, so the server can undo its own work if a
-// downstream handoff refuses it. The client never deletes a fabricated object.
-YFU_fnc_fabricatorRecordOrder = {
-	params ["_requestId", "_objects"];
-	private _ledger = missionNamespace getVariable ["YFU_fabricatorOrders", createHashMap];
-	_ledger set [_requestId, _objects apply {netId _x}];
-	missionNamespace setVariable ["YFU_fabricatorOrders", _ledger];
+YFU_fnc_fabricatorTransactions = {
+	private _all = missionNamespace getVariable ["YFU_fabricatorTx", createHashMap];
+	missionNamespace setVariable ["YFU_fabricatorTx", _all];
+	_all
 };
 
-YFU_fnc_fabricatorDiscardOrder = {
-	params [["_requestId", ""]];
-	if (!isServer) exitWith {};
-	private _ledger = missionNamespace getVariable ["YFU_fabricatorOrders", createHashMap];
-	private _ids = _ledger getOrDefault [_requestId, []];
+// Everything this transaction created, so a finalizer can undo exactly its own
+// work and nothing else.
+YFU_fnc_fabricatorTrack = {
+	params ["_token", "_txId", "_objects"];
+	if (_token isNotEqualTo YFU_FABRICATOR_TOKEN) exitWith {};
+	private _all = call YFU_fnc_fabricatorTransactions;
+	private _tx = _all getOrDefault [_txId, createHashMap];
+	private _created = _tx getOrDefault ["created", []];
+	{
+		if (!isNull _x) then {
+			private _id = netId _x;
+			if !(_id in _created) then {_created pushBack _id;};
+		};
+	} forEach _objects;
+	_tx set ["created", _created];
+	_all set [_txId, _tx];
+	count _created
+};
+
+YFU_fnc_fabricatorTxState = {
+	params ["_txId"];
+	private _all = call YFU_fnc_fabricatorTransactions;
+	private _tx = _all getOrDefault [_txId, createHashMap];
+	_tx getOrDefault ["state", "unknown"]
+};
+
+YFU_fnc_fabricatorSetState = {
+	params ["_token", "_txId", "_state"];
+	if (_token isNotEqualTo YFU_FABRICATOR_TOKEN) exitWith {};
+	private _all = call YFU_fnc_fabricatorTransactions;
+	private _tx = _all getOrDefault [_txId, createHashMap];
+	_tx set ["state", _state];
+	_all set [_txId, _tx];
+	_state
+};
+
+// Delete exactly the objects this transaction created. Scoped by construction:
+// it can only reach net ids the transaction itself recorded.
+YFU_fnc_fabricatorFinalize = {
+	params ["_token", "_txId", ["_state", "finalized"]];
+	if (_token isNotEqualTo YFU_FABRICATOR_TOKEN) exitWith {0};
+	private _all = call YFU_fnc_fabricatorTransactions;
+	private _tx = _all getOrDefault [_txId, createHashMap];
+	private _created = _tx getOrDefault ["created", []];
+	private _removed = 0;
 	{
 		private _object = objectFromNetId _x;
-		if (!isNull _object) then {deleteVehicle _object;};
-	} forEach _ids;
-	_ledger deleteAt _requestId;
-	missionNamespace setVariable ["YFU_fabricatorOrders", _ledger];
-	count _ids
+		if (!isNull _object) then {
+			deleteVehicle _object;
+			_removed = _removed + 1;
+		};
+	} forEach _created;
+	_tx set ["created", []];
+	_tx set ["state", _state];
+	_all set [_txId, _tx];
+	_removed
+};
+
+// Retire claim, result and ledger together so no transaction state accumulates
+// and no stale entry can later resolve a recycled net id.
+YFU_fnc_fabricatorRetire = {
+	params ["_token", "_txId"];
+	if (_token isNotEqualTo YFU_FABRICATOR_TOKEN) exitWith {};
+	[_txId] spawn {
+		params ["_txId"];
+		uiSleep YFU_FABRICATOR_RESULT_TTL;
+		missionNamespace setVariable [[_txId] call YFU_fnc_fabricatorResultKey, nil, true];
+		private _all = call YFU_fnc_fabricatorTransactions;
+		_all deleteAt _txId;
+	};
 };
 
 YFU_fnc_fabricatorPublishResult = {
-	params ["_requestId", "_ok", "_reason", ["_singleId", ""], ["_containerIds", []], ["_positions", []]];
-	private _key = [_requestId] call YFU_fnc_fabricatorResultKey;
-	missionNamespace setVariable [_key, [_requestId, _ok, _reason, _singleId, _containerIds, _positions], true];
-	// A result is a handshake, and a ledger entry only exists so the server can
-	// undo its own work. Both are retired together once the client has had every
-	// chance to read the result, so neither accumulates for the mission and a
-	// stale entry can never resolve a recycled net id later.
-	[_key, _requestId] spawn {
-		params ["_key", "_requestId"];
-		uiSleep YFU_FABRICATOR_RESULT_TTL;
-		missionNamespace setVariable [_key, nil, true];
-		private _ledger = missionNamespace getVariable ["YFU_fabricatorOrders", createHashMap];
-		_ledger deleteAt _requestId;
-		missionNamespace setVariable ["YFU_fabricatorOrders", _ledger];
-	};
+	params ["_token", "_txId", "_ok", "_reason", ["_singleId", ""], ["_containerIds", []], ["_positions", []]];
+	if (_token isNotEqualTo YFU_FABRICATOR_TOKEN) exitWith {""};
+	// A terminal result is written once. A duplicate or late writer must not be
+	// able to overwrite the outcome an in-progress transaction already reached.
+	private _key = [_txId] call YFU_fnc_fabricatorResultKey;
+	private _state = [_txId] call YFU_fnc_fabricatorTxState;
+	if (_state in ["delivered", "refused", "finalized"]) exitWith {_state};
+	missionNamespace setVariable [_key, [_txId, _ok, _reason, _singleId, _containerIds, _positions], true];
+	[YFU_FABRICATOR_TOKEN, _txId, if (_ok) then {"delivered"} else {"refused"}] call YFU_fnc_fabricatorSetState;
+	[YFU_FABRICATOR_TOKEN, _txId] call YFU_fnc_fabricatorRetire;
 	_reason
+};
+
+YFU_fnc_fabricatorRefuse = {
+	params ["_token", "_txId", "_reason"];
+	if (_token isNotEqualTo YFU_FABRICATOR_TOKEN) exitWith {""};
+	// Clean up under a non-terminal state: marking it finalized here would trip
+	// the write-once guard below and swallow the refusal it is meant to publish.
+	[YFU_FABRICATOR_TOKEN, _txId, "cleaning"] call YFU_fnc_fabricatorFinalize;
+	[YFU_FABRICATOR_TOKEN, _txId, false, _reason] call YFU_fnc_fabricatorPublishResult;
 };
 
 // The catalogue is a template source: fabricating never consumes it.
@@ -71,61 +148,158 @@ YFU_fnc_fabricatorStations = {
 	synchronizedObjects _logic
 };
 
-// A remoteExecCall arrives unscheduled, where uiSleep does nothing at all: a
-// freshly created object would never get the frame it needs to report a real
-// mass, and the delivery cap would silently never apply. Assemble every order in
-// a scheduled script so waiting actually waits.
+// Vigil owns which aircraft may carry a drop. Consult its authoritative server
+// registry rather than believing a client that says "this one is mine".
+YFU_fnc_fabricatorAirAssetAuthorized = {
+	params ["_aircraft"];
+	if (isNull _aircraft) exitWith {false};
+	if (isNil "YSF_fwEnsureRegistry") exitWith {false};
+	private _registry = call YSF_fwEnsureRegistry;
+	if !(_registry isEqualType createHashMap) exitWith {false};
+	private _authorized = false;
+	{
+		if ((_y isEqualType createHashMap) && {(_y getOrDefault ["spawnedVeh", objNull]) isEqualTo _aircraft}) exitWith {
+			_authorized = true;
+		};
+	} forEach _registry;
+	_authorized
+};
+
+// Complete schema check, run before anything is claimed, scheduled or created.
+// Returns "" when the payload is well formed, otherwise the refusal reason.
+YFU_fnc_fabricatorValidateRequest = {
+	params [["_requestId", nil], ["_stationId", nil], ["_entries", nil], ["_isAirdrop", nil]];
+	if (isNil "_requestId" || {!(_requestId isEqualType "")} || {_requestId isEqualTo ""}) exitWith {"malformed-request-id"};
+	if (isNil "_stationId" || {!(_stationId isEqualType "")}) exitWith {"malformed-station"};
+	if (isNil "_isAirdrop" || {!(_isAirdrop isEqualType false)}) exitWith {"malformed-mode"};
+	if (isNil "_entries" || {!(_entries isEqualType [])} || {_entries isEqualTo []}) exitWith {"malformed-entries"};
+	if ((count _entries) > YFU_FABRICATOR_MAX_ORDER) exitWith {"too-large"};
+	private _verdict = "";
+	private _total = 0;
+	{
+		if (_verdict isEqualTo "") then {
+			if (!(_x isEqualType []) || {(count _x) < 2}) then {
+				_verdict = "malformed-entries";
+			} else {
+				private _ref = _x # 0;
+				private _quantity = _x # 1;
+				if (!(_ref isEqualType "") || {_ref isEqualTo ""}) then {
+					_verdict = "malformed-entries";
+				} else {
+					if (!(_quantity isEqualType 0) || {!finite _quantity} || {_quantity isNotEqualTo (floor _quantity)} || {_quantity <= 0}) then {
+						_verdict = "malformed-quantity";
+					} else {
+						_total = _total + _quantity;
+					};
+				};
+			};
+		};
+	} forEach _entries;
+	if (_verdict isNotEqualTo "") exitWith {_verdict};
+	if (_total > YFU_FABRICATOR_MAX_ORDER) exitWith {"too-large"};
+	""
+};
+
+// The one endpoint a client may call.
 YFU_fnc_fabricateOrder = {
 	if (!isServer) exitWith {};
-	// Identity comes from the transport, never from the payload: a client may
-	// say what it wants built, never who is asking. remoteExecutedOwner is only
-	// meaningful in this frame, so it is captured before the worker is spawned.
 	private _owner = remoteExecutedOwner;
-	(_this + [_owner]) spawn YFU_fnc_fabricateOrderWorker;
+	// A local call is the server asking on its own behalf.
+	if (_owner isEqualTo 0) then {_owner = 2};
+	[_this, _owner, false] call YFU_fnc_fabricatorAccept;
+};
+
+// The trusted server-internal entry. Refuses any remote caller outright, so a
+// client cannot reach airdrop mode through it.
+YFU_fnc_fabricateAuthorizedOrder = {
+	if (!isServer) exitWith {};
+	// An entry point may still trust remoteExecutedOwner: it is evaluated in the
+	// remote-executed frame itself, which is exactly where it is meaningful.
+	if (remoteExecutedOwner isNotEqualTo 0) exitWith {};
+	[_this, 2, true] call YFU_fnc_fabricatorAccept;
+};
+
+YFU_fnc_fabricatorAccept = {
+	if (!isServer) exitWith {};
+	params ["_request", "_owner", "_serverAuthorized"];
+	if !(_request isEqualType []) exitWith {};
+
+	private _requestId = _request param [0, nil];
+	private _stationId = _request param [1, nil];
+	private _entries = _request param [2, nil];
+	private _isAirdrop = _request param [3, false];
+
+	// Schema first: a malformed payload is refused as a product decision, never
+	// left to raise an SQF error somewhere downstream.
+	private _schema = [_requestId, _stationId, _entries, _isAirdrop] call YFU_fnc_fabricatorValidateRequest;
+	if (_schema isNotEqualTo "") exitWith {
+		if (_requestId isEqualType "" && {_requestId isNotEqualTo ""}) then {
+			private _badTx = [_owner, _requestId] call YFU_fnc_fabricatorTxId;
+			[YFU_FABRICATOR_TOKEN, _badTx, false, _schema] call YFU_fnc_fabricatorPublishResult;
+		};
+		_schema
+	};
+
+	private _txId = [_owner, _requestId] call YFU_fnc_fabricatorTxId;
+	private _all = call YFU_fnc_fabricatorTransactions;
+	if (_all getOrDefault [_txId, createHashMap] getOrDefault ["claimed", false]) exitWith {
+		// The original transaction keeps its result; this duplicate gets nothing.
+		"replay"
+	};
+	private _tx = createHashMap;
+	_tx set ["claimed", true];
+	_tx set ["owner", _owner];
+	_tx set ["state", "claimed"];
+	_tx set ["created", []];
+	_tx set ["serverAuthorized", _serverAuthorized];
+	_all set [_txId, _tx];
+
+	[YFU_FABRICATOR_TOKEN, _txId, _stationId, _entries, _isAirdrop, _owner, _serverAuthorized] spawn YFU_fnc_fabricateOrderWorker;
+
+	// A durable finalizer: if the worker never reaches a terminal state - an
+	// unexpected script error, a stall, a failure after objects exist - this
+	// deletes exactly what the transaction created and records the refusal.
+	[_txId] spawn {
+		params ["_txId"];
+		uiSleep YFU_FABRICATOR_BUILD_DEADLINE;
+		if !(([_txId] call YFU_fnc_fabricatorTxState) in ["delivered", "refused", "finalized"]) then {
+			[YFU_FABRICATOR_TOKEN, _txId, "abandoned"] call YFU_fnc_fabricatorRefuse;
+		};
+	};
+	"accepted"
 };
 
 YFU_fnc_fabricateOrderWorker = {
-	params [["_requestId", ""], ["_stationId", ""], ["_entries", []], ["_isAirdrop", false], ["_owner", 0]];
 	if (!isServer) exitWith {};
-	if (!(_requestId isEqualType "") || {_requestId isEqualTo ""}) exitWith {};
+	params ["_token", "_txId", "_stationId", "_entries", "_isAirdrop", "_owner", "_serverAuthorized"];
+	if (_token isNotEqualTo YFU_FABRICATOR_TOKEN) exitWith {};
 
-	// One order per request id, claimed before anything is built, so a replayed
-	// or duplicated request cannot produce a second delivery.
-	private _claims = missionNamespace getVariable ["YFU_fabricatorClaims", createHashMap];
-	private _claimKey = format ["%1@%2", _owner, _requestId];
-	if (_claims getOrDefault [_claimKey, false]) exitWith {
-		[_requestId, false, "replay"] call YFU_fnc_fabricatorPublishResult;
-	};
-	_claims set [_claimKey, true];
-	missionNamespace setVariable ["YFU_fabricatorClaims", _claims];
+	[YFU_FABRICATOR_TOKEN, _txId, "building"] call YFU_fnc_fabricatorSetState;
 
 	private _caller = objNull;
 	{
 		if ((owner _x) isEqualTo _owner) exitWith {_caller = _x};
 	} forEach allPlayers;
-	private _station = objectFromNetId (if (_stationId isEqualType "") then {_stationId} else {""});
+	private _station = objectFromNetId _stationId;
 
 	if (isNull _caller || {!alive _caller}) exitWith {
-		[_requestId, false, "caller"] call YFU_fnc_fabricatorPublishResult;
+		[YFU_FABRICATOR_TOKEN, _txId, "caller"] call YFU_fnc_fabricatorRefuse;
 	};
 
 	private _catalogue = call YFU_fnc_fabricatorCatalogue;
 	if (_catalogue isEqualTo []) exitWith {
-		[_requestId, false, "no-storage"] call YFU_fnc_fabricatorPublishResult;
+		[YFU_FABRICATOR_TOKEN, _txId, "no-storage"] call YFU_fnc_fabricatorRefuse;
 	};
 
-	// Airdrop orders name Vigil's aircraft, not a registered station, and Vigil
-	// has already authorized them. Local orders must name a real station and the
-	// player must actually be standing at it.
-	// `exitWith` inside a `then` block exits only that block, so the station
-	// verdict is carried out rather than returned from inside the branch.
+	// `exitWith` inside a `then` block exits only that block, so the verdict is
+	// carried out rather than returned from inside the branch.
 	private _stationVerdict = "";
 	if (_isAirdrop) then {
-		// An airdrop order names Vigil's aircraft rather than a station, so it
-		// cannot be checked against the station registry. It must at least name
-		// an aircraft: otherwise the flag alone would skip every check.
-		if (isNull _station || {!(_station isKindOf "Air")}) then {
-			_stationVerdict = "not-an-air-asset";
+		// Airdrop is not a mode a client may simply select. It is either issued
+		// by the server, or the named aircraft must be one Vigil has actually
+		// registered - a client naming an arbitrary Air object authorizes nothing.
+		if (!_serverAuthorized && {!([_station] call YFU_fnc_fabricatorAirAssetAuthorized)}) then {
+			_stationVerdict = "airdrop-unauthorized";
 		};
 	} else {
 		private _stations = call YFU_fnc_fabricatorStations;
@@ -138,46 +312,27 @@ YFU_fnc_fabricateOrderWorker = {
 		};
 	};
 	if (_stationVerdict isNotEqualTo "") exitWith {
-		[_requestId, false, _stationVerdict] call YFU_fnc_fabricatorPublishResult;
+		[YFU_FABRICATOR_TOKEN, _txId, _stationVerdict] call YFU_fnc_fabricatorRefuse;
 	};
 
-	// Expand the request against the catalogue. An entry naming something that
-	// is not registered is refused outright rather than quietly dropped.
 	private _sources = [];
 	private _rejected = false;
-	if (!(_entries isEqualType [])) then {_rejected = true;};
 	{
-		private _wellFormed = (_x isEqualType [])
-			&& {(count _x) >= 2}
-			&& {(_x # 0) isEqualType ""}
-			&& {(_x # 1) isEqualType 0}
-			&& {(_x # 1) isEqualTo (floor (_x # 1))}
-			&& {(_x # 1) > 0}
-			&& {(_x # 1) <= YFU_FABRICATOR_MAX_ORDER};
-		private _source = if (_wellFormed) then {objectFromNetId (_x # 0)} else {objNull};
-		private _count = if (_wellFormed) then {_x # 1} else {0};
-		if (!_wellFormed || {isNull _source} || {!(_source in _catalogue)}) then {
+		private _source = objectFromNetId (_x # 0);
+		if (isNull _source || {!(_source in _catalogue)}) then {
 			_rejected = true;
 		} else {
-			for "_i" from 1 to _count do {_sources pushBack _source;};
+			for "_i" from 1 to (_x # 1) do {_sources pushBack _source;};
 		};
 	} forEach _entries;
 
 	if (_rejected) exitWith {
-		[_requestId, false, "unregistered"] call YFU_fnc_fabricatorPublishResult;
-	};
-	if (_sources isEqualTo []) exitWith {
-		[_requestId, false, "empty"] call YFU_fnc_fabricatorPublishResult;
-	};
-	if ((count _sources) > YFU_FABRICATOR_MAX_ORDER) exitWith {
-		[_requestId, false, "too-large"] call YFU_fnc_fabricatorPublishResult;
+		[YFU_FABRICATOR_TOKEN, _txId, "unregistered"] call YFU_fnc_fabricatorRefuse;
 	};
 
 	private _total = count _sources;
-	// Staging underground hides the order while it is being assembled, but an
-	// object created inside terrain never initialises a real mass and never
-	// recovers one, which silently defeats the delivery mass cap. Build on the
-	// surface where the object is valid and hide it instead.
+	// Assembled out of sight but on the surface: an object created inside terrain
+	// never initialises a real physical state and never recovers one.
 	private _stageBase = getPosATL _caller;
 	private _clones = [];
 	{
@@ -186,19 +341,15 @@ YFU_fnc_fabricateOrderWorker = {
 		if (!isNull _clone) then {
 			_clone hideObjectGlobal true;
 			_clones pushBack _clone;
+			// Tracked as it is created, so a failure at any later point - including
+			// one this code does not anticipate - still has something to undo.
+			[YFU_FABRICATOR_TOKEN, _txId, [_clone]] call YFU_fnc_fabricatorTrack;
 		};
 	} forEach _sources;
 	uiSleep 0.25;
 
-	// Orders are atomic. Anything short of the whole order produces nothing.
-	private _abort = {
-		params ["_objects"];
-		{if (!isNull _x) then {deleteVehicle _x;};} forEach _objects;
-	};
-
 	if ((count _clones) isNotEqualTo _total) exitWith {
-		[_clones] call _abort;
-		[_requestId, false, "clone-failed"] call YFU_fnc_fabricatorPublishResult;
+		[YFU_FABRICATOR_TOKEN, _txId, "clone-failed"] call YFU_fnc_fabricatorRefuse;
 	};
 
 	if (!_isAirdrop && {_total isEqualTo 1}) exitWith {
@@ -209,8 +360,7 @@ YFU_fnc_fabricateOrderWorker = {
 		_single hideObjectGlobal false;
 		uiSleep 0.25;
 		[_single] call YOSHI_capDeliveryMass;
-		[_requestId, [_single]] call YFU_fnc_fabricatorRecordOrder;
-		[_requestId, true, "single", netId _single, [], [_drop]] call YFU_fnc_fabricatorPublishResult;
+		[YFU_FABRICATOR_TOKEN, _txId, true, "single", netId _single, [], [_drop]] call YFU_fnc_fabricatorPublishResult;
 	};
 
 	{
@@ -222,19 +372,17 @@ YFU_fnc_fabricateOrderWorker = {
 	private _pack = [_clones] call YOSHI_spawnContainersNearObjectsAndPackMulti;
 	private _packOk = _pack # 0;
 	private _containers = _pack # 1;
+	[YFU_FABRICATOR_TOKEN, _txId, _containers] call YFU_fnc_fabricatorTrack;
 
 	if (!_packOk || {_containers isEqualTo []}) exitWith {
-		[_clones] call _abort;
-		[_containers] call _abort;
-		[_requestId, false, "unpackable"] call YFU_fnc_fabricatorPublishResult;
+		[YFU_FABRICATOR_TOKEN, _txId, "unpackable"] call YFU_fnc_fabricatorRefuse;
 	};
 
 	if (_isAirdrop) exitWith {
 		{_x hideObjectGlobal false;} forEach (_clones + _containers);
 		uiSleep 0.25;
 		{[_x] call YOSHI_capDeliveryMass;} forEach (_clones + _containers);
-		[_requestId, _containers + _clones] call YFU_fnc_fabricatorRecordOrder;
-		[_requestId, true, "airdrop", "", _containers apply {netId _x}, []] call YFU_fnc_fabricatorPublishResult;
+		[YFU_FABRICATOR_TOKEN, _txId, true, "airdrop", "", _containers apply {netId _x}, []] call YFU_fnc_fabricatorPublishResult;
 	};
 
 	private _centre = getPosATL _caller;
@@ -249,6 +397,19 @@ YFU_fnc_fabricateOrderWorker = {
 	uiSleep 0.25;
 	{[_x] call YOSHI_capDeliveryMass;} forEach (_clones + _containers);
 
-	[_requestId, _containers + _clones] call YFU_fnc_fabricatorRecordOrder;
-	[_requestId, true, "multi", "", _containers apply {netId _x}, _positions] call YFU_fnc_fabricatorPublishResult;
+	[YFU_FABRICATOR_TOKEN, _txId, true, "multi", "", _containers apply {netId _x}, _positions] call YFU_fnc_fabricatorPublishResult;
+};
+
+// A client may only discard its own transaction: the id is rebuilt from the
+// owner the transport reports, so naming someone else's request reaches nothing.
+YFU_fnc_fabricatorDiscardOrder = {
+	if (!isServer) exitWith {0};
+	params [["_requestId", ""]];
+	if !(_requestId isEqualType "") exitWith {0};
+	private _owner = remoteExecutedOwner;
+	if (_owner isEqualTo 0) then {_owner = 2};
+	private _txId = [_owner, _requestId] call YFU_fnc_fabricatorTxId;
+	private _all = call YFU_fnc_fabricatorTransactions;
+	if !(_all getOrDefault [_txId, createHashMap] getOrDefault ["claimed", false]) exitWith {0};
+	[YFU_FABRICATOR_TOKEN, _txId] call YFU_fnc_fabricatorFinalize
 };

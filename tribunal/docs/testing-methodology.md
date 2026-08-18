@@ -260,7 +260,20 @@ fabricated crate reports `getMass = 1e-12` and never gains a real mass on a
 dedicated server, so the intended cap never fires; an intermediate assertion
 passed on that value because `1e-12 > 0` and `1e-12 <= 200` were both true, which
 was a false PASS and was removed rather than kept. The scenario now asserts
-nothing about mass and the gap is recorded as open. Full analysis is in
+nothing about mass and the gap is recorded as open.
+
+A further audit round rebuilt the authority boundary: one client-facing endpoint,
+identity from `remoteExecutedOwner`, internal helpers gated on an unpublished
+per-machine token, one `owner#request` transaction identity across claim, result,
+ledger, discard and retirement, and a watchdog finalizer scoped to the objects a
+transaction created. Two lessons generalise. An internal guard built on
+`remoteExecutedOwner` is wrong: on this build it stays non-zero inside a script
+spawned from a remote-executed frame, so it silently blocks the server's own
+worker. And a fixture anchored on a player who has not been given a land spawn
+sits at the map origin, which on Stratis is open water - every earlier delivery in
+this feature was made over the sea, which is what actually defeated a
+`surfaceIsWater` placement check that had been reported as a world-configuration
+problem. Full analysis is in
 [`field-utilities-fabricator-review.md`](field-utilities-fabricator-review.md).
 
 ## Generic Tribunal capability backlog
