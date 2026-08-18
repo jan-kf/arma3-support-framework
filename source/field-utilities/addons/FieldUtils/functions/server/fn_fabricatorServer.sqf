@@ -43,12 +43,17 @@ YFU_fnc_fabricatorPublishResult = {
 	params ["_requestId", "_ok", "_reason", ["_singleId", ""], ["_containerIds", []], ["_positions", []]];
 	private _key = [_requestId] call YFU_fnc_fabricatorResultKey;
 	missionNamespace setVariable [_key, [_requestId, _ok, _reason, _singleId, _containerIds, _positions], true];
-	// A result is a handshake, not a record. Drop it once the client has had
-	// every chance to read it so the namespace does not grow for the mission.
-	[_key] spawn {
-		params ["_key"];
+	// A result is a handshake, and a ledger entry only exists so the server can
+	// undo its own work. Both are retired together once the client has had every
+	// chance to read the result, so neither accumulates for the mission and a
+	// stale entry can never resolve a recycled net id later.
+	[_key, _requestId] spawn {
+		params ["_key", "_requestId"];
 		uiSleep YFU_FABRICATOR_RESULT_TTL;
 		missionNamespace setVariable [_key, nil, true];
+		private _ledger = missionNamespace getVariable ["YFU_fabricatorOrders", createHashMap];
+		_ledger deleteAt _requestId;
+		missionNamespace setVariable ["YFU_fabricatorOrders", _ledger];
 	};
 	_reason
 };
@@ -72,20 +77,33 @@ YFU_fnc_fabricatorStations = {
 // a scheduled script so waiting actually waits.
 YFU_fnc_fabricateOrder = {
 	if (!isServer) exitWith {};
-	if (canSuspend) then {
-		_this call YFU_fnc_fabricateOrderWorker;
-	} else {
-		_this spawn YFU_fnc_fabricateOrderWorker;
-	};
+	// Identity comes from the transport, never from the payload: a client may
+	// say what it wants built, never who is asking. remoteExecutedOwner is only
+	// meaningful in this frame, so it is captured before the worker is spawned.
+	private _owner = remoteExecutedOwner;
+	(_this + [_owner]) spawn YFU_fnc_fabricateOrderWorker;
 };
 
 YFU_fnc_fabricateOrderWorker = {
-	params [["_requestId", ""], ["_callerId", ""], ["_stationId", ""], ["_entries", []], ["_isAirdrop", false]];
+	params [["_requestId", ""], ["_stationId", ""], ["_entries", []], ["_isAirdrop", false], ["_owner", 0]];
 	if (!isServer) exitWith {};
-	if (_requestId isEqualTo "") exitWith {};
+	if (!(_requestId isEqualType "") || {_requestId isEqualTo ""}) exitWith {};
 
-	private _caller = objectFromNetId _callerId;
-	private _station = objectFromNetId _stationId;
+	// One order per request id, claimed before anything is built, so a replayed
+	// or duplicated request cannot produce a second delivery.
+	private _claims = missionNamespace getVariable ["YFU_fabricatorClaims", createHashMap];
+	private _claimKey = format ["%1@%2", _owner, _requestId];
+	if (_claims getOrDefault [_claimKey, false]) exitWith {
+		[_requestId, false, "replay"] call YFU_fnc_fabricatorPublishResult;
+	};
+	_claims set [_claimKey, true];
+	missionNamespace setVariable ["YFU_fabricatorClaims", _claims];
+
+	private _caller = objNull;
+	{
+		if ((owner _x) isEqualTo _owner) exitWith {_caller = _x};
+	} forEach allPlayers;
+	private _station = objectFromNetId (if (_stationId isEqualType "") then {_stationId} else {""});
 
 	if (isNull _caller || {!alive _caller}) exitWith {
 		[_requestId, false, "caller"] call YFU_fnc_fabricatorPublishResult;
@@ -102,7 +120,14 @@ YFU_fnc_fabricateOrderWorker = {
 	// `exitWith` inside a `then` block exits only that block, so the station
 	// verdict is carried out rather than returned from inside the branch.
 	private _stationVerdict = "";
-	if (!_isAirdrop) then {
+	if (_isAirdrop) then {
+		// An airdrop order names Vigil's aircraft rather than a station, so it
+		// cannot be checked against the station registry. It must at least name
+		// an aircraft: otherwise the flag alone would skip every check.
+		if (isNull _station || {!(_station isKindOf "Air")}) then {
+			_stationVerdict = "not-an-air-asset";
+		};
+	} else {
 		private _stations = call YFU_fnc_fabricatorStations;
 		if (isNull _station || {!(_station in _stations)}) then {
 			_stationVerdict = "no-station";
@@ -120,10 +145,18 @@ YFU_fnc_fabricateOrderWorker = {
 	// is not registered is refused outright rather than quietly dropped.
 	private _sources = [];
 	private _rejected = false;
+	if (!(_entries isEqualType [])) then {_rejected = true;};
 	{
-		private _source = objectFromNetId (_x param [0, ""]);
-		private _count = _x param [1, 0];
-		if (isNull _source || {!(_source in _catalogue)} || {_count <= 0}) then {
+		private _wellFormed = (_x isEqualType [])
+			&& {(count _x) >= 2}
+			&& {(_x # 0) isEqualType ""}
+			&& {(_x # 1) isEqualType 0}
+			&& {(_x # 1) isEqualTo (floor (_x # 1))}
+			&& {(_x # 1) > 0}
+			&& {(_x # 1) <= YFU_FABRICATOR_MAX_ORDER};
+		private _source = if (_wellFormed) then {objectFromNetId (_x # 0)} else {objNull};
+		private _count = if (_wellFormed) then {_x # 1} else {0};
+		if (!_wellFormed || {isNull _source} || {!(_source in _catalogue)}) then {
 			_rejected = true;
 		} else {
 			for "_i" from 1 to _count do {_sources pushBack _source;};

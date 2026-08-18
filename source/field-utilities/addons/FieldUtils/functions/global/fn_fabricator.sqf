@@ -43,14 +43,14 @@ YOSHI_SPAWN_SAVED_ITEM_ACTION = {
     };
 
 
-    private _newObject = createVehicle [typeOf _itemToAdd, _location, [], 0, "NONE"]; 
-    
-    clearWeaponCargoGlobal _newObject; 
-    clearMagazineCargoGlobal _newObject; 
-    clearItemCargoGlobal _newObject; 
-    clearBackpackCargoGlobal _newObject; 
-    
-    
+    private _newObject = createVehicle [typeOf _itemToAdd, _location, [], 0, "NONE"];
+
+    clearWeaponCargoGlobal _newObject;
+    clearMagazineCargoGlobal _newObject;
+    clearItemCargoGlobal _newObject;
+    clearBackpackCargoGlobal _newObject;
+
+
     private _weapons = getWeaponCargo _itemToAdd;
     {
         private _weaponType = (_weapons select 0) select _forEachIndex;
@@ -88,8 +88,8 @@ YOSHI_SPAWN_SAVED_ITEM_ACTION = {
 
 YOSHI_addItemsToFabricator = {
 	params ["_fabricator", "_itemsToAdd"];
- 
-	{ 
+
+	{
 		private _itemToSpawn = _x;
 		private _classOfItemToSpawn = (typeOf _itemToSpawn);
 		HG_getConfig =
@@ -122,14 +122,14 @@ YOSHI_addItemsToFabricator = {
 				params ["_vic", "_caller", "_params"];
 
 				true
-			}, 
+			},
 			{}, // children
 			[_fabricator, _itemToSpawn]
 		] call ace_interact_menu_fnc_createAction;
 
 		[_fabricator, 0, ["ACE_MainActions"], _spawnItemAction] call ace_interact_menu_fnc_addActionToObject;
 
-	
-	} forEach _itemsToAdd; 
+
+	} forEach _itemsToAdd;
 
 };

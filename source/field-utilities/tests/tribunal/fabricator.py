@@ -244,7 +244,9 @@ TRIBUNAL_FAB_fnc_census = {
     private _all = [];
     {_all append (allMissionObjects _x);} forEach _classes;
     private _staged = _all select {(getPosATL _x) select 2 < -50};
-    [count _all, count _staged]
+    // Identities, not counts: one leaked clone and one deleted source leave the
+    // count unchanged, so a count-only census can pass a refusal that leaked.
+    [(_all apply {netId _x}) call BIS_fnc_sortAlphabetically, count _staged]
 };
 
 private _fixture = [_token, netId _station, netId _stationFar, netId _heavy, netId _light, netId _oversize, netId _unregistered];
@@ -340,6 +342,8 @@ private _atomicOk = (_unpackable # 3)
     && {(_unpackableResult param [1, true]) isEqualTo false}
     && {(_unpackableResult param [2, ""]) isEqualTo "unpackable"}
     && {(_unpackable # 1) isEqualTo (_unpackable # 0)}
+    && {(netId _heavy) in ((_unpackable # 1) # 0)}
+    && {(netId _oversize) in ((_unpackable # 1) # 0)}
     && {((_unpackable # 1) # 1) isEqualTo 0}
     && {(_unpackableReport param [2, true]) isEqualTo false};
 ["fabricator.control.unpackableAtomic", _atomicOk, format ["result=%1|censusBefore=%2|censusAfter=%3|clientSuccess=%4", _unpackableResult, _unpackable # 0, _unpackable # 1, _unpackableReport param [2, "unset"]]] call _assert;
@@ -407,7 +411,7 @@ missionNamespace setVariable ["TRIBUNAL_FAB_GO", nil, true];
 uiSleep 1;
 
 private _finalCensus = call TRIBUNAL_FAB_fnc_census;
-private _cleanupOk = (_finalCensus # 0) isEqualTo 0
+private _cleanupOk = (_finalCensus # 0) isEqualTo []
     && {(_finalCensus # 1) isEqualTo 0}
     && {isNull _station} && {isNull _heavy} && {isNull _oversize}
     && {isNil "YOSHI_FABRICATOR"};
@@ -425,7 +429,7 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
     },
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks, and delivery crates are capped to a carryable mass. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
+        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
         outcome="REFINE BEFORE PERMANENT COVERAGE",
         rationale="Baseline fabrication ran entirely on the ordering client with no server validation, and reported success for orders it had only partly filled while orphaning the remainder under the map. Coverage is permanent only after orders became server-authoritative and atomic, per the recorded product decisions.",
         dependencies=(
@@ -435,7 +439,7 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
         ),
         evidence_types=frozenset({
             "module-registration", "registered-action-statement", "server-authority", "exact-netid",
-            "cargo-inventory", "object-mass", "mission-wide-census", "replication", "cleanup",
+            "cargo-inventory", "mission-wide-census", "replication", "cleanup",
         }),
         locality_requirements="Client-a owns the terminal, the queue and the request; the dedicated server exclusively validates orders and creates, packs, places and discards every fabricated object. This proves one-client replication only, not client-b or JIP.",
     ),

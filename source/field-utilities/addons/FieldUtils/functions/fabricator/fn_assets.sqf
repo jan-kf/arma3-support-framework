@@ -336,6 +336,11 @@ YFU_assetsFindSafeDropPos = {
         };
     };
 
+    // The fallback ring keeps a delivery beside the player instead of wherever
+    // BIS_fnc_findSafePos lands after a failed search. It is NOT a suitability
+    // check: water, gradient, obstruction and final settling are still unverified,
+    // and a real check needs terrain the validation world does not have. Recorded
+    // as an open finding rather than approximated here.
     if (_candidate isEqualTo []) then {
         private _bearing = (_attempt * 47) % 360;
         _candidate = [
@@ -904,7 +909,7 @@ YFU_assetsSubmitOrder = {
         private _resultKey = format ["YFU_ORDER_RESULT_%1", _requestId];
         missionNamespace setVariable [_resultKey, nil, false];
         uiNamespace setVariable ["YFU_last_order_request", [_requestId, netId _fabricator, _entries, _isAirdrop]];
-        [_requestId, netId _caller, netId _fabricator, _entries, _isAirdrop] remoteExecCall ["YFU_fnc_fabricateOrder", 2];
+        [_requestId, netId _fabricator, _entries, _isAirdrop] remoteExecCall ["YFU_fnc_fabricateOrder", 2];
 
         private _duration = _totalCount max 1;
         private _start = diag_tickTime;

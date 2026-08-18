@@ -45,6 +45,8 @@ class FabricatorAuthorityTests(unittest.TestCase):
         # ...and it must not undo the server's work either.
         self.assertNotIn("deleteVehicle", body)
         self.assertIn('remoteExecCall ["YFU_fnc_fabricateOrder", 2]', body)
+        # The client says what it wants built, never who is asking.
+        self.assertNotIn("netId _caller, netId _fabricator", body)
 
     def test_the_server_order_path_refuses_to_run_anywhere_else(self) -> None:
         server = read(SERVER)
@@ -56,8 +58,7 @@ class FabricatorAuthorityTests(unittest.TestCase):
         """remoteExecCall arrives unscheduled, where uiSleep is a no-op."""
 
         server = read(SERVER)
-        self.assertIn("_this spawn YFU_fnc_fabricateOrderWorker;", server)
-        self.assertIn("if (canSuspend) then {", server)
+        self.assertIn("(_this + [_owner]) spawn YFU_fnc_fabricateOrderWorker;", server)
 
     def test_an_order_is_validated_against_the_registered_catalogue_and_station(self) -> None:
         server = read(SERVER)
@@ -65,6 +66,44 @@ class FabricatorAuthorityTests(unittest.TestCase):
             self.assertIn(f'"{reason}"', server, reason)
         self.assertIn("YFU_FABRICATOR_ORDER_RANGE", server)
         self.assertIn("_source in _catalogue", server)
+
+    def test_caller_identity_comes_from_the_transport_not_the_payload(self) -> None:
+        server = read(SERVER)
+        self.assertIn("private _owner = remoteExecutedOwner;", server)
+        self.assertIn("(_this + [_owner]) spawn YFU_fnc_fabricateOrderWorker;", server)
+        # The worker resolves the player from the owner id it was handed.
+        self.assertIn("if ((owner _x) isEqualTo _owner) exitWith {_caller = _x};", server)
+        self.assertNotIn("_callerId", server)
+
+    def test_a_request_id_is_claimed_before_anything_is_built(self) -> None:
+        server = read(SERVER)
+        claim = server.index("_claims set [_claimKey, true];")
+        build = server.index("call YOSHI_SPAWN_SAVED_ITEM_ACTION")
+        self.assertLess(claim, build)
+        self.assertIn('[_requestId, false, "replay"]', server)
+
+    def test_the_airdrop_flag_alone_cannot_skip_validation(self) -> None:
+        server = read(SERVER)
+        self.assertIn('_stationVerdict = "not-an-air-asset";', server)
+        self.assertIn('!(_station isKindOf "Air")', server)
+
+    def test_order_entries_are_schema_checked_before_expansion(self) -> None:
+        server = read(SERVER)
+        for guard in ("(_x # 1) isEqualType 0", "(_x # 1) isEqualTo (floor (_x # 1))", "(_x # 0) isEqualType \"\""):
+            self.assertIn(guard, server, guard)
+
+    def test_a_result_and_its_ledger_entry_retire_together(self) -> None:
+        server = read(SERVER)
+        block = server[server.index("YFU_fnc_fabricatorPublishResult = {"):server.index("YFU_fnc_fabricatorCatalogue = {")]
+        self.assertIn("_ledger deleteAt _requestId;", block)
+        self.assertIn("missionNamespace setVariable [_key, nil, true];", block)
+
+    def test_delivery_placement_is_bounded_but_not_yet_suitability_checked(self) -> None:
+        """Bounded to the player; water/gradient/obstruction remain unverified."""
+
+        assets = read(ASSETS)
+        self.assertIn("(vectorMagnitude _offset) <= (_radiusMax + 5)", assets)
+        self.assertIn("It is NOT a suitability", assets)
 
     def test_station_verdict_is_not_returned_from_inside_a_then_block(self) -> None:
         """`exitWith` in a `then` block exits the block, not the function."""

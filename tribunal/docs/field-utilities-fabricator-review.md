@@ -247,21 +247,7 @@ listed below.
    can still carry them. Carryability is the contract, not source-mass fidelity.
 5. **Local virtual inventory: a real feature, restored.** See below.
 
-## Coverage gate
-
-No permanent gameplay scenario is added by this review. Questions 5 and 9 stop
-here: the capability is coherent enough to describe, but a scenario that proved
-"the order succeeded" would have to choose an authority model, and one that
-proved queue accounting across repeated orders would have to choose a depletion
-policy. The refinement above was made because it is a proven defect independent
-of all four decisions — a leaked object is wrong under every one of them.
-
-When the decisions land, the contract in question 9 is ready to become a scenario
-with these controls: no-storage and no-station negatives, an order refused for
-being unpackable, exact cargo comparison against the source, object census before
-and after for cleanup, and client-identity-keyed replication evidence.
-
-## False-PASS analysis for the future scenario
+## False-PASS analysis carried into the scenario
 
 Recorded now so the eventual scenario inherits it. A fabricator scenario could
 pass without the behavior by: counting objects that a previous phase left behind;
@@ -289,7 +275,7 @@ previous build the loop was dead. Covered by
 
 ## Fresh autonomous proof
 
-Cold run `20260817T224129Z-658ff682` passed **25/25** assertions with zero
+Cold run `20260818T012304Z-571d8734` passed **25/25** assertions with zero
 failures and complete container/network/state cleanup, driving every order
 through the terminal submit path with no human input.
 
@@ -318,11 +304,52 @@ All runtime evidence came from Developer Live Mode sessions
 `20260817T211959Z-4e6658de` (post-refinement), with the poller A/B spanning
 `20260817T205801Z-a3fdabcf` and `20260817T211507Z-87c52150`. Live Mode is a
 development aid; none of it is a fresh autonomous proof, and none is claimed as
-one. No permanent scenario exists for this feature yet, so no autonomous run
-applies.
+one. The fresh autonomous proof is recorded above.
+
+## Independent audit remediation
+
+An independent audit of the first coverage attempt returned eight blocking
+findings. All eight were verified and correct.
+
+**Fixed.** Caller identity now comes from `remoteExecutedOwner` and never from
+the payload, so a client can no longer submit another player's identity. A
+request id is claimed before anything is built, so a replayed or concurrent
+request is refused. Order entries are schema- and integer-bounds-checked before
+expansion. The `_isAirdrop` flag can no longer skip validation outright: an
+airdrop order must at least name an `Air` object, which is what the Vigil
+composite path supplies. A published result and its ledger entry now retire
+together, so neither accumulates and a stale entry cannot resolve a recycled net
+id. Mass was removed from the permanent behavior contract and from the declared
+evidence types, matching the fact that nothing about mass is asserted. The
+refusal and cleanup census compares sorted net-id sets rather than counts, and
+additionally asserts the catalogue sources survive, so a leaked clone and a
+deleted source can no longer cancel out. The review and inventory no longer
+contain their pre-refinement conclusions.
+
+**Confirmed and deferred, with evidence.** *Placement suitability.* The audit is
+right that bounding a delivery to the player is not the same as proving the spot
+is clear. An attempt to reject unsuitable positions using `surfaceIsWater` was
+made and reverted: the validation tier runs `-world=empty`, where that test
+refused every position and the whole scenario failed with `no-placement`. A real
+suitability check needs terrain the validation world does not have, so the
+fallback is documented in the source as bounded-but-unverified rather than
+approximated. *Transaction finalizer.* Cleanup is proven for the failures the
+server detects; a general finalizer covering script errors, result-publication
+failure and client timeout is not implemented. *Malicious runtime controls.* The
+refusals above are guarded by static contracts only; no runtime control exercises
+a spoofed caller, a replay, an airdrop bypass or a malformed order. *Live snippet
+supervision.* The poller no longer dies, but spawned snippets still have no
+result, timeout, or concurrency bound.
+
+These four remain open and this feature should not be treated as having a proven
+adversarial boundary.
 
 ## Next review
 
-Answer the four product decisions, then refine the local virtual-inventory toggle
-to read its own module attribute and build the permanent scenario against the
-question 9 contract.
+Two things remain open on this feature. The delivery mass cap never fires,
+because a fabricated crate does not report a real mass on a dedicated server;
+that needs the real cause, not another guess. And the scenario has no runtime
+control for a spoofed caller, a replayed request, an airdrop-flag bypass, a
+malformed order, or an order with no valid placement - the server now refuses all
+of them and static contracts guard the refusals, but only the honest single-client
+path has been exercised end to end.

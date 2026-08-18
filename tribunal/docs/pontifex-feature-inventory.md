@@ -388,14 +388,14 @@ the review.
   large for any container and orphaning their clones under the map. The packer now
   returns the skipped objects and succeeds only when nothing was skipped; the
   caller deletes anything unpacked and the order is refused.
-* **Local virtual-inventory toggle** (`Fabricator_Module_EnableLocalArsenal`) is
-  declared with a tooltip and default but **never read**; the action is added
-  unconditionally on every client. **REVIEWED / REFINE BEFORE COVERAGE.**
-* **Order authority** is entirely client-side: the ordering client `createVehicle`s
-  the copies and owns them, with no server request, validation, or limit. Only the
-  airdrop branch is server-authoritative. **REVIEWED / DEFERRED** pending a product
-  decision, together with storage depletion, partial-fulfilment policy, and the
-  `ReammoBox_F` mass cap.
+* **Local virtual-inventory toggle** (`Fabricator_Module_EnableLocalArsenal`) gates
+  the ZEN inventory action used to add stock that was never synchronized. The
+  module setter now publishes it and the action condition honours it, default
+  enabled. **Implemented; REVIEWED / REFINED.**
+* **Order authority** is server-authoritative. The client sends a request bound to
+  `remoteExecutedOwner`, and the server claims the request id, validates the order
+  schema, station registration and proximity, and is the only machine that creates
+  or deletes a fabricated object. **Implemented; COVERED.**
 * **Airdrop handoff** calls Vigil delivery and observes authoritative parachute
   results. **Implemented; COVERED as a cross-mod composite.** Missing API fails
   closed.
