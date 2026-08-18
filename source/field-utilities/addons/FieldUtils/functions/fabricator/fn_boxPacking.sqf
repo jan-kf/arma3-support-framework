@@ -695,7 +695,7 @@ YOSHI_packObjectsOnPalletsSimple = {
 
 YOSHI_spawnContainersNearObjectsAndPackMulti = {
 	// Use small physical clearance to avoid collider jitter while keeping near-true dimensions.
-	params ["_objects", ["_containerDefs", []], ["_detachFirst", true], ["_keepUp", true], ["_spawnDistance", 2.0], ["_padding", [0,0,0]], ["_containerDir", 0], ["_preferMultiple", true], ["_maxSmallCountCap", 4], ["_allowExtra", false]];
+	params ["_objects", ["_containerDefs", []], ["_detachFirst", true], ["_keepUp", true], ["_spawnDistance", 2.0], ["_padding", [0,0,0]], ["_containerDir", 0], ["_preferMultiple", true], ["_maxSmallCountCap", 4], ["_allowExtra", false], ["_onContainerCreated", {}], ["_onContainerCreatedArgs", []]];
 
 	private _validObjects = _objects select {!isNull _x};
 	if ((count _validObjects) isEqualTo 0) exitWith {
@@ -743,6 +743,8 @@ YOSHI_spawnContainersNearObjectsAndPackMulti = {
 		[format ["[pack] spawn idx=%1 objs=%2 pos=%3", _offsetIdx, count _objs, _spawnPos]] call YFU_fnc_debugMsg;
 
 		private _container = createVehicle [_class, _spawnPos, [], 0, "NONE"];
+		// Report the object immediately, before packing/attachment can fail.
+		[_container, _onContainerCreatedArgs] call _onContainerCreated;
 		_container setPosATL _spawnPos;
 		_container setDir _containerDir;
 		_container setVectorUp [0,0,1];

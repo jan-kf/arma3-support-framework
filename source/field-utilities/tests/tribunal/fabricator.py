@@ -47,7 +47,7 @@ waitUntil {
     _fixture = missionNamespace getVariable ["TRIBUNAL_FAB_FIXTURE", []];
     !(_fixture isEqualTo []) || {diag_tickTime > _fixtureDeadline}
 };
-_fixture params [["_fixtureToken", ""], ["_stationId", ""], ["_stationFarId", ""], ["_heavyId", ""], ["_lightId", ""], ["_oversizeId", ""], ["_unregisteredId", ""], ["_rogueAirId", ""]];
+_fixture params [["_fixtureToken", ""], ["_stationId", ""], ["_stationFarId", ""], ["_heavyId", ""], ["_lightId", ""], ["_oversizeId", ""], ["_unregisteredId", ""], ["_rogueAirId", ""], ["_ineligibleAirId", ""], ["_busyAirId", ""]];
 private _station = objectFromNetId _stationId;
 
 // What the client can be shown to receive is the module handshake itself: both
@@ -171,6 +171,14 @@ private _clone = objectFromNetId (_singleResult param [3, ""]);
 private _noLocalOk = !isNull _clone && {!(local _clone)} && {typeOf _clone isEqualTo "Box_NATO_Ammo_F"};
 ["fabricator.client.noLocalCreation", _noLocalOk, format ["clone=%1|localHere=%2|type=%3", netId _clone, local _clone, typeOf _clone]] call _assert;
 
+// The result variable and object identity can replicate before the server's
+// final setPosATL. Wait only for that exact object's state; never substitute a
+// nearby object or relax the delivery bound.
+private _deliveryDeadline = diag_tickTime + 15;
+waitUntil {
+    uiSleep 0.05;
+    (!isNull _clone && {(_clone distance player) < 12}) || {diag_tickTime > _deliveryDeadline}
+};
 private _deliveryOk = !isNull _clone
     && {(_clone distance player) < 12}
     && {(getWeaponCargo _clone) isEqualTo [["arifle_MX_F"], [3]]}
@@ -193,20 +201,35 @@ private _stationFar = objectFromNetId _stationFarId;
 
 // 1. Reaching past the endpoint straight into the worker.
 ["bypass", "YFU_fnc_fabricateOrderWorker",
-    [["client-guessed-token", "1#tribunal-bypass", _stationId, [[_heavyId, 1]], false, clientOwner, true]],
+    [["client-guessed-token", "guessed#tribunal-bypass", _stationId, [[_heavyId, 1]], false, clientOwner]],
     "tribunal-bypass", 20] call TRIBUNAL_FAB_fnc_rawSend;
 
-// 2. The same request id sent twice, back to back.
+// 2. Reaching the internal accept function and supplying a forged owner.
+["acceptBypass", "YFU_fnc_fabricatorAccept",
+    [["client-guessed-token", ["tribunal-accept-bypass", _stationId, [[_heavyId, 1]], false], 2]],
+    "tribunal-accept-bypass", 20] call TRIBUNAL_FAB_fnc_rawSend;
+
+// 3. The same request id sent twice, back to back.
 ["duplicate", "YFU_fnc_fabricateOrder",
     [["tribunal-dup", _stationId, [[_heavyId, 1]], false], ["tribunal-dup", _stationId, [[_heavyId, 1]], false]],
     "tribunal-dup", 60] call TRIBUNAL_FAB_fnc_rawSend;
 
-// 3. Airdrop mode selected by the client, naming an unregistered aircraft.
+// 4. Airdrop mode selected by the client, naming an unregistered aircraft.
 ["rogueAirdrop", "YFU_fnc_fabricateOrder",
     [["tribunal-air", _rogueAirId, [[_heavyId, 1]], true]],
     "tribunal-air", 40] call TRIBUNAL_FAB_fnc_rawSend;
 
-// 4. Payloads that are simply not orders.
+// A registered strike aircraft is still not a current logistics capability.
+["ineligibleAirdrop", "YFU_fnc_fabricateOrder",
+    [["tribunal-air-role", _ineligibleAirId, [[_heavyId, 1]], true]],
+    "tribunal-air-role", 40] call TRIBUNAL_FAB_fnc_rawSend;
+
+// A logistics aircraft with an active task cannot authorize a second one.
+["busyAirdrop", "YFU_fnc_fabricateOrder",
+    [["tribunal-air-busy", _busyAirId, [[_heavyId, 1]], true]],
+    "tribunal-air-busy", 40] call TRIBUNAL_FAB_fnc_rawSend;
+
+// Payloads that are simply not orders.
 ["malformed", "YFU_fnc_fabricateOrder",
     [["tribunal-bad", _stationId, [[_heavyId, "many"]], false]],
     "tribunal-bad", 40] call TRIBUNAL_FAB_fnc_rawSend;
@@ -219,6 +242,37 @@ private _stationFar = objectFromNetId _stationFarId;
 ["foreignDiscard", "YFU_fnc_fabricatorDiscardOrder",
     [["tribunal-server-order"]],
     "tribunal-discard", 25] call TRIBUNAL_FAB_fnc_rawSend;
+
+// The server fixture stalls this order after its exact clone is tracked. The
+// owner then cancels through the public discard endpoint. This is a separate
+// race from the watchdog: cancellation must terminate the live worker before
+// rollback, or it can resume and create/publish after cleanup.
+missionNamespace setVariable ["TRIBUNAL_FAB_READY", "activeDiscard", true];
+private _cancelGoDeadline = diag_tickTime + 240;
+waitUntil {
+    uiSleep 0.1;
+    ((missionNamespace getVariable ["TRIBUNAL_FAB_GO", ""]) isEqualTo "activeDiscard") || {diag_tickTime > _cancelGoDeadline}
+};
+["tribunal-cancel", _stationId, [[_lightId, 1]], false] remoteExecCall ["YFU_fnc_fabricateOrder", 2];
+private _cancelCreatedDeadline = diag_tickTime + 30;
+waitUntil {
+    uiSleep 0.05;
+    (missionNamespace getVariable ["TRIBUNAL_FAB_CANCEL_CREATED", false]) || {diag_tickTime > _cancelCreatedDeadline}
+};
+["tribunal-cancel"] remoteExecCall ["YFU_fnc_fabricatorDiscardOrder", 2];
+uiSleep 1;
+missionNamespace setVariable ["TRIBUNAL_FAB_REPORT", ["tribunal-cancel", missionNamespace getVariable ["TRIBUNAL_FAB_CANCEL_CREATED", false]], true];
+missionNamespace setVariable ["TRIBUNAL_FAB_DONE", "activeDiscard", true];
+
+// The server fixture stalls after creation for this honest order; the watchdog
+// must return an explicit refusal and remove the tracked clone.
+["watchdog", _station, [[_lightId, 1]], 60] call TRIBUNAL_FAB_fnc_order;
+
+// A short test-only TTL lets the server prove complete state retirement without
+// making the proof wait for the production 120-second retention period.
+["retirement", "YFU_fnc_fabricateOrder",
+    [["tribunal-retire", _stationId, [[_heavyId, "invalid"]], false]],
+    "tribunal-retire", 30] call TRIBUNAL_FAB_fnc_rawSend;
 
 private _serverDeadline = diag_tickTime + 60;
 waitUntil {
@@ -242,11 +296,17 @@ TRIBUNAL_SCENARIO = Scenario(
         "fabricator.control.outOfRange",
         "fabricator.control.noStorage",
         "fabricator.control.workerBypass",
+        "fabricator.control.acceptBypass",
         "fabricator.control.duplicateRequest",
         "fabricator.control.airdropUnauthorized",
+        "fabricator.control.airdropEligibility",
+        "fabricator.control.registryForge",
         "fabricator.control.malformedRefused",
         "fabricator.control.foreignDiscardRefused",
+        "fabricator.control.activeDiscardAtomic",
+        "fabricator.control.watchdogAtomic",
         "fabricator.result.lifecycle",
+        "fabricator.result.retirement",
         "fabricator.cleanup",
     }),
     client_expected=CLIENT_EXPECTED,
@@ -314,6 +374,25 @@ private _unregistered = createVehicle ["Box_NATO_Wps_F", _base vectorAdd [0, 82,
 // An aircraft the mission maker never registered with Vigil. Naming it must not
 // authorize airdrop mode.
 private _rogueAir = createVehicle ["B_Heli_Light_01_F", _base vectorAdd [0, 120, 0], [], 0, "CAN_COLLIDE"];
+_rogueAir setFuel 0;
+
+// Two real registry entries that fail distinct current-capability predicates.
+private _ineligibleAir = createVehicle ["B_Heli_Light_01_F", _base vectorAdd [0, 130, 0], [], 0, "CAN_COLLIDE"];
+private _busyAir = createVehicle ["B_Heli_Light_01_F", _base vectorAdd [0, 140, 0], [], 0, "CAN_COLLIDE"];
+{_x setFuel 0; _x engineOn false;} forEach [_ineligibleAir, _busyAir];
+private _ineligibleEntry = createHashMapFromArray [
+    ["id", "tribunal-strike"], ["state", YSF_FW_STATE_ON_STATION],
+    ["roleMask", YSF_FW_ROLE_STRIKE], ["side", side _scenarioPlayer],
+    ["spawnedVeh", _ineligibleAir], ["logisticsActive", false]
+];
+private _busyEntry = createHashMapFromArray [
+    ["id", "tribunal-busy-logi"], ["state", YSF_FW_STATE_ON_STATION],
+    ["roleMask", YSF_FW_ROLE_LOGI], ["side", side _scenarioPlayer],
+    ["spawnedVeh", _busyAir], ["logisticsActive", true],
+    ["logisticsTaskId", "already-active"]
+];
+[YSF_FW_REGISTRY_TOKEN, "tribunal-strike", _ineligibleEntry] call YSF_fwSetEntry;
+[YSF_FW_REGISTRY_TOKEN, "tribunal-busy-logi", _busyEntry] call YSF_fwSetEntry;
 
 _storageLogic synchronizeObjectsAdd [_heavy];
 _storageLogic synchronizeObjectsAdd [_light];
@@ -340,7 +419,7 @@ TRIBUNAL_FAB_fnc_census = {
     [(_all apply {netId _x}) call BIS_fnc_sortAlphabetically, count _staged]
 };
 
-private _fixture = [_token, netId _station, netId _stationFar, netId _heavy, netId _light, netId _oversize, netId _unregistered, netId _rogueAir];
+private _fixture = [_token, netId _station, netId _stationFar, netId _heavy, netId _light, netId _oversize, netId _unregistered, netId _rogueAir, netId _ineligibleAir, netId _busyAir];
 missionNamespace setVariable ["TRIBUNAL_FAB_FIXTURE", _fixture, true];
 
 private _catalogue = synchronizedObjects _storageLogic;
@@ -351,12 +430,23 @@ private _fixtureOk = !isNull _scenarioPlayer
     && {(count _stations) isEqualTo 2}
     && {!(_unregistered in _catalogue)}
     && {!isNull _rogueAir}
-    && {!([_rogueAir] call YFU_fnc_fabricatorAirAssetAuthorized)}
+    && {!([_rogueAir, _scenarioPlayer] call YFU_fnc_fabricatorAirAssetAuthorized)}
+    && {!([_ineligibleAir, _scenarioPlayer] call YFU_fnc_fabricatorAirAssetAuthorized)}
+    && {!([_busyAir, _scenarioPlayer] call YFU_fnc_fabricatorAirAssetAuthorized)}
     && {!isNil "YOSHI_VIRTUAL_STORAGE"} && {!isNil "YOSHI_FABRICATOR"}
     && {_heavySourceMass > 200}
     && {(_scenarioPlayer distance _station) < YFU_FABRICATOR_ORDER_RANGE}
     && {(_scenarioPlayer distance _stationFar) > YFU_FABRICATOR_ORDER_RANGE};
 ["fabricator.fixture", _fixtureOk, format ["fixture=%1|catalogue=%2|stations=%3|sourceMass=%4|stationDist=%5|farDist=%6", _fixture, count _catalogue, count _stations, _heavySourceMass, _scenarioPlayer distance _station, _scenarioPlayer distance _stationFar]] call _assert;
+
+TRIBUNAL_FAB_fnc_auditMatches = {
+    params ["_ledger", "_operation", "_decision", ["_detail", ""]];
+    _ledger select {
+        (_x param [1, ""]) isEqualTo _operation
+        && {(_x param [2, ""]) isEqualTo _decision}
+        && {_detail isEqualTo "" || {(_x param [4, ""]) isEqualTo _detail}}
+    }
+};
 
 // One bounded handshake per order: the client announces readiness, the server
 // takes a baseline census, the client submits, the server censuses again.
@@ -368,6 +458,8 @@ TRIBUNAL_FAB_fnc_runPhase = {
         ((missionNamespace getVariable ["TRIBUNAL_FAB_READY", ""]) isEqualTo _phase) || {diag_tickTime > _readyDeadline}
     };
     private _before = call TRIBUNAL_FAB_fnc_census;
+    private _auditBefore = +(missionNamespace getVariable ["YFU_fabricatorAudit", []]);
+    private _vigilAuditBefore = +(missionNamespace getVariable ["YSF_FW_REGISTRY_AUDIT", []]);
     missionNamespace setVariable ["TRIBUNAL_FAB_GO", _phase, true];
     private _doneDeadline = diag_tickTime + _timeout;
     waitUntil {
@@ -376,7 +468,9 @@ TRIBUNAL_FAB_fnc_runPhase = {
     };
     private _after = call TRIBUNAL_FAB_fnc_census;
     private _report = missionNamespace getVariable ["TRIBUNAL_FAB_REPORT", []];
-    [_before, _after, _report, ((missionNamespace getVariable ["TRIBUNAL_FAB_DONE", ""]) isEqualTo _phase)]
+    private _auditAfter = +(missionNamespace getVariable ["YFU_fabricatorAudit", []]);
+    private _vigilAuditAfter = +(missionNamespace getVariable ["YSF_FW_REGISTRY_AUDIT", []]);
+    [_before, _after, _report, ((missionNamespace getVariable ["TRIBUNAL_FAB_DONE", ""]) isEqualTo _phase), _auditAfter - _auditBefore, _vigilAuditAfter - _vigilAuditBefore]
 };
 
 // Phase 1: a single local order.
@@ -492,22 +586,38 @@ _allTx set [_serverTxId, _seeded];
 
 // Reaching past the endpoint into the worker itself.
 private _bypass = ["bypass", 90] call TRIBUNAL_FAB_fnc_runPhase;
+private _bypassAudit = [_bypass # 4, "worker", "token-rejected", "guessed#tribunal-bypass"] call TRIBUNAL_FAB_fnc_auditMatches;
 private _bypassOk = (_bypass # 3)
     && {((_bypass # 2) param [1, []]) isEqualTo []}
     && {(_bypass # 1) isEqualTo (_bypass # 0)}
-    && {([2, "tribunal-bypass"] call YFU_fnc_fabricatorTxState) isEqualTo "unknown"};
-["fabricator.control.workerBypass", _bypassOk, format ["result=%1|before=%2|after=%3|txState=%4", (_bypass # 2) param [1, []], (_bypass # 0) # 0, (_bypass # 1) # 0, [2, "tribunal-bypass"] call YFU_fnc_fabricatorTxState]] call _assert;
+    && {(count _bypassAudit) isEqualTo 1}
+    && {(["guessed#tribunal-bypass"] call YFU_fnc_fabricatorTxState) isEqualTo "unknown"};
+["fabricator.control.workerBypass", _bypassOk, format ["result=%1|censusHeld=%2|receipt=%3|txState=%4", (_bypass # 2) param [1, []], (_bypass # 1) isEqualTo (_bypass # 0), _bypassAudit, ["guessed#tribunal-bypass"] call YFU_fnc_fabricatorTxState]] call _assert;
+
+private _acceptBypass = ["acceptBypass", 90] call TRIBUNAL_FAB_fnc_runPhase;
+private _acceptAudit = [_acceptBypass # 4, "accept", "token-rejected", "2"] call TRIBUNAL_FAB_fnc_auditMatches;
+private _acceptTx = [2, "tribunal-accept-bypass"] call YFU_fnc_fabricatorTxId;
+private _acceptBypassOk = (_acceptBypass # 3)
+    && {(_acceptBypass # 1) isEqualTo (_acceptBypass # 0)}
+    && {(count _acceptAudit) isEqualTo 1}
+    && {([_acceptTx] call YFU_fnc_fabricatorTxState) isEqualTo "unknown"};
+["fabricator.control.acceptBypass", _acceptBypassOk, format ["receipt=%1|censusHeld=%2|tx=%3|state=%4", _acceptAudit, (_acceptBypass # 1) isEqualTo (_acceptBypass # 0), _acceptTx, [_acceptTx] call YFU_fnc_fabricatorTxState]] call _assert;
 
 // The same request id twice: exactly one order may exist.
 private _dup = ["duplicate", 150] call TRIBUNAL_FAB_fnc_runPhase;
 private _dupResult = (_dup # 2) param [1, []];
 private _dupNew = ((_dup # 1) # 0) - ((_dup # 0) # 0);
+private _dupTx = [owner _scenarioPlayer, "tribunal-dup"] call YFU_fnc_fabricatorTxId;
+private _dupAccepted = [_dup # 4, "order", "accepted", _dupTx] call TRIBUNAL_FAB_fnc_auditMatches;
+private _dupRejected = [_dup # 4, "order", "replay-rejected", _dupTx] call TRIBUNAL_FAB_fnc_auditMatches;
 private _dupOk = (_dup # 3)
     && {(_dupResult param [1, false]) isEqualTo true}
     && {(_dupResult param [2, ""]) isEqualTo "single"}
     && {(count _dupNew) isEqualTo 1}
-    && {(_dupResult param [3, ""]) in _dupNew};
-["fabricator.control.duplicateRequest", _dupOk, format ["result=%1|created=%2|delivered=%3", _dupResult, _dupNew, _dupResult param [3, ""]]] call _assert;
+    && {(_dupResult param [3, ""]) in _dupNew}
+    && {(count _dupAccepted) isEqualTo 1}
+    && {(count _dupRejected) isEqualTo 1};
+["fabricator.control.duplicateRequest", _dupOk, format ["result=%1|created=%2|accepted=%3|rejected=%4", _dupResult, _dupNew, _dupAccepted, _dupRejected]] call _assert;
 
 // Airdrop mode named an aircraft nobody registered.
 private _rogue = ["rogueAirdrop", 90] call TRIBUNAL_FAB_fnc_runPhase;
@@ -516,7 +626,38 @@ private _rogueOk = (_rogue # 3)
     && {(_rogueResult param [1, true]) isEqualTo false}
     && {(_rogueResult param [2, ""]) isEqualTo "airdrop-unauthorized"}
     && {(_rogue # 1) isEqualTo (_rogue # 0)};
-["fabricator.control.airdropUnauthorized", _rogueOk, format ["result=%1|before=%2|after=%3|registered=%4", _rogueResult, (_rogue # 0) # 0, (_rogue # 1) # 0, [_rogueAir] call YFU_fnc_fabricatorAirAssetAuthorized]] call _assert;
+["fabricator.control.airdropUnauthorized", _rogueOk, format ["result=%1|before=%2|after=%3|authorized=%4", _rogueResult, (_rogue # 0) # 0, (_rogue # 1) # 0, [_rogueAir, _scenarioPlayer] call YFU_fnc_fabricatorAirAssetAuthorized]] call _assert;
+
+private _ineligible = ["ineligibleAirdrop", 90] call TRIBUNAL_FAB_fnc_runPhase;
+private _busy = ["busyAirdrop", 90] call TRIBUNAL_FAB_fnc_runPhase;
+private _ineligibleResult = (_ineligible # 2) param [1, []];
+private _busyResult = (_busy # 2) param [1, []];
+private _roleVerdict = [_ineligibleAir, _scenarioPlayer] call YSF_fwValidateLogisticsAsset;
+private _busyVerdict = [_busyAir, _scenarioPlayer] call YSF_fwValidateLogisticsAsset;
+private _eligibilityOk = (_ineligible # 3) && {_busy # 3}
+    && {(_ineligibleResult param [2, ""]) isEqualTo "airdrop-unauthorized"}
+    && {(_busyResult param [2, ""]) isEqualTo "airdrop-unauthorized"}
+    && {!(_roleVerdict # 0)} && {(_roleVerdict # 1) isEqualTo "aircraft_not_logistics"}
+    && {!(_busyVerdict # 0)} && {(_busyVerdict # 1) isEqualTo "duplicate_active_task"}
+    && {(_ineligible # 1) isEqualTo (_ineligible # 0)}
+    && {(_busy # 1) isEqualTo (_busy # 0)};
+["fabricator.control.airdropEligibility", _eligibilityOk, format ["roleResult=%1|roleVerdict=%2|busyResult=%3|busyVerdict=%4", _ineligibleResult, _roleVerdict, _busyResult, _busyVerdict]] call _assert;
+
+// Directly exercise the actual server-side capability guard with a guessed
+// token. Client-originated public-boundary behavior is covered above by the
+// real airdrop requests; this control makes no unobserved network claim.
+private _registryCensusBefore = call TRIBUNAL_FAB_fnc_census;
+private _registryAuditBefore = +(missionNamespace getVariable ["YSF_FW_REGISTRY_AUDIT", []]);
+["client-guessed-token", "tribunal-forged", []] call YSF_fwSetEntry;
+private _registryCensusAfter = call TRIBUNAL_FAB_fnc_census;
+private _registryAuditAfter = +(missionNamespace getVariable ["YSF_FW_REGISTRY_AUDIT", []]);
+private _registryAudit = [_registryAuditAfter - _registryAuditBefore, "set-entry", "token-rejected", "tribunal-forged"] call TRIBUNAL_FAB_fnc_auditMatches;
+private _forgedPresent = (call YSF_fwEnsureRegistry) getOrDefault ["tribunal-forged", objNull];
+private _registryForgeOk = (count _registryAudit) isEqualTo 1
+    && {typeName _forgedPresent isNotEqualTo "HASHMAP"}
+    && {!([_rogueAir, _scenarioPlayer] call YFU_fnc_fabricatorAirAssetAuthorized)}
+    && {_registryCensusAfter isEqualTo _registryCensusBefore};
+["fabricator.control.registryForge", _registryForgeOk, format ["receipt=%1|forgedType=%2|rogueAuthorized=%3", _registryAudit, typeName _forgedPresent, [_rogueAir, _scenarioPlayer] call YFU_fnc_fabricatorAirAssetAuthorized]] call _assert;
 
 // Payloads that are not orders at all.
 private _bad = ["malformed", 90] call TRIBUNAL_FAB_fnc_runPhase;
@@ -534,12 +675,82 @@ private _malformedOk = (_bad # 3) && {(_big # 3)}
 
 // Discarding somebody else's transaction.
 private _foreign = ["foreignDiscard", 90] call TRIBUNAL_FAB_fnc_runPhase;
+private _foreignTx = [owner _scenarioPlayer, "tribunal-server-order"] call YFU_fnc_fabricatorTxId;
+private _foreignAudit = [_foreign # 4, "discard", "owner-miss-rejected", _foreignTx] call TRIBUNAL_FAB_fnc_auditMatches;
 private _foreignOk = (_foreign # 3)
     && {!isNull _victim}
     && {(netId _victim) in ((_foreign # 1) # 0)}
     && {(_foreign # 1) isEqualTo (_foreign # 0)}
+    && {(count _foreignAudit) isEqualTo 1}
     && {((call YFU_fnc_fabricatorTransactions) getOrDefault [_serverTxId, createHashMap] getOrDefault ["created", []]) isEqualTo [netId _victim]};
-["fabricator.control.foreignDiscardRefused", _foreignOk, format ["victim=%1|alive=%2|txCreated=%3|censusHeld=%4", netId _victim, !isNull _victim, (call YFU_fnc_fabricatorTransactions) getOrDefault [_serverTxId, createHashMap] getOrDefault ["created", []], (_foreign # 1) isEqualTo (_foreign # 0)]] call _assert;
+["fabricator.control.foreignDiscardRefused", _foreignOk, format ["receipt=%1|victim=%2|alive=%3|txCreated=%4|censusHeld=%5", _foreignAudit, netId _victim, !isNull _victim, (call YFU_fnc_fabricatorTransactions) getOrDefault [_serverTxId, createHashMap] getOrDefault ["created", []], (_foreign # 1) isEqualTo (_foreign # 0)]] call _assert;
+
+// Cancel a live owner transaction after its exact object is registered. The
+// product must stop the worker before rollback; merely deleting the current
+// ledger would allow the stalled script to resume and escape the transaction.
+missionNamespace setVariable ["TRIBUNAL_FAB_ORIGINAL_CLONE", YOSHI_SPAWN_SAVED_ITEM_ACTION, false];
+YOSHI_SPAWN_SAVED_ITEM_ACTION = {
+    private _created = _this call (missionNamespace getVariable ["TRIBUNAL_FAB_ORIGINAL_CLONE", {}]);
+    missionNamespace setVariable ["TRIBUNAL_FAB_CANCEL_CREATED", true, true];
+    uiSleep 30;
+    _created
+};
+private _activeDiscard = ["activeDiscard", 60] call TRIBUNAL_FAB_fnc_runPhase;
+YOSHI_SPAWN_SAVED_ITEM_ACTION = missionNamespace getVariable ["TRIBUNAL_FAB_ORIGINAL_CLONE", {}];
+missionNamespace setVariable ["TRIBUNAL_FAB_ORIGINAL_CLONE", nil, false];
+missionNamespace setVariable ["TRIBUNAL_FAB_CANCEL_CREATED", nil, true];
+private _activeDiscardTx = [owner _scenarioPlayer, "tribunal-cancel"] call YFU_fnc_fabricatorTxId;
+private _activeDiscardTerminated = [_activeDiscard # 4, "discard", "worker-terminated", _activeDiscardTx] call TRIBUNAL_FAB_fnc_auditMatches;
+private _activeDiscardAccepted = [_activeDiscard # 4, "discard", "accepted", _activeDiscardTx] call TRIBUNAL_FAB_fnc_auditMatches;
+private _activeDiscardOk = (_activeDiscard # 3)
+    && {((_activeDiscard # 2) param [1, false]) isEqualTo true}
+    && {(count _activeDiscardTerminated) isEqualTo 1}
+    && {(count _activeDiscardAccepted) isEqualTo 1}
+    && {(_activeDiscard # 1) isEqualTo (_activeDiscard # 0)}
+    && {([_activeDiscardTx] call YFU_fnc_fabricatorTxState) isEqualTo "finalized"};
+["fabricator.control.activeDiscardAtomic", _activeDiscardOk, format ["created=%1|terminated=%2|accepted=%3|state=%4|censusBefore=%5|censusAfter=%6", (_activeDiscard # 2) param [1, false], _activeDiscardTerminated, _activeDiscardAccepted, [_activeDiscardTx] call YFU_fnc_fabricatorTxState, _activeDiscard # 0, _activeDiscard # 1]] call _assert;
+
+// Stall after the creation callback has recorded the exact clone. This exercises
+// the deadline without relying on Arma's uncaught-throw behavior, which can keep
+// re-evaluating and flood the RPT rather than terminating the scheduled script.
+missionNamespace setVariable ["TRIBUNAL_FAB_ORIGINAL_CLONE", YOSHI_SPAWN_SAVED_ITEM_ACTION, false];
+YOSHI_SPAWN_SAVED_ITEM_ACTION = {
+    private _created = _this call (missionNamespace getVariable ["TRIBUNAL_FAB_ORIGINAL_CLONE", {}]);
+    uiSleep 30;
+    _created
+};
+private _oldDeadline = YFU_FABRICATOR_BUILD_DEADLINE;
+YFU_FABRICATOR_BUILD_DEADLINE = 2;
+private _watchdog = ["watchdog", 90] call TRIBUNAL_FAB_fnc_runPhase;
+YOSHI_SPAWN_SAVED_ITEM_ACTION = missionNamespace getVariable ["TRIBUNAL_FAB_ORIGINAL_CLONE", {}];
+missionNamespace setVariable ["TRIBUNAL_FAB_ORIGINAL_CLONE", nil, false];
+YFU_FABRICATOR_BUILD_DEADLINE = _oldDeadline;
+private _watchdogResult = (_watchdog # 2) param [1, []];
+private _watchdogReceipt = [_watchdog # 4, "watchdog", "worker-terminated", _watchdogResult param [0, ""]] call TRIBUNAL_FAB_fnc_auditMatches;
+private _watchdogOk = (_watchdog # 3)
+    && {(_watchdogResult param [1, true]) isEqualTo false}
+    && {(_watchdogResult param [2, ""]) isEqualTo "abandoned"}
+    && {(count _watchdogReceipt) isEqualTo 1}
+    && {(_watchdog # 1) isEqualTo (_watchdog # 0)};
+["fabricator.control.watchdogAtomic", _watchdogOk, format ["result=%1|receipt=%2|censusBefore=%3|censusAfter=%4", _watchdogResult, _watchdogReceipt, _watchdog # 0, _watchdog # 1]] call _assert;
+
+private _oldTtl = YFU_FABRICATOR_RESULT_TTL;
+YFU_FABRICATOR_RESULT_TTL = 3;
+private _retirement = ["retirement", 60] call TRIBUNAL_FAB_fnc_runPhase;
+YFU_FABRICATOR_RESULT_TTL = _oldTtl;
+private _retirementResult = (_retirement # 2) param [1, []];
+private _retirementTx = [owner _scenarioPlayer, "tribunal-retire"] call YFU_fnc_fabricatorTxId;
+private _retirementKey = [_retirementTx] call YFU_fnc_fabricatorResultKey;
+private _retirementDeadline = diag_tickTime + 10;
+waitUntil {
+    uiSleep 0.1;
+    (([_retirementTx] call YFU_fnc_fabricatorTxState) isEqualTo "unknown" && {isNil {missionNamespace getVariable _retirementKey}})
+    || {diag_tickTime > _retirementDeadline}
+};
+private _retired = (_retirementResult param [2, ""]) isEqualTo "malformed-quantity"
+    && {([_retirementTx] call YFU_fnc_fabricatorTxState) isEqualTo "unknown"}
+    && {isNil {missionNamespace getVariable _retirementKey}};
+["fabricator.result.retirement", _retired, format ["result=%1|tx=%2|state=%3|resultPresent=%4", _retirementResult, _retirementTx, [_retirementTx] call YFU_fnc_fabricatorTxState, !isNil {missionNamespace getVariable _retirementKey}]] call _assert;
 
 // A result is a handshake the server publishes and then withdraws, and only the
 // server may undo its own work.
@@ -564,7 +775,7 @@ private _packed = [];
 } forEach _containers;
 {
     if (!isNull _x) then {deleteVehicle _x;};
-} forEach (_packed + _containers + [_station, _stationFar, _heavy, _light, _oversize, _unregistered, _rogueAir, _victim]);
+} forEach (_packed + _containers + [_station, _stationFar, _heavy, _light, _oversize, _unregistered, _rogueAir, _ineligibleAir, _busyAir, _victim]);
 {
     private _leftover = objectFromNetId _x;
     if (!isNull _leftover) then {deleteVehicle _leftover;};
@@ -575,14 +786,36 @@ missionNamespace setVariable ["YOSHI_VIRTUAL_STORAGE", nil, true];
 missionNamespace setVariable ["YOSHI_FABRICATOR", nil, true];
 missionNamespace setVariable ["TRIBUNAL_FAB_FIXTURE", nil, true];
 missionNamespace setVariable ["TRIBUNAL_FAB_GO", nil, true];
-uiSleep 1;
+
+// Explicitly retire every retained handshake and prove both maps and result
+// variables are gone. The production TTL remains 120 seconds; teardown need not
+// keep a completed Tribunal run alive merely to observe it.
+private _cleanupTxIds = keys (call YFU_fnc_fabricatorTransactions);
+{[YFU_FABRICATOR_TOKEN, _x, 0] call YFU_fnc_fabricatorRetire;} forEach _cleanupTxIds;
+private _registryCleanup = call YSF_fwEnsureRegistry;
+_registryCleanup deleteAt "tribunal-strike";
+_registryCleanup deleteAt "tribunal-busy-logi";
+[YSF_FW_REGISTRY_TOKEN, _registryCleanup] call YSF_fwCommitRegistry;
+private _cleanupDeadline = diag_tickTime + 5;
+waitUntil {
+    uiSleep 0.1;
+    ((keys (call YFU_fnc_fabricatorTransactions)) isEqualTo []) || {diag_tickTime > _cleanupDeadline}
+};
 
 private _finalCensus = call TRIBUNAL_FAB_fnc_census;
+private _resultKeysGone = (_cleanupTxIds findIf {
+    !isNil {missionNamespace getVariable ([_x] call YFU_fnc_fabricatorResultKey)}
+}) < 0;
 private _cleanupOk = (_finalCensus # 0) isEqualTo []
     && {(_finalCensus # 1) isEqualTo 0}
     && {isNull _station} && {isNull _heavy} && {isNull _oversize}
-    && {isNil "YOSHI_FABRICATOR"};
-["fabricator.cleanup", _cleanupOk, format ["census=%1|stationGone=%2|logicsCleared=%3", _finalCensus, isNull _station, isNil "YOSHI_FABRICATOR"]] call _assert;
+    && {isNil "YOSHI_FABRICATOR"}
+    && {(keys (call YFU_fnc_fabricatorTransactions)) isEqualTo []}
+    && {_resultKeysGone}
+    && {typeName (_registryCleanup getOrDefault ["tribunal-strike", objNull]) isNotEqualTo "HASHMAP"};
+["fabricator.cleanup", _cleanupOk, format ["census=%1|stationGone=%2|logicsCleared=%3|txRemaining=%4|resultKeysGone=%5|registryKeys=%6", _finalCensus, isNull _station, isNil "YOSHI_FABRICATOR", keys (call YFU_fnc_fabricatorTransactions), _resultKeysGone, keys _registryCleanup]] call _assert;
+missionNamespace setVariable ["YFU_fabricatorAudit", nil, false];
+missionNamespace setVariable ["YSF_FW_REGISTRY_AUDIT", nil, false];
 missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
 ''',
     client_expected_by_identity={identity: CLIENT_EXPECTED for identity in OBSERVER_IDENTITIES},

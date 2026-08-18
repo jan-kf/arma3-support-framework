@@ -2,19 +2,20 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Primary outcome: `REFINE BEFORE PERMANENT COVERAGE`. Refinement is now done and
-permanent coverage exists** (`fieldutils-fabricator`), following the product
-decisions recorded below. One clause could not be proven and is deliberately not
-asserted; see *Mass cap: preserved but unprovable*.
+**Review classification: `REFINE BEFORE PERMANENT COVERAGE`. Final disposition:
+refined and accepted with permanent coverage** (`fieldutils-fabricator`),
+following the product decisions recorded below. Unproven clauses are explicitly
+excluded from the accepted contract; see *Unresolved*.
 
 ## Scope
 
 In scope: Virtual Storage and Fabricator module registration, the fabricator ACE
-action, the asset browser and order queue, single local fabrication, multi-item
+action, the asset browser and order queue, single-item fabrication, multi-item
 packing and local delivery, inventory fidelity, authority/locality, and cleanup.
 
-Explicit non-scope: the airdrop handoff, which is already covered as a composite
-by `vigil-fixed-wing-logistics`; Bridge Builder; towing; FPV; ropes. The ZEN
+The Fabricator-to-Vigil authorization boundary is in scope. Physical airdrop
+flight/delivery remains covered as a composite by `vigil-fixed-wing-logistics`.
+Bridge Builder, towing, FPV, and ropes are out of scope. The ZEN
 virtual-inventory action is in scope only for its registration condition.
 
 Source: `source/field-utilities/addons/FieldUtils/`, principally
@@ -26,6 +27,11 @@ Source: `source/field-utilities/addons/FieldUtils/`, principally
 
 Inventory status at review start: section 4.1, *Implemented; NOT YET REVIEWED /
 PARTIALLY COVERED*, listed as the number one review priority.
+
+## Historical baseline at review start
+
+The following questions record the pre-refinement implementation and the path to
+the accepted result. The later *Current implementation* section is authoritative.
 
 ## Canonical review questions
 
@@ -65,7 +71,8 @@ which is per-client UI state.
 
 This is the review's central finding. **Local fabrication is entirely
 client-authoritative.** The module setters run on the server (`isGlobal = 0`) and
-`publicVariable` the two logics, so discovery is server-owned and JIP-safe. Every
+`publicVariable` the two logics, so discovery is server-owned. Actual JIP was not
+exercised by this review. Every
 subsequent step is not: the queue lives in the ordering client's `uiNamespace`,
 `YOSHI_SPAWN_SAVED_ITEM_ACTION` calls `createVehicle` on that client, packing and
 final placement run there too. Measured on the server for a client-ordered clone:
@@ -99,7 +106,7 @@ harness, not Tribunal.
 
 What counts as storage, what counts as a station, queue accounting, the choice
 between single and packed delivery, container selection and packing order, drop
-placement, the mass cap, and the order lifecycle. Four product decisions are
+placement, the mass cap, and the order lifecycle. Five product decisions are
 undefined and are listed under *Product decisions required*; none of them is
 invented here.
 
@@ -132,8 +139,9 @@ They remain `NEEDS EXPERIMENTATION` and are not frozen by any contract.
   the progress loop starts; the loop then runs for `count(items)` seconds
   displaying random status strings. No contract should promise that progress
   tracks work.
-* **Magic constants:** mass capped to 200 for `ReammoBox_F` above that mass
-  (measured: a 500-mass source clones to 200), station altitude `> 200` shifts
+* **Magic constants:** the implementation attempts to cap `ReammoBox_F` mass at
+  200, but later dedicated-server measurements did not establish that the cap
+  takes effect (see *Unresolved*); station altitude `> 200` shifts
   the spawn down by 10, staging depths `-40` and `-200`.
 
 ### 8. Is a better native or existing mechanism available, and is it proven?
@@ -275,27 +283,47 @@ previous build the loop was dead. Covered by
 
 ## Fresh autonomous proof
 
-Cold run `20260818T012304Z-571d8734` passed **25/25** assertions with zero
-failures and complete container/network/state cleanup, driving every order
-through the terminal submit path with no human input.
+The final cold acceptance run `20260818T213059Z-4a086b37` passed **26 server +
+10 client assertions** with zero failures and complete container/network/state
+cleanup. It drove honest orders through the terminal submit path and adversarial
+requests through their real public or guarded entry points with no human input.
 
-Selected evidence from that run and the ones that shaped it:
+Selected evidence from that run and the earlier cold runs that shaped it:
 
 * single order delivered server-owned and beside the player -
-  `result=[...,true,"single","2:158",[],[[9.98,12.31,137.99]]]|localOnServer=true|owner=2`;
+  `result=[...,true,"single","2:191",...]|localOnServer=true|owner=2`, with the
+  client independently resolving that exact net id at `dist=3.24843`;
 * packed order - `containers=1|attached=2|allLocal=true`;
 * atomic refusal of an unpackable order - `result=[...,false,"unpackable"]` with
   `censusBefore` equal to `censusAfter` and zero staged objects;
 * `unregistered`, `out-of-range` and `no-storage` refusals, each census-matched;
-* client stations - `clientStations=["2:148","2:149"]|registry=["2:148","2:149"]|idempotent=true`;
-* teardown - `census=[0,0]`.
+* guessed worker and accept capabilities produced exact `token-rejected`
+  receipts and no transaction/object change;
+* wrong-role and already-busy Vigil aircraft produced the exact shared-validator
+  reasons `aircraft_not_logistics` and `duplicate_active_task`;
+* the registry setter rejected a guessed token with an exact `set-entry`
+  receipt and left the registry unchanged;
+* the forced post-creation stall produced `watchdog/worker-terminated`, an
+  `abandoned` result, and an identical before/after mission-wide census;
+* owner cancellation after the exact clone had been tracked produced both
+  `discard/worker-terminated` and `discard/accepted`, restored the exact census,
+  and left the transaction finalized rather than letting its worker resume;
+* retirement reached `state=unknown|resultPresent=false` only after the terminal
+  result had first been observed;
+* teardown reported `census=[[],0]`, no transaction/result/registry keys, and
+  the harness removed the server, client, private network and run state.
 
-Nine earlier cold runs were needed to reach it, and the failures were real
+Earlier cold runs were needed to reach it, and the failures were real
 rather than flaky: an unstable player position at fixture time (the anchor was
 sampled the instant the player object appeared, before it had been placed), the
 6,168 m delivery, the deep-staging and hidden-object mass readings, unscheduled
 `uiSleep`, and the client reading editor synchronization before it had
-replicated. Each was diagnosed from run evidence and fixed at its cause.
+replicated. Two further Arma/SQF details surfaced during the adversarial round:
+`str` adds quotes when applied to a String, so an exact receipt oracle must keep
+an already-string detail unchanged; and a replicated result/object identity can
+arrive before the object's final position, so the client boundedly waits on that
+same net id rather than substituting a nearby object. Each failure was diagnosed
+from run evidence and fixed at its cause.
 
 ## Evidence index
 
@@ -311,10 +339,11 @@ one. The fresh autonomous proof is recorded above.
 Everything above this line describes what the feature *was* and how it was
 reviewed. This section is what it *is*.
 
-**Authority.** One function is reachable by a client: `YFU_fnc_fabricateOrder`.
-Identity comes from `remoteExecutedOwner` at that entry point and never from the
-payload. Every internal helper - worker, track, finalize, publish, refuse, set
-state, retire - is gated on `YFU_FABRICATOR_TOKEN`, a secret each machine
+**Authority.** Two operations are client-facing: order submission and an
+owner-bound discard. Identity comes from `remoteExecutedOwner` at those entry
+points and never from the payload. Every internal helper - accept, worker, track,
+finalize, publish, refuse, set state, and retire - is gated on
+`YFU_FABRICATOR_TOKEN`, a secret each machine
 generates at init and never publishes, so a remote-executed call to any of them
 carries the wrong value and does nothing. A discard rebuilds the transaction id
 from the owner the transport reports, so naming another owner's request reaches
@@ -327,12 +356,15 @@ guard blocked the server's own worker - the transaction was claimed
 (`knownTx=["4#YFU_4_83155_176009"]`) but no result was ever published. The token
 replaced it.
 
-**Airdrop.** A client cannot select airdrop mode into a bypass. `YFU_fnc_fabricateAuthorizedOrder`
-is the trusted server-internal entry and refuses any remote caller outright. A
-client-originated airdrop order is authorized only if the named aircraft appears
-in Vigil's server-side `YSF_FW_REGISTRY` as a `spawnedVeh`, which is the same
-authoritative source Vigil's own logistics request consults. Naming an arbitrary
-`Air` object authorizes nothing.
+**Airdrop.** A client cannot select airdrop mode into a bypass. Field Utilities
+delegates authorization to Vigil's product-owned
+`YSF_fwValidateLogisticsAsset`, which is also used by Vigil's logistics request.
+The exact aircraft must be alive and registered as the spawned vehicle, in
+`on_station`, have the LOGI role, match the requester's side, and have no active
+logistics task. Naming an arbitrary aircraft, a registered strike aircraft, or a
+busy logistics aircraft authorizes nothing. Vigil registry mutation is protected
+by its own unpublished per-machine capability token; Field Utilities neither
+interprets nor mutates the registry.
 
 **Transaction identity.** One id, `owner#request`, keys the claim, the published
 result, the ledger of created objects, finalization, discard and retirement. Two
@@ -349,12 +381,19 @@ total bounds. A malformed payload produces an explicit refusal, not an SQF error
 **Atomicity.** Objects are tracked into the transaction ledger as they are
 created, not only at known failure branches, and every refusal runs one path that
 finalizes before it publishes. The finalizer deletes exactly the net ids the
-transaction itself recorded and can reach nothing else. A watchdog finalizes any
-transaction that has not reached a terminal state within its build deadline, which
-covers unexpected script failure and stalls as well as the anticipated branches.
+transaction itself recorded and can reach nothing else. A watchdog handles any
+transaction that has not reached a terminal state within its build deadline. It
+terminates the worker before finalizing, so a stalled script cannot resume after
+rollback and create or publish late state. This covers unexpected script failure
+and stalls as well as the anticipated branches.
 The boundary is defined as: from claim to terminal result, on the server, over the
 objects that transaction created. Client disconnect mid-order is *not* separately
 handled beyond that watchdog, and no claim is made about it.
+
+The owner-bound discard path retains and terminates an active transaction's exact
+worker before finalization, then schedules normal retirement. A timeout checks
+that the claim still exists before acting, so a sleeping watchdog cannot recreate
+state after an earlier short-TTL retirement.
 
 ## Runtime adversarial controls
 
@@ -363,12 +402,18 @@ the fresh autonomous run with exact before/after identity sets:
 
 | Control | Evidence |
 | --- | --- |
-| Direct worker invocation | `result=[]`, census identical, `txState=unknown` |
-| Duplicate identical request | one order only: `created=["2:182"]`, `delivered=2:182` |
+| Direct worker invocation | exact `worker/token-rejected` server receipt, census identical, `txState=unknown` |
+| Direct internal-accept invocation with forged owner | exact `accept/token-rejected` receipt, census identical, no transaction |
+| Duplicate identical request | one `accepted` and one `replay-rejected` receipt; exactly one created identity |
 | Client-selected airdrop on an unregistered aircraft | `airdrop-unauthorized`, census identical |
+| Registered wrong-role and busy-logistics aircraft | exact Vigil rejection reasons; no delivery |
+| Registry-mutation guard | direct guessed-token invocation of the actual server setter records `token-rejected`; registry and census unchanged |
 | Malformed quantity | `malformed-quantity`, census identical |
 | Oversized order | `too-large`, census identical |
-| Discarding another owner's transaction | victim `2:181` alive, its ledger intact, census identical |
+| Discarding another owner's transaction | exact owner-miss receipt; victim alive, its ledger intact, census identical |
+| Owner discards an active transaction | exact clone first tracked; `worker-terminated` then `accepted`; census restored and transaction finalized |
+| Worker stalls after object creation | exact `worker-terminated` receipt, `abandoned` result, and immediate creation tracking restore the exact mission-wide census |
+| Result retirement | terminal result is first observed, then transaction and published key both disappear after a short test TTL |
 
 The foreign-discard control uses a server-owned transaction rather than a second
 authenticated player, because this scenario has one client. **The client-b case -
@@ -411,12 +456,13 @@ rather than claimed here.
 * **Live snippet supervision** is separate Tribunal infrastructure work, not a
   Fabricator concern.
 
-## Next review
+## Acceptance boundary
 
-Two things remain open on this feature. The delivery mass cap never fires,
-because a fabricated crate does not report a real mass on a dedicated server;
-that needs the real cause, not another guess. And the scenario has no runtime
-control for a spoofed caller, a replayed request, an airdrop-flag bypass, a
-malformed order, or an order with no valid placement - the server now refuses all
-of them and static contracts guard the refusals, but only the honest single-client
-path has been exercised end to end.
+The accepted milestone covers one authenticated client, server-authoritative
+atomic fabrication, unlimited catalogue semantics, exact cargo, packed delivery,
+the shared Vigil authorization boundary, adversarial request receipts,
+active-cancellation and watchdog rollback, result retirement, and complete
+scenario isolation. The mass cap,
+terrain suitability, actual client-b/JIP behavior, ACE-internal action visibility,
+runtime-created editor synchronization, and Live-snippet supervision remain the
+explicit follow-ups listed above; none is implied by the accepted PASS.

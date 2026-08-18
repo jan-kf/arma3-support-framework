@@ -22,6 +22,20 @@ YSF_FW_LOGISTICS_RELEASE_RADIUS = 25;
 YSF_FW_LOGISTICS_FLIGHT_HEIGHT = 180;
 YSF_FW_LOGISTICS_RELEASE_ALTITUDE_TOLERANCE = 60;
 
+// Registry mutation is a server capability, not an implication of knowing a
+// globally named SQF function. Each machine compiles a different value and it
+// is never published.
+YSF_FW_REGISTRY_TOKEN = format ["ysf-fw-%1-%2-%3", diag_tickTime, random 1e9, random 1e9];
+
+YSF_fwRegistryAudit = {
+	params ["_token", "_operation", "_decision", ["_detail", ""]];
+	if (_token isNotEqualTo YSF_FW_REGISTRY_TOKEN) exitWith {};
+	private _rows = missionNamespace getVariable ["YSF_FW_REGISTRY_AUDIT", []];
+	_rows pushBack [diag_tickTime, _operation, _decision, remoteExecutedOwner, _detail];
+	if ((count _rows) > 64) then {_rows deleteRange [0, (count _rows) - 64];};
+	missionNamespace setVariable ["YSF_FW_REGISTRY_AUDIT", _rows, false];
+};
+
 YSF_fwSideToId = {
     params ["_side"];
     if (_side isEqualType 0) exitWith {_side};
@@ -74,8 +88,11 @@ YSF_fwBuildPublicRegistry = {
 };
 
 YSF_fwCommitPublicRegistry = {
-    params ["_reg"];
-    if (!isServer) exitWith {};
+	params ["_token", "_reg"];
+	if (!isServer) exitWith {};
+	if (_token isNotEqualTo YSF_FW_REGISTRY_TOKEN) exitWith {
+		[YSF_FW_REGISTRY_TOKEN, "commit-public", "token-rejected"] call YSF_fwRegistryAudit;
+	};
     private _public = [_reg] call YSF_fwBuildPublicRegistry;
     missionNamespace setVariable [
         "YSF_FW_PUBLIC_REGISTRY",
@@ -98,10 +115,13 @@ YSF_fwCommitPublicRegistry = {
 };
 
 YSF_fwCommitRegistry = {
-    params ["_reg"];
-    missionNamespace setVariable ["YSF_FW_REGISTRY", _reg, false];
-    if (isServer) then {
-        [_reg] call YSF_fwCommitPublicRegistry;
+	params ["_token", "_reg"];
+	if (_token isNotEqualTo YSF_FW_REGISTRY_TOKEN) exitWith {
+		[YSF_FW_REGISTRY_TOKEN, "commit", "token-rejected"] call YSF_fwRegistryAudit;
+	};
+	missionNamespace setVariable ["YSF_FW_REGISTRY", _reg, false];
+	if (isServer) then {
+		[YSF_FW_REGISTRY_TOKEN, _reg] call YSF_fwCommitPublicRegistry;
     };
 };
 
@@ -109,7 +129,7 @@ YSF_fwEnsureRegistry = {
     private _reg = missionNamespace getVariable ["YSF_FW_REGISTRY", objNull];
     if !(typeName _reg isEqualTo "HASHMAP") then {
         _reg = createHashMap;
-        [_reg] call YSF_fwCommitRegistry;
+		[YSF_FW_REGISTRY_TOKEN, _reg] call YSF_fwCommitRegistry;
     };
     _reg
 };
@@ -460,15 +480,23 @@ YSF_fwDeleteVehicleAndCrew = {
 };
 
 YSF_fwSetEntry = {
-    params ["_id", "_entry"];
-    private _reg = call YSF_fwEnsureRegistry;
-    _reg set [_id, _entry];
-    [_reg] call YSF_fwCommitRegistry;
+	params ["_token", "_id", "_entry"];
+	if (_token isNotEqualTo YSF_FW_REGISTRY_TOKEN) exitWith {
+		private _detail = if (_id isEqualType "") then {_id} else {str _id};
+		[YSF_FW_REGISTRY_TOKEN, "set-entry", "token-rejected", _detail] call YSF_fwRegistryAudit;
+	};
+	private _reg = call YSF_fwEnsureRegistry;
+	_reg set [_id, _entry];
+	[YSF_FW_REGISTRY_TOKEN, _reg] call YSF_fwCommitRegistry;
 };
 
 YSF_fwSetEntryPrivate = {
-    params ["_id", "_entry"];
-    if (!isServer) exitWith {};
+	params ["_token", "_id", "_entry"];
+	if (!isServer) exitWith {};
+	if (_token isNotEqualTo YSF_FW_REGISTRY_TOKEN) exitWith {
+		private _detail = if (_id isEqualType "") then {_id} else {str _id};
+		[YSF_FW_REGISTRY_TOKEN, "set-entry-private", "token-rejected", _detail] call YSF_fwRegistryAudit;
+	};
     private _reg = call YSF_fwEnsureRegistry;
     _reg set [_id, _entry];
     missionNamespace setVariable ["YSF_FW_REGISTRY", _reg, false];
@@ -496,7 +524,7 @@ YSF_fwGetEntry = {
                 _entry set ["cooldownSeconds", 0];
                 _entry set ["lastUpdate", serverTime];
                 _reg set [_id, _entry];
-                [_reg] call YSF_fwCommitRegistry;
+				[YSF_FW_REGISTRY_TOKEN, _reg] call YSF_fwCommitRegistry;
             };
         };
     };
@@ -558,7 +586,7 @@ YSF_fwApplyDefaultPointToRegistry = {
             _reg set [_x, _entry];
         };
     } forEach _reg;
-    [_reg] call YSF_fwCommitRegistry;
+	[YSF_FW_REGISTRY_TOKEN, _reg] call YSF_fwCommitRegistry;
 };
 
 YSF_fwRegisterAsset = {
@@ -592,7 +620,7 @@ YSF_fwRegisterAsset = {
     ];
 
     _vehicle setVariable ["YSF_FW_ID", _id, true];
-    [_id, _entry] call YSF_fwSetEntry;
+	[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntry;
     [_vehicle] call YSF_fwDeleteVehicleAndCrew;
     true
 };
@@ -708,7 +736,7 @@ YSF_fwDeployAsset = {
 
     _entry set ["state", YSF_FW_STATE_DEPLOYING];
     _entry set ["lastUpdate", serverTime];
-    [_id, _entry] call YSF_fwSetEntryPrivate;
+	[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntryPrivate;
     diag_log format [
         "[YSF][FWDBG] scope=SERVER owner=%1 deployPrepared id=%2 state=%3 visibility=private_only",
         clientOwner,
@@ -722,7 +750,7 @@ YSF_fwDeployAsset = {
     if (_snapshot isEqualTo []) exitWith {
         _entry set ["state", YSF_FW_STATE_STOWED];
         _entry set ["lastUpdate", serverTime];
-        [_id, _entry] call YSF_fwSetEntry;
+		[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntry;
         diag_log format [
             "[YSF][FWDBG] scope=SERVER owner=%1 deployAbort id=%2 reason=no_snapshot",
             clientOwner,
@@ -753,7 +781,7 @@ YSF_fwDeployAsset = {
     _entry set ["spawnedVeh", _veh];
     _entry set ["state", YSF_FW_STATE_ON_STATION];
     _entry set ["lastUpdate", serverTime];
-    [_id, _entry] call YSF_fwSetEntry;
+	[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntry;
     diag_log format [
         "[YSF][FWDBG] scope=SERVER owner=%1 deployCommitted id=%2 finalState=%3 vehNetId=%4",
         clientOwner,
@@ -814,7 +842,7 @@ YSF_fwLogisticsSetIdle = {
         _entry set ["logisticsTaskId", ""];
         _entry set ["lastLogisticsResult", _result];
         _entry set ["lastUpdate", serverTime];
-        [_assetId, _entry] call YSF_fwSetEntry;
+		[YSF_FW_REGISTRY_TOKEN, _assetId, _entry] call YSF_fwSetEntry;
     };
 };
 
@@ -919,6 +947,34 @@ YSF_fwRunLogisticsTask = {
     };
 };
 
+// One authoritative capability decision shared by Vigil's task endpoint and
+// Field Utilities' airdrop preparation. The returned entry remains
+// server-private; callers consume only this current-state verdict.
+YSF_fwValidateLogisticsAsset = {
+	params ["_aircraft", "_requester"];
+	if (!isServer) exitWith {[false, "not_server", "", objNull]};
+	if (isNull _aircraft || {!alive _aircraft}) exitWith {[false, "aircraft_unavailable", "", objNull]};
+	if (isNull _requester || {!isPlayer _requester} || {!alive _requester}) exitWith {[false, "invalid_requester", "", objNull]};
+
+	private _registry = call YSF_fwEnsureRegistry;
+	private _assetId = "";
+	private _entry = objNull;
+	{
+		private _candidate = _y;
+		if (typeName _candidate isEqualTo "HASHMAP" && {(_candidate getOrDefault ["spawnedVeh", objNull]) isEqualTo _aircraft}) exitWith {
+			_assetId = _x;
+			_entry = _candidate;
+		};
+	} forEach _registry;
+	if (_assetId isEqualTo "" || {typeName _entry isNotEqualTo "HASHMAP"}) exitWith {[false, "aircraft_not_registered", "", objNull]};
+	if ((_entry getOrDefault ["state", ""]) isNotEqualTo YSF_FW_STATE_ON_STATION) exitWith {[false, "aircraft_not_on_station", _assetId, _entry]};
+	private _roleMask = _entry getOrDefault ["roleMask", 0];
+	if ((((floor (_roleMask / YSF_FW_ROLE_LOGI)) mod 2) isNotEqualTo 1)) exitWith {[false, "aircraft_not_logistics", _assetId, _entry]};
+	if ((_entry getOrDefault ["side", sideUnknown]) isNotEqualTo side _requester) exitWith {[false, "wrong_side", _assetId, _entry]};
+	if (_entry getOrDefault ["logisticsActive", false]) exitWith {[false, "duplicate_active_task", _assetId, _entry]};
+	[true, "eligible", _assetId, _entry]
+};
+
 YSF_fwRequestLogistics = {
     params ["_aircraftRef", "_containerRefs", "_targetATL", "_requestId", ["_requesterRef", ""]];
     if (!isServer) exitWith {
@@ -942,22 +998,10 @@ YSF_fwRequestLogistics = {
     private _requester = [_requesterRef] call YSF_fwResolveObjectRef;
     if (isNull _requester || {!isPlayer _requester} || {owner _requester isNotEqualTo _requestOwner}) exitWith {["invalid_requester"] call _reject};
 
-    private _registry = call YSF_fwEnsureRegistry;
-    private _assetId = "";
-    private _entry = objNull;
-    {
-        private _candidate = _y;
-        if (typeName _candidate isEqualTo "HASHMAP" && {(_candidate getOrDefault ["spawnedVeh", objNull]) isEqualTo _aircraft}) exitWith {
-            _assetId = _x;
-            _entry = _candidate;
-        };
-    } forEach _registry;
-    if (_assetId isEqualTo "" || {typeName _entry isNotEqualTo "HASHMAP"}) exitWith {["aircraft_not_registered"] call _reject};
-    if ((_entry getOrDefault ["state", ""]) isNotEqualTo YSF_FW_STATE_ON_STATION) exitWith {["aircraft_not_on_station", _assetId] call _reject};
-    private _roleMask = _entry getOrDefault ["roleMask", 0];
-    if ((((floor (_roleMask / YSF_FW_ROLE_LOGI)) mod 2) isNotEqualTo 1)) exitWith {["aircraft_not_logistics", _assetId] call _reject};
-    if ((_entry getOrDefault ["side", sideUnknown]) isNotEqualTo side _requester) exitWith {["wrong_side", _assetId] call _reject};
-    if (_entry getOrDefault ["logisticsActive", false]) exitWith {["duplicate_active_task", _assetId] call _reject};
+	private _assetVerdict = [_aircraft, _requester] call YSF_fwValidateLogisticsAsset;
+	if !(_assetVerdict # 0) exitWith {[_assetVerdict # 1, _assetVerdict # 2] call _reject};
+	private _assetId = _assetVerdict # 2;
+	private _entry = _assetVerdict # 3;
 
     private _containers = _containerRefs apply {[_x] call YSF_fwResolveObjectRef};
     if ((_containers findIf {isNull _x || {!alive _x}}) >= 0) exitWith {["invalid_manifest_object", _assetId] call _reject};
@@ -967,7 +1011,7 @@ YSF_fwRequestLogistics = {
     _entry set ["logisticsActive", true];
     _entry set ["logisticsTaskId", _requestId];
     _entry set ["lastUpdate", serverTime];
-    [_assetId, _entry] call YSF_fwSetEntry;
+	[YSF_FW_REGISTRY_TOKEN, _assetId, _entry] call YSF_fwSetEntry;
     [_requestId, true, "accepted", _requestOwner, _assetId] call YSF_fwLogisticsAck;
     [_requestId, "accepted", _assetId, _aircraft, _containers, _targetATL, [netId _requester, _requestOwner]] call YSF_fwLogisticsEvent;
     [_assetId, _requestId, _aircraft, _containers, _targetATL] call YSF_fwRunLogisticsTask;
@@ -1004,7 +1048,7 @@ YSF_fwFinalizeRtb = {
     _entry set ["spawnedVeh", objNull];
     _entry set ["lastRtbResult", _result];
     _entry set ["lastUpdate", serverTime];
-    [_id, _entry] call YSF_fwSetEntry;
+	[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntry;
 };
 
 YSF_fwRtbMonitor = {
@@ -1056,14 +1100,14 @@ YSF_fwRtbAsset = {
     if (isNull _vehicle || {!alive _vehicle}) exitWith {
         _entry set ["spawnedVeh", objNull];
         _entry set ["state", YSF_FW_STATE_STOWED];
-        [_id, _entry] call YSF_fwSetEntry;
+		[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntry;
         true
     };
 
     private _exfil = _entry getOrDefault ["exfilPosASL", ["exfil"] call YSF_fwDefaultPos];
     _entry set ["state", YSF_FW_STATE_RTB];
     _entry set ["lastUpdate", serverTime];
-    [_id, _entry] call YSF_fwSetEntry;
+	[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntry;
 
     private _grp = group _vehicle;
     if (!isNull _grp) then {
@@ -1104,7 +1148,7 @@ YSF_fwGetRegistrySnapshot = {
             };
         } forEach _reg;
         if (_dirty) then {
-            [_reg] call YSF_fwCommitRegistry;
+			[YSF_FW_REGISTRY_TOKEN, _reg] call YSF_fwCommitRegistry;
         };
     };
 

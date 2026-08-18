@@ -26,6 +26,8 @@ ACTIONS = ADDON / "functions" / "fabricator" / "fn_fabricationActions.sqf"
 SETTERS = ADDON / "functions" / "global" / "fn_initModuleLogicSetters.sqf"
 CLONE = ADDON / "functions" / "global" / "fn_fabricator.sqf"
 CONFIG = ADDON / "config.cpp"
+VIGIL_FW = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL" / "functions" / "task_fixedWing" / "fn_initFixedWingFunctions.sqf"
+SCENARIO = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
 
 
 def read(path: Path) -> str:
@@ -43,8 +45,8 @@ class FabricatorAuthorityTests(unittest.TestCase):
         self.assertNotIn("deleteVehicle", body)
         self.assertIn('remoteExecCall ["YFU_fnc_fabricateOrder", 2]', body)
 
-    def test_exactly_one_endpoint_is_reachable_by_a_client(self) -> None:
-        """Every other consequential helper refuses a remote caller."""
+    def test_only_order_and_owner_bound_discard_are_client_operations(self) -> None:
+        """Every internal consequential helper requires server capability."""
 
         server = read(SERVER)
         # The secret is generated per machine and never published, so a client
@@ -54,15 +56,14 @@ class FabricatorAuthorityTests(unittest.TestCase):
         guarded = (
             "YFU_fnc_fabricateOrderWorker", "YFU_fnc_fabricatorTrack", "YFU_fnc_fabricatorFinalize",
             "YFU_fnc_fabricatorPublishResult", "YFU_fnc_fabricatorRefuse", "YFU_fnc_fabricatorSetState",
-            "YFU_fnc_fabricatorRetire",
+            "YFU_fnc_fabricatorRetire", "YFU_fnc_fabricatorAccept",
         )
         for function in guarded:
             body = server[server.index(f"{function} = {{"):]
             self.assertIn("if (_token isNotEqualTo YFU_FABRICATOR_TOKEN) exitWith", body[:400], function)
-        # The trusted airdrop entry point may use remoteExecutedOwner: it is
-        # evaluated in the remote-executed frame, where it is meaningful.
-        authorized = server[server.index("YFU_fnc_fabricateAuthorizedOrder = {"):]
-        self.assertIn("if (remoteExecutedOwner isNotEqualTo 0) exitWith {};", authorized[:400])
+        self.assertNotIn("YFU_fnc_fabricateAuthorizedOrder", server)
+        self.assertIn("[YFU_FABRICATOR_TOKEN, _this, _owner] call YFU_fnc_fabricatorAccept;", server)
+        self.assertIn('YFU_fnc_fabricatorDiscardOrder = {', server)
 
     def test_caller_identity_comes_from_the_transport_not_the_payload(self) -> None:
         server = read(SERVER)
@@ -95,10 +96,25 @@ class FabricatorAuthorityTests(unittest.TestCase):
         claim = accept.index('_tx set ["claimed", true];')
         schedule = accept.index("spawn YFU_fnc_fabricateOrderWorker;")
         self.assertLess(claim, schedule)
-        self.assertIn('exitWith {\n\t\t// The original transaction keeps its result', accept)
+        self.assertIn('"replay-rejected"', accept)
+        self.assertIn('// The original transaction keeps its result', accept)
         # A terminal result is written once.
         publish = server[server.index("YFU_fnc_fabricatorPublishResult = {"):]
         self.assertIn('if (_state in ["delivered", "refused", "finalized"]) exitWith {_state};', publish)
+
+    def test_registry_forge_stimulus_reaches_the_real_server_guard(self) -> None:
+        scenario = read(SCENARIO)
+        self.assertIn('["client-guessed-token", "tribunal-forged", []] call YSF_fwSetEntry;', scenario)
+        self.assertIn("_registryAuditAfter - _registryAuditBefore", scenario)
+        self.assertIn("_registryCensusAfter isEqualTo _registryCensusBefore", scenario)
+        self.assertNotIn("TRIBUNAL_FAB_fnc_probeRegistryForge", scenario)
+        self.assertNotIn("private _forgedEntry = createHashMapFromArray", scenario)
+
+    def test_watchdog_fault_stimulus_stalls_without_uncaught_throw(self) -> None:
+        scenario = read(SCENARIO)
+        watchdog = scenario[scenario.index('// Stall after the creation callback'):]
+        self.assertIn("uiSleep 30;", watchdog[:800])
+        self.assertNotIn("throw format", watchdog[:800])
 
     def test_the_schema_is_validated_before_claim_scheduling_or_creation(self) -> None:
         server = read(SERVER)
@@ -116,17 +132,43 @@ class FabricatorAuthorityTests(unittest.TestCase):
         server = read(SERVER)
         self.assertIn('_stationVerdict = "airdrop-unauthorized";', server)
         self.assertIn("call YFU_fnc_fabricatorAirAssetAuthorized", server)
-        # Authorization is Vigil's server-side registry, not the payload.
+        # Authorization is Vigil's own current-state validator, not a Field
+        # Utilities reinterpretation of registry fields.
         auth = server[server.index("YFU_fnc_fabricatorAirAssetAuthorized = {"):]
-        self.assertIn("call YSF_fwEnsureRegistry", auth)
-        self.assertIn('getOrDefault ["spawnedVeh", objNull]', auth)
+        self.assertIn("call YSF_fwValidateLogisticsAsset", auth)
+        self.assertNotIn("call YSF_fwEnsureRegistry", auth[:800])
+        vigil = read(VIGIL_FW)
+        validator = vigil[vigil.index("YSF_fwValidateLogisticsAsset = {"):vigil.index("YSF_fwRequestLogistics = {")]
+        for condition in ("aircraft_not_registered", "aircraft_not_on_station", "aircraft_not_logistics", "wrong_side", "duplicate_active_task"):
+            self.assertIn(condition, validator)
+        request = vigil[vigil.index("YSF_fwRequestLogistics = {"):]
+        self.assertIn("call YSF_fwValidateLogisticsAsset", request[:3500])
+
+    def test_vigil_registry_mutation_requires_an_unpublished_capability(self) -> None:
+        vigil = read(VIGIL_FW)
+        self.assertIn('YSF_FW_REGISTRY_TOKEN = format ["ysf-fw-%1-%2-%3"', vigil)
+        self.assertNotIn('publicVariable "YSF_FW_REGISTRY_TOKEN"', vigil)
+        for function in ("YSF_fwCommitPublicRegistry", "YSF_fwCommitRegistry", "YSF_fwSetEntry", "YSF_fwSetEntryPrivate"):
+            body = vigil[vigil.index(f"{function} = {{"):]
+            self.assertIn("if (_token isNotEqualTo YSF_FW_REGISTRY_TOKEN) exitWith", body[:500], function)
+        self.assertIn('if (_id isEqualType "") then {_id} else {str _id}', vigil)
 
     def test_a_finalizer_covers_failures_the_code_does_not_anticipate(self) -> None:
         server = read(SERVER)
-        # Objects are tracked as they are created, not only at known failures.
+        # Objects are tracked by callbacks at the exact creation boundary, not
+        # after a helper containing later fallible work returns.
         worker = server[server.index("YFU_fnc_fabricateOrderWorker = {"):]
-        self.assertIn("[YFU_FABRICATOR_TOKEN, _txId, [_clone]] call YFU_fnc_fabricatorTrack;", worker)
+        clone = read(CLONE)
+        packing = read(PACKING)
+        self.assertIn("[_newObject, _onCreatedArgs] call _onCreated;", clone)
+        self.assertIn("[_container, _onContainerCreatedArgs] call _onContainerCreated;", packing)
+        self.assertIn('params ["_created", "_txId"]', worker)
+        self.assertIn("[_created]] call YFU_fnc_fabricatorTrack;", worker)
         # A watchdog finalizes a transaction that never reaches a terminal state.
+        self.assertIn("private _worker = [YFU_FABRICATOR_TOKEN", server)
+        self.assertIn('_tx set ["worker", _worker];', server)
+        self.assertIn("terminate _worker;", server)
+        self.assertIn('"watchdog", "worker-terminated"', server)
         self.assertIn('_txId, "abandoned"] call YFU_fnc_fabricatorRefuse;', server)
         # The finalizer can only reach ids the transaction itself recorded.
         finalize = server[server.index("YFU_fnc_fabricatorFinalize = {"):]
@@ -227,6 +269,18 @@ class FabricatorLocalInventoryTests(unittest.TestCase):
 
 
 class FabricatorScenarioTests(unittest.TestCase):
+    def test_client_replication_wait_is_bounded_and_identity_preserving(self) -> None:
+        import importlib.util
+
+        path = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
+        spec = importlib.util.spec_from_file_location("fabricator_scenario_replication", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        client = module.TRIBUNAL_SCENARIO.client_sqf
+        self.assertIn("private _deliveryDeadline = diag_tickTime + 15;", client)
+        self.assertIn("(_clone distance player) < 12", client)
+        self.assertNotIn("nearestObjects", client)
+
     def test_the_scenario_drives_the_real_terminal_submit_path(self) -> None:
         """Not the server function at the end of it."""
 
@@ -261,6 +315,55 @@ class FabricatorScenarioTests(unittest.TestCase):
         # pass by leaving an object somewhere the scenario never looked.
         for control in ("_unpackable", "_rogue", "_far", "_noStorage"):
             self.assertIn(f"{{({control} # 1) isEqualTo ({control} # 0)}}", server, control)
+
+    def test_adversarial_controls_require_server_receipt_evidence(self) -> None:
+        import importlib.util
+
+        path = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
+        spec = importlib.util.spec_from_file_location("fabricator_scenario_receipts", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        server = module.TRIBUNAL_SCENARIO.server_sqf
+        for marker in (
+            '"worker", "token-rejected"',
+            '"accept", "token-rejected"',
+            '"order", "replay-rejected"',
+            '"discard", "owner-miss-rejected"',
+            '"set-entry", "token-rejected"',
+            '"watchdog", "worker-terminated"',
+        ):
+            self.assertIn(marker, server)
+        self.assertIn("TRIBUNAL_FAB_fnc_auditMatches", server)
+
+    def test_watchdog_and_retirement_are_exercised_not_only_inspected(self) -> None:
+        import importlib.util
+
+        path = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
+        spec = importlib.util.spec_from_file_location("fabricator_scenario_lifecycle", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        server = module.TRIBUNAL_SCENARIO.server_sqf
+        self.assertIn("uiSleep 30;", server)
+        self.assertNotIn('throw format ["tribunal-post-create-%1"', server)
+        self.assertIn('isEqualTo "abandoned"', server)
+        self.assertIn("_watchdogReceipt", server)
+        self.assertIn('YFU_FABRICATOR_RESULT_TTL = 3;', server)
+        self.assertIn('isEqualTo "unknown"', server)
+        self.assertIn("_resultKeysGone", server)
+
+    def test_active_owner_discard_terminates_worker_before_rollback(self) -> None:
+        server = read(SERVER)
+        discard = server[server.index("YFU_fnc_fabricatorDiscardOrder = {"):]
+        terminate_at = discard.index("terminate _worker;")
+        finalize_at = discard.index("call YFU_fnc_fabricatorFinalize;")
+        self.assertLess(terminate_at, finalize_at)
+        self.assertIn('"discard", "worker-terminated"', discard)
+        self.assertIn("call YFU_fnc_fabricatorRetire", discard)
+
+        scenario = read(SCENARIO)
+        self.assertIn('"fabricator.control.activeDiscardAtomic"', scenario)
+        self.assertIn('"TRIBUNAL_FAB_CANCEL_CREATED"', scenario)
+        self.assertIn('_activeDiscard # 1) isEqualTo (_activeDiscard # 0', scenario)
 
 
 if __name__ == "__main__":

@@ -363,20 +363,23 @@ Reviewed in [`field-utilities-fabricator-review.md`](field-utilities-fabricator-
 primary outcome **REFINE BEFORE PERMANENT COVERAGE**; refinement is complete and
 the feature is now **COVERED** by `fieldutils-fabricator`. Orders are
 server-authoritative and atomic, the catalogue is an unlimited template source,
-and the local virtual-inventory toggle is restored. The delivery mass cap is
-preserved but could not be validated at runtime and is asserted by nothing - see
-the review.
+and the local virtual-inventory toggle is restored. Active owner cancellation
+terminates the transaction worker before rollback and retirement. The delivery
+mass cap is preserved but could not be validated at runtime and is asserted by
+nothing - see the review.
 
 * **Mission-maker registration** uses synchronized storage objects and designated
   Fabricator stations, optionally with nearby ZEN inventory. **Implemented;
   REVIEWED / KEEP AS-IS AND SPEC-TEST.** Module setters run server-side and
-  `publicVariable` both logics, so discovery is server-owned and JIP-safe.
+  publish both logics. Server ownership is proven; actual JIP and client-visible
+  runtime synchronization are not.
 * **Fabricator UI/queue** lists assets/images/quantities, ordered queue, grid,
   progress, success/failure, and may reuse Vigil skins. **Implemented; PARTIALLY
   COVERED.** Airdrop context/manifest/result is covered; normal browsing, local
   orders, invalid grids, and styling are not. The progress bar is cosmetic — all
   work completes before it starts — so no contract may promise it tracks work.
-* **Single local fabrication** clones one stored object near the player.
+* **Single-item fabrication** clones one stored object near the player on the
+  server.
   **Implemented; REVIEWED / KEEP AS-IS AND SPEC-TEST.** `YOSHI_SPAWN_SAVED_ITEM_ACTION`
   is the live clone primitive for both delivery modes and copies weapon, magazine,
   item and backpack cargo exactly. The separate `YOSHI_addItemsToFabricator` is
@@ -392,17 +395,19 @@ the review.
   the ZEN inventory action used to add stock that was never synchronized. The
   module setter now publishes it and the action condition honours it, default
   enabled. **Implemented; REVIEWED / REFINED.**
-* **Order authority** is server-authoritative through one client-facing endpoint.
+* **Order authority** is server-authoritative through one order endpoint plus an
+  owner-bound discard endpoint.
   Identity comes from `remoteExecutedOwner`; internal helpers are gated on an
   unpublished per-machine token; transaction state is keyed `owner#request` for
   claim, result, ledger, discard and retirement; orders are atomic with a
   watchdog finalizer scoped to the transaction's own objects. **Implemented;
-  COVERED**, including runtime adversarial controls for worker bypass, duplicate
-  request, unauthorized airdrop, malformed and oversized orders, and discarding
-  another owner's transaction.
-* **Airdrop authorization** is server-side: the trusted entry refuses remote
-  callers, and a client-originated airdrop order is accepted only for an aircraft
-  present in Vigil's `YSF_FW_REGISTRY`. **Implemented; COVERED.**
+  COVERED**, including exact server receipts for worker/accept bypass, replay,
+  registry mutation and foreign discard; malformed/oversized refusals; watchdog
+  worker termination plus rollback after creation; and bounded result retirement.
+* **Airdrop authorization** is server-side and delegated to Vigil's shared
+  validator. The exact aircraft must be alive, registered/on-station, LOGI-role,
+  same-side, and not already busy. Vigil registry mutation has its own private
+  capability boundary. **Implemented; COVERED for one authenticated client.**
 * **Delivery placement** is contracted only as *server-owned delivery within a
   bounded distance of the recipient*. Terrain/water/obstruction suitability is
   **REVIEWED / NEEDS EXPERIMENTATION**; the earlier `surfaceIsWater` failure was
@@ -594,9 +599,9 @@ Then consider APS anti-drone, CORDIS public routing/dedupe semantics, suite
 editor/Zeus modules, and towing. Do not resume reconnaissance until the product
 decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume
 CBR marker scoping or confirmed-origin persistence until the product decisions
-in `advanced-systems-counter-battery-radar-review.md` are answered. Fabricator
-coverage likewise waits on the four product decisions in
-`field-utilities-fabricator-review.md`; the review itself is complete.
+in `advanced-systems-counter-battery-radar-review.md` are answered. Fabricator's
+product decisions are resolved and its accepted one-client contract is covered;
+its remaining experiments are listed in the backlog above.
 
 ## Evidence sources
 

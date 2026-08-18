@@ -27,7 +27,7 @@ YOSHI_capDeliveryMass = {
 };
 
 YOSHI_SPAWN_SAVED_ITEM_ACTION = {
-    params ["_target", "_caller", "_params"];
+    params ["_target", "_caller", "_params", ["_onCreated", {}], ["_onCreatedArgs", []]];
     private _fabricator = _params select 0;
     private _itemToAdd = _params select 1;
     private _locationOverride = _params param [2, objNull];
@@ -44,6 +44,9 @@ YOSHI_SPAWN_SAVED_ITEM_ACTION = {
 
 
     private _newObject = createVehicle [typeOf _itemToAdd, _location, [], 0, "NONE"];
+    // Consequential callers can record ownership at the creation boundary,
+    // before cargo restoration or any later operation can fail.
+    [_newObject, _onCreatedArgs] call _onCreated;
 
     clearWeaponCargoGlobal _newObject;
     clearMagazineCargoGlobal _newObject;

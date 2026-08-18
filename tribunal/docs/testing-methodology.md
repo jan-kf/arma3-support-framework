@@ -230,15 +230,13 @@ here.
 
 ### Field Utilities Fabricator findings
 
-The Fabricator review reached and proved the whole positive path — module
-registration, ACE action registration, storage discovery, and exact cargo
-fidelity — and then stopped short of permanent coverage. Local fabrication is
-entirely client-authoritative: the ordering client creates and owns the copies,
-and the server never sees a request. Only the already-covered airdrop branch is
-server-owned. Because a scenario asserting order success would have to choose an
-authority model, and one asserting queue accounting would have to choose a
-depletion policy, coverage is gated on four product decisions rather than
-answered by the test author.
+The initial Fabricator review proved the positive path and found that fabrication
+was client-authoritative. It stopped rather than allowing a test to invent an
+authority or depletion policy. The product decisions were subsequently supplied:
+server-authoritative orders, unlimited catalogue, atomic fulfilment, intentional
+carryability cap, and an explicit local-inventory gate. The current scenario
+covers that refined contract; the earlier client-authoritative description is
+historical, not current architecture.
 
 One defect was refined because it is wrong under every one of those decisions:
 the packer reported success while silently dropping items too large for any
@@ -262,14 +260,26 @@ passed on that value because `1e-12 > 0` and `1e-12 <= 200` were both true, whic
 was a false PASS and was removed rather than kept. The scenario now asserts
 nothing about mass and the gap is recorded as open.
 
-A further audit round rebuilt the authority boundary: one client-facing endpoint,
-identity from `remoteExecutedOwner`, internal helpers gated on an unpublished
+A further audit round rebuilt the authority boundary: one order endpoint and an
+owner-bound discard endpoint, identity from `remoteExecutedOwner`, internal
+helpers gated on an unpublished
 per-machine token, one `owner#request` transaction identity across claim, result,
-ledger, discard and retirement, and a watchdog finalizer scoped to the objects a
-transaction created. Two lessons generalise. An internal guard built on
+ledger, discard and retirement, immediate creation callbacks, and a watchdog
+finalizer scoped to the objects a transaction created. Negative controls require
+exact server receipts rather than silence. Public client requests and direct
+internal-guard stimuli must be described separately; a direct server-side guard
+call must not be reported as a remote client transition. A forced worker stall
+after creation independently proves worker termination and rollback, and a short
+test TTL proves result retirement without changing the production TTL. Several
+lessons generalise. Cancellation must stop the exact active worker before
+rolling back its ledger, or the worker can resume after cleanup; a sleeping
+watchdog must also verify that the claim still exists before treating an unknown
+state as abandoned. An internal guard built on
 `remoteExecutedOwner` is wrong: on this build it stays non-zero inside a script
 spawned from a remote-executed frame, so it silently blocks the server's own
-worker. And a fixture anchored on a player who has not been given a land spawn
+worker. Objects must enter a transaction ledger at creation, before any fallible
+initialization that follows. And a fixture anchored on a player who has not been
+given a land spawn
 sits at the map origin, which on Stratis is open water - every earlier delivery in
 this feature was made over the sea, which is what actually defeated a
 `surfaceIsWater` placement check that had been reported as a world-configuration
