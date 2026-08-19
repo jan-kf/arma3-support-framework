@@ -17,10 +17,11 @@ decisions remain in each canonical feature review and the feature inventory.
 | Vigil developer laser harness | REVIEWED / DEFERRED | `0badf72` | none; exhaustive static reachability/boundary review | remove, move to dev/Tribunal, or capability-gate with bounded execution/storage | do not use as product evidence; decide disposition before reuse |
 | Field object handling / supply loading | REVIEWED / REFINE BEFORE COVERAGE | `3c17d1a` | none; static boundary review; 104 tests/static checks pass | split contact vs cargo policy; eligibility, authority, unload/finalization; locality/return experiments | run isolated exact ACE cargo and physical-contact A/B after decisions |
 | Field map helpers / airdrop feedback | markers REVIEWED / DEFERRED; feedback NEEDS DECISION/EXPERIMENT | `22854e5` | accepted logistics executes announcement incidentally; no feedback oracle | marker reachability/visibility; direction meaning, ETA interval/audience; two-distance timeline A/B | leave markers dormant; define feedback semantics then compare against physical delivery timeline |
+| Field helicopter sling helper | REVIEWED / DEFERRED | `8ea789e` | none; exhaustive static reachability review | whether it ships; entry/authority, rope ownership, native/custom mechanism, cleanup | revisit only after a supported entry and authoritative rope-operation policy |
 
-Current feature HEAD: `22854e5`. Accepted/covered in this ledger: Iron Dome
+Current feature HEAD: `8ea789e`. Accepted/covered in this ledger: Iron Dome
 and Tribunal manifest parity. Reviewed/deferred or precisely bounded: FPV,
 APS anti-drone, CORDIS, CBR modules, Vigil homepage, Field towing, helicopter
 stabilizer, laser harness, and object handling. Open experiments and decisions
-are recorded per row. Exact next recommended feature: **Field Utilities
-helicopter sling helper**, then the fixed-wing UAV disabled guard.
+are recorded per row. Exact next recommended feature: **Vigil fixed-wing UAV
+disabled guard**, then tablet-access coverage and VLS handshake characterization.
