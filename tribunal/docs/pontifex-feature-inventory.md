@@ -472,13 +472,17 @@ Full analysis: [`field-utilities-bridge-builder-review.md`](field-utilities-brid
 ### 4.4 Towing and sling ropes
 
 * **Tow points/rope deployment** use configured or geometry-derived points and
-  owner-local tow parent. **Partial; NOT YET REVIEWED.** TODOs cover filtering,
-  tow-parent behavior, and reset after rope loss.
-* **ACE tow/stow actions** are registered on vehicles. **Implemented; NOT YET
-  REVIEWED.** Menu, locality, movement, breakage, cleanup are uncovered.
+  owner-local tow parent. **REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** The
+  actor client creates ropes, discards their handles, and only owner-routes the
+  parent mutation; authority, atomicity, and terminal cleanup are unresolved.
+* **ACE tow/stow actions** are registered on vehicles. **REVIEWED / REFINE
+  BEFORE PERMANENT COVERAGE.** The path is reachable, but stow can destroy
+  unrelated ropes and physical towing has no controlled causal proof.
 * **Four-point helicopter sling helper** computes lift corners and attaches/
   stows ropes. **Implemented; UNKNOWN reachability** because no normal action
   invoking it was found.
+
+Full analysis: [`field-utilities-towing-review.md`](field-utilities-towing-review.md).
 
 ### 4.5 FPV/UAV field modifications
 
@@ -606,7 +610,7 @@ coverage.
 | Fabricator placement suitability | **REVIEWED / NEEDS EXPERIMENTATION** | delivery is bounded to the recipient; water/gradient/obstruction unproven |
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
 | Fabricator staging depths | **REVIEWED / NEEDS EXPERIMENTATION** | underground staging and the settle tick have no retained controlled alternative |
-| Field towing | **Partial / NOT YET REVIEWED** | source TODOs identify parent/cleanup gaps |
+| Field towing | **REVIEWED / REFINE BEFORE COVERAGE** | client-owned, non-atomic rope lifecycle; exact physical/locality A/B and product policy required |
 | Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |
 | Bridge direct extension | **DEFERRED** | helpers exist, but no reachable action or supported ownership contract was established |
 | Core settings/utils files | **Scaffolded / UNKNOWN** | reserved files contain no behavior |
@@ -614,9 +618,8 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **Field Utilities towing.** The reachable ACE path has no authoritative
-   transaction, discards rope identity, can destroy unrelated ropes and leaves
-   tow-parent cleanup unresolved.
+1. **Helicopter stabilizer.** It is mission-active through transport/RTB despite
+   the stale disabled label below; its causal effect and cleanup are unproven.
 
 Then consider the reviewed CBR module experiment, APS module activation, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
