@@ -161,9 +161,12 @@ locality, and client replication.
 
 Detects nearby fast sub-1000 kg airborne UAVs, consumes soft-kill fuel,
 destroys the UAV, schedules cleanup, and exposes ACE controls/status.
-**Implemented; NOT YET REVIEWED.** It is outside projectile APS coverage and
-removes many event handlers from the UAV, making locality, collateral handler
-removal, and resource semantics high-risk review topics.
+**Implemented; REVIEWED / DEFERRED pending product decisions and refinement.**
+The review found undefined threat/side/operator policy, a split owner-routed
+resource transaction, destructive mutation without an owner acknowledgment,
+unscoped event-handler removal, and caller-trusting ACE endpoints. It remains
+outside projectile APS coverage. See
+[`advanced-systems-aps-anti-drone-review.md`](advanced-systems-aps-anti-drone-review.md).
 
 ### 2.2 Counter Battery Radar
 
@@ -582,7 +585,7 @@ coverage.
 | VLS target handshake | **REVIEWED / NEEDS EXPERIMENTATION** | physical outcome covered; internal necessity unproven |
 | Transport hidden-pad landing | **REVIEWED / NEEDS EXPERIMENTATION** | landing works; exact mechanism necessity unproven |
 | Developer laser harness | **UNKNOWN** | substantive diagnostic code, no normal entry found |
-| APS anti-drone | **NOT YET REVIEWED** | active experimental behavior outside projectile contract |
+| APS anti-drone | **REVIEWED / DEFERRED** | threat/side/operator policy is undecided; resource authority and destructive cleanup require refinement before coverage |
 | CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
 | CBR confirmed-origin persistence | **REVIEWED / DEFERRED** | confirmed fix never expires; decay policy undecided |
 | CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; re-warning for a walking barrage undecided |
@@ -601,13 +604,12 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **APS anti-drone.** Active experimental destructive behavior remains outside
-   the accepted projectile APS contract.
-2. **CORDIS public routing/dedupe semantics.** Multiple accepted consumers now
+1. **CORDIS public routing/dedupe semantics.** Multiple accepted consumers now
    depend on it, while its callable authority boundary remains incidental.
 
-Then consider suite
-editor/Zeus modules, and towing. Do not resume reconnaissance until the product
+Then consider suite editor/Zeus modules, and towing. APS anti-drone is now
+reviewed but deferred at the product-decision and authority/refinement boundary
+recorded in its review. Do not resume reconnaissance until the product
 decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume
 CBR marker scoping or confirmed-origin persistence until the product decisions
 in `advanced-systems-counter-battery-radar-review.md` are answered. Fabricator's
