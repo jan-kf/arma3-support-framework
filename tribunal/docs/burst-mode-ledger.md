@@ -15,10 +15,11 @@ decisions remain in each canonical feature review and the feature inventory.
 | Vigil helicopter stabilizer | REVIEWED / NEEDS EXPERIMENTATION | `ead2d3e` | retained `20260813T184341Z-317a1605`, `20260816T151957Z-c7e7de23` reach force path; no causal A/B | enabled policy/outcome bound/owner scope; matched flights and cancellation/terrain controls | run paired enabled/disabled transport experiment after product outcome decision |
 | Tribunal manifest discovery | ACCEPTED / COVERED | `146cd38` | static CLI lists all 12 runtime product scenarios; 104 tests pass | none | retain independent manifest/runtime parity regression |
 | Vigil developer laser harness | REVIEWED / DEFERRED | `0badf72` | none; exhaustive static reachability/boundary review | remove, move to dev/Tribunal, or capability-gate with bounded execution/storage | do not use as product evidence; decide disposition before reuse |
+| Field object handling / supply loading | REVIEWED / REFINE BEFORE COVERAGE | `3c17d1a` | none; static boundary review; 104 tests/static checks pass | split contact vs cargo policy; eligibility, authority, unload/finalization; locality/return experiments | run isolated exact ACE cargo and physical-contact A/B after decisions |
 
-Current feature HEAD: `0badf72`. Accepted/covered in this ledger: Iron Dome
+Current feature HEAD: `3c17d1a`. Accepted/covered in this ledger: Iron Dome
 and Tribunal manifest parity. Reviewed/deferred or precisely bounded: FPV,
 APS anti-drone, CORDIS, CBR modules, Vigil homepage, Field towing, helicopter
-stabilizer, and the laser harness. Open experiments and decisions are recorded
-per row. Exact next recommended feature: **Field Utilities automatic object
-handling / nearby supply loading**.
+stabilizer, laser harness, and object handling. Open experiments and decisions
+are recorded per row. Exact next recommended feature: **Field Utilities map
+helpers**, with its read-only scout packet in flight.
