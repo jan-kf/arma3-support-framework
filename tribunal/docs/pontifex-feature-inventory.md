@@ -465,13 +465,18 @@ Full analysis: [`field-utilities-bridge-builder-review.md`](field-utilities-brid
 
 ### 4.3 Logistics and object handling
 
-* **Automatic pallet/container handling** makes existing/new pallets draggable/
-  carryable and adds box collision/load behavior. **Implemented; NOT YET
-  REVIEWED.** Active server/EntityCreated hooks exist.
-* **Nearby supply actions** expose supplies around pallets, boxes, vehicles, and
-  small UAVs. **Implemented; NOT YET REVIEWED.**
+* **Automatic pallet/container handling** makes pallets draggable/carryable and
+  adds a server-installed box contact/attachment hook. **REVIEWED / REFINE
+  BEFORE PERMANENT COVERAGE.** Contact locality, eligible surfaces, ownership,
+  detach, and cleanup are undefined.
+* **Nearby supply actions** expose eligible nearby carriers through ACE.
+  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** The client invokes
+  `setVehicleCargo` without authority or result handling; exact replicated
+  cargo membership is unproven.
 * **Safe-fall/fling/attach helpers** support delivery/packing. **Implemented;
   PARTIALLY COVERED** only in fixed-wing cargo.
+
+Full analysis: [`field-utilities-object-handling-review.md`](field-utilities-object-handling-review.md).
 
 ### 4.4 Towing and sling ropes
 
@@ -613,6 +618,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
 | Fabricator staging depths | **REVIEWED / NEEDS EXPERIMENTATION** | underground staging and the settle tick have no retained controlled alternative |
 | Field towing | **REVIEWED / REFINE BEFORE COVERAGE** | client-owned, non-atomic rope lifecycle; exact physical/locality A/B and product policy required |
+| Field object handling / supply loading | **REVIEWED / REFINE BEFORE COVERAGE** | contact attachment and explicit cargo loading conflate locality-sensitive paths without authority, exact result, or cleanup |
 | Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |
 | Bridge direct extension | **DEFERRED** | helpers exist, but no reachable action or supported ownership contract was established |
 | Core settings/utils files | **Scaffolded / UNKNOWN** | reserved files contain no behavior |
@@ -620,9 +626,8 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-1. **Field Utilities automatic object handling / nearby supply loading.** Active
-   hooks and ACE actions rely on implicit locality and lack exact result or
-   cleanup contracts.
+1. **Field Utilities map helpers.** Ownership overlaps Vigil and standalone
+   behavior remains unreviewed.
 
 Then consider the reviewed CBR module experiment, APS module activation, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
