@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -106,6 +107,13 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertIn("bridge.interaction.conditions", bridge.client_expected)
         self.assertEqual(multiplayer.FEATURE_SCENARIOS["fieldutils-bridge-builder"], bridge)
         self.assertIn("fieldutils-bridge-builder", gameplay.selected)
+
+    def test_project_manifest_discovers_the_runtime_feature_scenario_set(self) -> None:
+        manifest = json.loads((ROOT / "tribunal.project.json").read_text(encoding="utf-8"))
+        roots = [ROOT / value for value in manifest["scenario_roots"]]
+        manifest_scenarios = discover(roots)
+        self.assertEqual(set(manifest_scenarios), set(multiplayer.FEATURE_SCENARIOS))
+        self.assertTrue(all(root.is_dir() for root in roots))
 
     def test_generic_tribunal_sources_do_not_encode_pontifex_features(self) -> None:
         prohibited = ("aps", "iron dome", "vigil", "field utilities", "pontifex")

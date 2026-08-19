@@ -4,6 +4,8 @@
   "assertion_prefix": "PONTIFEX_TEST",
   "entrypoint": "./pontifex",
   "scenario_roots": [
-    "source/advanced-systems/tests/tribunal"
+    "source/advanced-systems/tests/tribunal",
+    "source/field-utilities/tests/tribunal",
+    "source/visual-support-tablet/tests/tribunal"
   ]
 }

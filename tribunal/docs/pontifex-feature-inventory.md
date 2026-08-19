@@ -581,11 +581,9 @@ Framework `locality-probe` and `visual-framebuffer` scenarios prove Tribunal,
 not product features. Promote generic backlog mechanics only for a concrete
 consumer.
 
-One discoverability inconsistency is recorded, not changed here:
-`tools/pontifex_multiplayer.py` discovers Advanced Systems and Vigil roots,
-while `tribunal.project.json` lists only Advanced Systems for the generic CLI.
-This is a future harness review item, not a product defect or missing runtime
-coverage.
+The project manifest and Pontifex runtime now discover the same feature scenario
+set across Advanced Systems, Field Utilities, and Vigil. A regression compares
+their independently loaded identifiers so future manifest drift fails closed.
 
 ## Deferred, incomplete, disabled, and unclear areas
 
@@ -618,8 +616,9 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **Tribunal project-manifest discovery parity.** The generic project manifest
-   omits Field Utilities and Vigil roots that the Pontifex runtime discovers.
+1. **Vigil developer laser harness.** A shipped preInit diagnostic surface has
+   no normal product entry and exposes destructive test/result functions without
+   a defined authorization or retention boundary.
 
 Then consider the reviewed CBR module experiment, APS module activation, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
