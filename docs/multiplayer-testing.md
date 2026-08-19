@@ -21,6 +21,15 @@ The gameplay demonstration creates a server-owned Offroad, publishes its netId, 
 
 The permanent `aps-intercept` scenario additionally runs a real server-owned rocket through the production APS predicate and interceptor. It records the exact vehicle and projectile IDs in the authoritative engagement ledger, requires projectile neutralization and exactly one hard-kill charge consumed, and verifies the replicated ledger from the real client. Its controls prove an APS-disabled vehicle receives the impact without an engagement or charge consumption, while an elevated lateral miss remains a live projectile outside the envelope with no engagement or charge change. Fixture rockets are positioned from the terrain-snapped vehicle's ASL position; this prevents an elevated Stratis terrain surface from turning the test into a ground-collision artifact.
 
+The permanent `advsys-iron-dome` scenario uses the native artillery firing path
+and a real physical interceptor. Its disabled and out-of-range controls first
+prove their exact shells fly into `HitPart` and damage outcomes; the positive
+path correlates exact shell, launcher, and independently sampled interceptor
+identities, while concurrent threats, authority rejection, locality,
+replication, and cleanup fail closed. Each post-interception phase uses a fresh
+identically configured mortar because early shell deletion can leave Arma's AI
+artillery command occupied even though the product task is complete.
+
 ### Developer Live Mode
 
 ```bash

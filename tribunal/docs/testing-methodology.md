@@ -78,6 +78,7 @@ schema.
 | Vigil fixed-wing strike | registered state reconstructs once, enters the operating area, consumes real client laser/IR designations for two correlated guided impacts, rejects no-designation fire, then physically egresses and cleans up | registry schema, fixture coordinates/classes, waypoint geometry, observer cadence and private helper names | REFINE BEFORE PERMANENT COVERAGE |
 | Fabricator / Virtual Storage | a player at a registered station orders copies of registered stock; the server validates and builds; an order that cannot be produced in full is refused whole and leaves nothing | queue/`uiNamespace` layout, IDCs, container classes and packing order, staging, progress cadence, drop radii | REFINE BEFORE PERMANENT COVERAGE (refined; covered) |
 | Counter Battery Radar | enabled detection draws an impact zone on the ground the shells actually strike, with count/ETA, a narrowing then confirmed origin at the real gun, a side-filtered launch warning, expiry, replication and full reset on stop; disabled produces nothing | cluster/member layout, uid format, marker names and index counters, link distance/leeway/hysteresis, integration step and cadence | REFINE BEFORE PERMANENT COVERAGE |
+| OPHANIM / Iron Dome | an enabled launcher physically intercepts each eligible in-range native artillery shell before the otherwise-proven impact; disabled/out-of-range shells remain physical; concurrent threats remain distinct; internal mutation is server-authorized; terminal identity replicates and tasks clean up | Jian class, fuse/steering/retry/spacing values, task/registry/ledger layout, UID format, fixture coordinates and observer cadence | REFINE BEFORE PERMANENT COVERAGE |
 
 ### APS findings
 
@@ -227,6 +228,28 @@ an interval, assertions observed to fail before they are trusted, and a
 timed-out run proving nothing — are recorded once in
 [`feature-review-program.md`](feature-review-program.md) rather than restated
 here.
+
+### OPHANIM / Iron Dome findings
+
+The review preserved the native `ArtilleryShellFired` and physical-interceptor
+pipeline but corrected two bounded contract defects before coverage: globally
+named internal functions had only `isServer` guards and could be invoked by a
+client, and exhausted live-shell tasks did not retire. Internal calls now carry
+an unpublished per-machine server capability, rejected calls leave a private
+receipt, active monitor ownership gates retirement, and a bounded replicated
+terminal record joins exact shell, launcher, and interceptor identities.
+
+The causal oracle holds gun class, ammunition, target, aim point, and geometry
+constant: without an eligible launcher the exact native shell is sampled into
+an exact `HitPart` and damage outcome; with the launcher, an independently
+sampled real interceptor closes on the exact shell, the shell terminates before
+impact, and the target remains protected. Fresh identical mortar fixtures are
+used after interception because deleting an artillery shell early can leave the
+AI's prior fire command occupied. That is fixture isolation, not product
+behavior. Concurrent identities, an out-of-range impact, authority rejection,
+server locality, client replication, and cleanup complete the specification.
+Full analysis is in
+[`advanced-systems-iron-dome-review.md`](advanced-systems-iron-dome-review.md).
 
 ### Field Utilities Fabricator findings
 

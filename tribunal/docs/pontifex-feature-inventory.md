@@ -46,7 +46,7 @@ Five top-level runtime families are present:
 | Family | Purpose | Primary locations | Overall state | Coverage summary |
 | --- | --- | --- | --- | --- |
 | CORDIS shared runtime | Authority routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Implemented, with reserved bootstrap files | **NOT YET REVIEWED**; heavily exercised incidentally |
-| Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS and Counter Battery Radar strong, Iron Dome uncovered |
+| Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS, Counter Battery Radar, and Iron Dome strong; APS anti-drone remains uncovered |
 | Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
 | Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fixed-wing logistics and the reviewed Bridge Builder core |
 | Cross-mod composition | Contracts joining CORDIS, Vigil, Field Utilities, ACE/CBA, and editor/Zeus surfaces | calls across all addons/configs | Implemented, some optional/degraded paths | **PARTIALLY COVERED**; one composite path direct, most incidental |
@@ -202,15 +202,23 @@ Full analysis:
 ### 2.3 OPHANIM / Iron Dome
 
 * **Launcher asset/registry** registers enabled `YAS_OPHANIM_box` instances.
-  **Implemented; NOT YET REVIEWED.** The server initializes it every run.
+  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE (refined; covered).** The
+  server initializes it every run and rejects client-originated internal
+  registration calls.
 * **Shell tasks/assignment** deduplicate threats, select in-range launchers,
-  schedule launcher spacing, and retry within shot limits. **Implemented; NOT
-  YET REVIEWED.** Concurrency and stale tasks are architectural risks.
+  schedule launcher spacing, and retry within shot limits. **REVIEWED / REFINE
+  BEFORE PERMANENT COVERAGE (refined; covered).** Distinct concurrent threats
+  are proven and exhausted work now retires after active monitors finish.
 * **Interceptor/terminal monitoring** creates a Jian missile, guides/monitors
-  it, detonates near the shell, and records retry/end reasons. **Implemented;
-  NOT YET REVIEWED.** No causal physical proof exists.
+  it, detonates near the shell, and records retry/end reasons. **REVIEWED /
+  SPECIFICATION COVERED.** A same-native-threat A/B proves disabled impact and
+  exact enabled interception with an independently sampled physical missile.
 * **Range setting/launch audio** expose CBA configuration and randomized sound.
-  **Implemented; NOT YET REVIEWED.** Audible proof needs opt-in audio capture.
+  **PARTIALLY REVIEWED.** The out-of-range physical control is covered; audible
+  output remains unproven because autonomous clients use `-noSound`.
+
+Permanent scenario: `advsys-iron-dome`.  Full analysis:
+[`advanced-systems-iron-dome-review.md`](advanced-systems-iron-dome-review.md).
 
 ### 2.4 Common Advanced Systems utilities
 
@@ -575,7 +583,8 @@ coverage.
 | CBR confirmed-origin persistence | **REVIEWED / DEFERRED** | confirmed fix never expires; decay policy undecided |
 | CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; re-warning for a walking barrage undecided |
 | CBR module/Zeus activation | **NOT YET REVIEWED** | lifecycle covered through the API, not real module/curator paths |
-| Iron Dome | **NOT YET REVIEWED** | active server subsystem, no causal proof |
+| Iron Dome client-owned artillery | **REVIEWED / DEFERRED** | current server handler deliberately rejects non-server-local shells; no owner-routing product policy is chosen |
+| Iron Dome threat policy/audio | **REVIEWED / DEFERRED** | friendly/outgoing versus protected-impact-area filtering is undecided; audio is unproven under `-noSound` |
 | Fabricator delivery mass cap | **REVIEWED / OPEN DEFECT** | a fabricated crate reported `getMass = 1e-12` across six runs, so the carryability cap never fires; those runs were over water and it has not been re-measured on land |
 | Fabricator placement suitability | **REVIEWED / NEEDS EXPERIMENTATION** | delivery is bounded to the recipient; water/gradient/obstruction unproven |
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
@@ -588,10 +597,7 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **OPHANIM / Iron Dome.** Always-started server subsystem with physical
-   interceptors, concurrent assignment, retries, and stale-task risk; reuses
-   artillery/projectile/combat evidence, and now the generic marker observer.
-2. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
+1. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
    user-visible and multiplayer-sensitive; separate UAV profile, IED, mortar,
    and grenade contracts during review.
 

@@ -17,6 +17,15 @@ YAS_IRONDOME_VERTICAL_LAUNCH_SPEED = 350;
 YAS_IRONDOME_LAUNCH_SPACING = 4;
 YAS_IRONDOME_ASSIGNMENT_WINDOW = 0.5;
 YAS_IRONDOME_LAUNCH_SOUNDS = ["YAS_OphanimReload1", "YAS_OphanimReload2"];
+YAS_IRONDOME_EVENT_LIMIT = 64;
+YAS_IRONDOME_AUDIT_LIMIT = 128;
+
+// All consequential Iron Dome work is server-internal.  Global SQF function
+// names are transport surfaces in an unrestricted Arma mission, so a server
+// guard alone does not distinguish the mission event/dispatcher from a client
+// remoteExec.  Each machine compiles a different unpublished capability; only
+// the server's event path and workers ever receive the authoritative value.
+localNamespace setVariable ["YAS_IRONDOME_TOKEN", format ["yas-iron-%1-%2-%3", diag_tickTime, random 1e9, random 1e9]];
 
 if (isNil "YAS_IRONDOME_REGISTRY") then {
     YAS_IRONDOME_REGISTRY = [];
@@ -40,6 +49,56 @@ if (isNil "YAS_IRONDOME_DISPATCHER_HANDLE") then {
     YAS_IRONDOME_DISPATCHER_HANDLE = scriptNull;
 };
 
+YAS_fnc_ironDomeAudit = {
+    params ["_token", "_operation", "_decision", ["_owner", -1], ["_detail", ""]];
+    if (_token isNotEqualTo (localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""])) exitWith {};
+    private _rows = missionNamespace getVariable ["YAS_IRONDOME_AUDIT", []];
+    _rows pushBack [diag_tickTime, _operation, _decision, _owner, _detail];
+    if ((count _rows) > YAS_IRONDOME_AUDIT_LIMIT) then {
+        _rows deleteRange [0, (count _rows) - YAS_IRONDOME_AUDIT_LIMIT];
+    };
+    missionNamespace setVariable ["YAS_IRONDOME_AUDIT", _rows, false];
+};
+
+YAS_fnc_ironDomeAuthorized = {
+    params ["_provided", "_operation"];
+    private _authoritative = localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""];
+    private _ok = isServer && {_authoritative isNotEqualTo ""} && {_provided isEqualTo _authoritative};
+    if (!_ok && {isServer}) then {
+        [_authoritative, _operation, "token-rejected", remoteExecutedOwner] call YAS_fnc_ironDomeAudit;
+    };
+    _ok
+};
+
+YAS_fnc_ironDomeObjectUid = {
+    params ["_object", "_prefix", ["_token", "", [""]]];
+    if !([_token, "object-uid"] call YAS_fnc_ironDomeAuthorized) exitWith {""};
+    if (isNull _object) exitWith {""};
+    private _uid = _object getVariable ["YAS_ironDome_uid", ""];
+    if (_uid isEqualTo "") then {
+        private _networkId = netId _object;
+        _uid = if (_networkId isNotEqualTo "" && {_networkId isNotEqualTo "0:0"}) then {
+            format ["%1-net-%2", _prefix, _networkId]
+        } else {
+            format ["%1-%2-%3", _prefix, round (diag_tickTime * 1000), floor random 1e9]
+        };
+        _object setVariable ["YAS_ironDome_uid", _uid, true];
+    };
+    _uid
+};
+
+YAS_fnc_ironDomeRecordEvent = {
+    params ["_token", "_event"];
+    if !([_token, "record-event"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
+    private _events = missionNamespace getVariable ["YAS_IRONDOME_ENGAGEMENT_EVENTS", []];
+    _events pushBack _event;
+    if ((count _events) > YAS_IRONDOME_EVENT_LIMIT) then {
+        _events deleteRange [0, (count _events) - YAS_IRONDOME_EVENT_LIMIT];
+    };
+    missionNamespace setVariable ["YAS_IRONDOME_ENGAGEMENT_EVENTS", _events, true];
+    true
+};
+
 YAS_fnc_ironDomeLog = {
     params ["_msg"];
     private _line = format ["[Iron Dome] %1", _msg];
@@ -60,7 +119,8 @@ YAS_fnc_ironDomeGetAssignmentWindow = {
 };
 
 YAS_fnc_ironDomeCleanupRegistry = {
-    if (!isServer) exitWith {[]};
+    params ["_token"];
+    if !([_token, "cleanup-registry"] call YAS_fnc_ironDomeAuthorized) exitWith {[]};
 
     if (isNil "YAS_IRONDOME_REGISTRY") then {
         YAS_IRONDOME_REGISTRY = [];
@@ -77,7 +137,8 @@ YAS_fnc_ironDomeCleanupRegistry = {
 };
 
 YAS_fnc_ironDomeRefreshRegistry = {
-    if (!isServer) exitWith {[]};
+    params ["_token"];
+    if !([_token, "refresh-registry"] call YAS_fnc_ironDomeAuthorized) exitWith {[]};
 
     if (isNil "YAS_IRONDOME_REGISTRY") then {
         YAS_IRONDOME_REGISTRY = [];
@@ -89,13 +150,13 @@ YAS_fnc_ironDomeRefreshRegistry = {
         };
     } forEach (entities YAS_IRONDOME_BOX_CLASS);
 
-    call YAS_fnc_ironDomeCleanupRegistry
+    [_token] call YAS_fnc_ironDomeCleanupRegistry
 };
 
 YAS_fnc_ironDomeRegisterBox = {
-    params [["_box", objNull, [objNull]]];
+    params [["_box", objNull, [objNull]], ["_token", "", [""]]];
 
-    if (!isServer) exitWith {false};
+    if !([_token, "register-box"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
     if (isNull _box) exitWith {false};
     if !(_box isKindOf YAS_IRONDOME_BOX_CLASS) exitWith {false};
 
@@ -117,8 +178,9 @@ YAS_fnc_ironDomeRegisterBox = {
 };
 
 YAS_fnc_ironDomePlayLaunchSound = {
-    params [["_launcher", objNull, [objNull]]];
+    params [["_launcher", objNull, [objNull]], ["_token", "", [""]]];
 
+    if !([_token, "play-launch-sound"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
     if (isNull _launcher) exitWith {false};
 
     private _soundName = selectRandom YAS_IRONDOME_LAUNCH_SOUNDS;
@@ -145,10 +207,12 @@ YAS_fnc_ironDomeCreateTask = {
     params [
         ["_shell", objNull, [objNull]],
         ["_source", objNull, [objNull]],
-        ["_ammo", "", [""]]
+        ["_ammo", "", [""]],
+        ["_token", "", [""]]
     ];
 
-    if (!isServer || {isNull _shell}) exitWith {createHashMap};
+    if !([_token, "create-task"] call YAS_fnc_ironDomeAuthorized) exitWith {createHashMap};
+    if (isNull _shell) exitWith {createHashMap};
 
     private _existing = [_shell] call YAS_fnc_ironDomeFindTaskForShell;
     if ((count _existing) > 0) exitWith {_existing};
@@ -163,7 +227,9 @@ YAS_fnc_ironDomeCreateTask = {
         ["assignedLauncher", objNull],
         ["scheduledLaunchAt", -1],
         ["waitingForCoverageLogged", false],
-        ["waitingForSlotLogged", false]
+        ["waitingForSlotLogged", false],
+        ["activeAttempts", 0],
+        ["shellUid", [_shell, "shell", _token] call YAS_fnc_ironDomeObjectUid]
     ];
 
     YAS_IRONDOME_TASKS pushBack _task;
@@ -171,7 +237,8 @@ YAS_fnc_ironDomeCreateTask = {
 };
 
 YAS_fnc_ironDomeCleanupTasks = {
-    if (!isServer) exitWith {[]};
+    params ["_token"];
+    if !([_token, "cleanup-tasks"] call YAS_fnc_ironDomeAuthorized) exitWith {[]};
 
     private _keep = [];
 
@@ -179,11 +246,20 @@ YAS_fnc_ironDomeCleanupTasks = {
         private _task = _x;
         private _shell = _task getOrDefault ["shell", objNull];
 
-        if (!isNull _shell && {!(_shell getVariable ["YAS_ironDome_hit", false])}) then {
+        private _exhausted = (_task getOrDefault ["attempts", 0]) >= YAS_IRONDOME_MAX_SHOTS
+            && {(_task getOrDefault ["activeAttempts", 0]) <= 0};
+        if (!isNull _shell && {!(_shell getVariable ["YAS_ironDome_hit", false])} && {!_exhausted}) then {
             _keep pushBack _task;
         } else {
             if (!isNull _shell) then {
                 _shell setVariable ["YAS_ironDome_controllerActive", false];
+            };
+            if (_exhausted) then {
+                [_token, [
+                    _task getOrDefault ["shellUid", ""], "", "", "exhausted",
+                    _task getOrDefault ["attempts", 0], -1, diag_tickTime,
+                    _task getOrDefault ["ammo", ""], true, true
+                ]] call YAS_fnc_ironDomeRecordEvent;
             };
         };
     } forEach YAS_IRONDOME_TASKS;
@@ -195,10 +271,12 @@ YAS_fnc_ironDomeCleanupTasks = {
 YAS_fnc_ironDomeGetLauncherCandidatesForTask = {
     params [
         ["_task", createHashMap],
-        ["_launchAvailability", [], [[]]]
+        ["_launchAvailability", [], [[]]],
+        ["_token", "", [""]]
     ];
 
-    if (!isServer || {(count _task) <= 0}) exitWith {[]};
+    if !([_token, "launcher-candidates"] call YAS_fnc_ironDomeAuthorized) exitWith {[]};
+    if ((count _task) <= 0) exitWith {[]};
 
     private _shell = _task getOrDefault ["shell", objNull];
     if (isNull _shell) exitWith {[]};
@@ -223,7 +301,7 @@ YAS_fnc_ironDomeGetLauncherCandidatesForTask = {
 
             _candidates pushBack [_launcher, _candidateLaunchAt, _shellDistance];
         };
-    } forEach (call YAS_fnc_ironDomeRefreshRegistry);
+    } forEach ([_token] call YAS_fnc_ironDomeRefreshRegistry);
 
     _candidates
 };
@@ -231,10 +309,12 @@ YAS_fnc_ironDomeGetLauncherCandidatesForTask = {
 YAS_fnc_ironDomeSelectLauncherForTask = {
     params [
         ["_task", createHashMap],
-        ["_launchAvailability", [], [[]]]
+        ["_launchAvailability", [], [[]]],
+        ["_token", "", [""]]
     ];
 
-    private _candidates = [_task, _launchAvailability] call YAS_fnc_ironDomeGetLauncherCandidatesForTask;
+    if !([_token, "select-launcher"] call YAS_fnc_ironDomeAuthorized) exitWith {[objNull, -1, -1, 0]};
+    private _candidates = [_task, _launchAvailability, _token] call YAS_fnc_ironDomeGetLauncherCandidatesForTask;
     private _bestLauncher = objNull;
     private _bestLaunchAt = 1e10;
     private _bestDistance = 1e10;
@@ -260,7 +340,8 @@ YAS_fnc_ironDomeSelectLauncherForTask = {
 };
 
 YAS_fnc_ironDomeAssignTasks = {
-    if (!isServer) exitWith {false};
+    params ["_token"];
+    if !([_token, "assign-tasks"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
 
     private _launchAvailability = [];
     {
@@ -269,7 +350,7 @@ YAS_fnc_ironDomeAssignTasks = {
             ((_x getVariable ["YAS_ironDome_nextLaunchAt", -1]) max serverTime)
         ];
         _x setVariable ["YAS_ironDome_taskedShell", objNull, true];
-    } forEach (call YAS_fnc_ironDomeRefreshRegistry);
+    } forEach ([_token] call YAS_fnc_ironDomeRefreshRegistry);
 
     {
         private _task = _x;
@@ -284,7 +365,7 @@ YAS_fnc_ironDomeAssignTasks = {
             && {(_task getOrDefault ["attempts", 0]) < YAS_IRONDOME_MAX_SHOTS}
             && {(_task getOrDefault ["nextAttemptAt", 0]) <= serverTime}
         ) then {
-            private _selection = [_task, _launchAvailability] call YAS_fnc_ironDomeSelectLauncherForTask;
+            private _selection = [_task, _launchAvailability, _token] call YAS_fnc_ironDomeSelectLauncherForTask;
             _selection params [
                 ["_launcher", objNull, [objNull]],
                 ["_scheduledLaunchAt", -1, [0]],
@@ -356,7 +437,8 @@ YAS_fnc_ironDomeAssignTasks = {
 };
 
 YAS_fnc_ironDomeExecuteAssignedTasks = {
-    if (!isServer) exitWith {false};
+    params ["_token"];
+    if !([_token, "execute-tasks"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
 
     {
         private _task = _x;
@@ -399,7 +481,7 @@ YAS_fnc_ironDomeExecuteAssignedTasks = {
                     ]
                 ] call YAS_fnc_ironDomeLog;
 
-                private _missile = [_launcher, _shell] call YAS_fnc_ironDomeSpawnMissile;
+                private _missile = [_launcher, _shell, _token] call YAS_fnc_ironDomeSpawnMissile;
                 if (isNull _missile) then {
                     [
                         format [
@@ -411,7 +493,15 @@ YAS_fnc_ironDomeExecuteAssignedTasks = {
                     ] call YAS_fnc_ironDomeLog;
                 } else {
                     _launcher setVariable ["YAS_ironDome_interceptCount", (_launcher getVariable ["YAS_ironDome_interceptCount", 0]) + 1, true];
-                    [_launcher, _missile, _shell, _task getOrDefault ["source", objNull], _attempt] spawn YAS_fnc_ironDomeMonitorIntercept;
+                    _task set ["activeAttempts", (_task getOrDefault ["activeAttempts", 0]) + 1];
+                    [_token, [
+                        _task getOrDefault ["shellUid", ""],
+                        [_launcher, "launcher", _token] call YAS_fnc_ironDomeObjectUid,
+                        [_missile, "interceptor", _token] call YAS_fnc_ironDomeObjectUid,
+                        "launched", _attempt, _launcher distance _shell, diag_tickTime,
+                        _task getOrDefault ["ammo", ""], local _shell, local _missile
+                    ]] call YAS_fnc_ironDomeRecordEvent;
+                    [_launcher, _missile, _shell, _task getOrDefault ["source", objNull], _attempt, _task, _token] spawn YAS_fnc_ironDomeMonitorIntercept;
                 };
             };
         };
@@ -421,18 +511,20 @@ YAS_fnc_ironDomeExecuteAssignedTasks = {
 };
 
 YAS_fnc_ironDomeEnsureDispatcher = {
-    if (!isServer) exitWith {false};
+    params ["_token"];
+    if !([_token, "ensure-dispatcher"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
 
     if (!isNil "YAS_IRONDOME_DISPATCHER_HANDLE" && {!scriptDone YAS_IRONDOME_DISPATCHER_HANDLE}) exitWith {true};
 
-    YAS_IRONDOME_DISPATCHER_HANDLE = [] spawn {
+    YAS_IRONDOME_DISPATCHER_HANDLE = [_token] spawn {
+        params ["_token"];
         while {YAS_IRONDOME_SERVER_READY} do {
-            call YAS_fnc_ironDomeRefreshRegistry;
-            call YAS_fnc_ironDomeCleanupTasks;
+            [_token] call YAS_fnc_ironDomeRefreshRegistry;
+            [_token] call YAS_fnc_ironDomeCleanupTasks;
 
             if !((count YAS_IRONDOME_TASKS) isEqualTo 0) then {
-                call YAS_fnc_ironDomeAssignTasks;
-                call YAS_fnc_ironDomeExecuteAssignedTasks;
+                [_token] call YAS_fnc_ironDomeAssignTasks;
+                [_token] call YAS_fnc_ironDomeExecuteAssignedTasks;
             };
 
             sleep 0.1;
@@ -446,9 +538,11 @@ YAS_fnc_ironDomeEnsureDispatcher = {
 YAS_fnc_ironDomeSpawnMissile = {
     params [
         ["_launcher", objNull, [objNull]],
-        ["_shell", objNull, [objNull]]
+        ["_shell", objNull, [objNull]],
+        ["_token", "", [""]]
     ];
 
+    if !([_token, "spawn-missile"] call YAS_fnc_ironDomeAuthorized) exitWith {objNull};
     if (isNull _launcher || {isNull _shell}) exitWith {objNull};
     if (YAS_IRONDOME_MANUAL_CONTROL <= 0) exitWith {objNull};
 
@@ -462,8 +556,10 @@ YAS_fnc_ironDomeSpawnMissile = {
     _missile setPosASL _spawnPosASL;
     _missile setVectorDirAndUp [[0, 0, 1], [0, 1, 0]];
     _missile setVelocity [0, 0, YAS_IRONDOME_VERTICAL_LAUNCH_SPEED];
+    [_launcher, "launcher", _token] call YAS_fnc_ironDomeObjectUid;
+    [_missile, "interceptor", _token] call YAS_fnc_ironDomeObjectUid;
 
-    [_launcher] call YAS_fnc_ironDomePlayLaunchSound;
+    [_launcher, _token] call YAS_fnc_ironDomePlayLaunchSound;
 
     [_missile, _shell] spawn {
         params ["_missile", "_shell"];
@@ -497,11 +593,31 @@ YAS_fnc_ironDomeMonitorIntercept = {
         ["_missile", objNull, [objNull]],
         ["_shell", objNull, [objNull]],
         ["_source", objNull, [objNull]],
-        ["_attemptIndex", 1, [0]]
+        ["_attemptIndex", 1, [0]],
+        ["_task", createHashMap],
+        ["_token", "", [""]]
     ];
 
-    if (isNull _launcher || {isNull _missile} || {isNull _shell}) exitWith {false};
+    if !([_token, "monitor-intercept"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
+    if (isNull _launcher || {isNull _missile} || {isNull _shell}) exitWith {
+        _task set ["activeAttempts", ((_task getOrDefault ["activeAttempts", 1]) - 1) max 0];
+        [_token, [
+            _task getOrDefault ["shellUid", ""],
+            [_launcher, "launcher", _token] call YAS_fnc_ironDomeObjectUid,
+            [_missile, "interceptor", _token] call YAS_fnc_ironDomeObjectUid,
+            "monitor-input-null", _attemptIndex, -1, diag_tickTime,
+            _task getOrDefault ["ammo", ""], !isNull _shell && {local _shell},
+            !isNull _missile && {local _missile}
+        ]] call YAS_fnc_ironDomeRecordEvent;
+        false
+    };
 
+    private _launcherUid = [_launcher, "launcher", _token] call YAS_fnc_ironDomeObjectUid;
+    private _missileUid = [_missile, "interceptor", _token] call YAS_fnc_ironDomeObjectUid;
+    private _shellUid = [_shell, "shell", _token] call YAS_fnc_ironDomeObjectUid;
+    private _ammo = _task getOrDefault ["ammo", ""];
+    private _shellLocal = local _shell;
+    private _missileLocal = local _missile;
     private _success = false;
     private _closestDistance = 1e10;
     private _nextReportAt = time;
@@ -559,6 +675,11 @@ YAS_fnc_ironDomeMonitorIntercept = {
     };
 
     if (!_success) exitWith {
+        _task set ["activeAttempts", ((_task getOrDefault ["activeAttempts", 1]) - 1) max 0];
+        [_token, [
+            _shellUid, _launcherUid, _missileUid, _endReason, _attemptIndex,
+            _closestDistance, diag_tickTime, _ammo, _shellLocal, _missileLocal
+        ]] call YAS_fnc_ironDomeRecordEvent;
         if (!isNull _missile) then {
             [
                 format [
@@ -578,6 +699,11 @@ YAS_fnc_ironDomeMonitorIntercept = {
 
     _launcher setVariable ["YAS_ironDome_successCount", (_launcher getVariable ["YAS_ironDome_successCount", 0]) + 1, true];
     _shell setVariable ["YAS_ironDome_hit", true];
+    _task set ["activeAttempts", ((_task getOrDefault ["activeAttempts", 1]) - 1) max 0];
+    [_token, [
+        _shellUid, _launcherUid, _missileUid, "intercepted", _attemptIndex,
+        _closestDistance, diag_tickTime, _ammo, _shellLocal, _missileLocal
+    ]] call YAS_fnc_ironDomeRecordEvent;
 
     private _shellPosATL = if (!isNull _shell) then {getPosATL _shell} else {getPosATL _source};
     "HelicopterExploSmall" createVehicle (_shellPosATL vectorAdd [0, 0, 0.1]);
@@ -606,12 +732,12 @@ YAS_fnc_ironDomeMonitorIntercept = {
 };
 
 YAS_fnc_ironDomeHandleShellFired = {
-    params ["_vehicle", "_ammo", "_shell"];
+    params ["_vehicle", "_ammo", "_shell", ["_token", "", [""]]];
 
-    if (!isServer) exitWith {false};
+    if !([_token, "handle-shell-fired"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
     if (isNull _shell) exitWith {false};
 
-    private _registry = call YAS_fnc_ironDomeRefreshRegistry;
+    private _registry = [_token] call YAS_fnc_ironDomeRefreshRegistry;
     if (_registry isEqualTo []) exitWith {false};
 
     if (!local _shell) exitWith {
@@ -641,13 +767,14 @@ YAS_fnc_ironDomeHandleShellFired = {
         ]
     ] call YAS_fnc_ironDomeLog;
 
-    [_shell, _vehicle, _ammo] call YAS_fnc_ironDomeCreateTask;
-    call YAS_fnc_ironDomeEnsureDispatcher;
+    [_shell, _vehicle, _ammo, _token] call YAS_fnc_ironDomeCreateTask;
+    [_token] call YAS_fnc_ironDomeEnsureDispatcher;
     true
 };
 
 YAS_fnc_ironDomeEnsureArtilleryEH = {
-    if (!isServer) exitWith {false};
+    params ["_token"];
+    if !([_token, "ensure-artillery-eh"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
 
     if (isNil "YAS_IRONDOME_ARTY_EH_ID") then {
         YAS_IRONDOME_ARTY_EH_ID = -1;
@@ -657,7 +784,7 @@ YAS_fnc_ironDomeEnsureArtilleryEH = {
 
     YAS_IRONDOME_ARTY_EH_ID = addMissionEventHandler ["ArtilleryShellFired", {
         params ["_vehicle", "_weapon", "_ammo", "_gunner", "_instigator", "_artilleryTarget", "_targetPosition", "_shell"];
-        [_vehicle, _ammo, _shell] call YAS_fnc_ironDomeHandleShellFired;
+        [_vehicle, _ammo, _shell, localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""]] call YAS_fnc_ironDomeHandleShellFired;
     }];
 
     ["server ArtilleryShellFired listener installed for Iron Dome."] call YAS_fnc_ironDomeLog;
@@ -670,13 +797,16 @@ YAS_fnc_ironDomeInitServer = {
 
     YAS_IRONDOME_MANUAL_CONTROL = getNumber (configFile >> "CfgAmmo" >> YAS_IRONDOME_MISSILE_CLASS >> "manualControl");
     YAS_IRONDOME_SERVER_READY = true;
-    call YAS_fnc_ironDomeRefreshRegistry;
-    call YAS_fnc_ironDomeCleanupTasks;
-    call YAS_fnc_ironDomeEnsureArtilleryEH;
-    call YAS_fnc_ironDomeEnsureDispatcher;
+    private _token = localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""];
+    missionNamespace setVariable ["YAS_IRONDOME_ENGAGEMENT_EVENTS", [], true];
+    missionNamespace setVariable ["YAS_IRONDOME_AUDIT", [], false];
+    [_token] call YAS_fnc_ironDomeRefreshRegistry;
+    [_token] call YAS_fnc_ironDomeCleanupTasks;
+    [_token] call YAS_fnc_ironDomeEnsureArtilleryEH;
+    [_token] call YAS_fnc_ironDomeEnsureDispatcher;
 
     {
-        [_x] call YAS_fnc_ironDomeRegisterBox;
+        [_x, _token] call YAS_fnc_ironDomeRegisterBox;
     } forEach (entities YAS_IRONDOME_BOX_CLASS);
 
     if (YAS_IRONDOME_ENTITY_CREATED_EH_ID < 0) then {
@@ -684,7 +814,7 @@ YAS_fnc_ironDomeInitServer = {
             params ["_entity"];
 
             if (_entity isKindOf YAS_IRONDOME_BOX_CLASS) then {
-                [_entity] call YAS_fnc_ironDomeRegisterBox;
+                [_entity, localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""]] call YAS_fnc_ironDomeRegisterBox;
             };
         }];
     };
@@ -692,8 +822,8 @@ YAS_fnc_ironDomeInitServer = {
     [
         format [
             "Iron Dome server init complete. registeredOphanim=%1 queuedTasks=%2 manualControl=%3",
-            count (call YAS_fnc_ironDomeRefreshRegistry),
-            count (call YAS_fnc_ironDomeCleanupTasks),
+            count ([_token] call YAS_fnc_ironDomeRefreshRegistry),
+            count ([_token] call YAS_fnc_ironDomeCleanupTasks),
             YAS_IRONDOME_MANUAL_CONTROL
         ]
     ] call YAS_fnc_ironDomeLog;
