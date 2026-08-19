@@ -13,7 +13,7 @@ decisions remain in each canonical feature review and the feature inventory.
 | Vigil homepage task management | REVIEWED / DEFERRED | `902d0f5` | none; unreachable static scaffold | whether page ships; task visibility, cancellation authority/history/finalization | no implementation until product decisions exist |
 | Field Utilities towing | REVIEWED / REFINE BEFORE COVERAGE | `dd7a310` | none; static boundary review | eligibility/authority, feature-owned ropes, parent/breakage/finalization policy; physical locality A/B | decide contract, then run exact ACE tow/stow and paired-trajectory experiment |
 | Vigil helicopter stabilizer | REVIEWED / NEEDS EXPERIMENTATION | `ead2d3e` | retained `20260813T184341Z-317a1605`, `20260816T151957Z-c7e7de23` reach force path; no causal A/B | enabled policy/outcome bound/owner scope; matched flights and cancellation/terrain controls | run paired enabled/disabled transport experiment after product outcome decision |
+| Tribunal manifest discovery | ACCEPTED / COVERED | `146cd38` | static CLI lists all 12 runtime product scenarios; 104 tests pass | none | retain independent manifest/runtime parity regression |
 
-Current reviewed-feature HEAD: `ead2d3e`. Next recommended feature:
-**Tribunal project-manifest discovery parity**, followed by the shipped Vigil
-laser diagnostic boundary.
+Current feature HEAD: `146cd38`. Next recommended feature: **Vigil developer
+laser harness**, followed by automatic object handling / nearby supply loading.
