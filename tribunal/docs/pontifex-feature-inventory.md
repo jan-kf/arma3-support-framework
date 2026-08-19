@@ -595,7 +595,7 @@ coverage.
 | CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
 | CBR confirmed-origin persistence | **REVIEWED / DEFERRED** | confirmed fix never expires; decay policy undecided |
 | CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; re-warning for a walking barrage undecided |
-| CBR module/Zeus activation | **NOT YET REVIEWED** | lifecycle covered through the API, not real module/curator paths |
+| CBR module/Zeus activation | **REVIEWED / REFINE BEFORE COVERAGE** | real framework dispatch/locality and curator authority need one controlled module-path experiment |
 | Iron Dome client-owned artillery | **REVIEWED / DEFERRED** | current server handler deliberately rejects non-server-local shells; no owner-routing product policy is chosen |
 | Iron Dome threat policy/audio | **REVIEWED / DEFERRED** | friendly/outgoing versus protected-impact-area filtering is undecided; audio is unproven under `-noSound` |
 | Fabricator delivery mass cap | **REVIEWED / OPEN DEFECT** | a fabricated crate reported `getMass = 1e-12` across six runs, so the carryability cap never fires; those runs were over water and it has not been re-measured on land |
@@ -610,12 +610,12 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **Advanced Systems CBR Eden/Zeus activation.** It is the narrowest module
-   surface with an accepted downstream oracle and can establish the generic
-   module-dispatch evidence boundary.
+1. **Vigil homepage task management.** Static reconnaissance indicates an
+   unreachable, data-incompatible scaffold suitable for a quick terminal review.
 
-Then consider APS module activation, the reviewed-but-uncovered CORDIS decision
-matrix, suite editor/Zeus modules, and towing. APS anti-drone is now
+Then consider the reviewed CBR module experiment, APS module activation, the
+reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
+towing. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product
 decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume
