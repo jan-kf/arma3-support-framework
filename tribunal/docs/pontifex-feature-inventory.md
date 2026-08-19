@@ -45,7 +45,7 @@ Five top-level runtime families are present:
 
 | Family | Purpose | Primary locations | Overall state | Coverage summary |
 | --- | --- | --- | --- | --- |
-| CORDIS shared runtime | Authority routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Implemented, with reserved bootstrap files | **NOT YET REVIEWED**; heavily exercised incidentally |
+| CORDIS shared runtime | Locality routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Implemented, with reserved bootstrap files | **REVIEWED / REFINE BEFORE COVERAGE**; trust, result, and key semantics remain undecided |
 | Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS, Counter Battery Radar, and Iron Dome strong; APS anti-drone remains uncovered |
 | Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
 | Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fixed-wing logistics and the reviewed Bridge Builder core |
@@ -61,37 +61,43 @@ locations are `source/core/addons/CORDIS/config.cpp` and `functions/`.
 
 ### 1.1 Authority-aware execution
 
-* **Server routing** calls a named function locally when authoritative or sends
-  it to owner `2`. **Implemented; NOT YET REVIEWED.** Vigil transport/CAS/task
-  management exercise it incidentally.
+* **Server routing** calls a named function locally on the server or sends it to
+  owner `2`. **Implemented; REVIEWED / REFINE BEFORE COVERAGE.** Routing is not
+  an authorization or completion boundary.
 * **Object-owner routing** executes on the machine local to a projectile,
-  vehicle, UAV, or cargo object. **Implemented; NOT YET REVIEWED.** APS, Vigil
-  strike, FPV actions, and towing consume it.
-* **Group-owner routing** routes AI waypoint/group mutations to `groupOwner`.
-  **Implemented; NOT YET REVIEWED.** Vigil tasking consumes it.
-* **Once-only routed execution** combines authority routes with server TTL keys.
-  **Implemented; NOT YET REVIEWED.** Duplicate rejection is covered in Vigil
-  scenarios, but CORDIS itself is only an evidence dependency.
+  vehicle, UAV, or cargo object. **Implemented; REVIEWED / NEEDS
+  EXPERIMENTATION.** APS, Vigil strike, FPV actions, and towing consume it;
+  migration and terminal acknowledgment remain unproven.
+* **Group-owner routing** targets `groupOwner`, but the local shortcut tests the
+  unit instead of the group. **Implemented; REVIEWED / NEEDS EXPERIMENTATION.**
+* **Once-only routed execution** combines routes with server TTL keys.
+  **Implemented; REVIEWED / REFINE BEFORE COVERAGE.** Raw global keys may be
+  consumed before missing or undeliverable work; success does not prove
+  execution. Vigil's own guards do not prove the CORDIS contract.
 
-A future review should separate public routing guarantees from generic Arma
-ownership behavior already proven by Tribunal's `locality-probe`.
+The completed review separates locality from authorization and result meaning;
+see [`core-cordis-review.md`](core-cordis-review.md).
 
 ### 1.2 Deduplication and fan-out
 
-* **Server/local TTL caches** claim and prune once keys. **Implemented; NOT YET
-  REVIEWED.** The server cache underpins current public fan-out.
+* **Server/local TTL caches** claim and prune once keys. **Implemented; REVIEWED
+  / REFINE BEFORE COVERAGE.** Key namespace and failed-delivery semantics need
+  product decisions.
 * **Recipient resolution** handles all players, a side, a player object, or a
-  list while filtering dead/non-player units. **Implemented; NOT YET REVIEWED.**
+  list while filtering dead/non-player units. **Implemented; REVIEWED / NEEDS
+  EXPERIMENTATION.** Headless/JIP policy and heterogeneous input are unproven.
 * **Scoped emit** performs server-deduplicated dispatch to resolved recipients.
-  **Implemented; NOT YET REVIEWED.** Chat/radio wrappers use it.
+  **Implemented; REVIEWED / REFINE BEFORE COVERAGE.** It claims before target
+  resolution; curator notification broadens every empty scope to broadcast.
 
 ### 1.3 Feedback, diagnostics, and bootstrap
 
 * **Side chat/radio** provide setting-aware scoped messages, speaker
-  normalization, and `CfgRadio` lookup. **Implemented; NOT YET REVIEWED.** Audio
-  is not proven while automated clients use `-noSound`.
+  normalization, and `CfgRadio` lookup. **Implemented; REVIEWED / NEEDS
+  EXPERIMENTATION.** Audio is unproven under autonomous `-noSound` clients.
 * **Curator notifications** and **debug logging** provide deduplicated hints and
-  server-normalized logs/optional `systemChat`. **Implemented; NOT YET REVIEWED.**
+  server-normalized logs/optional `systemChat`. **Implemented; REVIEWED / REFINE
+  BEFORE COVERAGE.** Empty scoped curator targets currently broadcast globally.
 * **Server cache initialization** and **client initialized marker** are
   implemented and incidentally smoke-covered, not feature contracts.
 * `fn_initSettings.sqf` and `fn_utils.sqf` contain no behavior. **Scaffolded;
@@ -604,10 +610,12 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **CORDIS public routing/dedupe semantics.** Multiple accepted consumers now
-   depend on it, while its callable authority boundary remains incidental.
+1. **Advanced Systems CBR Eden/Zeus activation.** It is the narrowest module
+   surface with an accepted downstream oracle and can establish the generic
+   module-dispatch evidence boundary.
 
-Then consider suite editor/Zeus modules, and towing. APS anti-drone is now
+Then consider APS module activation, the reviewed-but-uncovered CORDIS decision
+matrix, suite editor/Zeus modules, and towing. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product
 decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume
