@@ -11,7 +11,8 @@ decisions remain in each canonical feature review and the feature inventory.
 | CORDIS routing/dedupe | REVIEWED / REFINE BEFORE COVERAGE | `7ac5d77` | none; accepted consumers incidental only | trust model, result semantics, key namespace, failed-delivery/recipient policy | decide API boundary, then run one-session routing/dedupe matrix |
 | CBR Eden/Zeus activation | REVIEWED / REFINE BEFORE COVERAGE | `35086f5` | none; downstream CBR baseline remains accepted | real module dispatch/locality, curator authority/feedback, Eden disposal | add typed module fixture; run Eden/no-Eden and curator authority A/B |
 | Vigil homepage task management | REVIEWED / DEFERRED | `902d0f5` | none; unreachable static scaffold | whether page ships; task visibility, cancellation authority/history/finalization | no implementation until product decisions exist |
+| Field Utilities towing | REVIEWED / REFINE BEFORE COVERAGE | `dd7a310` | none; static boundary review | eligibility/authority, feature-owned ropes, parent/breakage/finalization policy; physical locality A/B | decide contract, then run exact ACE tow/stow and paired-trajectory experiment |
 
-Current HEAD at ledger creation: `902d0f5`. Next recommended feature: **Field
-Utilities towing**, followed by the helicopter stabilizer and APS module
-activation reconnaissance already in flight.
+Current reviewed-feature HEAD: `dd7a310`. Next recommended feature:
+**Vigil helicopter stabilizer**, followed by project-manifest discovery parity
+and the shipped Vigil laser diagnostic boundary.
