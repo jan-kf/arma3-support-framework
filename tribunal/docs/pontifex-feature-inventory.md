@@ -251,8 +251,11 @@ Utilities for fixed-wing airdrop.
   and resets. **Implemented; COVERED** with real input/framebuffer/locality.
 * **Tabbed navigation** registers Home, Assets, and task views. **Implemented;
   PARTIALLY COVERED.** Visible artillery navigation is direct, not every page.
-* **Homepage task list** renders managers and navigates to a selected task.
-  **Implemented; NOT YET REVIEWED.** Task scenarios do not use this path.
+* **Homepage task management** is **REVIEWED / DEFERRED.** Its page and
+  registration are commented out; the client renderer rejects the server-local
+  manager shape; cancellation has no authoritative request or correct
+  finalization; visibility/authority/history policy is undecided. See
+  [`vigil-homepage-task-management-review.md`](vigil-homepage-task-management-review.md).
 
 ### 3.2 Asset discovery and whitelist
 
@@ -584,6 +587,7 @@ coverage.
 
 | Area | Classification | Repository-grounded reason |
 | --- | --- | --- |
+| Vigil homepage task management | **REVIEWED / DEFERRED** | unreachable commented page; incompatible client/server data shape and no authoritative cancellation contract |
 | Vigil reconnaissance | **REVIEWED / DEFERRED** | role/state only; unreachable form, no submit, empty task, no sensor/output/lifecycle |
 | Fixed-wing UAV deploy | **REVIEWED / NEEDS EXPERIMENTATION** | explicitly rejected as unstable |
 | Helicopter stabilizer | **UNKNOWN / disabled** | implementation exists; aircraft registration commented out |
@@ -610,12 +614,13 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **Vigil homepage task management.** Static reconnaissance indicates an
-   unreachable, data-incompatible scaffold suitable for a quick terminal review.
+1. **Field Utilities towing.** The reachable ACE path has no authoritative
+   transaction, discards rope identity, can destroy unrelated ropes and leaves
+   tow-parent cleanup unresolved.
 
 Then consider the reviewed CBR module experiment, APS module activation, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
-towing. APS anti-drone is now
+the helicopter stabilizer. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product
 decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume
