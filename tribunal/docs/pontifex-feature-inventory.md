@@ -471,14 +471,18 @@ Full analysis: [`field-utilities-bridge-builder-review.md`](field-utilities-brid
 ### 4.5 FPV/UAV field modifications
 
 * **Small-UAV profile** adds owner-local engine attach/detach, drag/carry, fuel,
-  and camouflage behavior. **Implemented; NOT YET REVIEWED.**
+  and camouflage behavior. **REVIEWED / NEEDS EXPERIMENTATION.** Owner-local
+  routing exists, but completion and owner/non-owner behavior are unproven.
 * **IED payload** attaches/detonates a charge and creates effects on UAV death.
-  **Implemented; NOT YET REVIEWED.** Destructive locality/collateral effects
-  need causal review.
+  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** Destructive functions do not
+  revalidate the requester at the owner; collateral causality is unproven.
 * **Mortar/grenade payloads** grant finite counts, create physical ordnance, and
-  decrement counts. **Implemented; NOT YET REVIEWED.** Impact, depletion,
-  duplicate, and ownership controls are uncovered.
+  decrement counts. **REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** Direct
+  calls can release absent/depleted payloads and underflow counts; physical
+  impact, duplicate, and ownership controls are unproven.
 * **Click/shuffle feedback** is **implemented; NOT YET REVIEWED**; audio unproven.
+
+Full analysis: [`field-utilities-fpv-review.md`](field-utilities-fpv-review.md).
 
 ### 4.6 Shared libraries
 
@@ -597,17 +601,20 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **FPV/UAV field modifications.** Destructive owner-local payload behavior is
-   user-visible and multiplayer-sensitive; separate UAV profile, IED, mortar,
-   and grenade contracts during review.
+1. **APS anti-drone.** Active experimental destructive behavior remains outside
+   the accepted projectile APS contract.
+2. **CORDIS public routing/dedupe semantics.** Multiple accepted consumers now
+   depend on it, while its callable authority boundary remains incidental.
 
-Then consider APS anti-drone, CORDIS public routing/dedupe semantics, suite
+Then consider suite
 editor/Zeus modules, and towing. Do not resume reconnaissance until the product
 decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume
 CBR marker scoping or confirmed-origin persistence until the product decisions
 in `advanced-systems-counter-battery-radar-review.md` are answered. Fabricator's
 product decisions are resolved and its accepted one-client contract is covered;
 its remaining experiments are listed in the backlog above.
+FPV/UAV refinement and its unresolved product choices are recorded in
+`field-utilities-fpv-review.md`; do not invent those policies during coverage.
 
 ## Evidence sources
 
