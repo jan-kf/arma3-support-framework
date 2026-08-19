@@ -487,11 +487,12 @@ Full analysis: [`field-utilities-object-handling-review.md`](field-utilities-obj
 * **ACE tow/stow actions** are registered on vehicles. **REVIEWED / REFINE
   BEFORE PERMANENT COVERAGE.** The path is reachable, but stow can destroy
   unrelated ropes and physical towing has no controlled causal proof.
-* **Four-point helicopter sling helper** computes lift corners and attaches/
-  stows ropes. **Implemented; UNKNOWN reachability** because no normal action
-  invoking it was found.
+* **Four-point helicopter sling helper** is **REVIEWED / DEFERRED**. It is a
+  compiled orphan with no supported caller; it destroys all helicopter ropes
+  before non-atomic local creation and has no authority/cleanup contract.
 
 Full analysis: [`field-utilities-towing-review.md`](field-utilities-towing-review.md).
+Sling analysis: [`field-utilities-helicopter-sling-review.md`](field-utilities-helicopter-sling-review.md).
 
 ### 4.5 FPV/UAV field modifications
 
@@ -628,15 +629,15 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Field object handling / supply loading | **REVIEWED / REFINE BEFORE COVERAGE** | contact attachment and explicit cargo loading conflate locality-sensitive paths without authority, exact result, or cleanup |
 | Field ID/location markers | **REVIEWED / DEFERRED** | no product caller; global marker authority/lifetime/cleanup undefined |
 | Field airdrop direction/ETA | **REVIEWED / NEEDS PRODUCT DECISION AND EXPERIMENTATION** | direction/audience/ETA interval undefined; current fall formula omits ingress and parachute descent |
-| Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |
+| Helicopter sling helper | **REVIEWED / DEFERRED** | compiled orphan; destructive all-rope stow, non-atomic creation, no supported entry/authority/cleanup |
 | Bridge direct extension | **DEFERRED** | helpers exist, but no reachable action or supported ownership contract was established |
 | Core settings/utils files | **Scaffolded / UNKNOWN** | reserved files contain no behavior |
 | Multi-client/JIP | **NOT YET REVIEWED** | one authenticated-client proof boundary |
 
 ## Prioritized next feature reviews
 
-1. **Field Utilities helicopter sling helper.** The compiled four-point helper
-   has no supported caller and shares the unresolved rope ownership lifecycle.
+1. **Vigil fixed-wing UAV disabled guard.** The UI rejects UAV deployment but
+   the authoritative deploy endpoint lacks the same guard.
 
 Then consider the reviewed CBR module experiment, APS module activation, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
