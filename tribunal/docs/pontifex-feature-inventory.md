@@ -339,8 +339,12 @@ Utilities for fixed-wing airdrop.
   covered; beam rendering/color/compatibility are **PARTIALLY COVERED**.
 * **3CB Hellfire mapping** has no qualifying installed pylon row for comparison.
   **Implemented-looking; REVIEWED / NEEDS EXPERIMENTATION.**
-* `fn_fwLaserTest.sqf` is substantial manual diagnostics with no normal product
-  action found. **Unclear; UNKNOWN.**
+* `fn_fwLaserTest.sqf` is substantial preInit developer diagnostics with no
+  normal product action. **REVIEWED / DEFERRED.** It bypasses the accepted
+  strike pipeline and exposes unbounded destructive execution/result storage;
+  remove, relocate, or capability-gate it before supported use.
+
+Full analysis: [`vigil-developer-laser-harness-review.md`](vigil-developer-laser-harness-review.md).
 
 ### 3.9 Fixed-wing logistics / aerial delivery
 
@@ -596,7 +600,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | 3CB Hellfire mapping | **REVIEWED / NEEDS EXPERIMENTATION** | no compatible installed pylon row for A/B |
 | VLS target handshake | **REVIEWED / NEEDS EXPERIMENTATION** | physical outcome covered; internal necessity unproven |
 | Transport hidden-pad landing | **REVIEWED / NEEDS EXPERIMENTATION** | landing works; exact mechanism necessity unproven |
-| Developer laser harness | **UNKNOWN** | substantive diagnostic code, no normal entry found |
+| Developer laser harness | **REVIEWED / DEFERRED** | unreachable preInit diagnostic; destructive owner-routed run and unbounded client-supplied result store lack a product boundary |
 | APS anti-drone | **REVIEWED / DEFERRED** | threat/side/operator policy is undecided; resource authority and destructive cleanup require refinement before coverage |
 | CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
 | CBR confirmed-origin persistence | **REVIEWED / DEFERRED** | confirmed fix never expires; decay policy undecided |
@@ -616,9 +620,9 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-1. **Vigil developer laser harness.** A shipped preInit diagnostic surface has
-   no normal product entry and exposes destructive test/result functions without
-   a defined authorization or retention boundary.
+1. **Field Utilities automatic object handling / nearby supply loading.** Active
+   hooks and ACE actions rely on implicit locality and lack exact result or
+   cleanup contracts.
 
 Then consider the reviewed CBR module experiment, APS module activation, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
