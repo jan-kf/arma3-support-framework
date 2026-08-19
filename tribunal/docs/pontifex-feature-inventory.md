@@ -594,7 +594,7 @@ coverage.
 | Vigil homepage task management | **REVIEWED / DEFERRED** | unreachable commented page; incompatible client/server data shape and no authoritative cancellation contract |
 | Vigil reconnaissance | **REVIEWED / DEFERRED** | role/state only; unreachable form, no submit, empty task, no sensor/output/lifecycle |
 | Fixed-wing UAV deploy | **REVIEWED / NEEDS EXPERIMENTATION** | explicitly rejected as unstable |
-| Helicopter stabilizer | **UNKNOWN / disabled** | implementation exists; aircraft registration commented out |
+| Helicopter stabilizer | **REVIEWED / NEEDS EXPERIMENTATION** | transport/RTB enrolls by default and retained runs reach the force path; matched flight causality, safety, and cancellation cleanup unproven |
 | 3CB Hellfire mapping | **REVIEWED / NEEDS EXPERIMENTATION** | no compatible installed pylon row for A/B |
 | VLS target handshake | **REVIEWED / NEEDS EXPERIMENTATION** | physical outcome covered; internal necessity unproven |
 | Transport hidden-pad landing | **REVIEWED / NEEDS EXPERIMENTATION** | landing works; exact mechanism necessity unproven |
@@ -618,8 +618,8 @@ coverage.
 
 ## Prioritized next feature reviews
 
-1. **Helicopter stabilizer.** It is mission-active through transport/RTB despite
-   the stale disabled label below; its causal effect and cleanup are unproven.
+1. **Tribunal project-manifest discovery parity.** The generic project manifest
+   omits Field Utilities and Vigil roots that the Pontifex runtime discovers.
 
 Then consider the reviewed CBR module experiment, APS module activation, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
