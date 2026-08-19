@@ -514,10 +514,17 @@ Full analysis: [`field-utilities-fpv-review.md`](field-utilities-fpv-review.md).
 * **Geometry/packing primitives** provide bounds, transforms, lift corners,
   orientations, and placement. **Implemented; PARTIALLY COVERED incidentally**
   by logistics, not standalone specification.
-* **Map helpers** provide ID/location markers, direction labels, and fall time.
-  **Implemented; NOT YET REVIEWED.** Overlap with Vigil leaves ownership unclear.
+* **ID/location marker helpers** are **REVIEWED / DEFERRED**: compiled global
+  scaffold with no normal caller; authority, visibility, labels, and cleanup
+  have no product contract.
+* **Airdrop direction/ETA feedback** is **REVIEWED / NEEDS PRODUCT DECISION AND
+  EXPERIMENTATION**. The live client announcement uses target-to-aircraft
+  bearing and altitude-only vacuum fall time at acceptance, which does not model
+  ingress or parachute descent.
 * **Sound, global ACE registration, debug/chat wrappers** are **implemented; NOT
   YET REVIEWED.** Current callers remain; do not label them dead.
+
+Full analysis: [`field-utilities-map-helpers-review.md`](field-utilities-map-helpers-review.md).
 
 ## 5. Cross-mod composition and integration
 
@@ -619,6 +626,8 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Fabricator staging depths | **REVIEWED / NEEDS EXPERIMENTATION** | underground staging and the settle tick have no retained controlled alternative |
 | Field towing | **REVIEWED / REFINE BEFORE COVERAGE** | client-owned, non-atomic rope lifecycle; exact physical/locality A/B and product policy required |
 | Field object handling / supply loading | **REVIEWED / REFINE BEFORE COVERAGE** | contact attachment and explicit cargo loading conflate locality-sensitive paths without authority, exact result, or cleanup |
+| Field ID/location markers | **REVIEWED / DEFERRED** | no product caller; global marker authority/lifetime/cleanup undefined |
+| Field airdrop direction/ETA | **REVIEWED / NEEDS PRODUCT DECISION AND EXPERIMENTATION** | direction/audience/ETA interval undefined; current fall formula omits ingress and parachute descent |
 | Helicopter sling helper | **UNKNOWN** | helper exists; no registered invocation found |
 | Bridge direct extension | **DEFERRED** | helpers exist, but no reachable action or supported ownership contract was established |
 | Core settings/utils files | **Scaffolded / UNKNOWN** | reserved files contain no behavior |
@@ -626,8 +635,8 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-1. **Field Utilities map helpers.** Ownership overlaps Vigil and standalone
-   behavior remains unreviewed.
+1. **Field Utilities helicopter sling helper.** The compiled four-point helper
+   has no supported caller and shares the unresolved rope ownership lifecycle.
 
 Then consider the reviewed CBR module experiment, APS module activation, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
