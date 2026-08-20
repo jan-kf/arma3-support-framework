@@ -229,10 +229,11 @@ and the disabled and stop controls.
 * **Marker sharing policy** publishes zone and origin markers globally while the
   radio warning is side-filtered. **Implemented; REVIEWED / DEFERRED** as an open
   product decision; no test asserts a preferred answer.
-* **Eden enable / Zeus toggle** start, stop, reset, and report the system.
-  **Implemented; PARTIALLY COVERED.** The start/stop lifecycle is directly
-  covered through the API; real module and curator activation are **NOT YET
-  REVIEWED**.
+* **Eden enable / Zeus toggle** is **REVIEWED / REFINE BEFORE PERMANENT
+  COVERAGE**. The accepted API proves the lifecycle tail, not authentic typed
+  module or curator dispatch. Exact class/requester authority, replay, feedback,
+  and own-logic cleanup remain unproven. See
+  [`advanced-systems-cbr-module-review.md`](advanced-systems-cbr-module-review.md).
 
 Full analysis:
 [`advanced-systems-counter-battery-radar-review.md`](advanced-systems-counter-battery-radar-review.md).
