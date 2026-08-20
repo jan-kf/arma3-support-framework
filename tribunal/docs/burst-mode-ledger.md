@@ -21,8 +21,9 @@ decisions remain in each canonical feature review and the feature inventory.
 | Vigil fixed-wing UAV deploy boundary | REFINED; ACCEPTED / COVERED | `f609419` | `20260819T235611Z-e6d9a2dc`; server 23/0, client 17/0 | physical UAV reconstruction/control and reconnaissance product remain deferred | retain authoritative rejection; next cover tablet access matrix |
 | Vigil tablet access | ACCEPTED / COVERED | `5e53728` | `20260820T000642Z-124746c4`; server 6/0, client 18/0 | itemless override cosmetic skin and fixed-wing override consistency are not access promises | retain data-first B/I/O/rejection/override matrix; characterize VLS handshake next |
 | Vigil VLS target handshake | REVIEWED / CHARACTERIZED | `96cdd4f` | Live `20260820T001108Z-c8edbbcc`; four direct-first physical A/B pairs; exact baseline `2:240` diverged and `2:248` terminated 0.74 m from target | individual report-versus-confirm necessity and ordering remain unisolated | retain combined handshake; require another physical A/B before simplifying it |
+| Advanced Systems common utilities | REVIEWED / DEFERRED AS STANDALONE; CONSUMER-OWNED | `f414463` | none; exhaustive static reachability and consumer map | beam/audio concurrency and audience only if a consumer promises them | keep helpers internal; test outcomes from each consumer entry |
 
-Current feature HEAD: `96cdd4f`. Accepted/covered or characterized in
+Current feature HEAD: `f414463`. Accepted/covered or characterized in
 this ledger: Iron Dome, Tribunal manifest parity, and authoritative fixed-wing
 UAV rejection, Vigil tablet access, and the VLS target-knowledge handshake.
 Reviewed/deferred or precisely bounded: FPV, APS anti-drone, CORDIS, CBR
