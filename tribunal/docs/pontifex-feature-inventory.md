@@ -232,9 +232,13 @@ Permanent scenario: `advsys-iron-dome`.  Full analysis:
 ### 2.4 Common Advanced Systems utilities
 
 Beam effects, positional helpers, server `say3D`, number-to-voice tokenization,
-and CORDIS-backed debug/radio/curator wrappers are **implemented; NOT YET
-REVIEWED standalone**. Review only when a consumer establishes user-visible
-behavior.
+and CORDIS-backed debug/radio/curator wrappers are **REVIEWED / DEFERRED AS A
+STANDALONE FEATURE; CONSUMER-OWNED**. They have no independent product entry or
+coherent standalone outcome. APS, CBR, Iron Dome, and module reviews own their
+respective user-visible semantics; incidental helper execution does not
+establish beam concurrency, audible output, or notification audience. Dead
+marker/beam helpers remain unpromised. See
+[`advanced-systems-common-utilities-review.md`](advanced-systems-common-utilities-review.md).
 
 ## 3. Vigil support tablet
 
