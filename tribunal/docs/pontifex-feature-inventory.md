@@ -420,8 +420,12 @@ Full analysis: [`vigil-developer-laser-harness-review.md`](vigil-developer-laser
 
 ### 3.11 Other Vigil support systems
 
-* **Helicopter stabilization** has sampling/force code, but aircraft registration
-  is commented out. **Disabled/unreachable; UNKNOWN.** Review intent first.
+* **Helicopter stabilization** is **REVIEWED / NEEDS EXPERIMENTATION**.
+  Broad automatic registration is commented out, but normal transport/RTB tasks
+  enroll aircraft by default and retained runs reach the force path. No matched
+  enabled/disabled flight proves a useful or safe causal effect; cancellation
+  cleanup and the hidden always-on default also remain unresolved. See
+  [`vigil-helicopter-stabilizer-review.md`](vigil-helicopter-stabilizer-review.md).
 * **Radio/chat/debug/curator feedback** wraps CORDIS. **REVIEWED / NEEDS
   PRODUCT DECISION; PRESENTATION EXPERIMENT DEFERRED.** Real task callers exist,
   but they default to all-live-player routing and curator empty-scope fallback;
@@ -641,12 +645,13 @@ airdrop. General fabrication is outside the contract.
 
 ### 5.4 Eden/Zeus and CBA configuration
 
-* APS/CBR, Vigil whitelist and fixed-wing Eden/Zeus activation remain
-  **implemented; NOT YET REVIEWED** unless separately linked above; their
-  scenarios call APIs rather than real synchronization/curator paths. Field
-  Utilities defines Virtual Storage and Fabricator Eden modules but no Zeus
-  activation tool; their module/authority boundary is reviewed separately in
-  [`field-utilities-eden-module-activation-review.md`](field-utilities-eden-module-activation-review.md).
+* APS and CBR Eden/Zeus activation, Vigil whitelist Eden/Zeus activation,
+  and Field Utilities Virtual Storage/Fabricator Eden activation are
+  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE** in their linked feature
+  reviews: accepted scenarios call lifecycle APIs and do not prove authentic
+  synchronization, curator transport, or authority. Field Utilities exposes no
+  Zeus tool. Vigil fixed-wing Eden/Zeus activation remains implemented but not
+  independently reviewed.
 * Cross-addon CBA setting declarations are **REFINED; ACCEPTED / COVERED**
   for 13 exact unique keys, types, defaults/bounds, global/local scope, live
   consumer handoff, and fallback parity. Iron Dome's fallback now matches its
