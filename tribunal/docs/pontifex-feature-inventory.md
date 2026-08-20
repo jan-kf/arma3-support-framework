@@ -288,8 +288,11 @@ Utilities for fixed-wing airdrop.
   rejects zero, out-of-range, and no-ammo requests. **Implemented; COVERED** by
   `vigil-artillery` for authority, trajectories, geometry, locality, and cleanup.
 * **VLS execution** launches vertically, guides, and reaches the target region.
-  **Implemented; COVERED.** Its target-report handshake is **REVIEWED / NEEDS
-  EXPERIMENTATION** because no retained A/B proves it engine-required.
+  **Implemented; COVERED.** Its combined target-report/confirmation handshake
+  is a **REVIEWED / CHARACTERIZED ENGINE REQUIREMENT**: four fresh direct-first
+  physical A/B pairs prove direct fire emits an unguided missile while the
+  handshake reaches the target region. See
+  [`vigil-vls-handshake-characterization.md`](vigil-vls-handshake-characterization.md).
 
 ### 3.5 Helicopter transport / reinsertion
 
@@ -618,7 +621,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Fixed-wing UAV deploy | **REVIEWED / NEEDS EXPERIMENTATION** | explicitly rejected as unstable |
 | Helicopter stabilizer | **REVIEWED / NEEDS EXPERIMENTATION** | transport/RTB enrolls by default and retained runs reach the force path; matched flight causality, safety, and cancellation cleanup unproven |
 | 3CB Hellfire mapping | **REVIEWED / NEEDS EXPERIMENTATION** | no compatible installed pylon row for A/B |
-| VLS target handshake | **REVIEWED / NEEDS EXPERIMENTATION** | physical outcome covered; internal necessity unproven |
+| VLS target handshake | **REVIEWED / CHARACTERIZED** | four fresh physical A/B pairs prove the combined knowledge step is required; individual calls remain unisolated |
 | Transport hidden-pad landing | **REVIEWED / NEEDS EXPERIMENTATION** | landing works; exact mechanism necessity unproven |
 | Developer laser harness | **REVIEWED / DEFERRED** | unreachable preInit diagnostic; destructive owner-routed run and unbounded client-supplied result store lack a product boundary |
 | APS anti-drone | **REVIEWED / DEFERRED** | threat/side/operator policy is undecided; resource authority and destructive cleanup require refinement before coverage |

@@ -123,11 +123,18 @@ and full VLS flight are specification evidence. `ArtilleryShellFired`/`Fired`
 correlation and waterline platform stabilization are Tribunal fixture concerns.
 Vigil currently creates a temporary VLS target, reports it to the launcher
 side, confirms it, and calls `fireAtTarget`. This handshake is a
-characterization candidate, not yet a characterized contract: no retained
-controlled A/B proves that direct fire necessarily launches vertically without
-guidance on the current engine build. The permanent test therefore requires
-physical guidance/arrival but does not freeze the handshake. A future isolated
-A/B may promote it to characterization with artifacts.
+**characterized engine requirement** on the installed build. In retained Live
+run `20260820T001108Z-c8edbbcc`, four fresh direct-first pairs held platform,
+weapon, magazine and geometry constant. Direct `fireAtTarget` emitted exact
+server-local missiles that climbed and traveled but did not guide to their
+fresh targets; the combined report/confirm handshake emitted exact missiles
+that converged on their targets. The exact terrain-level baseline terminated
+0.74 m from target; three secondary below-terrain pairs are used only for their
+repeatable guidance split, not terminal-impact evidence. Command returns and
+knowledge arrays were diagnostic only; exact Fired identities and independently
+sampled trajectories were the oracle. This proves the combined target-knowledge
+step is necessary, not that either individual call or its ordering is
+permanently required.
 
 ### Vigil transport findings
 

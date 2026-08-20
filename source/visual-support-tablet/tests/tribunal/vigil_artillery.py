@@ -1,7 +1,7 @@
 """Causal Tier 3 coverage for Vigil native artillery and VLS execution."""
 
 from tribunal.mission.artillery import artillery_observer_sqf
-from tribunal.runner.model import Scenario, ScenarioReview
+from tribunal.runner.model import CharacterizedBehavior, Scenario, ScenarioReview
 
 
 TRIBUNAL_SCENARIO = Scenario(
@@ -290,9 +290,16 @@ waitUntil {
         test_type="specification",
         behavior_contract="A valid grid request fires exactly the requested circle/line rounds near their intended geometry; invalid requests do not fire; VLS launches, guides, and reaches its target region.",
         outcome="KEEP AS-IS AND SPEC-TEST",
-        rationale="The scenario correlates product requests with physical projectiles and outcomes while avoiding promises about private governor variables, event order, or VLS handshake internals.",
+        rationale="The scenario correlates product requests with physical projectiles and outcomes while avoiding promises about private governor variables or event order; a retained direct-first A/B characterizes the combined VLS target-knowledge step.",
         dependencies=("Tribunal artillery observer", "Vigil task governor", "Arma native artillery", "Arma VLS"),
         evidence_types=frozenset({"fire-event", "trajectory", "spatial-distribution", "negative-control", "locality"}),
         locality_requirements="Client-a owns request/UI state; server owns task, platforms, projectiles, trajectory evidence, and completion.",
+        characterized_behaviors=(CharacterizedBehavior(
+            description="Establish launcher-side target knowledge before VLS fireAtTarget.",
+            reason="Direct fire emits a live cruise missile but does not guide it to a fresh target on this Arma build; the current combined report/confirm handshake does.",
+            evidence="Live run 20260820T001108Z-c8edbbcc: four direct-first fresh-identity pairs with exact Fired and sampled trajectory/arrival records; the exact terrain-level baseline terminated 0.74 m from target.",
+            alternative_tested="Call fireAtTarget directly with identical launcher class, weapon, magazine, pose, target geometry and reload state.",
+            outcome="Direct missiles climbed/traveled away from target; handshake missiles terminated in the target region. Individual necessity of report versus confirm remains unisolated.",
+        ),),
     ),
 )
