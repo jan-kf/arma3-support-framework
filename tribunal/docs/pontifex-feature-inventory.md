@@ -656,11 +656,7 @@ airdrop. General fabrication is outside the contract.
   registration, concrete-class inheritance, coexistence, and relevance through
   ACE's installed-version active-tree adapter. Consequential effects, the
   Fabricator delayed object action, client-B, and JIP remain feature-owned or
-  deferred. APS plus Field Utilities composition is **REVIEWED / DEFERRED UNTIL
-  APS CONTROL POLICY AND AUTHORITY REFINEMENT**. APS uses persistent per-object
-  actions whose combined object/class tree, exact unregister isolation, and
-  re-enable uniqueness are unproven; accepting it now would also bless the
-  deferred anti-drone submenu. See
+  deferred. APS plus Field Utilities composition is **ACCEPTED / COVERED** for the current authenticated client. Fresh run `20260820T223222Z-3046910b` proved four exact singleton Field roots on installed and uninstalled same-class tanks, an unchanged Field census across authenticated APS suspension/resume, exactly Resume while suspended, and exact preserved-mode APS controls after resume. Client-B/JIP, explicit uninstall, deletion, repeated init, and ownership migration remain deferred; anti-drone gameplay is not implied. See
   [`field-utilities-ace-composition-review.md`](field-utilities-ace-composition-review.md)
   and
   [`aps-fieldutils-ace-composition-review.md`](aps-fieldutils-ace-composition-review.md).

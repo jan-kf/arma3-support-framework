@@ -32,6 +32,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "aps.controls.menu",
         "aps.controls.transitions",
         "aps.controls.lifecycle",
+        "aps.controls.composition",
         "aps.controls.authority",
         "aps.controls.resultReplication",
     }),
@@ -42,11 +43,11 @@ TRIBUNAL_SCENARIO = Scenario(
     metadata={"product": "advanced-systems", "feature": "active-protection-system"},
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="APS intercepts qualifying inbound threats, preserves disabled/outside/away controls, consumes the correct resource, and replicates the authoritative result.",
+        behavior_contract="APS intercepts qualifying inbound threats and its authenticated current-client ACE controls coexist with exact Field Utilities class roots across active, suspended, and resumed states without Field mutation.",
         outcome="KEEP AS-IS AND SPEC-TEST",
         rationale="The matrix asserts causal player-visible protection and resource behavior; ledger and exact projectile identities are supplemental correlation rather than the public contract.",
         dependencies=("Tribunal direct-projectile fixture", "server-authoritative APS", "one authenticated client"),
-        evidence_types=frozenset({"trajectory", "impact", "authoritative-state", "replication", "locality"}),
+        evidence_types=frozenset({"trajectory", "impact", "authoritative-state", "replication", "locality", "ace-active-action-tree", "negative-control", "cleanup"}),
         locality_requirements="APS tracking, threat projectile, and authoritative ledger execute on the server; client-a observes replicated state.",
     ),
 )

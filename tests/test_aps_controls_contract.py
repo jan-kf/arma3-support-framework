@@ -59,9 +59,13 @@ class ApsControlsContractTests(unittest.TestCase):
             client = (mission / "initPlayerLocal.sqf").read_text(encoding="ascii")
         for name in ("aps.controls.hardOffImpact", "aps.controls.rebootIntercept", "aps.controls.authoritativeAudit"):
             self.assertIn(name, server)
-        for name in ("aps.controls.menu", "aps.controls.transitions", "aps.controls.lifecycle", "aps.controls.authority", "aps.controls.resultReplication"):
+        for name in ("aps.controls.menu", "aps.controls.transitions", "aps.controls.lifecycle", "aps.controls.composition", "aps.controls.authority", "aps.controls.resultReplication"):
             self.assertIn(name, client)
         self.assertIn("ace_interact_menu_fnc_collectActiveActionTree", client)
+        self.assertIn("ace_interact_menu_fnc_compileMenu", client)
+        self.assertIn("YOSHI_APS_ActionData_Local", client)
+        self.assertIn("_fieldInitial isEqualTo _fieldSuspended", client)
+        self.assertIn("_apsSuspendedLeaves isEqualTo [\"YOSHI_APS_Resume\"]", client)
         self.assertIn("call (_data # 3)", client)
         self.assertIn('"operator_ineligible"', client)
         self.assertIn('"replay"', client)

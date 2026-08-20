@@ -955,6 +955,7 @@ waitUntil {
     (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_ARMED", ""]) isEqualTo _token || {diag_tickTime > _controlsArmDeadline}
 };
 private _apsVehicle = [[3000, 4000, 0], 1] call _newTarget;
+private _compositionControlVehicle = [[3000, 4020, 0], 0] call _newTarget;
 [_apsVehicle, 2] call YOSHI_fnc_apsEnableVehicle;
 [] call YOSHI_fnc_apsEnsureLocalRuntime;
 private _chargesBefore = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
@@ -997,7 +998,7 @@ sleep 0.1; private _postDeflectionPosition = if (isNull _softRocket) then {[]} e
 ["aps.softkill.deflection", _softEvent && {!isNull _softRocket} && {(_soft # 2)} && {(_soft # 4)} && {local _softRocket} && {!(_velocityBefore isEqualTo [])} && {!(_velocityAfter isEqualTo [])} && {(_velocityBefore distance _velocityAfter) > 0.1} && {(fuel _softVehicle) isEqualTo (_fuelBefore - YOSHI_APS_SOFTKILL_FUEL_COST)} && {!(missionNamespace getVariable [_soft # 1, false])}, format ["uid=%1|before=%2|after=%3|fuel=%4:%5|postPosition=%6", _softUid, _velocityBefore, _velocityAfter, _fuelBefore, fuel _softVehicle, _postDeflectionPosition]] call _assert;
 if (!isNull _softRocket) then {deleteVehicle _softRocket};
 private _controlsStartCharges = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
-missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_FIXTURE", [_token, netId _apsVehicle, _controlsStartCharges], true];
+missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_FIXTURE", [_token, netId _apsVehicle, _controlsStartCharges, netId _compositionControlVehicle], true];
 private _operatorDeadline = diag_tickTime + 20;
 waitUntil {
     uiSleep 0.05;
@@ -1036,7 +1037,7 @@ waitUntil {uiSleep 0.05; (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_D
 private _audit = missionNamespace getVariable ["YOSHI_APS_OPERATION_AUDIT", []];
 ["aps.controls.authoritativeAudit", (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_DONE", ""]) isEqualTo _token && {(count _audit) >= 8} && {(_audit findIf {(_x # 2) isEqualTo false && {(_x # 3) in ["replay", "operator_ineligible", "unknown_operation"]}}) >= 0}, format ["done=%1|auditCount=%2|audit=%3", missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_DONE", ""], count _audit, _audit]] call _assert;
 missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _apsVehicle, _projectileUid], true];
-{if (!isNull _x) then {deleteVehicle _x}} forEach [_apsVehicle, _controlVehicle, _softVehicle];
+{if (!isNull _x) then {deleteVehicle _x}} forEach [_apsVehicle, _controlVehicle, _softVehicle, _compositionControlVehicle];
 '''
         )
         aps_client = '''
@@ -1046,12 +1047,14 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
  waitUntil {
      uiSleep 0.05;
      _controlsFixture = missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_FIXTURE", []];
-     (count _controlsFixture) isEqualTo 3 || {diag_tickTime > _controlsFixtureDeadline}
+     (count _controlsFixture) isEqualTo 4 || {diag_tickTime > _controlsFixtureDeadline}
  };
  private _controlsVehicleId = _controlsFixture param [1, ""];
  private _controlsVehicle = if (_controlsVehicleId isEqualTo "") then {objNull} else {objectFromNetId _controlsVehicleId};
+ private _compositionControlId = _controlsFixture param [3, ""];
+ private _compositionControl = if (_compositionControlId isEqualTo "") then {objNull} else {objectFromNetId _compositionControlId};
  private _controlsResolveDeadline = diag_tickTime + 15;
- waitUntil {uiSleep 0.05; !isNull _controlsVehicle || {diag_tickTime > _controlsResolveDeadline}};
+ waitUntil {uiSleep 0.05; (!isNull _controlsVehicle && {!isNull _compositionControl}) || {diag_tickTime > _controlsResolveDeadline}};
  private _originalPlayerASL = getPosASL player;
  if (!isNull _controlsVehicle) then {player setPosASL ((getPosASL _controlsVehicle) vectorAdd [0, 5, 0]);};
  private _stateDeadline = diag_tickTime + 10;
@@ -1066,13 +1069,68 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
      private _record = (_controlsVehicle getVariable ["YOSHI_APS_ActionData_Local", []]) select {(_x param [0, ""]) isEqualTo _id};
      if ((count _record) isEqualTo 1) then {_record # 0} else {[]}
  };
- private _activeAction = {
-     params ["_data"];
-     if (_data isEqualTo []) exitWith {false};
+ private _activeActionOn = {
+     params ["_target", "_data"];
+     if (isNull _target || {_data isEqualTo []}) exitWith {false};
      ace_interact_menu_objectActionList = [];
-     private _tree = [_controlsVehicle, [_data, []], [], player distance _controlsVehicle] call ace_interact_menu_fnc_collectActiveActionTree;
+     private _tree = [_target, [_data, []], [], player distance _target] call ace_interact_menu_fnc_collectActiveActionTree;
      _tree isNotEqualTo []
  };
+ private _activeAction = {
+     params ["_data"];
+     [_controlsVehicle, _data] call _activeActionOn
+ };
+ private _findAction = {
+     params ["_nodes", "_wanted"];
+     private _found = [];
+     {
+         _x params ["_data", "_children"];
+         if ((_data param [0, ""]) isEqualTo _wanted) exitWith {_found = _data};
+         private _child = [_children, _wanted] call _findAction;
+         if (_child isNotEqualTo []) exitWith {_found = _child};
+     } forEach _nodes;
+     _found
+ };
+ private _allActionIds = {
+     params ["_nodes"];
+     private _found = [];
+     {
+         _x params ["_data", "_children"];
+         private _id = _data param [0, ""];
+         if (_id isNotEqualTo "") then {_found pushBack _id;};
+         _found append ([_children] call _allActionIds);
+     } forEach _nodes;
+     _found
+ };
+ private _fieldWanted = ["logiActions", "TowActions", "YOSHI_StowRopes", "UAV_field_task"];
+ private _fieldSnapshot = {
+     params ["_target"];
+     if (isNull _target) exitWith {[[], [], [], []]};
+     [_target] call ace_interact_menu_fnc_compileMenu;
+     private _class = typeOf _target call ace_common_fnc_getConfigName;
+     private _tree = ace_interact_menu_ActNamespace getOrDefault [_class, []];
+     private _ids = [_tree] call _allActionIds;
+     private _records = _fieldWanted apply {[_tree, _x] call _findAction};
+     private _counts = _fieldWanted apply {private _wanted = _x; {_x isEqualTo _wanted} count _ids};
+     private _active = [];
+     {if ([_target, _x] call _activeActionOn) then {_active pushBack (_x param [0, ""]);};} forEach _records;
+     [_counts, _active, [count ropes _target, _target getVariable ["YOSHI_UavHasIED", false], _target getVariable ["YOSHI_UavOrdinanceCount", 0], _target getVariable ["YOSHI_UavGrenadeCount", 0]], _ids]
+ };
+ private _activeApsLeafIds = {
+     private _active = [];
+     {
+         private _id = _x param [0, ""];
+         if !(_id in ["YOSHI_APS_Menu", "YOSHI_APS_AntiDrone_Menu"]) then {
+             if ([_x] call _activeAction) then {_active pushBack _id;};
+         };
+     } forEach (_controlsVehicle getVariable ["YOSHI_APS_ActionData_Local", []]);
+     _active
+ };
+ private _fieldInitial = [_controlsVehicle] call _fieldSnapshot;
+ private _fieldUninstalled = [_compositionControl] call _fieldSnapshot;
+ private _uninstalledNoAps = !(_compositionControl getVariable ["YOSHI_APS_Installed", false])
+     && {(count (_compositionControl getVariable ["YOSHI_APS_ActionData_Local", []])) isEqualTo 0};
+ private _apsInitialLeaves = call _activeApsLeafIds;
  private _invokeRegistered = {
      params ["_id"];
      private _data = [_id] call _actionData;
@@ -1151,12 +1209,22 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
      && {((_antiDroneOff # 1) param [2, false])} && {((_antiDroneOff # 1) param [3, ""]) isEqualTo "anti_drone_off"}
      && {((_voiceOff # 1) param [2, false])};
  private _beforeSuspend = [_controlsVehicle] call YOSHI_fnc_apsStateSnapshot;
+ private _fieldBeforeSuspend = [_controlsVehicle] call _fieldSnapshot;
+ private _apsBeforeSuspendLeaves = call _activeApsLeafIds;
  private _suspend = ["YOSHI_APS_Suspend"] call _invokeRegistered;
  private _suspendState = ((_suspend # 1) param [7, []]);
+ private _suspendedReplicationDeadline = diag_tickTime + 5;
+ waitUntil {uiSleep 0.05; !(_controlsVehicle getVariable ["YOSHI_APS_Enabled", true]) || {diag_tickTime > _suspendedReplicationDeadline}};
+ private _fieldSuspended = [_controlsVehicle] call _fieldSnapshot;
+ private _apsSuspendedLeaves = call _activeApsLeafIds;
  private _resumeData = ["YOSHI_APS_Resume"] call _actionData;
  private _resumeWasActive = [_resumeData] call _activeAction;
  private _resume = ["YOSHI_APS_Resume"] call _invokeRegistered;
  private _resumeState = ((_resume # 1) param [7, []]);
+ private _resumedReplicationDeadline = diag_tickTime + 5;
+ waitUntil {uiSleep 0.05; (_controlsVehicle getVariable ["YOSHI_APS_Enabled", false]) || {diag_tickTime > _resumedReplicationDeadline}};
+ private _fieldResumed = [_controlsVehicle] call _fieldSnapshot;
+ private _apsResumedLeaves = call _activeApsLeafIds;
  private _preservedIndexes = [2, 3, 4, 5, 6, 7];
  private _preserved = (count _beforeSuspend) isEqualTo 8 && {(count _suspendState) isEqualTo 8} && {(count _resumeState) isEqualTo 8} && {(_preservedIndexes findIf {(_beforeSuspend # _x) isNotEqualTo (_suspendState # _x) || {(_beforeSuspend # _x) isNotEqualTo (_resumeState # _x)}}) < 0};
  private _lifecycleOk = _modeControlsOk
@@ -1167,6 +1235,25 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
      && {_resumeState # 1}
      && {_preserved};
  ["aps.controls.lifecycle", _lifecycleOk, format ["emptyReboot=%1|softOff=%2|softOn=%3|antiOff=%4|voiceOff=%5|before=%6|suspend=%7|resumeActive=%8|resume=%9|preserved=%10", _emptyReboot # 1, _softOff # 1, _softOn # 1, _antiDroneOff # 1, _voiceOff # 1, _beforeSuspend, _suspend # 1, _resumeWasActive, _resume # 1, _preserved]] call _assert;
+ private _fieldCountsOk = (_fieldInitial # 0) isEqualTo [1, 1, 1, 1]
+     && {(_fieldUninstalled # 0) isEqualTo [1, 1, 1, 1]}
+     && {(_fieldBeforeSuspend # 0) isEqualTo [1, 1, 1, 1]}
+     && {(_fieldSuspended # 0) isEqualTo [1, 1, 1, 1]}
+     && {(_fieldResumed # 0) isEqualTo [1, 1, 1, 1]};
+ private _fieldStable = _fieldInitial isEqualTo _fieldBeforeSuspend
+     && {_fieldInitial isEqualTo _fieldSuspended}
+     && {_fieldInitial isEqualTo _fieldResumed}
+     && {(_fieldInitial # 0) isEqualTo (_fieldUninstalled # 0)}
+     && {"TowActions" in (_fieldInitial # 1)}
+     && {!("YOSHI_StowRopes" in (_fieldInitial # 1))}
+     && {!("UAV_field_task" in (_fieldInitial # 1))};
+ private _initialApsOk = _apsInitialLeaves isEqualTo ["YOSHI_APS_Suspend", "YOSHI_APS_HardKill_TurnOff", "YOSHI_APS_AntiDrone_TurnOff", "YOSHI_APS_AntiDrone_Status", "YOSHI_APS_Status", "YOSHI_APS_Voice_Off"];
+ private _activeModeApsExpected = ["YOSHI_APS_Suspend", "YOSHI_APS_HardKill_Reboot", "YOSHI_APS_SoftKill_TurnOff", "YOSHI_APS_AntiDrone_TurnOn", "YOSHI_APS_AntiDrone_Status", "YOSHI_APS_Status", "YOSHI_APS_Voice_On"];
+ private _apsLifecycleCensusOk = _apsBeforeSuspendLeaves isEqualTo _activeModeApsExpected
+     && {_apsSuspendedLeaves isEqualTo ["YOSHI_APS_Resume"]}
+     && {_apsResumedLeaves isEqualTo _activeModeApsExpected};
+ private _compositionOk = _uninstalledNoAps && {_fieldCountsOk} && {_fieldStable} && {_initialApsOk} && {_apsLifecycleCensusOk};
+ ["aps.controls.composition", _compositionOk, format ["uninstalledNoAps=%1|fieldInitial=%2|fieldControl=%3|fieldBefore=%4|fieldSuspended=%5|fieldResumed=%6|apsInitial=%7|apsBefore=%8|apsSuspended=%9|apsResumed=%10", _uninstalledNoAps, _fieldInitial, _fieldUninstalled, _fieldBeforeSuspend, _fieldSuspended, _fieldResumed, _apsInitialLeaves, _apsBeforeSuspendLeaves, _apsSuspendedLeaves, _apsResumedLeaves]] call _assert;
 
  private _repeatId = format ["APS_REPEAT_%1", floor random 1e9];
  private _repeatAck = ["resume", _repeatId] call _sendDirect;
