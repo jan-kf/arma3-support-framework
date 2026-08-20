@@ -597,8 +597,14 @@ airdrop. General fabrication is outside the contract.
   whitelist, and config state. **Implemented; PARTIALLY COVERED** by one-client
   replication scenarios.
 * No durable campaign/database persistence exists in the four mods.
-* **JIP/multi-client semantics** are **NOT YET REVIEWED**. One authenticated
-  client is the proof boundary; future identities are architecture, not proof.
+* **JIP/multi-client semantics** are **REVIEWED / DEFERRED — ENVIRONMENT
+  DEPENDENCY; FEATURE-SPECIFIC POLICY REQUIRED**. Tribunal is structurally
+  client-N-aware, but Pontifex currently provisions, slots, launches, observes,
+  and validates exactly one independently authenticated client. Existing
+  replication claims remain client-a-only. Reopen after a second licensed Steam
+  identity is provisioned and each feature defines visibility, retention,
+  audience, concurrency, and disconnect policy. See
+  [`multiplayer-client-n-jip-boundary-review.md`](multiplayer-client-n-jip-boundary-review.md).
 
 ## Validation architecture (not a product family)
 
@@ -662,7 +668,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Helicopter sling helper | **REVIEWED / DEFERRED** | compiled orphan; destructive all-rope stow, non-atomic creation, no supported entry/authority/cleanup |
 | Bridge direct extension | **DEFERRED** | helpers exist, but no reachable action or supported ownership contract was established |
 | Core settings/utils files | **Scaffolded / UNKNOWN** | reserved files contain no behavior |
-| Multi-client/JIP | **NOT YET REVIEWED** | one authenticated-client proof boundary |
+| Multi-client/JIP | **REVIEWED / DEFERRED** | second independently authenticated Steam identity plus per-feature visibility/retention/audience/concurrency/disconnect policy required |
 
 ## Prioritized next feature reviews
 
