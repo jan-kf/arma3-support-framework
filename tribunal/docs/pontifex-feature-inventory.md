@@ -359,9 +359,11 @@ Utilities for fixed-wing airdrop.
 
 ### 3.7 Fixed-wing shared lifecycle
 
-* **Editor/Zeus registration** configures asset, ingress, exfil, and Zeus add.
-  **Implemented; PARTIALLY COVERED.** Direct API registration is covered; real
-  module activation is not.
+* **Editor/Zeus registration** is **REVIEWED / REFINE BEFORE PERMANENT
+  COVERAGE**. Direct registry/default APIs are covered, but authentic typed
+  module dispatch, Sync/position input, duplicate precedence, curator identity,
+  replay/result, and own-logic cleanup are unproven and unguarded. See
+  [`vigil-fixed-wing-module-review.md`](vigil-fixed-wing-module-review.md).
 * **Snapshot serialization** retains class, side, crew, fuel, damage, pylons,
   ammunition, role, and points while deleting the source and publishing a
   sanitized registry. **Implemented; COVERED for strike/logistics state.** Exact
@@ -650,8 +652,8 @@ airdrop. General fabrication is outside the contract.
   **REVIEWED / REFINE BEFORE PERMANENT COVERAGE** in their linked feature
   reviews: accepted scenarios call lifecycle APIs and do not prove authentic
   synchronization, curator transport, or authority. Field Utilities exposes no
-  Zeus tool. Vigil fixed-wing Eden/Zeus activation remains implemented but not
-  independently reviewed.
+  Zeus tool. Vigil fixed-wing Eden/Zeus activation is also reviewed/REFINE in
+  [`vigil-fixed-wing-module-review.md`](vigil-fixed-wing-module-review.md).
 * Cross-addon CBA setting declarations are **REFINED; ACCEPTED / COVERED**
   for 13 exact unique keys, types, defaults/bounds, global/local scope, live
   consumer handoff, and fallback parity. Iron Dome's fallback now matches its

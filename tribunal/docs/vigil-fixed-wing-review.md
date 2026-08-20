@@ -76,8 +76,10 @@ state and complete crew/task cleanup.
 
 ## Architecture and lifecycle
 
-`YSF_fwRegisterAsset` is the common entry used by synchronized Eden assets and
-the Zeus/runtime module. It records a snapshot plus side, callsign, ingress,
+`YSF_fwRegisterAsset` is the common registry API intended for synchronized
+Eden assets and the Zeus/runtime module. The accepted scenario proves this API,
+not authentic configured module dispatch; that boundary is reviewed separately.
+It records a snapshot plus side, callsign, ingress,
 egress, heading and a bitmask of strike, recon and logistics roles, commits a
 public registry view, and deletes the original vehicle and crew. Strike, recon
 and logistics therefore share registration, serialization, dispatch, public
@@ -109,7 +111,7 @@ spawned aircraft and crew are cleared.
 
 | Subsystem | Classification | Resolution |
 | --- | --- | --- |
-| Eden/runtime registration | KEEP AS-IS AND SPEC-TEST | both feed one authoritative registry API |
+| registry API registration | KEEP AS-IS AND SPEC-TEST | authoritative registry tail is covered; authentic module activation is separately REFINE |
 | snapshot/remove/reconstruct model | REFINE BEFORE PERMANENT COVERAGE | restore fuel and exact pylon counts |
 | role bitmask and shared lifecycle | KEEP AS-IS AND SPEC-TEST | strike/recon/logistics identified; logistics deferred |
 | client request/server ownership | REFINE AND SPEC-TEST | deployment now binds the exact player owner and acknowledges the authoritative result; other request surfaces retain their accepted feature-specific evidence |
