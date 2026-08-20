@@ -277,8 +277,12 @@ Utilities for fixed-wing airdrop.
   live commander side is preferred and class affiliation is the bounded fallback.
   Fixed-wing registry rows and the dormant recon branch remain separate. See
   [`vigil-asset-browser-review.md`](vigil-asset-browser-review.md).
-* **Eden whitelist** restricts the source to synchronized objects; **Zeus toggle**
-  adds/removes a selected object. **Implemented; NOT YET REVIEWED.**
+* **Eden whitelist and Zeus add/remove** are **REVIEWED / REFINE BEFORE
+  PERMANENT COVERAGE**. Real typed dispatch, mission/runtime synchronization
+  replication, curator authority/target resolution, exact client membership,
+  duplicate/empty/deleted-module policy, and JIP are unproven. The accepted
+  unwhitelisted browser remains unchanged. See
+  [`vigil-asset-whitelist-review.md`](vigil-asset-whitelist-review.md).
 
 ### 3.3 Coordinates, vehicle tasking, and governor
 
