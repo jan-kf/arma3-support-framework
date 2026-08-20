@@ -571,8 +571,15 @@ Audio analysis:
   EXPERIMENTATION**. The live client announcement uses target-to-aircraft
   bearing and altitude-only vacuum fall time at acceptance, which does not model
   ingress or parachute descent.
-* **Sound, global ACE registration, debug/chat wrappers** are **implemented; NOT
-  YET REVIEWED.** Current callers remain; do not label them dead.
+* **Shared sound, global ACE registration, and debug/chat wrappers** are
+  **REVIEWED / DEFERRED AS A STANDALONE FEATURE; CONSUMER-OWNED**. Bridge
+  Builder proves its exact current-client action, while airdrop feedback keeps
+  its own unresolved recipient/meaning contract. Debug is diagnostic and the
+  generic vehicle-sound helpers have no caller. Wrapper invocation is not JIP
+  delivery, recipient-visible feedback, or audible-output evidence.
+
+Full analysis:
+[`field-utilities-shared-runtime-wrappers-review.md`](field-utilities-shared-runtime-wrappers-review.md).
 
 Full analysis: [`field-utilities-map-helpers-review.md`](field-utilities-map-helpers-review.md).
 
