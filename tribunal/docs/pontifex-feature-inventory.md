@@ -245,8 +245,10 @@ Utilities for fixed-wing airdrop.
 ### 3.1 Tablet access, shell, and navigation
 
 * **Items/access rule/keybind** provide three side terminal variants, optional
-  tablet requirement, and Ctrl+Home open. **Implemented; PARTIALLY COVERED.**
-  `vigil-ui` proves the BLU path; side variants, rejection, and override are not.
+  tablet requirement, and Ctrl+Home open. **Implemented; COVERED.** `vigil-ui`
+  proves required/no-item rejection, itemless override, all three terminal
+  variants, exact client-local display state, and the real keybind path. See
+  [`vigil-tablet-access-review.md`](vigil-tablet-access-review.md).
 * **Open/theme/intro/close/reopen** selects skin/colors, initializes, cleans up,
   and resets. **Implemented; COVERED** with real input/framebuffer/locality.
 * **Tabbed navigation** registers Home, Assets, and task views. **Implemented;

@@ -1,7 +1,7 @@
 #include "\a3\ui_f\hpp\defineDIKCodes.inc"
 
 ["YSF_enableTablet", "CHECKBOX",
-    ["Tablet Required", "When enabled, you'll need the VIGIL Tablet (or any of the Rugged Tablets) in order to use the combat tablet. When disabled, it will always be available even with an empty inventory"],
+    ["Tablet Required", "When enabled, you'll need a VIGIL Tablet in your GPS slot to use the combat tablet. When disabled, it will always be available even with an empty inventory"],
     "Pontifex: VIGIL Support Tablet",
     true,
     1

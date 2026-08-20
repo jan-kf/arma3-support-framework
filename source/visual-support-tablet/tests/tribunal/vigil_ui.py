@@ -19,6 +19,12 @@ TRIBUNAL_SCENARIO = Scenario(
         "vigil.locality.noServerOpenPath",
     }),
     client_expected=frozenset({
+        "vigil.access.requiredRejects",
+        "vigil.access.overrideOpens",
+        "vigil.access.bluOpens",
+        "vigil.access.independentOpens",
+        "vigil.access.opforOpens",
+        "vigil.access.matrixCleanup",
         "vigil.fixture.itemEquipped",
         "vigil.fixture.inputReady",
         "vigil.locality.clientContext",
@@ -42,6 +48,80 @@ private _identity = missionNamespace getVariable ["TRIBUNAL_MACHINE_IDENTITY", "
 // remove it after the test has armed external input.
 private _inputReadyAt = diag_tickTime + 8;
 waitUntil { uiSleep 0.1; diag_tickTime >= _inputReadyAt };
+
+private _tabletClasses = ["YSF_VigilTerminal_B", "YSF_VigilTerminal_I", "YSF_VigilTerminal_O"];
+{
+    if (_x in assignedItems player) then {player unlinkItem _x;};
+} forEach _tabletClasses;
+private _noneDeadline = diag_tickTime + 3;
+waitUntil {uiSleep 0.05; (_tabletClasses findIf {_x in assignedItems player}) < 0 || diag_tickTime > _noneDeadline};
+
+private _closeTablet = {
+    if (!isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull])) then {closeDialog 0;};
+    private _deadline = diag_tickTime + 5;
+    waitUntil {uiSleep 0.05; isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull]) || diag_tickTime > _deadline};
+    isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull])
+};
+private _openTablet = {
+    if (!isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull])) exitWith {false};
+    [] spawn {[] call YSF_UI_OpenTablet;};
+    private _deadline = diag_tickTime + 8;
+    waitUntil {uiSleep 0.05; !isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull]) || diag_tickTime > _deadline};
+    private _display = uiNamespace getVariable ["YSF_Tablet_Display", displayNull];
+    private _page = if (isNull _display) then {controlNull} else {_display displayCtrl 88130};
+    private _tabs = if (isNull _page) then {controlNull} else {_page controlsGroupCtrl 88050};
+    !isNull _display && {(ctrlIDD _display) isEqualTo 88000} && {!isNull _page} && {!isNull _tabs}
+};
+
+missionNamespace setVariable ["YSF_enableTablet", true];
+private _requiredStimulus = (missionNamespace getVariable ["YSF_enableTablet", false])
+    && {(_tabletClasses findIf {_x in assignedItems player}) < 0}
+    && {isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull])};
+missionNamespace setVariable ["TRIBUNAL_VIGIL_REQUIRED_CALL_AT", nil];
+[] spawn {
+    missionNamespace setVariable ["TRIBUNAL_VIGIL_REQUIRED_CALL_AT", diag_tickTime];
+    [] call YSF_UI_OpenTablet;
+};
+uiSleep 1;
+private _requiredCalledAt = missionNamespace getVariable ["TRIBUNAL_VIGIL_REQUIRED_CALL_AT", -1];
+private _requiredRejected = _requiredStimulus && {_requiredCalledAt >= 0} && {isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull])};
+["vigil.access.requiredRejects", _requiredRejected, format ["setting=%1|assigned=%2|calledAt=%3|display=%4", missionNamespace getVariable ["YSF_enableTablet", false], assignedItems player, _requiredCalledAt, !isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull])]] call _assert;
+
+missionNamespace setVariable ["YSF_enableTablet", false];
+private _overrideOpened = (missionNamespace getVariable ["YSF_enableTablet", true]) isEqualTo false
+    && {(_tabletClasses findIf {_x in assignedItems player}) < 0}
+    && {call _openTablet};
+["vigil.access.overrideOpens", _overrideOpened, format ["setting=%1|assigned=%2|display=%3", missionNamespace getVariable ["YSF_enableTablet", true], assignedItems player, !isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull])]] call _assert;
+call _closeTablet;
+
+missionNamespace setVariable ["YSF_enableTablet", true];
+private _variantAssertions = [
+    ["YSF_VigilTerminal_B", "vigil.access.bluOpens"],
+    ["YSF_VigilTerminal_I", "vigil.access.independentOpens"],
+    ["YSF_VigilTerminal_O", "vigil.access.opforOpens"]
+];
+{
+    _x params ["_class", "_assertion"];
+    {
+        if (_x in assignedItems player) then {player unlinkItem _x;};
+    } forEach _tabletClasses;
+    player linkItem _class;
+    private _equipVariantDeadline = diag_tickTime + 3;
+    waitUntil {uiSleep 0.05; _class in assignedItems player || diag_tickTime > _equipVariantDeadline};
+    private _exactAssigned = _class in assignedItems player
+        && {(_tabletClasses select {_x in assignedItems player}) isEqualTo [_class]};
+    private _opened = _exactAssigned && {call _openTablet};
+    [_assertion, _opened, format ["class=%1|setting=%2|assigned=%3|display=%4", _class, missionNamespace getVariable ["YSF_enableTablet", false], assignedItems player, !isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull])]] call _assert;
+    private _closed = call _closeTablet;
+    if (!_closed) then {diag_log format ["TRIBUNAL_VIGIL|ACCESS_CLOSE_FAILED|class=%1", _class];};
+} forEach _variantAssertions;
+
+private _matrixClean = isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull]);
+["vigil.access.matrixCleanup", _matrixClean, format ["display=%1|assigned=%2", !isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull]), assignedItems player]] call _assert;
+
+{
+    if (_x in assignedItems player) then {player unlinkItem _x;};
+} forEach _tabletClasses;
 player linkItem "YSF_VigilTerminal_B";
 private _equipDeadline = diag_tickTime + 3;
 waitUntil { uiSleep 0.05; "YSF_VigilTerminal_B" in assignedItems player || diag_tickTime > _equipDeadline };
