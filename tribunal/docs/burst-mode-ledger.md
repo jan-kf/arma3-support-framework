@@ -29,9 +29,11 @@ decisions remain in each canonical feature review and the feature inventory.
 | Cross-addon CBA settings contract | REFINED; ACCEPTED / COVERED | `17a12ba` | static 13-setting matrix; 109 tests/HEMTT pass | downstream effects and future feedback-scope changes remain consumer-owned | retain fallback/consumer parity; next document client-N/JIP proof boundary |
 | Multi-client / JIP proof boundary | REVIEWED / DEFERRED | `8a0d8c3` | none; static architecture/environment boundary | second licensed Steam identity; per-feature visibility/retention/audience/concurrency/disconnect policy | extend identity-aware orchestration and run true late-join/isolation matrix after dependency exists |
 | LORICA APS ACE controls | REVIEWED / REFINE BEFORE PERMANENT COVERAGE | `e0c38a9` | none; static reachable authority boundary | operator eligibility, proximity/role, status/voice policy | choose policy; add authenticated transition endpoint and ACE/physical A/B matrix |
+| Field Utilities Eden module activation | REVIEWED / REFINE BEFORE PERMANENT COVERAGE | `319cb26` | none; accepted Fabricator scenario bypasses real typed dispatch | duplicate/missing-module/runtime-reconfiguration policy; typed dispatch/sync locality | add typed module fixture; split private authority from mirrors; prove no-module/rogue publication controls |
 
-Current feature HEAD: `e0c38a9`. LORICA APS ACE controls are now reviewed
-and stopped at a precise operator-policy/authority boundary; accepted APS
-physical behavior remains unchanged. Scout evaluation remains positive and
-non-contentious. Exact next recommended feature: **Field Utilities Eden module
-activation/catalogue authority**, followed by Vigil whitelist/Zeus activation.
+Current feature HEAD: `319cb26`. Field Utilities Eden activation/catalogue
+provenance is now reviewed and stopped before typed-module/authority refinement;
+accepted Fabricator transactions remain unchanged. Scout evaluation remains
+positive and non-contentious. Exact next recommended feature: **Vigil asset
+whitelist Eden/Zeus activation**, followed by the Field Utilities FPV audio
+feedback static closeout.
