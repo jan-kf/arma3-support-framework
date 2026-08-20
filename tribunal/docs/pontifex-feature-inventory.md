@@ -150,9 +150,15 @@ locality, and client replication.
 
 #### 2.1.4 Installation, controls, and feedback
 
-* **Eden synchronized enable module** and **Zeus per-vehicle toggle** install or
-  toggle APS. **Implemented; PARTIALLY COVERED** for API state, but real module/
-  curator activation and invalid selection are **NOT YET REVIEWED**.
+* **Eden synchronized enable module** and **Zeus per-vehicle toggle** are
+  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE**. Accepted APIs prove the
+  lifecycle tail, not authentic typed-module or curator dispatch. Handlers do
+  not validate exact class, requester, locality, target ambiguity, or replay;
+  they delete caller-supplied logic, and Eden deletion contradicts its
+  non-disposable config. Add the typed module/Sync fixture and characterize one
+  real curator placement before authority refinement and physical A/B proof.
+  See
+  [`advanced-systems-aps-module-review.md`](advanced-systems-aps-module-review.md).
 * **Enable/disable lifecycle** initializes resources/runtime, publishes state,
   starts/stops drone work, and registers/removes actions. **Implemented;
   PARTIALLY COVERED.** Combat outcomes are direct; JIP/action cleanup is not.
