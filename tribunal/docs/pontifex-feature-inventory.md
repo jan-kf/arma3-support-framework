@@ -159,9 +159,14 @@ locality, and client replication.
   real curator placement before authority refinement and physical A/B proof.
   See
   [`advanced-systems-aps-module-review.md`](advanced-systems-aps-module-review.md).
-* **Enable/disable lifecycle** initializes resources/runtime, publishes state,
-  starts/stops drone work, and registers/removes actions. **Implemented;
-  PARTIALLY COVERED.** Combat outcomes are direct; JIP/action cleanup is not.
+* **Enable/disable/re-enable lifecycle** is **REVIEWED / DEFERRED AS A
+  STANDALONE FEATURE; ENTRY-CONSUMER-OWNED**. Direct combat setup proves an
+  operational enable tail, not authentic install/toggle semantics. Re-enable
+  currently replenishes hard-kill charges and resets voice, anti-drone, hard-
+  and soft-kill state; preservation/resupply policy, exact action removal/re-add,
+  transient cleanup, deletion, and JIP remain unresolved. Fold proof into the
+  APS module/control refinements. See
+  [`advanced-systems-aps-lifecycle-review.md`](advanced-systems-aps-lifecycle-review.md).
 * The **LORICA ACE control menu** is **REVIEWED / REFINE BEFORE
   PERMANENT COVERAGE** for hard-kill, soft-kill, status, voice state, and
   registration lifecycle. The entry is reachable, but server handlers trust
