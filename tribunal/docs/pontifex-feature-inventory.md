@@ -170,9 +170,15 @@ locality, and client replication.
   authoritative request boundary and data-driven ACE/physical A/B coverage.
   Anti-drone remains separately deferred. See
   [`advanced-systems-aps-ace-controls-review.md`](advanced-systems-aps-ace-controls-review.md).
-* **Beam/particle animation** and **voice/status sequences** expose engagement,
-  charge, fuel, and errors. **Implemented; NOT YET REVIEWED.** The scenario
-  proves world outcome, not rendering or audible playback.
+* **Beam/particle animation** is **REVIEWED / REFINE BEFORE PERMANENT
+  COVERAGE**: the real engagement path reaches it, but particle creation is
+  server-local on a dedicated server and beam concurrency/client rendering are
+  unproven. **Audible voice/engagement sound** is **REVIEWED / DEFERRED** under
+  `-noSound` pending audience/overlap policy and a sound-enabled observer.
+  **Status facts/presentation** remain consumer-owned by the APS control review;
+  accepted world state does not prove hint, beam, particle, or audio delivery.
+  See
+  [`advanced-systems-aps-presentation-review.md`](advanced-systems-aps-presentation-review.md).
 
 #### 2.1.5 Experimental anti-drone
 
