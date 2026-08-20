@@ -156,9 +156,14 @@ locality, and client replication.
 * **Enable/disable lifecycle** initializes resources/runtime, publishes state,
   starts/stops drone work, and registers/removes actions. **Implemented;
   PARTIALLY COVERED.** Combat outcomes are direct; JIP/action cleanup is not.
-* **ACE menu** provides hard-kill off/reboot, soft-kill on/off, status, voice,
-  and anti-drone actions. **Implemented; NOT YET REVIEWED.** It needs the future
-  real ACE interaction adapter.
+* The **LORICA ACE control menu** is **REVIEWED / REFINE BEFORE
+  PERMANENT COVERAGE** for hard-kill, soft-kill, status, voice state, and
+  registration lifecycle. The entry is reachable, but server handlers trust
+  caller-supplied actor/target data, do not revalidate the active transition,
+  and return no correlated result. Choose operator eligibility, then add an
+  authoritative request boundary and data-driven ACE/physical A/B coverage.
+  Anti-drone remains separately deferred. See
+  [`advanced-systems-aps-ace-controls-review.md`](advanced-systems-aps-ace-controls-review.md).
 * **Beam/particle animation** and **voice/status sequences** expose engagement,
   charge, fuel, and errors. **Implemented; NOT YET REVIEWED.** The scenario
   proves world outcome, not rendering or audible playback.
