@@ -151,6 +151,19 @@ Hidden-pad creation plus `land "LAND"` remains a characterization candidate,
 not a frozen requirement: the successful baseline proves the mechanism works,
 but no controlled alternative has yet shown that it is required by Arma.
 
+### Remote vehicle eligibility findings
+
+A client-side map-wide browser cannot assume that distant AI crew objects are
+streamed merely because their server-owned vehicle is visible. Vigil cold runs
+proved living WEST crews on the dedicated server while the real client observed
+null commander proxies and civilian `side vehicle` for stationary assets more
+than four kilometres away. Eligibility fixtures should keep the real distance
+and independently prove authoritative class, crew, side, alive state, and exact
+client rows. Product code may prefer live crew/group state when available and
+use a documented authoritative or class-based fallback when absent; tests must
+not move fixtures nearby or wait indefinitely to conceal the streaming boundary.
+Captured/re-crewed edge semantics remain product-specific.
+
 ### Vigil rotary-CAS findings
 
 The CAS review found globally eligible engagement, incorrect effective-side

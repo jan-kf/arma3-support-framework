@@ -265,10 +265,13 @@ Utilities for fixed-wing airdrop.
 
 ### 3.2 Asset discovery and whitelist
 
-* **Live asset browser** discovers friendly manned assets, classifies artillery,
-  rotary CAS, transport, fixed-wing/recon, and renders status/actions.
-  **Implemented; PARTIALLY COVERED.** Fixtures prove specific eligibility, not
-  mixed-fleet refresh/presentation.
+* **Live asset browser** discovers and classifies live friendly support assets.
+  **Implemented; COVERED** for unwhitelisted transport, artillery, and rotary
+  CAS. `vigil-ui` proves exact mixed-fleet backing/tree identities and excludes
+  hostile, dead, and wrong-role controls. Distant crew proxies are not assumed;
+  live commander side is preferred and class affiliation is the bounded fallback.
+  Fixed-wing registry rows and the dormant recon branch remain separate. See
+  [`vigil-asset-browser-review.md`](vigil-asset-browser-review.md).
 * **Eden whitelist** restricts the source to synchronized objects; **Zeus toggle**
   adds/removes a selected object. **Implemented; NOT YET REVIEWED.**
 

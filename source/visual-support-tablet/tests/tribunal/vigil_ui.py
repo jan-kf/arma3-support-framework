@@ -15,10 +15,17 @@ TRIBUNAL_SCENARIO = Scenario(
     identifier="vigil-ui",
     tier="gameplay",
     server_expected=frozenset({
+        "vigil.browser.serverFixture",
+        "vigil.browser.serverLocality",
+        "vigil.browser.cleanup",
         "vigil.locality.serverNoDisplay",
         "vigil.locality.noServerOpenPath",
     }),
     client_expected=frozenset({
+        "vigil.browser.fixtureReplicated",
+        "vigil.browser.transportExact",
+        "vigil.browser.artilleryExact",
+        "vigil.browser.casExact",
         "vigil.access.requiredRejects",
         "vigil.access.overrideOpens",
         "vigil.access.bluOpens",
@@ -35,9 +42,106 @@ TRIBUNAL_SCENARIO = Scenario(
         "vigil.reopen.state",
     }),
     server_sqf=r'''
+private _browserVehicles = [];
+private _browserUnits = [];
+private _browserGroups = [];
+private _spawnBrowserVehicle = {
+    params ["_class", "_posATL", "_groupLabel"];
+    private _vehicle = createVehicle [_class, _posATL, [], 0, "NONE"];
+    createVehicleCrew _vehicle;
+    _vehicle allowCrewInImmobile true;
+    _vehicle setFuel 0;
+    _vehicle engineOn false;
+    _browserVehicles pushBack _vehicle;
+    _vehicle setVariable ["TRIBUNAL_VIGIL_BROWSER_GROUP_LABEL", _groupLabel];
+    _vehicle
+};
+
+private _browserTransport = ["B_Heli_Light_01_F", [1450, 5420, 0], "TRIBUNAL TRANSPORT"] call _spawnBrowserVehicle;
+private _browserArtillery = ["B_Mortar_01_F", [1480, 5420, 0], "TRIBUNAL ARTILLERY"] call _spawnBrowserVehicle;
+private _browserCas = ["B_Heli_Attack_01_F", [1510, 5420, 0], "TRIBUNAL CAS"] call _spawnBrowserVehicle;
+private _hostileTransport = ["O_Heli_Light_02_unarmed_F", [1540, 5420, 0], "TRIBUNAL HOSTILE TRANSPORT"] call _spawnBrowserVehicle;
+private _hostileArtillery = ["O_Mortar_01_F", [1570, 5420, 0], "TRIBUNAL HOSTILE ARTILLERY"] call _spawnBrowserVehicle;
+private _hostileCas = ["O_Heli_Attack_02_dynamicLoadout_F", [1600, 5420, 0], "TRIBUNAL HOSTILE CAS"] call _spawnBrowserVehicle;
+private _deadTransport = ["B_Heli_Light_01_F", [1630, 5420, 0], "TRIBUNAL DEAD TRANSPORT"] call _spawnBrowserVehicle;
+private _wrongRole = ["B_MRAP_01_F", [1660, 5420, 0], "TRIBUNAL WRONG ROLE"] call _spawnBrowserVehicle;
+
+private _crewReadyDeadline = diag_tickTime + 10;
+waitUntil {
+    uiSleep 0.05;
+    (_browserVehicles findIf {isNull effectiveCommander _x}) < 0
+        || {diag_tickTime > _crewReadyDeadline}
+};
+{
+    private _vehicle = _x;
+    {
+        doStop _x;
+        _browserUnits pushBack _x;
+    } forEach crew _vehicle;
+    private _group = group effectiveCommander _vehicle;
+    if (!isNull _group) then {
+        _group setGroupIdGlobal [_vehicle getVariable ["TRIBUNAL_VIGIL_BROWSER_GROUP_LABEL", "TRIBUNAL BROWSER"]];
+        _browserGroups pushBackUnique _group;
+    };
+} forEach _browserVehicles;
+_deadTransport setDamage 1;
+
+private _browserIds = _browserVehicles apply {netId _x};
+private _fixtureValid = (count (_browserIds select {_x isEqualTo ""})) isEqualTo 0
+    && {(count (_browserIds arrayIntersect _browserIds)) isEqualTo count _browserIds}
+    && {alive _browserTransport}
+    && {alive _browserArtillery}
+    && {alive _browserCas}
+    && {!isNull effectiveCommander _browserTransport}
+    && {!isNull effectiveCommander _browserArtillery}
+    && {!isNull effectiveCommander _browserCas}
+    && {side (group effectiveCommander _browserTransport) isEqualTo west}
+    && {side (group effectiveCommander _browserArtillery) isEqualTo west}
+    && {side (group effectiveCommander _browserCas) isEqualTo west}
+    && {side (group effectiveCommander _hostileTransport) isEqualTo east}
+    && {side (group effectiveCommander _hostileArtillery) isEqualTo east}
+    && {side (group effectiveCommander _hostileCas) isEqualTo east}
+    && {alive _hostileTransport}
+    && {alive _hostileArtillery}
+    && {alive _hostileCas}
+    && {alive _wrongRole}
+    && {!alive _deadTransport};
+private _serverLocal = (_browserVehicles findIf {!local _x || {owner _x isNotEqualTo 2}}) < 0;
+["vigil.browser.serverFixture", _fixtureValid, format ["ids=%1|classes=%2|alive=%3", _browserIds, _browserVehicles apply {typeOf _x}, _browserVehicles apply {alive _x}]] call _assert;
+["vigil.browser.serverLocality", _serverLocal, format ["locality=%1", _browserVehicles apply {[netId _x, local _x, owner _x]}]] call _assert;
+missionNamespace setVariable [
+    "TRIBUNAL_VIGIL_BROWSER_FIXTURE",
+    [
+        netId _browserTransport,
+        netId _browserArtillery,
+        netId _browserCas,
+        [netId _hostileTransport, netId _hostileArtillery, netId _hostileCas, netId _deadTransport, netId _wrongRole]
+    ],
+    true
+];
+
 private _serverDisplay = uiNamespace getVariable ["YSF_Tablet_Display", displayNull];
 ["vigil.locality.serverNoDisplay", isDedicated && {!hasInterface} && {isNull _serverDisplay}, format ["dedicated=%1|hasInterface=%2|display=%3", isDedicated, hasInterface, !isNull _serverDisplay]] call _assert;
 ["vigil.locality.noServerOpenPath", isNil {missionNamespace getVariable "TRIBUNAL_VIGIL_SERVER_OPEN"}, "no server UI open execution marker"] call _assert;
+private _browserDoneDeadline = diag_tickTime + 90;
+waitUntil {
+    uiSleep 0.1;
+    missionNamespace getVariable ["TRIBUNAL_VIGIL_BROWSER_DONE", false]
+        || {diag_tickTime > _browserDoneDeadline}
+};
+private _browserCompleted = missionNamespace getVariable ["TRIBUNAL_VIGIL_BROWSER_DONE", false];
+{deleteVehicle _x;} forEach _browserUnits;
+{deleteVehicle _x;} forEach _browserVehicles;
+{deleteGroup _x;} forEach _browserGroups;
+missionNamespace setVariable ["TRIBUNAL_VIGIL_BROWSER_FIXTURE", nil, true];
+private _cleanupDeadline = diag_tickTime + 3;
+waitUntil {
+    uiSleep 0.05;
+    (_browserIds findIf {!isNull (objectFromNetId _x)}) < 0 || {diag_tickTime > _cleanupDeadline}
+};
+private _browserClean = _browserCompleted
+    && {(_browserIds findIf {!isNull (objectFromNetId _x)}) < 0};
+["vigil.browser.cleanup", _browserClean, format ["clientDone=%1|remaining=%2", _browserCompleted, _browserIds select {!isNull (objectFromNetId _x)}]] call _assert;
 ''',
     client_sqf=r'''
 private _identity = missionNamespace getVariable ["TRIBUNAL_MACHINE_IDENTITY", ""];
@@ -73,6 +177,111 @@ private _openTablet = {
     !isNull _display && {(ctrlIDD _display) isEqualTo 88000} && {!isNull _page} && {!isNull _tabs}
 };
 
+private _browserFixture = [];
+private _browserFixtureDeadline = diag_tickTime + 20;
+waitUntil {
+    uiSleep 0.05;
+    _browserFixture = missionNamespace getVariable ["TRIBUNAL_VIGIL_BROWSER_FIXTURE", []];
+    (count _browserFixture) isEqualTo 4 || {diag_tickTime > _browserFixtureDeadline}
+};
+private _fixtureObjects = [];
+private _browserObjectsDeadline = diag_tickTime + 15;
+waitUntil {
+    uiSleep 0.05;
+    _fixtureObjects = [];
+    if ((count _browserFixture) isEqualTo 4) then {
+        _fixtureObjects = [
+            objectFromNetId (_browserFixture # 0),
+            objectFromNetId (_browserFixture # 1),
+            objectFromNetId (_browserFixture # 2)
+        ];
+        {_fixtureObjects pushBack (objectFromNetId _x);} forEach (_browserFixture # 3);
+    };
+    ((count _fixtureObjects) isEqualTo 8
+        && {(_fixtureObjects findIf {isNull _x}) < 0})
+        || {diag_tickTime > _browserObjectsDeadline}
+};
+private _fixtureClasses = _fixtureObjects apply {if (isNull _x) then {"<null>"} else {typeOf _x}};
+private _fixtureReplicated = (count _fixtureObjects) isEqualTo 8
+    && {(_fixtureObjects findIf {isNull _x}) < 0}
+    && {_fixtureClasses isEqualTo [
+        "B_Heli_Light_01_F",
+        "B_Mortar_01_F",
+        "B_Heli_Attack_01_F",
+        "O_Heli_Light_02_unarmed_F",
+        "O_Mortar_01_F",
+        "O_Heli_Attack_02_dynamicLoadout_F",
+        "B_Heli_Light_01_F",
+        "B_MRAP_01_F"
+    ]}
+    && {alive (_fixtureObjects # 0)}
+    && {alive (_fixtureObjects # 1)}
+    && {alive (_fixtureObjects # 2)}
+    && {alive (_fixtureObjects # 3)}
+    && {alive (_fixtureObjects # 4)}
+    && {alive (_fixtureObjects # 5)}
+    && {alive (_fixtureObjects # 7)}
+    && {!alive (_fixtureObjects # 6)};
+private _predicateInputs = _fixtureObjects apply {
+    if (isNull _x) then {
+        []
+    } else {
+        private _commander = effectiveCommander _x;
+        [
+            netId _x,
+            typeOf _x,
+            alive _x,
+            side _x,
+            if (isNull _commander) then {"<null>"} else {side (group _commander)},
+            _x emptyPositions "cargo",
+            locked _x,
+            count (magazinesAmmoFull _x),
+            [_x] call YOSHI_cfgSideIsPlayer,
+            [_x] call YOSHI_isTransportHelicopter,
+            [_x] call YOSHI_isArmedHelicopter,
+            [_x] call YSF_isArtilleryCapable
+        ]
+    }
+};
+["vigil.browser.fixtureReplicated", _fixtureReplicated, format ["fixture=%1|classes=%2|alive=%3|locality=%4|predicateInputs=%5", _browserFixture, _fixtureClasses, _fixtureObjects apply {if (isNull _x) then {false} else {alive _x}}, _fixtureObjects apply {if (isNull _x) then {[]} else {[netId _x, local _x, owner _x]}}, _predicateInputs]] call _assert;
+
+private _browserTreeNetIds = {
+    params ["_tree"];
+    private _ids = [];
+    if (isNull _tree) exitWith {_ids};
+    private _roots = _tree tvCount [];
+    for "_root" from 0 to (_roots - 1) do {
+        private _rootData = _tree tvData [_root];
+        if !(_rootData isEqualTo "") then {_ids pushBack _rootData;};
+        private _children = _tree tvCount [_root];
+        for "_child" from 0 to (_children - 1) do {
+            private _childData = _tree tvData [_root, _child];
+            if !(_childData isEqualTo "") then {_ids pushBack _childData;};
+        };
+    };
+    _ids
+};
+
+private _assertBrowserCategory = {
+    params ["_category", "_expectedIds", "_assertion"];
+    [_category] call YOSHI_selectAssetType;
+    uiSleep 0.15;
+    private _items = (uiNamespace getVariable ["YSF_assets_items", []])
+        select {!isNull _x};
+    private _itemIds = _items apply {netId _x};
+    private _treeResult = [88310] call YOSHI_getControl;
+    private _tree = _treeResult # 0;
+    private _treeIds = [_tree] call _browserTreeNetIds;
+    private _expected = +_expectedIds;
+    _itemIds sort true;
+    _treeIds sort true;
+    _expected sort true;
+    private _passed = (_treeResult # 1)
+        && {_itemIds isEqualTo _expected}
+        && {_treeIds isEqualTo _expected};
+    [_assertion, _passed, format ["category=%1|expected=%2|items=%3|tree=%4|fixtureClasses=%5", _category, _expected, _itemIds, _treeIds, _fixtureClasses]] call _assert;
+};
+
 missionNamespace setVariable ["YSF_enableTablet", true];
 private _requiredStimulus = (missionNamespace getVariable ["YSF_enableTablet", false])
     && {(_tabletClasses findIf {_x in assignedItems player}) < 0}
@@ -92,6 +301,17 @@ private _overrideOpened = (missionNamespace getVariable ["YSF_enableTablet", tru
     && {(_tabletClasses findIf {_x in assignedItems player}) < 0}
     && {call _openTablet};
 ["vigil.access.overrideOpens", _overrideOpened, format ["setting=%1|assigned=%2|display=%3", missionNamespace getVariable ["YSF_enableTablet", true], assignedItems player, !isNull (uiNamespace getVariable ["YSF_Tablet_Display", displayNull])]] call _assert;
+if (_overrideOpened && {_fixtureReplicated}) then {
+    ["transport", [_browserFixture # 0], "vigil.browser.transportExact"] call _assertBrowserCategory;
+    ["arty", [_browserFixture # 1], "vigil.browser.artilleryExact"] call _assertBrowserCategory;
+    ["cas", [_browserFixture # 2], "vigil.browser.casExact"] call _assertBrowserCategory;
+    ["transport"] call YOSHI_selectAssetType;
+} else {
+    ["vigil.browser.transportExact", false, format ["override=%1|fixture=%2", _overrideOpened, _fixtureReplicated]] call _assert;
+    ["vigil.browser.artilleryExact", false, format ["override=%1|fixture=%2", _overrideOpened, _fixtureReplicated]] call _assert;
+    ["vigil.browser.casExact", false, format ["override=%1|fixture=%2", _overrideOpened, _fixtureReplicated]] call _assert;
+};
+missionNamespace setVariable ["TRIBUNAL_VIGIL_BROWSER_DONE", true, true];
 call _closeTablet;
 
 missionNamespace setVariable ["YSF_enableTablet", true];
@@ -201,11 +421,11 @@ diag_log "TRIBUNAL_VIGIL|REOPENED_STATE";
     },
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="The equipped client can open Vigil, navigate visible tabs, close it cleanly, and reopen at a reset default state without creating server UI state.",
+        behavior_contract="The equipped client can open Vigil, see exactly the live friendly eligible transport, artillery, and rotary-CAS assets while excluding hostile, dead, and wrong-role controls, navigate visible tabs, close cleanly, and reopen at a reset default state without server UI state.",
         outcome="KEEP + CHARACTERIZE ENGINE REQUIREMENT",
-        rationale="Assertions combine real framebuffer transitions with client-local backing state; control IDs are adapter anchors, not the user contract.",
+        rationale="Exact tokenized fixture netIds are compared with both the live tree rows and client backing objects; framebuffer/input remains limited to the inherently visual navigation contract.",
         dependencies=("Tribunal authenticated framebuffer input", "Vigil terminal item", "Arma UI scheduler"),
-        evidence_types=frozenset({"framebuffer", "input", "client-ui-state", "locality"}),
+        evidence_types=frozenset({"framebuffer", "input", "client-ui-state", "exact-identity", "negative-control", "locality"}),
         locality_requirements="All display/input state exists only on client-a; the dedicated server retains displayNull.",
         characterized_behaviors=(CharacterizedBehavior(
             description="Reopen Vigil from a fresh scheduled script after Escape destroys the prior display.",

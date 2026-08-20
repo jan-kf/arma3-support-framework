@@ -50,6 +50,25 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertIn("vigil.access.independentOpens", vigil.client_expected)
         self.assertIn("vigil.access.opforOpens", vigil.client_expected)
         self.assertIn("vigil.access.matrixCleanup", vigil.client_expected)
+        self.assertTrue({
+            "vigil.browser.fixtureReplicated",
+            "vigil.browser.transportExact",
+            "vigil.browser.artilleryExact",
+            "vigil.browser.casExact",
+        }.issubset(vigil.client_expected))
+        self.assertTrue({
+            "vigil.browser.serverFixture",
+            "vigil.browser.serverLocality",
+            "vigil.browser.cleanup",
+        }.issubset(vigil.server_expected))
+        self.assertIn("TRIBUNAL_VIGIL_BROWSER_FIXTURE", vigil.server_sqf)
+        self.assertIn("TRIBUNAL_VIGIL_BROWSER_DONE", vigil.client_sqf)
+        self.assertIn("objectFromNetId", vigil.client_sqf)
+        self.assertIn("_tree tvData", vigil.client_sqf)
+        self.assertIn('["transport", [_browserFixture # 0]', vigil.client_sqf)
+        self.assertIn('["arty", [_browserFixture # 1]', vigil.client_sqf)
+        self.assertIn('["cas", [_browserFixture # 2]', vigil.client_sqf)
+        self.assertNotIn('["recon",', vigil.client_sqf)
         self.assertIn('missionNamespace setVariable ["YSF_enableTablet", false]', vigil.client_sqf)
         self.assertIn("TRIBUNAL_VIGIL_REQUIRED_CALL_AT", vigil.client_sqf)
         self.assertIn('"YSF_VigilTerminal_I"', vigil.client_sqf)

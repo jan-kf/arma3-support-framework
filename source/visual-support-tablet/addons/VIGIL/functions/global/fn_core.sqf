@@ -40,15 +40,24 @@ the life of the world to come.
 Amen.
 */
 
-// returns true if config side matches player's side
+// Prefer the current crew side, but distant vehicle crew may not be streamed to
+// a client. Fall back to the class affiliation so the map-wide browser remains
+// deterministic for normal mission assets.
 YOSHI_cfgSideIsPlayer = {
   params ["_veh"];
-  private _vehicleSide = side _veh;
+  private _vehicleSideId = (side _veh) call BIS_fnc_sideID;
   if !(_veh isKindOf "Man") then {
     private _commander = effectiveCommander _veh;
-    if (!isNull _commander) then { _vehicleSide = side (group _commander); };
+    if (!isNull _commander) then {
+      _vehicleSideId = (side (group _commander)) call BIS_fnc_sideID;
+    } else {
+      private _configSideId = getNumber (configOf _veh >> "side");
+      if (_configSideId in [0, 1, 2, 3]) then {
+        _vehicleSideId = _configSideId;
+      };
+    };
   };
-  ((_vehicleSide call BIS_fnc_sideID) isEqualTo ((side player) call BIS_fnc_sideID))
+  _vehicleSideId isEqualTo ((side player) call BIS_fnc_sideID)
 };
 
 YOSHI_getControl = {
