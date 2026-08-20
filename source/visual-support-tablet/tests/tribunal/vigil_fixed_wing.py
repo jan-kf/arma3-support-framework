@@ -12,6 +12,7 @@ TRIBUNAL_SCENARIO = Scenario(
     server_expected=frozenset({
         "vigil.fixedWing.registration.snapshot",
         "vigil.fixedWing.registration.originalRemoved",
+        "vigil.fixedWing.control.uavDeployRejected",
         "vigil.fixedWing.dispatch.reconstructed",
         "vigil.fixedWing.dispatch.ingress",
         "vigil.fixedWing.locality",
@@ -31,6 +32,7 @@ TRIBUNAL_SCENARIO = Scenario(
     }),
     client_expected=frozenset({
         "vigil.fixedWing.client.registry",
+        "vigil.fixedWing.client.uavDeployRejected",
         "vigil.fixedWing.client.deploy",
         "vigil.fixedWing.client.locality",
         "vigil.fixedWing.client.normalDesignation",
@@ -51,6 +53,14 @@ private _operating = if (isNull _scenarioPlayer) then {[3200, 5600, 0]} else {ge
 private _infilDelta = if ((_operating # 0) < (worldSize / 2)) then {2200} else {-2200};
 private _infil = [(((_operating # 0) + _infilDelta) max 500) min (worldSize - 500), _operating # 1, 900];
 private _exfil = [500, 1000, 900];
+private _uavAssetId = format ["FW_UAV_DISABLED_%1", _token];
+private _uavSource = "B_UAV_02_dynamicLoadout_F" createVehicle [1400, 5400, 0];
+createVehicleCrew _uavSource;
+_uavSource setVariable ["YSF_FW_ID", _uavAssetId, true];
+private _uavRegistered = [_uavSource, _infil, _exfil, "SENTRY"] call YSF_fwRegisterAsset;
+private _uavEntryBefore = [_uavAssetId] call YSF_fwGetEntry;
+private _uavSnapshotBefore = +(_uavEntryBefore getOrDefault ["snapshot", []]);
+missionNamespace setVariable ["TRIBUNAL_FIXED_WING_UAV_FIXTURE", [_token, _uavAssetId, _uavRegistered, _uavEntryBefore getOrDefault ["vehicleType", ""]], true];
 private _source = "B_Plane_CAS_01_dynamicLoadout_F" createVehicle [1500, 5400, 0];
 _source setDir 125;
 _source setFuel 0.73;
@@ -94,6 +104,25 @@ waitUntil {uiSleep 0.01; isNull _source || diag_tickTime > _deleteDeadline};
 private _originalRemoved = isNull _source && {(_sourceCrewIds findIf {!isNull (objectFromNetId _x)}) < 0};
 ["vigil.fixedWing.registration.originalRemoved", _originalRemoved, format ["source=%1|crew=%2|sourceNull=%3", _sourceId, _sourceCrewIds, isNull _source]] call _assert;
 missionNamespace setVariable ["TRIBUNAL_FIXED_WING_FIXTURE", [_token, _assetId, _infil, _operating, _exfil], true];
+
+private _uavAuditDeadline = diag_tickTime + 30;
+private _uavAuditRow = [];
+waitUntil {
+    uiSleep 0.05;
+    private _audit = missionNamespace getVariable ["YSF_FW_DEPLOY_AUDIT", []];
+    private _ix = _audit findIf {(_x param [0, ""]) find (format ["UAV_REJECT_%1_", _token]) isEqualTo 0};
+    if (_ix >= 0) then {_uavAuditRow = _audit # _ix;};
+    (_uavAuditRow isNotEqualTo []) || {diag_tickTime > _uavAuditDeadline}
+};
+private _uavEntryAfter = [_uavAssetId] call YSF_fwGetEntry;
+private _uavRejected = _uavRegistered
+    && {(_uavAuditRow param [1, ""]) isEqualTo _uavAssetId}
+    && {(_uavAuditRow param [2, true]) isEqualTo false}
+    && {(_uavAuditRow param [3, ""]) isEqualTo "uav_deploy_disabled"}
+    && {(_uavEntryAfter getOrDefault ["state", ""]) isEqualTo YSF_FW_STATE_STOWED}
+    && {isNull (_uavEntryAfter getOrDefault ["spawnedVeh", objNull])}
+    && {(_uavEntryAfter getOrDefault ["snapshot", []]) isEqualTo _uavSnapshotBefore};
+["vigil.fixedWing.control.uavDeployRejected", _uavRejected, format ["audit=%1|before=%2|after=%3|spawned=%4", _uavAuditRow, _uavEntryBefore, _uavEntryAfter, _uavEntryAfter getOrDefault ["spawnedVeh", objNull]]] call _assert;
 
 private _deployDeadline = diag_tickTime + 45;
 waitUntil {
@@ -307,7 +336,7 @@ missionNamespace setVariable ["TRIBUNAL_FIXED_WING_EGRESS_DONE", [_token, _asset
 [_combatToken] call TRIBUNAL_fnc_combatObserverStop;
 {if (!isNull _x) then {deleteVehicleCrew _x; deleteVehicle _x}} forEach [_normalTarget, _irTarget];
 private _registry = call YSF_fwEnsureRegistry;
-private _cleanupOk = count _registry isEqualTo 1
+private _cleanupOk = count _registry isEqualTo 2
     && {isNull (_entry getOrDefault ["spawnedVeh", objNull])}
     && {isNull _normalLaser} && {isNull _irLaser};
 ["vigil.fixedWing.cleanup", _cleanupOk, format ["registry=%1|spawned=%2|normalLaserNull=%3|irLaserNull=%4", keys _registry, _entry getOrDefault ["spawnedVeh", objNull], isNull _normalLaser, isNull _irLaser]] call _assert;
@@ -325,6 +354,25 @@ private _registryOk = (_fixture param [0, ""]) isEqualTo _token && {_rowIndex >=
 ["vigil.fixedWing.client.registry", _registryOk, format ["fixture=%1|registry=%2", _fixture, _registry]] call _assert;
 player linkItem "YSF_VigilTerminal_B";
 player allowDamage false;
+private _uavFixture = missionNamespace getVariable ["TRIBUNAL_FIXED_WING_UAV_FIXTURE", []];
+private _uavAssetId = _uavFixture param [1, ""];
+private _uavRequestId = format ["UAV_REJECT_%1_%2", _token, clientOwner];
+[_uavAssetId, player, _uavRequestId] call YSF_fwDeployAsset;
+private _uavAckName = format ["YSF_FW_DEPLOY_ACK_%1", _uavRequestId];
+private _uavAckDeadline = diag_tickTime + 15;
+waitUntil {uiSleep 0.05; !isNil {missionNamespace getVariable _uavAckName} || diag_tickTime > _uavAckDeadline};
+private _uavAck = missionNamespace getVariable [_uavAckName, []];
+private _registryAfterUav = call YSF_fwGetPublicRegistry;
+private _uavRowIndex = _registryAfterUav findIf {(_x param [0, ""]) isEqualTo _uavAssetId};
+private _uavClientRejected = (_uavFixture param [0, ""]) isEqualTo _token
+    && {(_uavFixture param [2, false]) isEqualTo true}
+    && {(_uavFixture param [3, ""]) isEqualTo "B_UAV_02_dynamicLoadout_F"}
+    && {(_uavAck param [0, true]) isEqualTo false}
+    && {(_uavAck param [1, ""]) isEqualTo "uav_deploy_disabled"}
+    && {(_uavAck param [2, ""]) isEqualTo _uavAssetId}
+    && {_uavRowIndex >= 0}
+    && {((_registryAfterUav # _uavRowIndex) param [1, ""]) isEqualTo YSF_FW_STATE_STOWED};
+["vigil.fixedWing.client.uavDeployRejected", _uavClientRejected, format ["fixture=%1|request=%2|ack=%3|row=%4", _uavFixture, _uavRequestId, _uavAck, if (_uavRowIndex < 0) then {[]} else {_registryAfterUav # _uavRowIndex}]] call _assert;
 uiNamespace setVariable ["YSF_current_selected_fw_id", _assetId];
 call YOSHI_taskFW_deploy;
 private _deployedDeadline = diag_tickTime + 45;

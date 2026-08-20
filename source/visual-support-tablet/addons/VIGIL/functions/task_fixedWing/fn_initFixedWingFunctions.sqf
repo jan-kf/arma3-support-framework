@@ -682,22 +682,38 @@ YSF_fwMonitorCallerLoiter = {
     }, _checkInterval, [_id, _vehicle, _caller, _recenterDistance]] call CBA_fnc_addPerFrameHandler;
 };
 
+YSF_fwDeployAck = {
+    params ["_requestId", "_accepted", "_reason", ["_owner", 0], ["_assetId", ""]];
+    if (!isServer || {_requestId isEqualTo ""}) exitWith {};
+    private _payload = [_accepted isEqualTo true, _reason, _assetId, serverTime];
+    missionNamespace setVariable [format ["YSF_FW_DEPLOY_ACK_%1", _requestId], _payload, _owner];
+
+    private _audit = missionNamespace getVariable ["YSF_FW_DEPLOY_AUDIT", []];
+    _audit pushBack [_requestId, _assetId, _accepted isEqualTo true, _reason, _owner, serverTime];
+    if ((count _audit) > 50) then {_audit deleteRange [0, (count _audit) - 50];};
+    missionNamespace setVariable ["YSF_FW_DEPLOY_AUDIT", _audit, false];
+};
+
 YSF_fwDeployAsset = {
-    params ["_id", ["_caller", objNull]];
+    params ["_id", ["_caller", objNull], ["_requestId", ""]];
 
     if (!isServer) exitWith {
+        if (_requestId isEqualTo "") then {
+            _requestId = format ["FW_DEPLOY_%1_%2_%3", clientOwner, floor (diag_tickTime * 1000), floor random 1000000];
+        };
         private _callerRef = if (_caller isEqualType objNull) then {
             if (isNull _caller) then {""} else {netId _caller}
         } else {
             _caller
         };
+        missionNamespace setVariable [format ["YSF_FW_DEPLOY_ACK_%1", _requestId], nil, false];
         diag_log format [
             "[YSF][FWDBG] scope=CLIENT owner=%1 deployClick id=%2 caller=%3",
             clientOwner,
             _id,
             if (isNull _caller) then {"<null>"} else {name _caller}
         ];
-        [_id, _callerRef] remoteExecCall ["YSF_fwDeployAsset", 2];
+        [_id, _callerRef, _requestId] remoteExecCall ["YSF_fwDeployAsset", 2];
         diag_log format [
             "[YSF][FWDBG] scope=CLIENT owner=%1 deployDispatchQueued id=%2 callerRef=%3",
             clientOwner,
@@ -707,12 +723,29 @@ YSF_fwDeployAsset = {
         objNull
     };
 
+    private _requestOwner = remoteExecutedOwner;
+    private _reject = {
+        params ["_reason"];
+        [_requestId, false, _reason, _requestOwner, _id] call YSF_fwDeployAck;
+        objNull
+    };
+    if !(_requestId isEqualType "" && {_requestId isNotEqualTo ""}) exitWith {objNull};
+
     if (_caller isEqualType "") then {
         _caller = [_caller] call YSF_fwResolveObjectRef;
     };
+    if (isNull _caller || {!isPlayer _caller} || {owner _caller isNotEqualTo _requestOwner}) exitWith {
+        ["invalid_requester"] call _reject
+    };
 
     private _entry = [_id] call YSF_fwGetEntry;
-    if !(typeName _entry isEqualTo "HASHMAP") exitWith {objNull};
+    if !(typeName _entry isEqualTo "HASHMAP") exitWith {["asset_not_registered"] call _reject};
+
+    private _vehicleType = _entry getOrDefault ["vehicleType", ""];
+    if (isNil "YSF_fwIsDisabledDeployType") exitWith {["deploy_classifier_unavailable"] call _reject};
+    if ([_vehicleType] call YSF_fwIsDisabledDeployType) exitWith {
+        ["uav_deploy_disabled"] call _reject
+    };
 
     private _state = _entry getOrDefault ["state", YSF_FW_STATE_STOWED];
     if (!(_state isEqualTo YSF_FW_STATE_STOWED)) exitWith {
@@ -782,6 +815,7 @@ YSF_fwDeployAsset = {
     _entry set ["state", YSF_FW_STATE_ON_STATION];
     _entry set ["lastUpdate", serverTime];
 	[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntry;
+    [_requestId, true, "accepted", _requestOwner, _id] call YSF_fwDeployAck;
     diag_log format [
         "[YSF][FWDBG] scope=SERVER owner=%1 deployCommitted id=%2 finalState=%3 vehNetId=%4",
         clientOwner,

@@ -112,7 +112,7 @@ spawned aircraft and crew are cleared.
 | Eden/runtime registration | KEEP AS-IS AND SPEC-TEST | both feed one authoritative registry API |
 | snapshot/remove/reconstruct model | REFINE BEFORE PERMANENT COVERAGE | restore fuel and exact pylon counts |
 | role bitmask and shared lifecycle | KEEP AS-IS AND SPEC-TEST | strike/recon/logistics identified; logistics deferred |
-| client request/server ownership | KEEP AS-IS AND SPEC-TEST | locality asserted at every object boundary |
+| client request/server ownership | REFINE AND SPEC-TEST | deployment now binds the exact player owner and acknowledges the authoritative result; other request surfaces retain their accepted feature-specific evidence |
 | handheld laser descriptor | KEEP AS-IS AND SPEC-TEST | real input, lifetime and ownership proven |
 | weapon-IR helper | KEEP + CHARACTERIZE ENGINE REQUIREMENT | real L input creates/moves/cleans client-local LaserTarget in daylight without NVG |
 | native Bomb04 | KEEP AS-IS AND SPEC-TEST | physically guides and impacts under current Arma build |

@@ -187,6 +187,13 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn('[_id, _vehicle, "timeout"] call YSF_fwFinalizeRtb', source)
         self.assertNotIn('_row set [1, "PylonRack_Bomb_GBU12_x2"]', source)
         self.assertIn('_row set [1, "PylonRack_4Rnd_LG_scalpel"]', source)
+        self.assertIn("YSF_fwDeployAck", source)
+        self.assertIn('"uav_deploy_disabled"', source)
+        self.assertIn("owner _caller isNotEqualTo _requestOwner", source)
+        self.assertLess(
+            source.index('"uav_deploy_disabled"'),
+            source.index('_entry set ["state", YSF_FW_STATE_DEPLOYING]'),
+        )
 
     def test_vigil_fixed_wing_scenario_is_causal_repeated_and_cleans_up(self) -> None:
         plan = multiplayer.select_plan("gameplay", "vigil-fixed-wing")
@@ -200,6 +207,7 @@ class TierFrameworkTests(unittest.TestCase):
         for assertion in (
             "vigil.fixedWing.registration.snapshot",
             "vigil.fixedWing.registration.originalRemoved",
+            "vigil.fixedWing.control.uavDeployRejected",
             "vigil.fixedWing.dispatch.reconstructed",
             "vigil.fixedWing.dispatch.ingress",
             "vigil.fixedWing.designation.normal",
@@ -224,6 +232,8 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn("TRIBUNAL_FIXED_WING|HANDHELD_ARMED", client)
         self.assertIn("TRIBUNAL_FIXED_WING|IR_ARMED", client)
         self.assertIn('call YOSHI_taskFW_deploy', client)
+        self.assertIn("vigil.fixedWing.client.uavDeployRejected", client)
+        self.assertIn("UAV_REJECT_", client)
         self.assertIn('call YOSHI_taskFW_rtb', client)
         self.assertIn("position[]={ 2000.0,5.0,5600.0 }", mission_sqm)
         self.assertIn("respawnOnStart = 0", description)

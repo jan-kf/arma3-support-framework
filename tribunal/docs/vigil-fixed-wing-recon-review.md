@@ -18,7 +18,9 @@ That metadata does not lead to a reconnaissance task:
 
 - every fixed-wing UAV class is rejected by `YSF_fwIsDisabledDeployType`, whose
   user-facing reason says UAV deployment is temporarily disabled because it is
-  unstable;
+  unstable; the guard was historically presentation-only, but is now enforced
+  at the authoritative deployment endpoint and covered separately in
+  [the UAV deployment boundary review](vigil-fixed-wing-uav-deploy-review.md);
 - the Fixed Wing controls expose Deploy, RTB, strike controls and Fabricator,
   but no reconnaissance request control;
 - the separate `TaskG_Recon` controls contain grid, altitude and radius fields,
@@ -86,6 +88,7 @@ history contains no earlier implementation that establishes missing intent.
 | --- | --- | --- |
 | shared fixed-wing registry/snapshot | KEEP AS-IS AND SPEC-TEST | already proven by strike/logistics; not recon success |
 | UAV-derived RECON role bit and label | DEFER | intentional-looking metadata, but capability semantics are undefined |
+| fixed-wing UAV rejection boundary | ACCEPTED / COVERED | direct remote request is rejected before authoritative mutation |
 | fixed-wing UAV reconstruction | NEEDS EXPERIMENTATION | explicitly disabled as unstable; no controlled evidence yet |
 | separate recon grid/altitude/radius state | DEFER | disconnected client-only scaffolding |
 | recon submit/request construction | DEFER | absent; submit control has no action |

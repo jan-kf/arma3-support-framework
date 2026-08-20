@@ -326,8 +326,13 @@ Utilities for fixed-wing airdrop.
   aircraft/crew, restore state, enter operating space, then record outcome and
   clean resources while retaining registration. **Implemented; COVERED** for
   strike/logistics.
-* **Fixed-wing UAV deploy** is rejected by an explicit unstable guard.
-  **Disabled/unreachable; REVIEWED / NEEDS EXPERIMENTATION.**
+* **Fixed-wing UAV deploy** is rejected by an explicit unstable guard. The
+  authoritative endpoint now binds the requesting player and rejects the
+  stored UAV class before registry/world mutation; a direct client bypass and
+  manned positive control are permanent coverage. **Disabled; ACCEPTED /
+  COVERED for rejection.** Physical UAV reconstruction remains **REVIEWED /
+  NEEDS EXPERIMENTATION**. See
+  [the boundary review](vigil-fixed-wing-uav-deploy-review.md).
 
 ### 3.8 Fixed-wing strike
 
