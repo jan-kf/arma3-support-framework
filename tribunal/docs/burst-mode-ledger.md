@@ -23,11 +23,13 @@ decisions remain in each canonical feature review and the feature inventory.
 | Vigil VLS target handshake | REVIEWED / CHARACTERIZED | `96cdd4f` | Live `20260820T001108Z-c8edbbcc`; four direct-first physical A/B pairs; exact baseline `2:240` diverged and `2:248` terminated 0.74 m from target | individual report-versus-confirm necessity and ordering remain unisolated | retain combined handshake; require another physical A/B before simplifying it |
 | Advanced Systems common utilities | REVIEWED / DEFERRED AS STANDALONE; CONSUMER-OWNED | `f414463` | none; exhaustive static reachability and consumer map | beam/audio concurrency and audience only if a consumer promises them | keep helpers internal; test outcomes from each consumer entry |
 
-Current feature HEAD: `f414463`. Accepted/covered or characterized in
-this ledger: Iron Dome, Tribunal manifest parity, and authoritative fixed-wing
-UAV rejection, Vigil tablet access, and the VLS target-knowledge handshake.
-Reviewed/deferred or precisely bounded: FPV, APS anti-drone, CORDIS, CBR
-modules, Vigil homepage, Field towing, helicopter stabilizer, laser harness,
-and object handling. Open experiments and decisions are recorded per row.
-Exact next recommended feature: **Advanced Systems common utility boundary**,
-followed by the **Vigil mixed-fleet asset browser**.
+| Vigil mixed-fleet asset browser | REFINED; ACCEPTED / COVERED | `039ad91` | `20260820T010547Z-f5c9dfb1`; server 9/0, client 22/0 | whitelist/Zeus, fixed-wing rows, dormant recon, client-B/JIP, distant captured-crew edge | retain exact backing/tree identity matrix; next review Field Utilities cold-client ACE composition |
+
+Current feature HEAD: `039ad91`. Accepted/covered or characterized in
+this ledger now also includes the Vigil mixed-fleet browser. Reviewed/deferred
+and precisely bounded work remains linked above. Scout evaluation: all three
+packets materially reduced reconnaissance; two independently converged on the
+Vigil governor, so future assignments must explicitly exclude already-selected
+surfaces while retaining three-way parallelism. Exact next recommended feature:
+**Field Utilities cold-client ACE registration/coexistence boundary**, followed
+by a static Vigil governor terminal review.
