@@ -565,9 +565,14 @@ airdrop. General fabrication is outside the contract.
 * Field Utilities reuses Vigil display/terminal skins while keeping separate
   state. **Implemented; PARTIALLY COVERED incidentally** by logistics. Nested
   lifecycle, styling, and use without Vigil are not reviewed.
-* APS and Field Utilities register many ACE object/class actions. **Implemented;
-  NOT YET REVIEWED as a suite boundary.** No product scenario proves real
-  ACE-menu availability/activation.
+* Field Utilities cold-client ACE class-action composition is **ACCEPTED /
+  COVERED** for Bridge, Logistics, Virtual Inventory, Towing/Stow, and FPV root
+  registration, concrete-class inheritance, coexistence, and relevance through
+  ACE's installed-version active-tree adapter. Consequential effects, the
+  Fabricator delayed object action, client-B, and JIP remain feature-owned or
+  deferred. APS action composition is still **NOT YET REVIEWED** as a suite
+  boundary. See
+  [`field-utilities-ace-composition-review.md`](field-utilities-ace-composition-review.md).
 
 ### 5.4 Eden/Zeus and CBA configuration
 

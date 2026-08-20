@@ -401,6 +401,17 @@ implementation, and the private
 activation path. The version adapter, rather than feature tests, owns any future
 compatibility work caused by changes to those private functions.
 
+The Field Utilities cold-client composition proof established an additional
+adapter rule for ACE 3.21: inherited class actions must be observed after
+`compileMenu` has materialized the exact concrete target class. Looking only in
+the abstract class namespace where an action was originally registered can
+produce a false absence even though the live concrete menu contains it. The
+adapter therefore compiles the exact target, recursively enumerates its concrete
+tree, and then applies the active-tree collector. Range-sensitive roots also
+require the actor to be placed in a measured eligible state and restored after
+observation; native dynamic-child stimuli such as vehicle cargo capability must
+be boundedly settled and independently asserted before absence/presence counts.
+
 ## Preliminary review of next feature families
 
 | Priority | Family | Preliminary outcome | Review focus before coverage |
