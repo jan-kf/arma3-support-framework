@@ -18,9 +18,9 @@ decisions remain in each canonical feature review and the feature inventory.
 | Field object handling / supply loading | REVIEWED / REFINE BEFORE COVERAGE | `3c17d1a` | none; static boundary review; 104 tests/static checks pass | split contact vs cargo policy; eligibility, authority, unload/finalization; locality/return experiments | run isolated exact ACE cargo and physical-contact A/B after decisions |
 | Field map helpers / airdrop feedback | markers REVIEWED / DEFERRED; feedback NEEDS DECISION/EXPERIMENT | `22854e5` | accepted logistics executes announcement incidentally; no feedback oracle | marker reachability/visibility; direction meaning, ETA interval/audience; two-distance timeline A/B | leave markers dormant; define feedback semantics then compare against physical delivery timeline |
 | Field helicopter sling helper | REVIEWED / DEFERRED | `8ea789e` | none; exhaustive static reachability review | whether it ships; entry/authority, rope ownership, native/custom mechanism, cleanup | revisit only after a supported entry and authoritative rope-operation policy |
-| Vigil fixed-wing UAV deploy boundary | REFINED; ACCEPTED / COVERED | pending | `20260819T235611Z-e6d9a2dc`; server 23/0, client 17/0 | physical UAV reconstruction/control and reconnaissance product remain deferred | retain authoritative rejection; next cover tablet access matrix |
+| Vigil fixed-wing UAV deploy boundary | REFINED; ACCEPTED / COVERED | `f609419` | `20260819T235611Z-e6d9a2dc`; server 23/0, client 17/0 | physical UAV reconstruction/control and reconnaissance product remain deferred | retain authoritative rejection; next cover tablet access matrix |
 
-Current feature HEAD: pending fixed-wing boundary commit. Accepted/covered in
+Current feature HEAD: `f609419`. Accepted/covered in
 this ledger: Iron Dome, Tribunal manifest parity, and authoritative fixed-wing
 UAV rejection. Reviewed/deferred or precisely bounded: FPV,
 APS anti-drone, CORDIS, CBR modules, Vigil homepage, Field towing, helicopter
