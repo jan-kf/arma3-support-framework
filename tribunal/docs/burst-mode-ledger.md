@@ -27,10 +27,11 @@ decisions remain in each canonical feature review and the feature inventory.
 | Field Utilities cold-client ACE composition | ACCEPTED / COVERED | `a1f5ff3` | `20260820T012801Z-0212d338`; server 2/0, client 4/0 | Fabricator delayed object action, effects, repeated-init, client-B/JIP remain separate | retain concrete-class inheritance/relevance matrix; next canonicalize Vigil task governor review |
 | Vigil task governor | REVIEWED / REWRITE BEFORE PERMANENT COVERAGE | `ba6cc50` | none; deterministic static lifecycle/authority defects | declarative request schema, one-task/cancel/retention/retry policy, HC ownership | run Live lifecycle and forged-request matrix; rewrite server boundary, then rerun artillery/transport/CAS |
 | Cross-addon CBA settings contract | REFINED; ACCEPTED / COVERED | `17a12ba` | static 13-setting matrix; 109 tests/HEMTT pass | downstream effects and future feedback-scope changes remain consumer-owned | retain fallback/consumer parity; next document client-N/JIP proof boundary |
+| Multi-client / JIP proof boundary | REVIEWED / DEFERRED | `8a0d8c3` | none; static architecture/environment boundary | second licensed Steam identity; per-feature visibility/retention/audience/concurrency/disconnect policy | extend identity-aware orchestration and run true late-join/isolation matrix after dependency exists |
 
-Current feature HEAD: `17a12ba`. The cross-addon CBA settings contract is
-accepted with 13 exact declarations, consumers, scopes, and fallbacks enforced.
-Scout evaluation remains positive and non-contentious; all three packets drove
-distinct terminal or queued work. Exact next recommended feature:
-**multi-client/JIP proof boundary**, followed by the LORICA APS ACE control
-menu authority review.
+Current feature HEAD: `8a0d8c3`. The client-N/JIP proof boundary is now
+reviewed and deferred on an exact external identity dependency plus per-feature
+policy; no accepted client-a claim was broadened. Scout evaluation remains
+positive and non-contentious. Exact next recommended feature: **LORICA APS ACE
+control menu authority review**; implementation waits on the operator-policy
+decision documented by that review.
