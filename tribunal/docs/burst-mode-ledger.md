@@ -28,10 +28,10 @@ decisions remain in each canonical feature review and the feature inventory.
 | Vigil task governor | REVIEWED / REWRITE BEFORE PERMANENT COVERAGE | `ba6cc50` | none; deterministic static lifecycle/authority defects | declarative request schema, one-task/cancel/retention/retry policy, HC ownership | run Live lifecycle and forged-request matrix; rewrite server boundary, then rerun artillery/transport/CAS |
 | Cross-addon CBA settings contract | REFINED; ACCEPTED / COVERED | `17a12ba` | static 13-setting matrix; 109 tests/HEMTT pass | downstream effects and future feedback-scope changes remain consumer-owned | retain fallback/consumer parity; next document client-N/JIP proof boundary |
 | Multi-client / JIP proof boundary | REVIEWED / DEFERRED | `8a0d8c3` | none; static architecture/environment boundary | second licensed Steam identity; per-feature visibility/retention/audience/concurrency/disconnect policy | extend identity-aware orchestration and run true late-join/isolation matrix after dependency exists |
+| LORICA APS ACE controls | REVIEWED / REFINE BEFORE PERMANENT COVERAGE | `e0c38a9` | none; static reachable authority boundary | operator eligibility, proximity/role, status/voice policy | choose policy; add authenticated transition endpoint and ACE/physical A/B matrix |
 
-Current feature HEAD: `8a0d8c3`. The client-N/JIP proof boundary is now
-reviewed and deferred on an exact external identity dependency plus per-feature
-policy; no accepted client-a claim was broadened. Scout evaluation remains
-positive and non-contentious. Exact next recommended feature: **LORICA APS ACE
-control menu authority review**; implementation waits on the operator-policy
-decision documented by that review.
+Current feature HEAD: `e0c38a9`. LORICA APS ACE controls are now reviewed
+and stopped at a precise operator-policy/authority boundary; accepted APS
+physical behavior remains unchanged. Scout evaluation remains positive and
+non-contentious. Exact next recommended feature: **Field Utilities Eden module
+activation/catalogue authority**, followed by Vigil whitelist/Zeus activation.
