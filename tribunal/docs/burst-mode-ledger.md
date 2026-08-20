@@ -26,12 +26,11 @@ decisions remain in each canonical feature review and the feature inventory.
 | Vigil mixed-fleet asset browser | REFINED; ACCEPTED / COVERED | `039ad91` | `20260820T010547Z-f5c9dfb1`; server 9/0, client 22/0 | whitelist/Zeus, fixed-wing rows, dormant recon, client-B/JIP, distant captured-crew edge | retain exact backing/tree identity matrix; next review Field Utilities cold-client ACE composition |
 | Field Utilities cold-client ACE composition | ACCEPTED / COVERED | `a1f5ff3` | `20260820T012801Z-0212d338`; server 2/0, client 4/0 | Fabricator delayed object action, effects, repeated-init, client-B/JIP remain separate | retain concrete-class inheritance/relevance matrix; next canonicalize Vigil task governor review |
 | Vigil task governor | REVIEWED / REWRITE BEFORE PERMANENT COVERAGE | `ba6cc50` | none; deterministic static lifecycle/authority defects | declarative request schema, one-task/cancel/retention/retry policy, HC ownership | run Live lifecycle and forged-request matrix; rewrite server boundary, then rerun artillery/transport/CAS |
+| Cross-addon CBA settings contract | REFINED; ACCEPTED / COVERED | `17a12ba` | static 13-setting matrix; 109 tests/HEMTT pass | downstream effects and future feedback-scope changes remain consumer-owned | retain fallback/consumer parity; next document client-N/JIP proof boundary |
 
-Current feature HEAD: `ba6cc50`. The Vigil task governor is now reviewed and
-classified REWRITE BEFORE PERMANENT COVERAGE without disturbing accepted
-consumer outcomes. Scout evaluation remains positive: the governor packet
-removed most source archaeology, the CBA packet identified a bounded defect and
-static acceptance path, and the client-N packet provides an independent deferred
-boundary. Three-scout parallelism remains non-contentious. Exact next
-recommended feature: **cross-addon CBA settings contract**, followed by the
-multi-client/JIP proof-boundary review.
+Current feature HEAD: `17a12ba`. The cross-addon CBA settings contract is
+accepted with 13 exact declarations, consumers, scopes, and fallbacks enforced.
+Scout evaluation remains positive and non-contentious; all three packets drove
+distinct terminal or queued work. Exact next recommended feature:
+**multi-client/JIP proof boundary**, followed by the LORICA APS ACE control
+menu authority review.
