@@ -22,7 +22,7 @@ CORDIS routing/deduplication itself.
    `systemChat`.
 3. **Which machines own it?** Consequential task state remains server-owned.
    CORDIS resolves recipients server-side and invokes presentation on target
-   clients. Every Vigil radio/chat caller currently omits scope, so scope `0`
+   clients. Every Vigil radio/chat caller uses default or explicit scope `0`, which
    resolves all live players. Curator notification also falls back from an
    empty resolved scope to all live players. Target-client setting gates are
    globally synchronized CBA policy.
@@ -31,8 +31,8 @@ CORDIS routing/deduplication itself.
    observation are CORDIS/Tribunal concerns. Message meaning and lifecycle
    placement are Vigil-owned.
 5. **Which behavior is product-owned?** Vigil owns which task transition merits
-   which acknowledgment, who should receive it, whether transport's per-task
-   radio flag coexists with the global setting, and whether curator feedback is
+   which acknowledgment, who should receive it, whether transport's internal per-task-data
+   radio override coexists with the global setting, and whether curator feedback is
    requester-only, curator-wide, side-wide, or global.
 6. **Are unusual engine requirements proven?** No. The autonomous client uses
    `-noSound`, so actual audibility is unproven. No controlled evidence shows
