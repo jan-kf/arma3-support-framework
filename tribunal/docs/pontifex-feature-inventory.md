@@ -541,9 +541,16 @@ Sling analysis: [`field-utilities-helicopter-sling-review.md`](field-utilities-h
   decrement counts. **REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** Direct
   calls can release absent/depleted payloads and underflow counts; physical
   impact, duplicate, and ownership controls are unproven.
-* **Click/shuffle feedback** is **implemented; NOT YET REVIEWED**; audio unproven.
+* **Click/shuffle feedback** is **REVIEWED / DEFERRED AS A STANDALONE FEATURE;
+  CONSUMER-OWNED PRESENTATION**. The clicks are reachable from the real FPV ACE
+  statements and shuffle is incidental to owner-local attachment, but
+  autonomous clients run with `-noSound` and no listener/audience/concurrency
+  contract exists. Payload success or a sound-command call is not audible
+  evidence. The generic vehicle-sound helpers have no product caller.
 
 Full analysis: [`field-utilities-fpv-review.md`](field-utilities-fpv-review.md).
+Audio analysis:
+[`field-utilities-fpv-audio-review.md`](field-utilities-fpv-audio-review.md).
 
 ### 4.6 Shared libraries
 
