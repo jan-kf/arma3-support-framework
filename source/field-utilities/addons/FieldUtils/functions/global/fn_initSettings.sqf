@@ -6,7 +6,7 @@
 ] call CBA_fnc_addSetting;
 
 ["YFU_showDebugMessages", "CHECKBOX",
-    ["Show Debug Messages", "Shows debug messages in systemChat for Field Utilities. When false, messages are diag_log'd instead."],
+    ["Show Debug Messages", "Debug messages are always written to the server log. When enabled, they are also shown in systemChat on clients."],
     "Pontifex: Field Utilities",
     false,
     1

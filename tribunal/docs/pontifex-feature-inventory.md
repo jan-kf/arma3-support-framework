@@ -583,9 +583,13 @@ airdrop. General fabrication is outside the contract.
 * APS/CBR, whitelist, fixed-wing points/assets, Virtual Storage, and Fabricator
   Eden modules plus Zeus tools are **implemented; NOT YET REVIEWED**. Scenarios
   call APIs directly, not real synchronization/curator paths.
-* CBA startup/settings cover access, feedback, colors, timing, and range.
-  **Implemented; PARTIALLY COVERED incidentally.** Cold init is proven, not each
-  default/scope/change/combination.
+* Cross-addon CBA setting declarations are **REFINED; ACCEPTED / COVERED**
+  for 13 exact unique keys, types, defaults/bounds, global/local scope, live
+  consumer handoff, and fallback parity. Iron Dome's fallback now matches its
+  registered 1000 m default, and debug descriptions match always-log plus
+  optional-systemChat behavior. Downstream gameplay, feedback, sound, colors,
+  Draw3D, and combined-setting effects remain consumer-owned. See
+  [`cba-settings-contract-review.md`](cba-settings-contract-review.md).
 
 ### 5.5 State, serialization, and persistence
 

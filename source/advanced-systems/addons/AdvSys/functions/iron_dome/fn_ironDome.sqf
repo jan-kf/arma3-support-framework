@@ -111,7 +111,7 @@ YAS_fnc_ironDomeLog = {
 };
 
 YAS_fnc_ironDomeGetEngagementRadius = {
-    (missionNamespace getVariable ["YAS_ironDomeEngagementRadius", 1500]) max 0
+    (missionNamespace getVariable ["YAS_ironDomeEngagementRadius", 1000]) max 0
 };
 
 YAS_fnc_ironDomeGetAssignmentWindow = {

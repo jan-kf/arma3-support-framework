@@ -6,7 +6,7 @@
 ] call CBA_fnc_addSetting;
 
 ["YAS_showDebugMessages", "CHECKBOX",
-    ["Show Debug Messages", "Shows debug messages in systemChat for Advanced Systems. When false, messages are diag_log'd instead."],
+    ["Show Debug Messages", "Debug messages are always written to the server log. When enabled, they are also shown in systemChat on clients."],
     "Pontifex: Advanced Systems",
     false,
     1

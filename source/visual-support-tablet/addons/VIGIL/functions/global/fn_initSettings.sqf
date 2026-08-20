@@ -22,7 +22,7 @@
 ] call CBA_fnc_addSetting;
 
 ["YSF_showDebugMessages", "CHECKBOX",
-    ["Show Debug Messages", "Shows debug messages in systemChat, useful for troubleshooting issues. When false, all messages are diag_log'd instead."],
+    ["Show Debug Messages", "Debug messages are always written to the server log. When enabled, they are also shown in systemChat on clients."],
     "Pontifex: VIGIL Support Tablet",
     false,
     1
