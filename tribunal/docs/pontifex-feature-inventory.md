@@ -280,11 +280,15 @@ Utilities for fixed-wing airdrop.
 * Grid parse/format, map clicks/previews, nearest helipad, waypoints, hard stop/
   AI reboot, engine/landing mode, and safe/transit AI presets are **implemented;
   PARTIALLY COVERED** through artillery/flight outcomes. Helpers are replaceable.
-* The **task governor** manages vehicle-keyed init/start/mission/end/finally
-  stages, outcomes, stale retries, cancellation, completion, and a CBA
-  dispatcher. **Implemented; PARTIALLY COVERED.** Transport/artillery/CAS prove
-  several success, duplicate, bounded failure, and cleanup outcomes, but no
-  independent governor contract exists.
+* The **task governor** is **REVIEWED / REWRITE BEFORE PERMANENT
+  COVERAGE**. Accepted transport/artillery/CAS scenarios retain their physical
+  consumer outcomes, but clients currently submit executable handler maps for
+  server execution; generic artillery may overwrite active work; and cancel,
+  failure, vehicle loss, or early completion can skip exact-once finalization or
+  manager retirement. Replace this with validated declarative requests,
+  server-built registered tasks, and one generation-aware terminal path before
+  permanent governor coverage. See
+  [`vigil-task-governor-review.md`](vigil-task-governor-review.md).
 
 ### 3.4 Artillery and VLS
 
