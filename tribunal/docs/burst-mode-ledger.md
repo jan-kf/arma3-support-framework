@@ -31,10 +31,6 @@ decisions remain in each canonical feature review and the feature inventory.
 | LORICA APS ACE controls | REVIEWED / REFINE BEFORE PERMANENT COVERAGE | `e0c38a9` | none; static reachable authority boundary | operator eligibility, proximity/role, status/voice policy | choose policy; add authenticated transition endpoint and ACE/physical A/B matrix |
 | Field Utilities Eden module activation | REVIEWED / REFINE BEFORE PERMANENT COVERAGE | `319cb26` | none; accepted Fabricator scenario bypasses real typed dispatch | duplicate/missing-module/runtime-reconfiguration policy; typed dispatch/sync locality | add typed module fixture; split private authority from mirrors; prove no-module/rogue publication controls |
 | Vigil whitelist Eden/Zeus activation | REVIEWED / REFINE BEFORE PERMANENT COVERAGE | `97a8618` | none; accepted browser covers only no-whitelist source | module/empty/duplicate policy, curator authority, sync replication/JIP, refresh/feedback | prove typed module A/B and one real curator add/remove; refine server-owned membership |
+| Field Utilities FPV audio feedback | REVIEWED / DEFERRED AS STANDALONE; CONSUMER-OWNED | `6667c60` | none; autonomous clients use `-noSound` | listener/range/concurrency/cleanup only if audible feedback becomes product contract | keep payload proof data/physical; reopen audio only after explicit promise |
 
-Current feature HEAD: `97a8618`. Vigil whitelist Eden and Zeus activation
-are now reviewed and stopped before typed-module/curator transport and authority
-refinement; the accepted unwhitelisted browser remains unchanged. Scout
-evaluation remains positive and non-contentious. Exact next recommended feature:
-**Field Utilities FPV click/shuffle feedback** static closeout, followed by the
-next independent inventory scout result.
+Current feature HEAD: `6667c60`. FPV click and shuffle sounds are reachable presentation owned by their payload operations, while generic sound helpers remain unused; no standalone audio scenario is justified under `-noSound`. Scout evaluation remains positive and noncontentious. Exact next recommended feature: **Vigil task feedback settings (radio, side-chat, and debug)** review, followed by the next independent inventory scout result.
