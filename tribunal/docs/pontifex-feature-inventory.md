@@ -573,9 +573,16 @@ Audio analysis:
 
 ### 4.6 Shared libraries
 
-* **Geometry/packing primitives** provide bounds, transforms, lift corners,
-  orientations, and placement. **Implemented; PARTIALLY COVERED incidentally**
-  by logistics, not standalone specification.
+* **Geometry and packing primitives** are **REVIEWED / DEFERRED AS A
+  STANDALONE FEATURE; CONSUMER-OWNED**. Fabricator directly covers authoritative
+  packed delivery, exact manifest, atomic skipped-item refusal, bounded
+  placement, and leak-free cleanup. Pallet choice, reference corners,
+  orientation, ordering, allocation, offsets, and helper names remain
+  replaceable mechanics. Towing uses a subset but remains separately unresolved;
+  product helpers must not serve as their own placement oracle.
+
+Full analysis:
+[`field-utilities-geometry-packing-review.md`](field-utilities-geometry-packing-review.md).
 * **ID/location marker helpers** are **REVIEWED / DEFERRED**: compiled global
   scaffold with no normal caller; authority, visibility, labels, and cleanup
   have no product contract.
