@@ -251,7 +251,7 @@ Systems scenario. Production code gains no Tribunal dependency.
 | dead uid/handler-id state | replaceable | recorded, not deleted; not load-bearing |
 | marker sharing policy | DEFER | product decision; see below |
 | Eden module and Zeus toggle entry | REVIEWED / REFINE BEFORE COVERAGE | configured handlers are reachable, but real framework dispatch/locality and curator authority are unproven; see `advanced-systems-cbr-module-review.md` |
-| multi-launcher/multi-cluster arbitration | NOT YET REVIEWED | excluded from the first contract |
+| multi-launcher/multi-cluster arbitration | REVIEWED / REFINE BEFORE COVERAGE | ownership-dependent warnings, unbound telemetry, and product arbitration decisions; see `advanced-systems-cbr-concurrency-review.md` |
 | client-b, JIP, disconnect | DEFER | a one-client run must not overclaim these boundaries |
 
 The permanent `advsys-counter-battery-radar` Tier 3 scenario is a specification

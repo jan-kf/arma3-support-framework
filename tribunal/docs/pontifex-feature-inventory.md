@@ -209,7 +209,14 @@ and the disabled and stop controls.
   remaining time, and every warning claim travels the real launch pipeline with
   real hostile-far and friendly-near negative controls, including the
   once-per-airborne-cycle rule. Multi-launcher and multi-cluster arbitration are
-  **NOT YET REVIEWED**.
+  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE; PRODUCT DECISIONS REQUIRED**.
+  Warning cadence currently depends on firing-machine ownership, cluster
+  assignment is fixed at first nearest-center selection, and owner-local launch/
+  track endpoints accept unbound caller-authored telemetry. Choose grouping and
+  warning semantics, bind updates to source owner/launcher, then prove same- and
+  cross-owner close/far pairs, reverse-order invariance, independent origins/
+  expiry, and forgery rejection. See
+  [`advanced-systems-cbr-concurrency-review.md`](advanced-systems-cbr-concurrency-review.md).
 * **Origin estimation** narrows repeated launch origins into a search marker.
   **Implemented; COVERED** for narrowing and confirmation at the real gun
   position. Confirmed-origin persistence is **REVIEWED / DEFERRED** pending a
