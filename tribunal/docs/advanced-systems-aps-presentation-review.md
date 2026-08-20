@@ -6,14 +6,14 @@ This review covers APS hard/soft-kill beams and particles, engagement sounds,
 voice sequences, and status/notification presentation. It does not reopen the
 accepted physical APS outcomes or the separately reviewed ACE authority/menu.
 
-* **Beam/particle presentation:** **REVIEWED / REFINE BEFORE PERMANENT
-  COVERAGE**.
+* **Beam/particle presentation:** **REVIEWED / DEFERRED PENDING PRODUCT
+  PRESENTATION DECISIONS**.
 * **Audible voice/engagement sound:** **REVIEWED / DEFERRED** under the current
   `-noSound` proof environment and unresolved audience/concurrency contract.
 * **Status facts:** consumer-owned by the APS control review; actual hint/audio
   presentation is not covered.
 
-The strongest concrete defect is locality: `YOSHI_animateAPS` remote-executes
+The strongest concrete mechanical divergence is locality: `YOSHI_animateAPS` remote-executes
 `YOSHI_effects` only to the server, while `YOSHI_effects` creates local particle
 sources. On a dedicated server those particles are not client-visible. The beam
 and sound paths use separate global helpers and are reachable, but their client
