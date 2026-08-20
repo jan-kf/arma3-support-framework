@@ -408,8 +408,8 @@ Full analysis: [`vigil-developer-laser-harness-review.md`](vigil-developer-laser
   but they default to all-live-player routing and curator empty-scope fallback;
   requester/side/curator audience is unresolved. Accepted task state, wrapper
   return, or one recipient does not prove correct delivery, and actual audio is
-  unproven under `-noSound`. The static always-log/conditional-`systemChat` control flow is covered; actual
-  client presentation remains unproven.
+  unproven under `-noSound`. The static always-log/conditional-`systemChat` control flow is covered;
+  actual client presentation remains unproven.
 
 Full analysis: [`vigil-feedback-review.md`](vigil-feedback-review.md).
 
