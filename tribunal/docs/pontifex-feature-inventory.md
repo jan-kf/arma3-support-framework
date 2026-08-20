@@ -403,8 +403,15 @@ Full analysis: [`vigil-developer-laser-harness-review.md`](vigil-developer-laser
 
 * **Helicopter stabilization** has sampling/force code, but aircraft registration
   is commented out. **Disabled/unreachable; UNKNOWN.** Review intent first.
-* **Radio/chat/debug/curator feedback** wraps CORDIS. **Implemented; NOT YET
-  REVIEWED.** Task state does not prove visible/audible feedback.
+* **Radio/chat/debug/curator feedback** wraps CORDIS. **REVIEWED / NEEDS
+  PRODUCT DECISION; PRESENTATION EXPERIMENT DEFERRED.** Real task callers exist,
+  but they default to all-live-player routing and curator empty-scope fallback;
+  requester/side/curator audience is unresolved. Accepted task state, wrapper
+  return, or one recipient does not prove correct delivery, and actual audio is
+  unproven under `-noSound`. Debug always logs server-side and optionally adds
+  client `systemChat` as covered by the CBA settings contract.
+
+Full analysis: [`vigil-feedback-review.md`](vigil-feedback-review.md).
 
 ## 4. Field Utilities
 
