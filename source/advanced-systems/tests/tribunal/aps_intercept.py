@@ -23,8 +23,18 @@ TRIBUNAL_SCENARIO = Scenario(
         "aps.control.outsideEnvelope",
         "aps.control.directionAway",
         "aps.softkill.deflection",
+        "aps.controls.hardOffImpact",
+        "aps.controls.rebootIntercept",
+        "aps.controls.authoritativeAudit",
     }),
-    client_expected=frozenset({"aps.replication"}),
+    client_expected=frozenset({
+        "aps.replication",
+        "aps.controls.menu",
+        "aps.controls.transitions",
+        "aps.controls.lifecycle",
+        "aps.controls.authority",
+        "aps.controls.resultReplication",
+    }),
     # The existing generated SQF fixture is intentionally retained by the
     # Pontifex compatibility adapter for this migration commit.
     server_sqf="",

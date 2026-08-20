@@ -2,11 +2,11 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** The menu is a
-real, reachable client entry and existing APS combat/state evidence remains
-accepted, but visible ACE conditions are the only eligibility boundary. Server
-handlers trust caller-supplied player/target arguments and return no correlated
-result. Operator policy must be selected before refinement.
+**Classification: REFINED; ACCEPTED / COVERED for the current authenticated
+client and server-owned vehicle.** Nearby living players within the established
+10 m interaction bound and operational driver/gunner/commander crew are accepted;
+cargo, distant actors, stale transitions, replay, and unknown operations fail
+closed. Client-B/JIP and audible presentation remain deferred.
 
 ## Scope
 
@@ -19,26 +19,21 @@ anti-drone submenu remains deferred. Audible playback remains unproven under
 
 ### 1. What should the user observe?
 
-After APS installation, an eligible operator should see exactly the controls
-relevant to authoritative hard/soft/voice state. A selected transition should
-change only that vehicle once, report a truthful result, and update every
-client's active tree. Disable should remove only APS-owned controls.
+After APS installation, an eligible operator sees exactly the controls relevant
+to authoritative hard/soft/voice state. A selected transition changes only that
+vehicle once and returns a request-correlated authoritative result. Temporary
+suspension preserves the installed root and exposes only the valid resume path.
 
 ### 2. What does the implementation actually do?
 
-Server enable publishes installed, hard-kill, soft-kill, voice, anti-drone, and
-resource state, starts runtime work, and persistently remote-registers actions on
-clients. Local registration is idempotent by an object variable. Hard-kill online
-shows Off; offline shows Reboot and the applicable soft-kill toggle; voice On/Off
-alternate by state; Status is available while installed. Disable clears runtime
-state and removes exact action IDs.
-
-Each statement directly remote-executes a globally named server handler with
-caller-supplied target and player. Hard/soft handlers check only server context,
-nonnull target, and installed state; voice and status do not require installation.
-No handler binds `remoteExecutedOwner`, revalidates actor eligibility/proximity,
-checks the current visible transition, rejects replay, or returns a request-ID
-receipt.
+First installation publishes state and persistently registers one local action
+tree. Every consequential statement now submits an operation name and unique ID
+to one server endpoint. The server derives the only requester from
+`remoteExecutedOwner`, checks alive/player identity plus nearby or operational-crew
+eligibility, revalidates the exact current transition, rejects replay, applies the
+mutation through a machine-local capability, and returns a targeted result.
+Legacy direct handlers reject client-origin remote execution. Suspension leaves
+the installed tree present so its mutually exclusive Resume action is reachable.
 
 ### 3. Which machines and lifecycle own it?
 
@@ -69,33 +64,29 @@ remoteExec registration, or caller-supplied player identity are engine-required.
 
 ### 7. Which details are fragile or incomplete?
 
-Client-only eligibility, unauthenticated server handlers, absent request IDs and
-results, stale stored statements, replay, uninstalled voice/status mutation,
-local bookkeeping as registration evidence, top-level voice placement, exact
-prose, and sound timing are fragile. A notification cannot prove acceptance or
-correct recipient.
+The ACE active-tree collector is version-bound private API, so the adapter must
+continue to fail closed. Per-object action data retained locally is diagnostic,
+not an outcome oracle. The replay cache is deliberately bounded, client-B/JIP and
+ownership migration are unproven, and exact labels, top-level voice placement,
+notification prose, status formatting, and sound timing remain non-contractual.
 
 ### 8. Is a better native/existing mechanism available?
 
-Use one narrow server request endpoint like other accepted Pontifex authority
-boundaries: derive requester from `remoteExecutedOwner`, validate exact target and
-current transition, mutate server state, and publish a request-correlated result.
-Keep ACE conditions as responsive presentation, not authority.
+The accepted design uses one narrow server request endpoint. It derives the
+requester from `remoteExecutedOwner`, validates target/operator/current transition,
+applies state through a server-local capability, and publishes a correlated
+result. ACE conditions remain responsive presentation rather than authority.
 
 ### 9. What is the stable contract and causal proof?
 
-After choosing eligibility, prove uninstalled absence; exact root uniqueness;
-hard-online Off relevance; registered-node Off request/receipt and replicated
-state; refreshed Reboot/Soft relevance; Soft on/off alternation; charged Reboot
-restoring hard and disabling soft without consuming a charge; no-charge Reboot
-truthfully rejecting; voice-state alternation; disable removal; and clean
-re-enable without duplicates.
-
-Adversarial forged-player, ineligible/far actor, uninstalled target, stale
-transition, and replay requests must each reach rejection and preserve exact
-state/resources. One hard-off/reboot pair should reuse the accepted projectile
-oracle: the same calibrated threat impacts while hard-kill is off and is exactly
-intercepted after accepted reboot.
+A nearby living player or driver/gunner/commander sees the applicable active APS
+controls. Invoking the exact active node reaches the authenticated server boundary,
+changes only the selected vehicle once, and returns/replicates a truthful result.
+Hard-off causes the calibrated threat to impact without engagement or consumption;
+a charged reboot causes exact interception and one charge consumption. Soft on/off,
+voice, anti-drone preference, suspension/resume, no-charge rejection, idempotency,
+stale/replayed/unknown requests, crew acceptance, and distant rejection are
+covered by exact state snapshots and request receipts.
 
 ### 10. Which details must remain replaceable?
 
@@ -106,11 +97,12 @@ result, and physical APS outcome are stable.
 
 ### 11. What remains unproven or requires decision?
 
-Who may operate APS—any nearby player, same-side player, current crew, engineer,
-or another role—is unresolved and blocks implementation. Proximity/alive bounds,
-voice menu placement, and status fact set also need selection. Anti-drone actions,
-audible playback, client-B/JIP, and action cleanup on ownership migration remain
-separate.
+Operator policy is resolved and covered for nearby players, driver, and the
+distant negative; gunner/commander share the same explicit predicate but were not
+separately seated in this one-client run. Cargo exclusion is implemented but not
+a separate runtime assertion. Audible playback, client-B/JIP, ownership migration,
+and anti-drone threat semantics remain separate. Exact labels/nesting/status prose
+are not specification.
 
 ### 12. What belongs in Tribunal?
 
@@ -118,7 +110,7 @@ Reuse the generic ACE active-tree, request/locality, exact projectile, replicati
 and cleanup capabilities. Do not promote LORICA action names, modes, charge/fuel
 policy, or operator rules.
 
-## False-PASS boundary and continuation
+## Acceptance evidence and false-PASS boundary
 
 Do not pass on an action stored in ACE namespace, `ActionsAdded_Local`, an inactive
 node's directly invoked statement, local state, notification, or projectile
@@ -126,7 +118,14 @@ outcome alone. Compile the exact concrete target, prove the node active immediat
 before invoking that registered statement, require a server receipt plus client
 replication, and correlate physical state to the request.
 
-After operator policy is selected: add the authoritative request endpoint and
-retired receipts, implement the active-tree/negative-control matrix, connect the
-hard-off/reboot pair to the existing physical APS scenario, and prove unregister,
-re-enable uniqueness, state restoration, and cleanup in one fresh run.
+Fresh autonomous run `20260820T222348Z-a22110d3` is the acceptance proof
+(server 18/18, client 10/10). ACE 3.21 resolved the exact root with active
+children, and the scenario invoked the statements from those exact active nodes.
+Hard-off made projectile `2:156` physically impact with one charge unchanged and
+no ledger event; reboot then made projectile `2:158` produce the exact hard-kill
+event, no impact, and the final charge decrement. Soft off/on, anti-drone off,
+voice off, no-charge reboot, suspension/resume preservation, idempotent resume,
+stale transition, replay, crew acceptance, distant rejection, unknown operation,
+and replicated result were all correlated to server receipts. Cleanup removed
+client, server, network, and run state. Do not extend this evidence to client-B/JIP
+or audible/visual presentation.

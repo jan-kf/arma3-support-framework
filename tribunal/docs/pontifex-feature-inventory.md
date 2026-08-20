@@ -163,21 +163,21 @@ locality, and client replication.
   real curator placement before authority refinement and physical A/B proof.
   See
   [`advanced-systems-aps-module-review.md`](advanced-systems-aps-module-review.md).
-* **Enable/disable/re-enable lifecycle** is **REVIEWED / DEFERRED AS A
-  STANDALONE FEATURE; ENTRY-CONSUMER-OWNED**. Direct combat setup proves an
-  operational enable tail, not authentic install/toggle semantics. Re-enable
-  currently replenishes hard-kill charges and resets voice, anti-drone, hard-
-  and soft-kill state; preservation/resupply policy, exact action removal/re-add,
-  transient cleanup, deletion, and JIP remain unresolved. Fold proof into the
-  APS module/control refinements. See
+* **Enable/disable/re-enable lifecycle** is **REFINED; ACCEPTED / COVERED
+  through the authentic current-client ACE control entry** for suspension/resume.
+  First install alone initializes resources/defaults; suspension and resume are
+  idempotent and preserve hard/soft mode, voice, anti-drone preference, charges,
+  and fuel without resupply. Typed Eden/Zeus install/toggle, deletion, ownership
+  migration, and client-B/JIP remain separate. See
   [`advanced-systems-aps-lifecycle-review.md`](advanced-systems-aps-lifecycle-review.md).
-* The **LORICA ACE control menu** is **REVIEWED / REFINE BEFORE
-  PERMANENT COVERAGE** for hard-kill, soft-kill, status, voice state, and
-  registration lifecycle. The entry is reachable, but server handlers trust
-  caller-supplied actor/target data, do not revalidate the active transition,
-  and return no correlated result. Choose operator eligibility, then add an
-  authoritative request boundary and data-driven ACE/physical A/B coverage.
-  Anti-drone remains separately deferred. See
+* The **LORICA ACE control menu** is **REFINED; ACCEPTED / COVERED** for
+  the current authenticated client and server-owned vehicle. The server derives
+  requester identity from transport ownership, authorizes nearby players or
+  driver/gunner/commander crew, revalidates transitions, rejects stale/replay/
+  distant/unknown requests, and publishes correlated results. Exact active-node
+  hard-off/reboot is causally tied to impact/interception; soft, voice, anti-drone
+  preference, status, and suspend/resume transitions are covered. Client-B/JIP,
+  ownership migration, and anti-drone threat semantics remain separate. See
   [`advanced-systems-aps-ace-controls-review.md`](advanced-systems-aps-ace-controls-review.md).
 * **Beam/particle animation** is **REVIEWED / DEFERRED PENDING PRODUCT
   PRESENTATION DECISIONS**: the real engagement path reaches it, but particle creation is

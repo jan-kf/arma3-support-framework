@@ -7,70 +7,67 @@ first enable, repeated enable, disable, re-enable, action registration, transien
 work, resources, preferences, and deletion. It does not re-review projectile
 combat, ACE operator authority, module dispatch, or anti-drone behavior.
 
-**Classification: `REVIEWED / DEFERRED AS A STANDALONE FEATURE;
-ENTRY-CONSUMER-OWNED`.**
+**Classification: `REFINED; ACCEPTED / COVERED THROUGH THE AUTHENTIC ACE
+CONTROL ENTRY` for current-client suspension/resume.** First typed Eden install,
+Zeus module dispatch, client-B/JIP, ownership migration, and destruction cleanup
+remain owned by their separate entry/lifecycle reviews.
 
-A direct lifecycle-API scenario would bypass the authentic module/control entry
-that gives install/toggle meaning. The unresolved behavior is consequential:
-every enable tops hard-kill cargo to the target/default, turns voice and
-anti-drone on, selects hard kill, and turns soft kill off. Thus OFF→ON is
-currently also resupply and preference/mode reset, not a neutral resume.
+Disable is now an idempotent temporary suspension. First installation alone sets
+default modes and tops up configured hard-kill charges. Resume does not resupply,
+reset modes/preferences, or replace the action tree; it restarts only the runtime
+work enabled by preserved state.
 
 ## Canonical twelve-question review
 
 1. **What should the user observe?** Authentic first installation makes one
-   exact vehicle operational. Disable stops APS and removes its controls. A
-   later enable restores operation according to an explicitly chosen resource
-   and preference policy, without duplicate actions/workers or leaked effects.
-2. **What does it do now?** Enable validates server/non-null/vehicle, tops up
-   charges, resets voice/anti-drone/hard/soft and warning flags, ensures global
-   runtime, starts a drone worker, and persistently registers object actions.
-   Disable cancels voice, terminates drone work, clears modes, and persistently
-   unregisters actions. Toggle chooses from the local enabled flag and ignores
-   callee failure in its returned choice.
+   exact vehicle operational. Disable temporarily suspends interception while
+   leaving an eligible operator a Resume control. Resume restores operation with
+   the same modes, preferences, charges, and fuel—never an implicit resupply.
+2. **What does it do now?** Enable distinguishes first installation from resume.
+   First install alone initializes defaults/resources and registers the tree.
+   Suspension cancels transient voice/drone work and clears only active state.
+   Resume preserves hard/soft, voice, anti-drone, charge, and fuel state, restarts
+   applicable work, and reuses the idempotent action registration. Lifecycle
+   mutation rejects client-origin calls outside the authenticated operation path.
 3. **Which machines own it?** Vehicle state and lifecycle mutation are
    server-owned; action add/remove is client-local through object-keyed
    persistent remote execution. The mission-wide projectile tracker starts on
    every machine after mission time independently of vehicle enable and is not
    removed by disable. Authentic request authority belongs to module/control
    entries.
-4. **Which mechanics are generic?** Exact active ACE tree census, persistent
-   registration receipts, script/source cleanup, vehicle deletion observation,
+4. **Which mechanics are generic?** Exact active ACE tree census, request
+   receipts, state snapshots, script/source cleanup, vehicle deletion observation,
    and current-client/JIP delivery can be Tribunal mechanics. APS resource/mode
    policy is Advanced Systems.
-5. **Which behavior is product-owned?** Suspend versus uninstall versus reload;
-   repeated-enable idempotence; charge/fuel preservation or resupply; mode/voice
-   preference reset; deletion cleanup; and supported ownership/JIP lifecycle.
-6. **Are unusual engine requirements proven?** No. Current-client action
-   registration/removal, persistent JIP-key replacement, re-enable uniqueness,
-   object-deletion cleanup, and ownership transfer have no direct proof. The
-   global tracker may reasonably be mission-lived, but no contract requires its
-   present PFH/class-handler representation.
-7. **What is fragile or incomplete?** Re-enable silently replenishes spent
-   charges and erases operator choices. Repeated Eden enable does the same.
-   Disable has weaker type validation. Toggle can report a transition when its
-   server-only callee did nothing. Stored script handles and local action flags
-   can drift from actual workers/tree. Anti-drone work is entangled despite its
-   product contract being deferred.
-8. **Is a better mechanism available?** Keep the shared server lifecycle tail,
-   but distinguish first install, temporary suspension, and explicit resupply/
-   reset if product semantics require it. The real module/control endpoint
-   should validate and acknowledge the selected operation. Do not add a second
-   standalone lifecycle command surface.
-9. **What is the stable contract and causal proof?** Through authentic entries,
-   first install has exact initial resources/state and one active action tree;
-   OFF causes the same calibrated threat to impact with resources unchanged and
-   exact APS nodes removed; ON restores the selected resource/preference state,
-   one tree, and exact interception. Voice/source/worker cleanup is bounded.
-   Unrelated vehicles/actions remain unchanged. Repeat/replay and deletion leave
-   no vehicle-scoped effects.
+5. **Which behavior is product-owned?** Disable is temporary suspension; repeated
+   enable/disable is idempotent; charges, fuel, hard/soft mode, voice, and anti-drone
+   preference are preserved; first installation alone applies defaults/resupply.
+   Deletion cleanup and supported ownership/JIP lifecycle remain product-owned.
+6. **Are unusual engine requirements proven?** The current-client tree and
+   mutually exclusive Suspend/Resume nodes are proven through ACE 3.21. Persistent
+   JIP-key delivery, object-deletion cleanup, and ownership transfer remain
+   unproven. The global tracker may reasonably be mission-lived, but no contract
+   requires its present PFH/class-handler representation.
+7. **What is fragile or incomplete?** Stored script handles and local action
+   flags remain diagnostics, not proof. Authentic Eden/Zeus dispatch, deletion,
+   ownership transfer, and JIP behavior are not established. Anti-drone threat
+   semantics remain deferred even though its preference is preserved correctly.
+8. **Is a better mechanism available?** The shared server lifecycle now
+   distinguishes first install from suspension/resume. The authenticated ACE
+   operation endpoint validates and acknowledges the transition; no second public
+   lifecycle command surface was added.
+9. **What is the stable contract and causal proof?** Through exact active ACE
+   nodes, suspension preserves modes/preferences/resources and makes the same
+   calibrated threat impact with no ledger event or consumption. Resume preserves
+   the snapshot and lets the same threat be exactly intercepted with one charge
+   consumed. Duplicate resume is harmless and replay is rejected. Typed install,
+   deletion, and JIP are not claimed by this proof.
 10. **Which details remain free?** Function names, flags/handles, tracker
     implementation, JIP key, action IDs/layout, worker representation, default
     counts, and receipt schema are replaceable behind chosen semantics.
-11. **Which mechanisms deserve characterization?** Current-client persistent
-    register/unregister/re-enable ordering and exact active-tree uniqueness.
-    Client-B/JIP and ownership migration wait for the existing second-identity
-    dependency. Global tracker teardown is not a goal absent measured cost.
+11. **Which mechanisms deserve characterization?** Typed Eden first-install
+    dispatch, enabled-vehicle destruction, client-B/JIP, and ownership migration
+    remain. Global tracker teardown is not a goal absent measured cost.
 12. **What belongs in Tribunal?** Reuse the ACE active-tree/locality/cleanup
     observers. Keep APS lifecycle state/resources and module/control entry
     meaning in Advanced Systems scenarios.
@@ -88,15 +85,17 @@ silent refill/reset cannot accidentally pass.
 Do not use anti-drone state/effects to prove lifecycle correctness. Do not call
 client-a re-registration JIP coverage.
 
-## Decisions and continuation
+## Acceptance evidence and continuation
 
-Decide whether disable is suspension, uninstall, or reload; whether repeated/
-re-enable preserves or resets charges, fuel, hard/soft mode and voice; whether
-enabling an enabled vehicle is idempotent, reset, or rejection; and deletion/
-owner-migration support.
+The author selected temporary suspension, state/resource preservation, no implicit
+resupply, idempotent enable/disable, and anti-drone enabled only on first install.
+Fresh run `20260820T222348Z-a22110d3` proved the current-client control entry: the
+pre-suspend snapshot survived suspension and resume exactly across hard/soft mode,
+voice, anti-drone preference, zero charges, and fuel; the off threat impacted and
+the resumed/rebooted threat was intercepted; duplicate resume and replay were
+bounded. Server 18/18 and client 10/10 passed with full cleanup.
 
-Fold proof into the authentic APS module and control refinements: typed first
-install, authenticated Zeus OFF, second authenticated ON, exact current-client
-ACE removal/re-add, calibrated impact/interception pair, resource/preference
-assertions, repeat/replay, unrelated-vehicle isolation, and enabled-vehicle
-deletion cleanup. Keep client-B/JIP explicitly deferred.
+Next lifecycle work belongs to authentic APS Eden/Zeus module activation: prove
+typed first install, multiple-module idempotency/aggregation, curator authorization,
+and current-client tree consistency. Keep client-B/JIP and destruction cleanup
+explicitly deferred until those entry paths and dependencies are available.

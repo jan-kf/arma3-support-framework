@@ -949,7 +949,12 @@ private _injectThreat = {
     private _tracked = !isNull _projectile && {[_projectile] call YOSHI_fnc_apsTrackProjectileLocal};
     [_projectile, _launch # 1, _tracked, _launch # 3, _launch # 2]
 };
-private _apsVehicle = [[3000, 4000, 0], 0] call _newTarget;
+private _controlsArmDeadline = diag_tickTime + 30;
+waitUntil {
+    uiSleep 0.05;
+    (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_ARMED", ""]) isEqualTo _token || {diag_tickTime > _controlsArmDeadline}
+};
+private _apsVehicle = [[3000, 4000, 0], 1] call _newTarget;
 [_apsVehicle, 2] call YOSHI_fnc_apsEnableVehicle;
 [] call YOSHI_fnc_apsEnsureLocalRuntime;
 private _chargesBefore = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
@@ -991,11 +996,206 @@ waitUntil { uiSleep 0.005; if (!isNull _softRocket && {!_softEvent}) then { _las
 sleep 0.1; private _postDeflectionPosition = if (isNull _softRocket) then {[]} else {getPosASL _softRocket};
 ["aps.softkill.deflection", _softEvent && {!isNull _softRocket} && {(_soft # 2)} && {(_soft # 4)} && {local _softRocket} && {!(_velocityBefore isEqualTo [])} && {!(_velocityAfter isEqualTo [])} && {(_velocityBefore distance _velocityAfter) > 0.1} && {(fuel _softVehicle) isEqualTo (_fuelBefore - YOSHI_APS_SOFTKILL_FUEL_COST)} && {!(missionNamespace getVariable [_soft # 1, false])}, format ["uid=%1|before=%2|after=%3|fuel=%4:%5|postPosition=%6", _softUid, _velocityBefore, _velocityAfter, _fuelBefore, fuel _softVehicle, _postDeflectionPosition]] call _assert;
 if (!isNull _softRocket) then {deleteVehicle _softRocket};
+private _controlsStartCharges = [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount;
+missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_FIXTURE", [_token, netId _apsVehicle, _controlsStartCharges], true];
+private _operatorDeadline = diag_tickTime + 20;
+waitUntil {
+    uiSleep 0.05;
+    ((missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_PHASE", ""]) isEqualTo "positioned" && {(_player distance _apsVehicle) <= YOSHI_APS_OPERATOR_RANGE})
+        || {diag_tickTime > _operatorDeadline}
+};
+missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_PHASE", "operator-ready", true];
+private _hardOffDeadline = diag_tickTime + 45;
+waitUntil {uiSleep 0.05; (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_PHASE", ""]) isEqualTo "hard-off" || {diag_tickTime > _hardOffDeadline}};
+private _offEvents = +(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]);
+private _offThreat = [_apsVehicle, "controls-off"] call _injectThreat;
+private _offRocket = _offThreat # 0;
+private _offUid = [_offRocket] call YOSHI_fnc_apsProjectileUid;
+private _offDeadline = diag_tickTime + 4;
+waitUntil {uiSleep 0.01; (missionNamespace getVariable [_offThreat # 1, false]) || {isNull _offRocket} || {diag_tickTime > _offDeadline}};
+private _offImpact = missionNamespace getVariable [_offThreat # 1, false];
+["aps.controls.hardOffImpact", _offImpact && {(_offThreat # 2)} && {(_offThreat # 4)} && {(missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) isEqualTo _offEvents} && {([_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount) isEqualTo _controlsStartCharges}, format ["projectile=%1|impact=%2|charges=%3|eventsUnchanged=%4", _offUid, _offImpact, [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount, (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) isEqualTo _offEvents]] call _assert;
+missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_PHASE", "off-impact", true];
+
+private _rebootDeadline = diag_tickTime + 45;
+waitUntil {uiSleep 0.05; (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_PHASE", ""]) isEqualTo "rebooted" || {diag_tickTime > _rebootDeadline}};
+private _rebootThreat = [_apsVehicle, "controls-reboot"] call _injectThreat;
+private _rebootRocket = _rebootThreat # 0;
+private _rebootUid = [_rebootRocket] call YOSHI_fnc_apsProjectileUid;
+private _rebootEvent = false;
+private _rebootPhysicalDeadline = diag_tickTime + 4;
+waitUntil {
+    uiSleep 0.005;
+    _rebootEvent = (missionNamespace getVariable ["YOSHI_APS_EngagementEvents", []]) findIf {(_x # 0) isEqualTo (netId _apsVehicle) && {(_x # 1) isEqualTo _rebootUid} && {(_x # 2) isEqualTo "hardkill"}} >= 0;
+    _rebootEvent || {diag_tickTime > _rebootPhysicalDeadline}
+};
+["aps.controls.rebootIntercept", _rebootEvent && {isNull _rebootRocket} && {!(missionNamespace getVariable [_rebootThreat # 1, false])} && {([_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount) isEqualTo (_controlsStartCharges - 1)}, format ["projectile=%1|event=%2|impact=%3|charges=%4", _rebootUid, _rebootEvent, missionNamespace getVariable [_rebootThreat # 1, false], [_apsVehicle] call YOSHI_fnc_apsHardKillChargeCount]] call _assert;
+missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_PHASE", "physical-done", true];
+private _controlsDoneDeadline = diag_tickTime + 60;
+waitUntil {uiSleep 0.05; (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_DONE", ""]) isEqualTo _token || {diag_tickTime > _controlsDoneDeadline}};
+private _audit = missionNamespace getVariable ["YOSHI_APS_OPERATION_AUDIT", []];
+["aps.controls.authoritativeAudit", (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_DONE", ""]) isEqualTo _token && {(count _audit) >= 8} && {(_audit findIf {(_x # 2) isEqualTo false && {(_x # 3) in ["replay", "operator_ineligible", "unknown_operation"]}}) >= 0}, format ["done=%1|auditCount=%2|audit=%3", missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_DONE", ""], count _audit, _audit]] call _assert;
 missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _apsVehicle, _projectileUid], true];
 {if (!isNull _x) then {deleteVehicle _x}} forEach [_apsVehicle, _controlVehicle, _softVehicle];
 '''
         )
         aps_client = '''
+ missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_ARMED", _token, true];
+ private _controlsFixture = [];
+ private _controlsFixtureDeadline = diag_tickTime + 120;
+ waitUntil {
+     uiSleep 0.05;
+     _controlsFixture = missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_FIXTURE", []];
+     (count _controlsFixture) isEqualTo 3 || {diag_tickTime > _controlsFixtureDeadline}
+ };
+ private _controlsVehicleId = _controlsFixture param [1, ""];
+ private _controlsVehicle = if (_controlsVehicleId isEqualTo "") then {objNull} else {objectFromNetId _controlsVehicleId};
+ private _controlsResolveDeadline = diag_tickTime + 15;
+ waitUntil {uiSleep 0.05; !isNull _controlsVehicle || {diag_tickTime > _controlsResolveDeadline}};
+ private _originalPlayerASL = getPosASL player;
+ if (!isNull _controlsVehicle) then {player setPosASL ((getPosASL _controlsVehicle) vectorAdd [0, 5, 0]);};
+ private _stateDeadline = diag_tickTime + 10;
+ waitUntil {uiSleep 0.05; (_controlsVehicle getVariable ["YOSHI_APS_Installed", false]) && {(_controlsVehicle getVariable ["YOSHI_APS_Enabled", false])} || {diag_tickTime > _stateDeadline}};
+ missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_PHASE", "positioned", true];
+ private _operatorDeadline = diag_tickTime + 20;
+ waitUntil {uiSleep 0.05; (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_PHASE", ""]) isEqualTo "operator-ready" || {diag_tickTime > _operatorDeadline}};
+ private _registrationDeadline = diag_tickTime + 15;
+ waitUntil {uiSleep 0.05; (count (_controlsVehicle getVariable ["YOSHI_APS_ActionData_Local", []])) isEqualTo 14 || {diag_tickTime > _registrationDeadline}};
+ private _actionData = {
+     params ["_id"];
+     private _record = (_controlsVehicle getVariable ["YOSHI_APS_ActionData_Local", []]) select {(_x param [0, ""]) isEqualTo _id};
+     if ((count _record) isEqualTo 1) then {_record # 0} else {[]}
+ };
+ private _activeAction = {
+     params ["_data"];
+     if (_data isEqualTo []) exitWith {false};
+     ace_interact_menu_objectActionList = [];
+     private _tree = [_controlsVehicle, [_data, []], [], player distance _controlsVehicle] call ace_interact_menu_fnc_collectActiveActionTree;
+     _tree isNotEqualTo []
+ };
+ private _invokeRegistered = {
+     params ["_id"];
+     private _data = [_id] call _actionData;
+     if !([_data] call _activeAction) exitWith {["", []]};
+     [_controlsVehicle, player, []] call (_data # 3);
+     private _submitted = uiNamespace getVariable ["YOSHI_APS_LastSubmittedOperation", []];
+     private _requestId = _submitted param [0, ""];
+     private _ack = [];
+     private _ackDeadline = diag_tickTime + 10;
+     waitUntil {
+         uiSleep 0.05;
+         _ack = missionNamespace getVariable [format ["YOSHI_APS_OPERATION_ACK_%1", _requestId], []];
+         (count _ack) isEqualTo 8 || {diag_tickTime > _ackDeadline}
+     };
+     [_requestId, _ack]
+ };
+ private _sendDirect = {
+     params ["_operation", "_requestId"];
+     missionNamespace setVariable [format ["YOSHI_APS_OPERATION_ACK_%1", _requestId], nil, false];
+     [_controlsVehicle, _operation, _requestId] remoteExecCall ["YOSHI_fnc_apsRequestOperation", 2];
+     private _ack = [];
+     private _deadline = diag_tickTime + 10;
+     waitUntil {uiSleep 0.05; _ack = missionNamespace getVariable [format ["YOSHI_APS_OPERATION_ACK_%1", _requestId], []]; (count _ack) isEqualTo 8 || {diag_tickTime > _deadline}};
+     _ack
+ };
+ private _root = ["YOSHI_APS_Menu"] call _actionData;
+ private _hardOffData = ["YOSHI_APS_HardKill_TurnOff"] call _actionData;
+ private _suspendData = ["YOSHI_APS_Suspend"] call _actionData;
+ private _registeredIds = (_controlsVehicle getVariable ["YOSHI_APS_ActionData_Local", []]) apply {_x param [0, ""]};
+ private _hardOffActive = [_hardOffData] call _activeAction;
+ private _suspendActive = [_suspendData] call _activeAction;
+ ace_interact_menu_objectActionList = [];
+ private _rootTree = if (_root isEqualTo [] || {_hardOffData isEqualTo []} || {_suspendData isEqualTo []}) then {[]} else {
+     [_controlsVehicle, [_root, [[_hardOffData, []], [_suspendData, []]]], [], player distance _controlsVehicle] call ace_interact_menu_fnc_collectActiveActionTree
+ };
+ private _rootActive = _rootTree isNotEqualTo [];
+ private _menuOk = !isNull _controlsVehicle
+     && {_rootActive}
+     && {_hardOffActive}
+     && {_suspendActive}
+     && {({_x isEqualTo "YOSHI_APS_Menu"} count _registeredIds) isEqualTo 1}
+     && {({_x isEqualTo "YOSHI_APS_Suspend"} count _registeredIds) isEqualTo 1}
+     && {({_x isEqualTo "YOSHI_APS_Resume"} count _registeredIds) isEqualTo 1};
+ ["aps.controls.menu", _menuOk, format ["vehicle=%1|distance=%2|ids=%3|records=%4|root=%5|hardOff=%6|suspend=%7|installed=%8|enabled=%9", _controlsVehicleId, player distance _controlsVehicle, _registeredIds, count (_controlsVehicle getVariable ["YOSHI_APS_ActionData_Local", []]), _rootActive, _hardOffActive, _suspendActive, _controlsVehicle getVariable ["YOSHI_APS_Installed", false], _controlsVehicle getVariable ["YOSHI_APS_Enabled", false]]] call _assert;
+
+ private _hardOffResult = ["YOSHI_APS_HardKill_TurnOff"] call _invokeRegistered;
+ private _hardOffAck = _hardOffResult # 1;
+ private _staleHardOffId = format ["APS_STALE_%1", floor random 1e9];
+ private _staleHardOffAck = ["hardkill-off", _staleHardOffId] call _sendDirect;
+ private _hardOffOk = (_hardOffAck param [2, false]) && {(_hardOffAck param [3, ""]) isEqualTo "hardkill_off"} && {!((_hardOffAck param [7, []]) param [2, true])}
+     && {!(_staleHardOffAck param [2, true])} && {(_staleHardOffAck param [3, ""]) isEqualTo "stale_transition"};
+ missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_PHASE", "hard-off", true];
+ private _offDeadline = diag_tickTime + 15;
+ waitUntil {uiSleep 0.05; (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_PHASE", ""]) isEqualTo "off-impact" || {diag_tickTime > _offDeadline}};
+ private _rebootData = ["YOSHI_APS_HardKill_Reboot"] call _actionData;
+ private _rebootWasActive = [_rebootData] call _activeAction;
+ private _rebootResult = ["YOSHI_APS_HardKill_Reboot"] call _invokeRegistered;
+ private _rebootAck = _rebootResult # 1;
+ private _rebootOk = _rebootWasActive && {(_rebootAck param [2, false])} && {(_rebootAck param [3, ""]) isEqualTo "hardkill_rebooted"} && {((_rebootAck param [7, []]) param [2, false])} && {((_rebootAck param [7, []]) param [6, -1]) isEqualTo (_controlsFixture # 2)};
+ ["aps.controls.transitions", _hardOffOk && {_rebootOk}, format ["hardOff=%1|stale=%2|rebootActive=%3|reboot=%4", _hardOffAck, _staleHardOffAck, _rebootWasActive, _rebootAck]] call _assert;
+ missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_PHASE", "rebooted", true];
+ private _physicalDeadline = diag_tickTime + 15;
+ waitUntil {uiSleep 0.05; (missionNamespace getVariable ["PONTIFEX_APS_CONTROLS_PHASE", ""]) isEqualTo "physical-done" || {diag_tickTime > _physicalDeadline}};
+ private _depletionDeadline = diag_tickTime + 5;
+ waitUntil {uiSleep 0.05; ([_controlsVehicle] call YOSHI_fnc_apsHardKillChargeCount) isEqualTo 0 || {diag_tickTime > _depletionDeadline}};
+
+ private _emptyReboot = ["YOSHI_APS_HardKill_Reboot"] call _invokeRegistered;
+ private _softOff = ["YOSHI_APS_SoftKill_TurnOff"] call _invokeRegistered;
+ private _softOn = ["YOSHI_APS_SoftKill_TurnOn"] call _invokeRegistered;
+ private _antiDroneOff = ["YOSHI_APS_AntiDrone_TurnOff"] call _invokeRegistered;
+ private _voiceOff = ["YOSHI_APS_Voice_Off"] call _invokeRegistered;
+ private _modeControlsOk = !((_emptyReboot # 1) param [2, true])
+     && {((_emptyReboot # 1) param [3, ""]) isEqualTo "no_hardkill_charges"}
+     && {((_softOff # 1) param [2, false])} && {((_softOff # 1) param [3, ""]) isEqualTo "softkill_off"}
+     && {((_softOn # 1) param [2, false])} && {((_softOn # 1) param [3, ""]) isEqualTo "softkill_on"}
+     && {((_antiDroneOff # 1) param [2, false])} && {((_antiDroneOff # 1) param [3, ""]) isEqualTo "anti_drone_off"}
+     && {((_voiceOff # 1) param [2, false])};
+ private _beforeSuspend = [_controlsVehicle] call YOSHI_fnc_apsStateSnapshot;
+ private _suspend = ["YOSHI_APS_Suspend"] call _invokeRegistered;
+ private _suspendState = ((_suspend # 1) param [7, []]);
+ private _resumeData = ["YOSHI_APS_Resume"] call _actionData;
+ private _resumeWasActive = [_resumeData] call _activeAction;
+ private _resume = ["YOSHI_APS_Resume"] call _invokeRegistered;
+ private _resumeState = ((_resume # 1) param [7, []]);
+ private _preservedIndexes = [2, 3, 4, 5, 6, 7];
+ private _preserved = (count _beforeSuspend) isEqualTo 8 && {(count _suspendState) isEqualTo 8} && {(count _resumeState) isEqualTo 8} && {(_preservedIndexes findIf {(_beforeSuspend # _x) isNotEqualTo (_suspendState # _x) || {(_beforeSuspend # _x) isNotEqualTo (_resumeState # _x)}}) < 0};
+ private _lifecycleOk = _modeControlsOk
+     && {((_suspend # 1) param [2, false])}
+     && {!(_suspendState # 1)}
+     && {_resumeWasActive}
+     && {((_resume # 1) param [2, false])}
+     && {_resumeState # 1}
+     && {_preserved};
+ ["aps.controls.lifecycle", _lifecycleOk, format ["emptyReboot=%1|softOff=%2|softOn=%3|antiOff=%4|voiceOff=%5|before=%6|suspend=%7|resumeActive=%8|resume=%9|preserved=%10", _emptyReboot # 1, _softOff # 1, _softOn # 1, _antiDroneOff # 1, _voiceOff # 1, _beforeSuspend, _suspend # 1, _resumeWasActive, _resume # 1, _preserved]] call _assert;
+
+ private _repeatId = format ["APS_REPEAT_%1", floor random 1e9];
+ private _repeatAck = ["resume", _repeatId] call _sendDirect;
+ private _replayAck = ["resume", _repeatId] call _sendDirect;
+ private _crewId = format ["APS_CREW_%1", floor random 1e9];
+ player moveInDriver _controlsVehicle;
+ private _crewDeadline = diag_tickTime + 5;
+ waitUntil {uiSleep 0.05; (driver _controlsVehicle) isEqualTo player || {diag_tickTime > _crewDeadline}};
+ private _crewEntered = (driver _controlsVehicle) isEqualTo player;
+ private _crewAck = ["status", _crewId] call _sendDirect;
+ moveOut player;
+ player setPosASL ((getPosASL _controlsVehicle) vectorAdd [30, 0, 0]);
+ uiSleep 1;
+ private _farId = format ["APS_FAR_%1", floor random 1e9];
+ private _farAck = ["status", _farId] call _sendDirect;
+ player setPosASL ((getPosASL _controlsVehicle) vectorAdd [0, 5, 0]);
+ uiSleep 1;
+ private _unknownId = format ["APS_UNKNOWN_%1", floor random 1e9];
+ private _unknownAck = ["invented-operation", _unknownId] call _sendDirect;
+ private _authorityOk = _crewEntered && {(_repeatAck param [2, false]) && {(_repeatAck param [3, ""]) isEqualTo "already_active"}}
+     && {!(_replayAck param [2, true])} && {(_replayAck param [3, ""]) isEqualTo "replay"}
+     && {(_crewAck param [2, false])} && {(_crewAck param [3, ""]) isEqualTo "status_delivered"}
+     && {!(_farAck param [2, true])} && {(_farAck param [3, ""]) isEqualTo "operator_ineligible"}
+     && {!(_unknownAck param [2, true])} && {(_unknownAck param [3, ""]) isEqualTo "unknown_operation"};
+ ["aps.controls.authority", _authorityOk, format ["repeat=%1|replay=%2|crew=%3|far=%4|unknown=%5", _repeatAck, _replayAck, _crewAck, _farAck, _unknownAck]] call _assert;
+ private _replicatedResult = _controlsVehicle getVariable ["YOSHI_APS_LastOperationResult", []];
+ ["aps.controls.resultReplication", (_replicatedResult param [0, ""]) isEqualTo _unknownId && {(_replicatedResult param [2, true]) isEqualTo false} && {(_replicatedResult param [4, ""]) isEqualTo netId player} && {(_replicatedResult param [5, -1]) isEqualTo clientOwner}, format ["result=%1|player=%2|owner=%3", _replicatedResult, netId player, clientOwner]] call _assert;
+ player setPosASL _originalPlayerASL;
+ missionNamespace setVariable ["PONTIFEX_APS_CONTROLS_DONE", _token, true];
  private _apsDeadline = diag_tickTime + 45;
  waitUntil { uiSleep 0.1; !isNil {missionNamespace getVariable "PONTIFEX_TIER_apsReplication"} || diag_tickTime > _apsDeadline };
  private _apsReplication = missionNamespace getVariable ["PONTIFEX_TIER_apsReplication", []];

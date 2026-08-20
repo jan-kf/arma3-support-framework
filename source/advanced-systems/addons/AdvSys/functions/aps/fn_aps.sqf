@@ -30,6 +30,13 @@ YOSHI_APS_PROJECTILE_MISS_MARGIN = 3;
 YOSHI_APS_HARDKILL_TRIGGER_SOUNDS = ["ApsHardKillShot2", "ApsHardKillShot3", "ApsHardKillShot4"];
 YOSHI_APS_SOFTKILL_TRIGGER_SOUNDS = ["ApsSoftKillGlitch1", "ApsSoftKillGlitch2", "ApsSoftKillGlitch3", "ApsSoftKillGlitch4", "ApsSoftKillGlitch5"];
 YOSHI_APS_ANTIDRONE_TRIGGER_SOUNDS = ["ApsDronePulse1", "ApsDronePulse2"];
+YOSHI_APS_OPERATOR_RANGE = 10;
+YOSHI_APS_OPERATION_AUDIT_LIMIT = 64;
+
+// Consequential menu requests arrive through one authenticated server entry.
+// A machine-local token prevents the globally named mutation helper from
+// becoming an alternate remoteExec surface.
+localNamespace setVariable ["YOSHI_APS_OPERATION_TOKEN", format ["aps-op-%1-%2-%3", diag_tickTime, random 1e9, random 1e9]];
 
 YOSHI_effects = {
     params ["_posATL"];
@@ -859,8 +866,171 @@ YOSHI_detectDrones = {
     _vehicle setVariable ["YOSHI_APS_Drone_Thread", scriptNull];
 };
 
+YOSHI_fnc_apsStateSnapshot = {
+    params ["_vehicle"];
+    if (isNull _vehicle) exitWith {[]};
+    [
+        _vehicle getVariable ["YOSHI_APS_Installed", false],
+        _vehicle getVariable ["YOSHI_APS_Enabled", false],
+        _vehicle getVariable ["YOSHI_APS_HardKill_Enabled", false],
+        _vehicle getVariable ["YOSHI_APS_SoftKill_Enabled", false],
+        _vehicle getVariable ["YOSHI_APS_VoiceEnabled", true],
+        _vehicle getVariable ["YOSHI_APS_AntiDrone_Enabled", true],
+        [_vehicle] call YOSHI_fnc_apsHardKillChargeCount,
+        fuel _vehicle
+    ]
+};
+
+YOSHI_fnc_apsCanOperate = {
+    params ["_vehicle", "_requester"];
+    if (isNull _vehicle || {isNull _requester} || {!isPlayer _requester} || {!alive _requester}) exitWith {false};
+    private _inside = (vehicle _requester) isEqualTo _vehicle;
+    private _operationalCrew = _inside && {
+        (driver _vehicle) isEqualTo _requester
+        || {(gunner _vehicle) isEqualTo _requester}
+        || {(commander _vehicle) isEqualTo _requester}
+    };
+    private _nearby = !_inside && {(_requester distance _vehicle) <= YOSHI_APS_OPERATOR_RANGE};
+    _operationalCrew || _nearby
+};
+
+YOSHI_fnc_apsPublishOperationResult = {
+    params ["_vehicle", "_requestId", "_operation", "_accepted", "_reason", "_requester", "_owner"];
+    if (!isServer || {_requestId isEqualTo ""}) exitWith {};
+    private _payload = [_requestId, _operation, _accepted isEqualTo true, _reason, if (isNull _requester) then {""} else {netId _requester}, _owner, serverTime, [_vehicle] call YOSHI_fnc_apsStateSnapshot];
+    if (!isNull _vehicle) then {_vehicle setVariable ["YOSHI_APS_LastOperationResult", _payload, true];};
+    missionNamespace setVariable [format ["YOSHI_APS_OPERATION_ACK_%1", _requestId], _payload, _owner];
+    private _audit = missionNamespace getVariable ["YOSHI_APS_OPERATION_AUDIT", []];
+    _audit pushBack _payload;
+    if ((count _audit) > YOSHI_APS_OPERATION_AUDIT_LIMIT) then {_audit deleteRange [0, (count _audit) - YOSHI_APS_OPERATION_AUDIT_LIMIT];};
+    missionNamespace setVariable ["YOSHI_APS_OPERATION_AUDIT", _audit, false];
+};
+
+YOSHI_fnc_apsApplyOperation = {
+    params ["_vehicle", "_requester", "_operation", "_token"];
+    if (!isServer || {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {[false, "unauthorized_internal_call"]};
+    private _active = _vehicle getVariable ["YOSHI_APS_Enabled", false];
+    if !(_vehicle getVariable ["YOSHI_APS_Installed", false]) exitWith {[false, "aps_not_installed"]};
+
+    switch (_operation) do {
+        case "suspend": {
+            if (!_active) exitWith {[true, "already_suspended"]};
+            [_vehicle, _token] call YOSHI_fnc_apsDisableVehicle;
+            [true, "suspended"]
+        };
+        case "resume": {
+            if (_active) exitWith {[true, "already_active"]};
+            [_vehicle, YOSHI_APS_DEFAULT_HARDKILL_CHARGES, _token] call YOSHI_fnc_apsEnableVehicle;
+            [true, "resumed"]
+        };
+        case "hardkill-off": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            if !((_vehicle getVariable ["YOSHI_APS_HardKill_Enabled", false]) && {_vehicle getVariable ["YOSHI_APS_HardKill_Online", false]}) exitWith {[false, "stale_transition"]};
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleHardKillTurnOff;
+            [true, "hardkill_off"]
+        };
+        case "hardkill-reboot": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            if ((_vehicle getVariable ["YOSHI_APS_HardKill_Enabled", false]) && {_vehicle getVariable ["YOSHI_APS_HardKill_Online", false]}) exitWith {[false, "stale_transition"]};
+            if (([_vehicle] call YOSHI_fnc_apsHardKillChargeCount) <= 0) exitWith {
+                [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleHardKillReboot;
+                [false, "no_hardkill_charges"]
+            };
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleHardKillReboot;
+            [true, "hardkill_rebooted"]
+        };
+        case "softkill-on": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            if (_vehicle getVariable ["YOSHI_APS_HardKill_Online", false]) exitWith {[false, "hardkill_online"]};
+            if (_vehicle getVariable ["YOSHI_APS_SoftKill_Enabled", false]) exitWith {[false, "stale_transition"]};
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleSoftKillTurnOn;
+            [true, "softkill_on"]
+        };
+        case "softkill-off": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            if (_vehicle getVariable ["YOSHI_APS_HardKill_Online", false]) exitWith {[false, "hardkill_online"]};
+            if !(_vehicle getVariable ["YOSHI_APS_SoftKill_Enabled", false]) exitWith {[false, "stale_transition"]};
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleSoftKillTurnOff;
+            [true, "softkill_off"]
+        };
+        case "voice-on": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            if (_vehicle getVariable ["YOSHI_APS_VoiceEnabled", true]) exitWith {[false, "stale_transition"]};
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleVoiceTurnOn;
+            [true, "voice_on"]
+        };
+        case "voice-off": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            if !(_vehicle getVariable ["YOSHI_APS_VoiceEnabled", true]) exitWith {[false, "stale_transition"]};
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleVoiceTurnOff;
+            [true, "voice_off"]
+        };
+        case "anti-drone-on": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            if (_vehicle getVariable ["YOSHI_APS_AntiDrone_Enabled", true]) exitWith {[false, "stale_transition"]};
+            if ((fuel _vehicle) < YOSHI_APS_SOFTKILL_FUEL_COST) exitWith {[false, "insufficient_fuel"]};
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleAntiDroneTurnOn;
+            [true, "anti_drone_on"]
+        };
+        case "anti-drone-off": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            if !(_vehicle getVariable ["YOSHI_APS_AntiDrone_Enabled", true]) exitWith {[false, "stale_transition"]};
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleAntiDroneTurnOff;
+            [true, "anti_drone_off"]
+        };
+        case "anti-drone-status": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleAntiDroneStatusAction;
+            [true, "anti_drone_status_delivered"]
+        };
+        case "status": {
+            if (!_active) exitWith {[false, "aps_suspended"]};
+            [_vehicle, _requester, _token] call YOSHI_fnc_apsHandleStatusAction;
+            [true, "status_delivered"]
+        };
+        default {[false, "unknown_operation"]};
+    }
+};
+
+YOSHI_fnc_apsRequestOperation = {
+    params ["_vehicle", "_operation", "_requestId"];
+    if (!isServer) exitWith {[_vehicle, _operation, _requestId] remoteExecCall ["YOSHI_fnc_apsRequestOperation", 2]; false};
+    private _owner = remoteExecutedOwner;
+    private _matches = allPlayers select {isPlayer _x && {owner _x isEqualTo _owner}};
+    private _requester = if ((count _matches) isEqualTo 1) then {_matches # 0} else {objNull};
+    private _reject = {
+        params ["_reason"];
+        [_vehicle, _requestId, _operation, false, _reason, _requester, _owner] call YOSHI_fnc_apsPublishOperationResult;
+        false
+    };
+    if !(_requestId isEqualType "" && {_requestId isNotEqualTo ""} && {(count _requestId) <= 128}) exitWith {false};
+    if !(_operation isEqualType "") exitWith {["invalid_operation"] call _reject};
+    if (isNull _vehicle || {!(_vehicle isKindOf "AllVehicles")} || {!alive _vehicle}) exitWith {["invalid_vehicle"] call _reject};
+    if (isNull _requester) exitWith {["invalid_requester"] call _reject};
+    if !([_vehicle, _requester] call YOSHI_fnc_apsCanOperate) exitWith {["operator_ineligible"] call _reject};
+    private _seen = _vehicle getVariable ["YOSHI_APS_OperationRequestIds", []];
+    if (_requestId in _seen) exitWith {["replay"] call _reject};
+    _seen pushBack _requestId;
+    if ((count _seen) > YOSHI_APS_OPERATION_AUDIT_LIMIT) then {_seen deleteAt 0;};
+    _vehicle setVariable ["YOSHI_APS_OperationRequestIds", _seen, false];
+    private _result = [_vehicle, _requester, toLowerANSI _operation, localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""]] call YOSHI_fnc_apsApplyOperation;
+    [_vehicle, _requestId, _operation, _result # 0, _result # 1, _requester, _owner] call YOSHI_fnc_apsPublishOperationResult;
+    _result # 0
+};
+
+YOSHI_fnc_apsSubmitOperation = {
+    params ["_vehicle", "_operation"];
+    private _requestId = format ["APS_%1_%2_%3", clientOwner, floor (diag_tickTime * 1000), floor random 1e9];
+    missionNamespace setVariable [format ["YOSHI_APS_OPERATION_ACK_%1", _requestId], nil, false];
+    uiNamespace setVariable ["YOSHI_APS_LastSubmittedOperation", [_requestId, _operation, netId _vehicle]];
+    [_vehicle, _operation, _requestId] remoteExecCall ["YOSHI_fnc_apsRequestOperation", 2];
+    _requestId
+};
+
 YOSHI_fnc_apsHandleHardKillTurnOff = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -875,7 +1045,9 @@ YOSHI_fnc_apsHandleHardKillTurnOff = {
 };
 
 YOSHI_fnc_apsHandleHardKillReboot = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -903,7 +1075,9 @@ YOSHI_fnc_apsHandleHardKillReboot = {
 };
 
 YOSHI_fnc_apsHandleSoftKillTurnOn = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -918,7 +1092,9 @@ YOSHI_fnc_apsHandleSoftKillTurnOn = {
 };
 
 YOSHI_fnc_apsHandleSoftKillTurnOff = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -933,7 +1109,9 @@ YOSHI_fnc_apsHandleSoftKillTurnOff = {
 };
 
 YOSHI_fnc_apsHandleVoiceTurnOn = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -944,7 +1122,9 @@ YOSHI_fnc_apsHandleVoiceTurnOn = {
 };
 
 YOSHI_fnc_apsHandleVoiceTurnOff = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -956,7 +1136,9 @@ YOSHI_fnc_apsHandleVoiceTurnOff = {
 };
 
 YOSHI_fnc_apsHandleAntiDroneTurnOn = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -973,7 +1155,9 @@ YOSHI_fnc_apsHandleAntiDroneTurnOn = {
 };
 
 YOSHI_fnc_apsHandleAntiDroneTurnOff = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -984,7 +1168,9 @@ YOSHI_fnc_apsHandleAntiDroneTurnOff = {
 };
 
 YOSHI_fnc_apsHandleAntiDroneStatusAction = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -1009,7 +1195,9 @@ YOSHI_fnc_apsHandleAntiDroneStatusAction = {
 };
 
 YOSHI_fnc_apsHandleStatusAction = {
-    params ["_vehicle", "_player"];
+    params ["_vehicle", "_player", ["_token", ""]];
+
+    if (remoteExecutedOwner > 2 && {_token isNotEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""])}) exitWith {false};
 
     if (!isServer) exitWith {};
     if (isNull _vehicle) exitWith {};
@@ -1059,10 +1247,35 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "APS",
         "",
         {},
-        { _target getVariable ["YOSHI_APS_Enabled", false] }
+        {
+            params ["_target", "_player"];
+            (_target getVariable ["YOSHI_APS_Installed", false])
+                && {[_target, _player] call YOSHI_fnc_apsCanOperate}
+        }
     ] call ace_interact_menu_fnc_createAction;
 
     [_vehicle, 0, ["ACE_MainActions"], _menuAction] call ace_interact_menu_fnc_addActionToObject;
+
+    private _suspendAction = [
+        "YOSHI_APS_Suspend",
+        "Disable APS",
+        "",
+        {params ["_target", "_player"]; [_target, "suspend"] call YOSHI_fnc_apsSubmitOperation;},
+        {_target getVariable ["YOSHI_APS_Enabled", false]}
+    ] call ace_interact_menu_fnc_createAction;
+    [_vehicle, 0, ["ACE_MainActions", "YOSHI_APS_Menu"], _suspendAction] call ace_interact_menu_fnc_addActionToObject;
+
+    private _resumeAction = [
+        "YOSHI_APS_Resume",
+        "Enable APS",
+        "",
+        {params ["_target", "_player"]; [_target, "resume"] call YOSHI_fnc_apsSubmitOperation;},
+        {
+            (_target getVariable ["YOSHI_APS_Installed", false])
+                && {!(_target getVariable ["YOSHI_APS_Enabled", false])}
+        }
+    ] call ace_interact_menu_fnc_createAction;
+    [_vehicle, 0, ["ACE_MainActions", "YOSHI_APS_Menu"], _resumeAction] call ace_interact_menu_fnc_addActionToObject;
 
     private _hardKillOffAction = [
         "YOSHI_APS_HardKill_TurnOff",
@@ -1070,7 +1283,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleHardKillTurnOff", 2];
+            [_target, "hardkill-off"] call YOSHI_fnc_apsSubmitOperation;
         },
         {
             (_target getVariable ["YOSHI_APS_Enabled", false]) &&
@@ -1087,7 +1300,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleHardKillReboot", 2];
+            [_target, "hardkill-reboot"] call YOSHI_fnc_apsSubmitOperation;
         },
         {
             (_target getVariable ["YOSHI_APS_Enabled", false]) &&
@@ -1104,7 +1317,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleSoftKillTurnOn", 2];
+            [_target, "softkill-on"] call YOSHI_fnc_apsSubmitOperation;
         },
         {
             (_target getVariable ["YOSHI_APS_Enabled", false]) &&
@@ -1121,7 +1334,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleSoftKillTurnOff", 2];
+            [_target, "softkill-off"] call YOSHI_fnc_apsSubmitOperation;
         },
         {
             (_target getVariable ["YOSHI_APS_Enabled", false]) &&
@@ -1147,7 +1360,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleAntiDroneTurnOn", 2];
+            [_target, "anti-drone-on"] call YOSHI_fnc_apsSubmitOperation;
         },
         {
             (_target getVariable ["YOSHI_APS_Enabled", false]) &&
@@ -1162,7 +1375,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleAntiDroneTurnOff", 2];
+            [_target, "anti-drone-off"] call YOSHI_fnc_apsSubmitOperation;
         },
         {
             (_target getVariable ["YOSHI_APS_Enabled", false]) &&
@@ -1177,7 +1390,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleAntiDroneStatusAction", 2];
+            [_target, "anti-drone-status"] call YOSHI_fnc_apsSubmitOperation;
         },
         { _target getVariable ["YOSHI_APS_Enabled", false] }
     ] call ace_interact_menu_fnc_createAction;
@@ -1189,7 +1402,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleStatusAction", 2];
+            [_target, "status"] call YOSHI_fnc_apsSubmitOperation;
         },
         { _target getVariable ["YOSHI_APS_Enabled", false] }
     ] call ace_interact_menu_fnc_createAction;
@@ -1202,7 +1415,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleVoiceTurnOn", 2];
+            [_target, "voice-on"] call YOSHI_fnc_apsSubmitOperation;
         },
         {
             (_target getVariable ["YOSHI_APS_Enabled", false]) &&
@@ -1217,7 +1430,7 @@ YOSHI_fnc_apsRegisterActionsLocal = {
         "",
         {
             params ["_target", "_player"];
-            [_target, _player] remoteExecCall ["YOSHI_fnc_apsHandleVoiceTurnOff", 2];
+            [_target, "voice-off"] call YOSHI_fnc_apsSubmitOperation;
         },
         {
             (_target getVariable ["YOSHI_APS_Enabled", false]) &&
@@ -1226,6 +1439,17 @@ YOSHI_fnc_apsRegisterActionsLocal = {
     ] call ace_interact_menu_fnc_createAction;
     [_vehicle, 0, ["ACE_MainActions"], _voiceOffAction] call ace_interact_menu_fnc_addActionToObject;
 
+    // ACE marks addActionToObject final, so external wrappers cannot observe
+    // per-object registration. Retain the exact ACE-created action data as a
+    // local diagnostic adapter; tests still evaluate it through ACE's own
+    // active-tree collector and invoke the exact registered statement.
+    _vehicle setVariable ["YOSHI_APS_ActionData_Local", [
+        _menuAction, _suspendAction, _resumeAction,
+        _hardKillOffAction, _hardKillRebootAction,
+        _softKillOnAction, _softKillOffAction,
+        _antiDroneMenu, _antiDroneOnAction, _antiDroneOffAction,
+        _antiDroneStatusAction, _statusAction, _voiceOnAction, _voiceOffAction
+    ], false];
     _vehicle setVariable ["YOSHI_APS_ActionsAdded_Local", true];
 };
 
@@ -1236,6 +1460,8 @@ YOSHI_fnc_apsUnregisterActionsLocal = {
     if (isNil "ace_interact_menu_fnc_removeActionFromObject") exitWith {};
     if !(_vehicle getVariable ["YOSHI_APS_ActionsAdded_Local", false]) exitWith {};
 
+    [_vehicle, 0, ["ACE_MainActions", "YOSHI_APS_Menu"], "YOSHI_APS_Suspend"] call ace_interact_menu_fnc_removeActionFromObject;
+    [_vehicle, 0, ["ACE_MainActions", "YOSHI_APS_Menu"], "YOSHI_APS_Resume"] call ace_interact_menu_fnc_removeActionFromObject;
     [_vehicle, 0, ["ACE_MainActions", "YOSHI_APS_Menu"], "YOSHI_APS_HardKill_TurnOff"] call ace_interact_menu_fnc_removeActionFromObject;
     [_vehicle, 0, ["ACE_MainActions", "YOSHI_APS_Menu"], "YOSHI_APS_HardKill_Reboot"] call ace_interact_menu_fnc_removeActionFromObject;
     [_vehicle, 0, ["ACE_MainActions", "YOSHI_APS_Menu"], "YOSHI_APS_SoftKill_TurnOn"] call ace_interact_menu_fnc_removeActionFromObject;
@@ -1249,6 +1475,7 @@ YOSHI_fnc_apsUnregisterActionsLocal = {
     [_vehicle, 0, ["ACE_MainActions"], "YOSHI_APS_Voice_On"] call ace_interact_menu_fnc_removeActionFromObject;
     [_vehicle, 0, ["ACE_MainActions"], "YOSHI_APS_Voice_Off"] call ace_interact_menu_fnc_removeActionFromObject;
 
+    _vehicle setVariable ["YOSHI_APS_ActionData_Local", nil, false];
     _vehicle setVariable ["YOSHI_APS_ActionsAdded_Local", false];
 };
 
@@ -1266,75 +1493,79 @@ YOSHI_fnc_apsUnregisterActionsGlobal = {
     [_vehicle] remoteExecCall ["YOSHI_fnc_apsUnregisterActionsLocal", 0, _vehicle];
 };
 
+YOSHI_fnc_apsLifecycleAuthorized = {
+    params ["_token"];
+    isServer && {
+        remoteExecutedOwner <= 2
+        || {_token isEqualTo (localNamespace getVariable ["YOSHI_APS_OPERATION_TOKEN", ""]) }
+    }
+};
+
 YOSHI_fnc_apsEnableVehicle = {
-    params ["_vehicle", ["_charges", YOSHI_APS_DEFAULT_HARDKILL_CHARGES]];
+    params ["_vehicle", ["_charges", YOSHI_APS_DEFAULT_HARDKILL_CHARGES], ["_token", ""]];
 
-    if (!isServer) exitWith {false};
-    if (isNull _vehicle) exitWith {false};
-    if !(_vehicle isKindOf "AllVehicles") exitWith {false};
+    if !([_token] call YOSHI_fnc_apsLifecycleAuthorized) exitWith {false};
+    if (isNull _vehicle || {!(_vehicle isKindOf "AllVehicles")} || {!alive _vehicle}) exitWith {false};
+    private _firstInstall = !(_vehicle getVariable ["YOSHI_APS_Installed", false]);
+    if (!_firstInstall && {_vehicle getVariable ["YOSHI_APS_Enabled", false]}) exitWith {true};
 
-    [_vehicle, _charges] call YOSHI_fnc_apsTopUpHardKillCharges;
-
-    _vehicle setVariable ["YOSHI_APS_Enabled", true, true];
-    _vehicle setVariable ["YOSHI_APS_VoiceEnabled", true, true];
-    _vehicle setVariable ["YOSHI_APS_AntiDrone_Enabled", true, true];
-    _vehicle setVariable ["YOSHI_APS_HardKill_EmptyAnnounced", false, true];
-    _vehicle setVariable ["YOSHI_APS_SoftKill_LowPowerAnnounced", false, true];
-    [_vehicle, true] call YOSHI_fnc_apsSetHardKillState;
-    [_vehicle, false] call YOSHI_fnc_apsSetSoftKillState;
-    [] remoteExecCall ["YOSHI_fnc_apsEnsureLocalRuntime", 0];
-
-    _vehicle setVariable ["YOSHI_APS_Thread", scriptNull];
-
-    private _droneThread = _vehicle getVariable ["YOSHI_APS_Drone_Thread", scriptNull];
-    if (scriptDone _droneThread) then {
-        _droneThread = [_vehicle] spawn YOSHI_detectDrones;
-        _vehicle setVariable ["YOSHI_APS_Drone_Thread", _droneThread];
+    if (_firstInstall) then {
+        [_vehicle, _charges] call YOSHI_fnc_apsTopUpHardKillCharges;
+        _vehicle setVariable ["YOSHI_APS_Installed", true, true];
+        _vehicle setVariable ["YOSHI_APS_VoiceEnabled", true, true];
+        _vehicle setVariable ["YOSHI_APS_AntiDrone_Enabled", true, true];
+        _vehicle setVariable ["YOSHI_APS_HardKill_EmptyAnnounced", false, true];
+        _vehicle setVariable ["YOSHI_APS_SoftKill_LowPowerAnnounced", false, true];
+        [_vehicle, true] call YOSHI_fnc_apsSetHardKillState;
+        [_vehicle, false] call YOSHI_fnc_apsSetSoftKillState;
     };
 
+    _vehicle setVariable ["YOSHI_APS_Enabled", true, true];
+    [] remoteExecCall ["YOSHI_fnc_apsEnsureLocalRuntime", 0];
+    _vehicle setVariable ["YOSHI_APS_Thread", scriptNull];
     _vehicle setVariable ["YOSHI_APS_soft_Thread", scriptNull];
 
-    [_vehicle] call YOSHI_fnc_apsRegisterActionsGlobal;
+    if (_vehicle getVariable ["YOSHI_APS_AntiDrone_Enabled", true]) then {
+        private _droneThread = _vehicle getVariable ["YOSHI_APS_Drone_Thread", scriptNull];
+        if (scriptDone _droneThread) then {
+            _droneThread = [_vehicle] spawn YOSHI_detectDrones;
+            _vehicle setVariable ["YOSHI_APS_Drone_Thread", _droneThread];
+        };
+    };
 
+    [_vehicle] call YOSHI_fnc_apsRegisterActionsGlobal;
     true
 };
 
 YOSHI_fnc_apsDisableVehicle = {
-    params ["_vehicle"];
+    params ["_vehicle", ["_token", ""]];
 
-    if (!isServer) exitWith {false};
-    if (isNull _vehicle) exitWith {false};
+    if !([_token] call YOSHI_fnc_apsLifecycleAuthorized) exitWith {false};
+    if (isNull _vehicle || {!(_vehicle isKindOf "AllVehicles")}) exitWith {false};
+    if !(_vehicle getVariable ["YOSHI_APS_Installed", false]) exitWith {false};
+    if !(_vehicle getVariable ["YOSHI_APS_Enabled", false]) exitWith {true};
 
     [_vehicle] call YOSHI_fnc_apsCancelVoice;
-
     private _droneThread = _vehicle getVariable ["YOSHI_APS_Drone_Thread", scriptNull];
-    if (!scriptDone _droneThread) then {
-        terminate _droneThread;
-    };
-
+    if (!scriptDone _droneThread) then {terminate _droneThread;};
     _vehicle setVariable ["YOSHI_APS_Thread", scriptNull];
     _vehicle setVariable ["YOSHI_APS_Drone_Thread", scriptNull];
     _vehicle setVariable ["YOSHI_APS_soft_Thread", scriptNull];
     _vehicle setVariable ["YOSHI_APS_Enabled", false, true];
-    _vehicle setVariable ["YOSHI_APS_AntiDrone_Enabled", false, true];
-    [_vehicle, false] call YOSHI_fnc_apsSetHardKillState;
-    [_vehicle, false] call YOSHI_fnc_apsSetSoftKillState;
-
-    [_vehicle] call YOSHI_fnc_apsUnregisterActionsGlobal;
-
+    // Suspension preserves every mode, preference, hard-kill charge, and fuel.
+    // The installed menu remains so an eligible operator can resume it.
     true
 };
 
 YOSHI_fnc_apsToggleVehicle = {
-    params ["_vehicle"];
-
-    private _enabled = _vehicle getVariable ["YOSHI_APS_Enabled", false];
-    if (_enabled) exitWith {
-        [_vehicle] call YOSHI_fnc_apsDisableVehicle;
+    params ["_vehicle", ["_token", ""]];
+    if !([_token] call YOSHI_fnc_apsLifecycleAuthorized) exitWith {false};
+    if (isNull _vehicle) exitWith {false};
+    if (_vehicle getVariable ["YOSHI_APS_Enabled", false]) exitWith {
+        [_vehicle, _token] call YOSHI_fnc_apsDisableVehicle;
         false
     };
-
-    [_vehicle] call YOSHI_fnc_apsEnableVehicle;
+    [_vehicle, YOSHI_APS_DEFAULT_HARDKILL_CHARGES, _token] call YOSHI_fnc_apsEnableVehicle;
     true
 };
 
