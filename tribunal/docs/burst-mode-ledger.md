@@ -30,10 +30,11 @@ decisions remain in each canonical feature review and the feature inventory.
 | Multi-client / JIP proof boundary | REVIEWED / DEFERRED | `8a0d8c3` | none; static architecture/environment boundary | second licensed Steam identity; per-feature visibility/retention/audience/concurrency/disconnect policy | extend identity-aware orchestration and run true late-join/isolation matrix after dependency exists |
 | LORICA APS ACE controls | REVIEWED / REFINE BEFORE PERMANENT COVERAGE | `e0c38a9` | none; static reachable authority boundary | operator eligibility, proximity/role, status/voice policy | choose policy; add authenticated transition endpoint and ACE/physical A/B matrix |
 | Field Utilities Eden module activation | REVIEWED / REFINE BEFORE PERMANENT COVERAGE | `319cb26` | none; accepted Fabricator scenario bypasses real typed dispatch | duplicate/missing-module/runtime-reconfiguration policy; typed dispatch/sync locality | add typed module fixture; split private authority from mirrors; prove no-module/rogue publication controls |
+| Vigil whitelist Eden/Zeus activation | REVIEWED / REFINE BEFORE PERMANENT COVERAGE | `97a8618` | none; accepted browser covers only no-whitelist source | module/empty/duplicate policy, curator authority, sync replication/JIP, refresh/feedback | prove typed module A/B and one real curator add/remove; refine server-owned membership |
 
-Current feature HEAD: `319cb26`. Field Utilities Eden activation/catalogue
-provenance is now reviewed and stopped before typed-module/authority refinement;
-accepted Fabricator transactions remain unchanged. Scout evaluation remains
-positive and non-contentious. Exact next recommended feature: **Vigil asset
-whitelist Eden/Zeus activation**, followed by the Field Utilities FPV audio
-feedback static closeout.
+Current feature HEAD: `97a8618`. Vigil whitelist Eden and Zeus activation
+are now reviewed and stopped before typed-module/curator transport and authority
+refinement; the accepted unwhitelisted browser remains unchanged. Scout
+evaluation remains positive and non-contentious. Exact next recommended feature:
+**Field Utilities FPV click/shuffle feedback** static closeout, followed by the
+next independent inventory scout result.
