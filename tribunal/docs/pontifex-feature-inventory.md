@@ -418,11 +418,16 @@ terminates the transaction worker before rollback and retirement. The delivery
 mass cap is preserved but could not be validated at runtime and is asserted by
 nothing - see the review.
 
-* **Mission-maker registration** uses synchronized storage objects and designated
-  Fabricator stations, optionally with nearby ZEN inventory. **Implemented;
-  REVIEWED / KEEP AS-IS AND SPEC-TEST.** Module setters run server-side and
-  publish both logics. Server ownership is proven; actual JIP and client-visible
-  runtime synchronization are not.
+* **Mission-maker Eden registration** is **REVIEWED / REFINE BEFORE
+  PERMANENT COVERAGE**. The accepted Fabricator scenario uses plain Logic
+  objects, runtime synchronization, and direct setters, so it does not prove
+  typed module dispatch, SQM Sync links, attributes, or authoritative catalogue
+  provenance. Setters are unguarded and the server consumes the same public
+  globals clients receive; duplicates are last-writer-wins. Add a typed module
+  fixture, measure native locality, separate server-private source from mirrors,
+  and prove rogue-publication rejection before coverage. Field Utilities has no
+  Zeus activation tool. See
+  [`field-utilities-eden-module-activation-review.md`](field-utilities-eden-module-activation-review.md).
 * **Fabricator UI/queue** lists assets/images/quantities, ordered queue, grid,
   progress, success/failure, and may reuse Vigil skins. **Implemented; PARTIALLY
   COVERED.** Airdrop context/manifest/result is covered; normal browsing, local
@@ -585,9 +590,12 @@ airdrop. General fabrication is outside the contract.
 
 ### 5.4 Eden/Zeus and CBA configuration
 
-* APS/CBR, whitelist, fixed-wing points/assets, Virtual Storage, and Fabricator
-  Eden modules plus Zeus tools are **implemented; NOT YET REVIEWED**. Scenarios
-  call APIs directly, not real synchronization/curator paths.
+* APS/CBR, Vigil whitelist and fixed-wing Eden/Zeus activation remain
+  **implemented; NOT YET REVIEWED** unless separately linked above; their
+  scenarios call APIs rather than real synchronization/curator paths. Field
+  Utilities defines Virtual Storage and Fabricator Eden modules but no Zeus
+  activation tool; their module/authority boundary is reviewed separately in
+  [`field-utilities-eden-module-activation-review.md`](field-utilities-eden-module-activation-review.md).
 * Cross-addon CBA setting declarations are **REFINED; ACCEPTED / COVERED**
   for 13 exact unique keys, types, defaults/bounds, global/local scope, live
   consumer handoff, and fallback parity. Iron Dome's fallback now matches its
