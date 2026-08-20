@@ -25,13 +25,13 @@ decisions remain in each canonical feature review and the feature inventory.
 
 | Vigil mixed-fleet asset browser | REFINED; ACCEPTED / COVERED | `039ad91` | `20260820T010547Z-f5c9dfb1`; server 9/0, client 22/0 | whitelist/Zeus, fixed-wing rows, dormant recon, client-B/JIP, distant captured-crew edge | retain exact backing/tree identity matrix; next review Field Utilities cold-client ACE composition |
 | Field Utilities cold-client ACE composition | ACCEPTED / COVERED | `a1f5ff3` | `20260820T012801Z-0212d338`; server 2/0, client 4/0 | Fabricator delayed object action, effects, repeated-init, client-B/JIP remain separate | retain concrete-class inheritance/relevance matrix; next canonicalize Vigil task governor review |
+| Vigil task governor | REVIEWED / REWRITE BEFORE PERMANENT COVERAGE | `ba6cc50` | none; deterministic static lifecycle/authority defects | declarative request schema, one-task/cancel/retention/retry policy, HC ownership | run Live lifecycle and forged-request matrix; rewrite server boundary, then rerun artillery/transport/CAS |
 
-Current feature HEAD: `a1f5ff3`. Accepted/covered or characterized in
-this ledger now also includes the Field Utilities cold-client ACE composition
-boundary. Reviewed/deferred and precisely bounded work remains linked above.
-Scout evaluation: all three packets materially reduced reconnaissance without
-runtime or repository contention; the governor packet supplies a complete
-canonical continuation and the other two identify independent follow-ups.
-Three-scout parallelism remains useful with explicit non-overlap. Exact next
-recommended feature: **Vigil task governor** for a static terminal review, then
-the cross-addon CBA settings contract.
+Current feature HEAD: `ba6cc50`. The Vigil task governor is now reviewed and
+classified REWRITE BEFORE PERMANENT COVERAGE without disturbing accepted
+consumer outcomes. Scout evaluation remains positive: the governor packet
+removed most source archaeology, the CBA packet identified a bounded defect and
+static acceptance path, and the client-N packet provides an independent deferred
+boundary. Three-scout parallelism remains non-contentious. Exact next
+recommended feature: **cross-addon CBA settings contract**, followed by the
+multi-client/JIP proof-boundary review.
