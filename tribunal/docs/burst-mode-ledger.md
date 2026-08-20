@@ -24,12 +24,14 @@ decisions remain in each canonical feature review and the feature inventory.
 | Advanced Systems common utilities | REVIEWED / DEFERRED AS STANDALONE; CONSUMER-OWNED | `f414463` | none; exhaustive static reachability and consumer map | beam/audio concurrency and audience only if a consumer promises them | keep helpers internal; test outcomes from each consumer entry |
 
 | Vigil mixed-fleet asset browser | REFINED; ACCEPTED / COVERED | `039ad91` | `20260820T010547Z-f5c9dfb1`; server 9/0, client 22/0 | whitelist/Zeus, fixed-wing rows, dormant recon, client-B/JIP, distant captured-crew edge | retain exact backing/tree identity matrix; next review Field Utilities cold-client ACE composition |
+| Field Utilities cold-client ACE composition | ACCEPTED / COVERED | `a1f5ff3` | `20260820T012801Z-0212d338`; server 2/0, client 4/0 | Fabricator delayed object action, effects, repeated-init, client-B/JIP remain separate | retain concrete-class inheritance/relevance matrix; next canonicalize Vigil task governor review |
 
-Current feature HEAD: `039ad91`. Accepted/covered or characterized in
-this ledger now also includes the Vigil mixed-fleet browser. Reviewed/deferred
-and precisely bounded work remains linked above. Scout evaluation: all three
-packets materially reduced reconnaissance; two independently converged on the
-Vigil governor, so future assignments must explicitly exclude already-selected
-surfaces while retaining three-way parallelism. Exact next recommended feature:
-**Field Utilities cold-client ACE registration/coexistence boundary**, followed
-by a static Vigil governor terminal review.
+Current feature HEAD: `a1f5ff3`. Accepted/covered or characterized in
+this ledger now also includes the Field Utilities cold-client ACE composition
+boundary. Reviewed/deferred and precisely bounded work remains linked above.
+Scout evaluation: all three packets materially reduced reconnaissance without
+runtime or repository contention; the governor packet supplies a complete
+canonical continuation and the other two identify independent follow-ups.
+Three-scout parallelism remains useful with explicit non-overlap. Exact next
+recommended feature: **Vigil task governor** for a static terminal review, then
+the cross-addon CBA settings contract.
