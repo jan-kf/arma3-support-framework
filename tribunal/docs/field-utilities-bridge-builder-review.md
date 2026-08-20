@@ -15,12 +15,22 @@ bounded result. Missing identity, invalid authority, incomplete construction,
 failed physical traversal, unrelated-object deletion, or incomplete cleanup is
 failure.
 
-This review covers the construction-box entry, one lengthwise flat plan,
-preview, server-authoritative build, physical traversal, box-scoped removal,
-replication to client-a, and cleanup. It does not claim coverage of wide mode,
-ramps, pitch/orientation controls, automatic distance planning, clipping
-policy, interruption/destruction, simultaneous builders, direct segment
-extension, client-b, disconnect/reconnect, or JIP.
+This review covers the construction-box entry, lengthwise and wide layouts,
+ramps per end, source-matched and world-level orientation, automatic
+terrain/building support selection, the 50 metre bound, immutable submitted
+plans, preview, server-authoritative build, pedestrian and vehicle traversal,
+box-scoped removal, replication to client-a, and cleanup. It does not claim
+coverage of interruption/destruction, a genuine second-player contention
+attempt, direct segment extension, client-b, disconnect/reconnect, or JIP.
+
+Product decisions recorded on 2026-08-20 define the excluded advanced planning
+contract: lengthwise is a narrow end-to-end catwalk; wide is vehicle-capable;
+ramp count applies at each end; Keep Level uses world level while Match Box
+preserves source tilt; automatic mode stops only on terrain/building support;
+slight end embedding is intentional; one server-owned planner lease exists per
+box; and the physical span is bounded around 50 metres. Those modes are now
+accepted by the fresh proof recorded below. Contention rejection remains
+explicitly unproven until a second authenticated client identity is available.
 
 ## Canonical review questions
 
@@ -68,10 +78,10 @@ camera/menu input.
 ### 5. Which behavior is product-owned?
 
 Field Utilities owns box eligibility, planning state, supported segment class,
-placement geometry, per-segment delay, operation exclusion, requester
-validation, box-scoped ownership, result lifecycle and removal semantics. The
-product does not currently define a resource cost, persistence policy,
-multi-user conflict policy, or supported contract for direct extension.
+placement geometry, per-segment delay, operation exclusion, the one-planner
+lease, requester validation, box-scoped ownership, result lifecycle and
+removal semantics. The product does not currently define a resource cost,
+persistence policy, or supported contract for direct extension.
 
 ### 6. Are unusual engine requirements proven?
 
@@ -85,8 +95,9 @@ algorithm is engine-required.
 ### 7. Which details were accidental, fragile, or incomplete?
 
 The absent ACR class, reversed generic length/width interpretation,
-client-authoritative world mutation, unowned chain discovery/removal, and
-unbounded result ambiguity blocked permanent coverage and were rewritten.
+client-authoritative world mutation, client-published mutable planning state,
+unowned chain discovery/removal, and unbounded result ambiguity blocked
+permanent coverage and were rewritten.
 Control IDs, screen points, plan-cache layout, request-ID spelling, exact
 coordinates and polling cadence remain evidence-adapter details. Direct
 extension is **DEFER** because it has no reachable action or coherent ownership
@@ -107,10 +118,12 @@ segment netIds and removal result. It proves out-of-range/busy/idle ACE active
 states, invokes the exact registered statement, verifies dialog controls and
 preview data, server request ownership, exact
 class/tag/count, 4.1792 m spacing, direction and height, server locality,
-physical player movement over exact segment collision surfaces, removal of all
-owned identities, survival of a deliberately nearby untagged control plank,
-replication, lifecycle reset and cleanup. An internal result alone cannot pass
-the traversal or scoped-removal claims.
+physical player movement over exact segment collision surfaces, wide-layout
+vehicle movement against an adjacent fall control, ascent and descent over an
+exact ramp chain, terrain/building support observations that reject a nearer
+vehicle, removal of all owned identities, survival of a deliberately nearby
+untagged control plank, replication, lifecycle reset and cleanup. An internal
+result alone cannot pass the traversal or scoped-removal claims.
 
 ### 10. Which implementation details remain free to change?
 
@@ -148,7 +161,8 @@ Utilities scenario. Production code has no dependency on Tribunal.
 | build authority/result | REWRITE BEFORE PERMANENT COVERAGE | validated client request, server-only mutation, bounded terminal result |
 | physical bridge outcome | REFINE BEFORE PERMANENT COVERAGE | corrected length/width metrics and causal traversal over exact segments |
 | removal scope | REFINE BEFORE PERMANENT COVERAGE | box tags and ownership filtering preserve nearby unowned control |
-| wide/ramp/pitch/auto/clipping | NOT YET REVIEWED | excluded from first permanent contract |
+| wide/ramp/pitch/auto/clipping | ACCEPTED / COVERED | immutable server-validated plan; world/source orientation; terrain/building-only endpoint filtering; 50 m cap; wide vehicle and ramp pedestrian physical proofs |
+| planner lease | PARTIALLY COVERED | exact server grant/receipt, scheduled dialog, lease-bound submission and cleanup pass; second-player named contention rejection awaits client-b |
 | direct chain extension | DEFER | helpers exist but attachment entry is empty and intent/authority are undefined |
 | client-b/JIP/concurrency | DEFER | one-client run must not overclaim these boundaries |
 
@@ -186,6 +200,19 @@ exact segment-contact samples; all four owned netIds were removed, the nearby
 untagged control survived until fixture cleanup, and client/server cleanup
 acknowledgment completed.
 
+Fresh autonomous run `20260820T213913Z-d70d2c4f` passed the expanded matrix:
+17 server assertions and 14 client assertions, zero failures, with client,
+server, network and run-state cleanup all complete. Its planner receipt bound
+the granted lease ID to client owner 4 before the dialog opened and the build
+accepted the versioned immutable plan. The wide quadbike advanced 11.50 m over
+the exact 16-segment deck with 69 contact samples while the adjacent no-bridge
+control fell 9.27 m. The ramp player advanced 29.29 m, rose from 2.00 m to a
+4.48 m peak, descended to 0.50 m, remained within 0.0011 m laterally, and
+recorded 436 exact ramp contacts. Automatic planning observed a nearer MRAP at
+7.26 m, ignored it, and selected the building support at 19.71 m; the same ray
+also observed terrain support farther along. All 25 advanced fixture segments,
+both test vehicles, and both boxes were retired before terminal PASS.
+
 ## Security and compatibility
 
 The permanent Bridge proof requires no VNC actor. The optional generic visual
@@ -197,6 +224,7 @@ content dependency is the already-enabled first-party Apex accessories addon.
 
 ## Next review
 
-Review Advanced Systems Counter Battery Radar next. Bridge wide/ramp/automatic
-planning and direct extension remain separate follow-ups rather than silently
-expanding this contract.
+Review the now-unblocked APS operation/control lifecycle next. Bridge
+second-player contention, interruption/destruction, client-b/JIP, and direct
+extension remain explicit follow-ups rather than being inferred from this
+one-client proof.

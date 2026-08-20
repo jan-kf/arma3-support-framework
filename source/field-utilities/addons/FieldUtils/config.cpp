@@ -93,7 +93,7 @@ class YFU_BridgeBuilder_Dialog {
     movingEnable = 0;
     enableSimulation = 1;
     onLoad = "uiNamespace setVariable ['YFU_BridgeBuilder_Display', _this select 0]; [] spawn { uiSleep 0.01; call YFU_bridge_onDialogLoad; };";
-    onUnload = "uiNamespace setVariable ['YFU_BridgeBuilder_Display', displayNull];";
+    onUnload = "call YFU_bridge_onDialogUnload; uiNamespace setVariable ['YFU_BridgeBuilder_Display', displayNull];";
     class controlsBackground {};
     class controls {
         #include "ui\tablet_base.hpp"

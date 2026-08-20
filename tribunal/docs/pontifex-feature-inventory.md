@@ -10,6 +10,10 @@ Reviews selected from this inventory follow Tribunal's
 updates the affected inventory status; the inventory itself does not invent or
 establish product semantics.
 
+Author decisions that resolve review questions are recorded in
+[`product-decisions-2026-08-20.md`](product-decisions-2026-08-20.md) and must be
+read with the applicable feature review.
+
 ## Reading the inventory
 
 Implementation state:
@@ -520,16 +524,21 @@ nothing - see the review.
   its out-of-range, busy, and eligible states; the permanent feature proof then
   invokes that registered statement without per-feature VNC automation.
 * **Planning UI** selects layout, ramp, orientation, clipping, counts, pitch,
-  offsets, and auto calculation. **PARTIALLY COVERED.** Flat lengthwise manual
-  planning is covered; wide/ramp/pitch/auto/clipping remain unreviewed.
+  offsets, and auto calculation. **ACCEPTED / COVERED.** The permanent scenario
+  proves the narrow lengthwise and vehicle-capable wide layouts, ramps per end,
+  world-level versus source-tilt orientation, terrain/building-only automatic
+  support, intentional end clipping, an immutable server-validated plan, and a
+  50 m bound. A server planner lease and exact grant receipt are covered for
+  client-a; genuine second-player named contention remains deferred.
 * **Preview** computes/caches queues and renders validity colors. **Implemented;
-  PARTIALLY COVERED.** Calibration captured the real rendered four-segment flat
-  preview; permanent regression validates its exact planning state through
-  data. Other modes remain unreviewed.
+  COVERED through data for the accepted layouts.** Calibration captured the
+  real rendered flat preview; permanent regression validates flat, wide, ramp,
+  Match Box and Keep Level plan state without making pixels the oracle.
 * **Build/removal** incrementally creates deduplicated segments with configured
-  delay and removes chains. **COVERED for the reviewed flat contract.** Server
-  authority, exact geometry/locality, physical traversal, box-scoped removal,
-  bounded results and cleanup are proven; interruption/resources are not.
+  delay and removes chains. **ACCEPTED / COVERED.** Server authority, exact
+  geometry/locality, pedestrian flat/ramp traversal, wide vehicle traversal,
+  box-scoped removal, bounded results and cleanup are proven;
+  interruption/destruction and resources are not.
 * **Direct chain-extension actions** coexist with plan UI. **Implemented-looking;
   DEFERRED.** Helpers exist but action attachment is empty and no supported
   intent/authority contract was established.

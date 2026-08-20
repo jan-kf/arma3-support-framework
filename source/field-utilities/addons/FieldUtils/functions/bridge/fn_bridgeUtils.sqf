@@ -131,9 +131,13 @@ YFU_bridge_getHorizontalDir = {
 };
 
 YFU_bridge_getBuildOrientation = {
-	params ["_sourceObject", ["_widthwise", false]];
+	params ["_sourceObject", ["_widthwise", false], ["_planRequest", []]];
 
-	private _matchBoxAngle = _sourceObject getVariable ["YFU_bridge_match_box_angle", true];
+	private _matchBoxAngle = if (_planRequest isEqualTo []) then {
+		_sourceObject getVariable ["YFU_bridge_match_box_angle", true]
+	} else {
+		_planRequest # 2
+	};
 	private _buildDir = if (_matchBoxAngle) then {
 		vectorNormalized (vectorDirVisual _sourceObject)
 	} else {
@@ -144,7 +148,11 @@ YFU_bridge_getBuildOrientation = {
 	} else {
 		[0, 0, 1]
 	};
-	private _pitchOffset = [_sourceObject] call YFU_bridge_getPitchOffsetDegrees;
+	private _pitchOffset = if (_planRequest isEqualTo []) then {
+		[_sourceObject] call YFU_bridge_getPitchOffsetDegrees
+	} else {
+		_planRequest # 6
+	};
 	if ((abs _pitchOffset) > 0.001) then {
 		private _sin = sin _pitchOffset;
 		private _cos = cos _pitchOffset;
@@ -164,7 +172,7 @@ YFU_bridge_setBuilderMode = {
 
 	if (isNull _boxObject) exitWith {};
 
-	_boxObject setVariable ["YFU_bridge_match_box_angle", _matchBoxAngle, true];
+	_boxObject setVariable ["YFU_bridge_match_box_angle", _matchBoxAngle, false];
 	[_boxObject] call YFU_bridge_invalidatePlanPreviewCache;
 	systemChat format [
 		"Bridge builder mode: %1",
@@ -177,7 +185,7 @@ YFU_bridge_setPlanMode = {
 
 	if (isNull _boxObject) exitWith {};
 
-	_boxObject setVariable ["YFU_bridge_plan_widthwise", _widthwise, true];
+	_boxObject setVariable ["YFU_bridge_plan_widthwise", _widthwise, false];
 	[_boxObject] call YFU_bridge_invalidatePlanPreviewCache;
 	systemChat format [
 		"Bridge plan mode: %1",
@@ -190,7 +198,7 @@ YFU_bridge_setRampMode = {
 
 	if (isNull _boxObject) exitWith {};
 
-	_boxObject setVariable ["YFU_bridge_ramp_mode", _enabled, true];
+	_boxObject setVariable ["YFU_bridge_ramp_mode", _enabled, false];
 	[_boxObject] call YFU_bridge_invalidatePlanPreviewCache;
 	systemChat format ["Bridge ramp mode: %1", if (_enabled) then {"On"} else {"Off"}];
 };
@@ -200,17 +208,19 @@ YFU_bridge_setAllowClipping = {
 
 	if (isNull _boxObject) exitWith {};
 
-	_boxObject setVariable ["YFU_bridge_allow_clipping", _enabled, true];
+	_boxObject setVariable ["YFU_bridge_allow_clipping", _enabled, false];
 	systemChat format ["Bridge allow clipping: %1", if (_enabled) then {"On"} else {"Off"}];
 };
 
 YFU_bridge_getVerticalOffset = {
-	params ["_boxObject"];
+	params ["_boxObject", ["_planRequest", []]];
 
-	if (_boxObject getVariable ["YFU_bridge_ramp_mode", false]) exitWith {
+	private _rampMode = if (_planRequest isEqualTo []) then {_boxObject getVariable ["YFU_bridge_ramp_mode", false]} else {_planRequest # 3};
+	if (_rampMode) exitWith {
 		-1
 	};
 
+	if (_planRequest isNotEqualTo []) exitWith {-0.2};
 	_boxObject getVariable ["YFU_bridge_vertical_offset", -0.2]
 };
 
@@ -221,6 +231,39 @@ YFU_bridge_getPerPlankBuildDelay = {
 YFU_bridge_newRequestId = {
 	params [["_action", "operation"]];
 	format ["bridge-%1-%2-%3-%4", _action, clientOwner, round (diag_tickTime * 1000), floor (random 1000000)]
+};
+
+YFU_bridge_capturePlanRequest = {
+	params ["_boxObject"];
+	[
+		"bridge-plan-v1",
+		_boxObject getVariable ["YFU_bridge_plan_widthwise", false],
+		_boxObject getVariable ["YFU_bridge_match_box_angle", true],
+		_boxObject getVariable ["YFU_bridge_ramp_mode", false],
+		[_boxObject] call YFU_bridge_getRampPlankCount,
+		[_boxObject] call YFU_bridge_getManualPlankCount,
+		[_boxObject] call YFU_bridge_getPitchOffsetDegrees
+	]
+};
+
+YFU_bridge_validatePlanRequest = {
+	params ["_planRequest"];
+	if !(typeName _planRequest isEqualTo "ARRAY") exitWith {[false, "invalid_plan_type", []]};
+	if ((count _planRequest) isNotEqualTo 7) exitWith {[false, "invalid_plan_shape", []]};
+	if ((_planRequest # 0) isNotEqualTo "bridge-plan-v1") exitWith {[false, "unsupported_plan_version", []]};
+	if !((typeName (_planRequest # 1)) isEqualTo "BOOL") exitWith {[false, "invalid_plan_layout", []]};
+	if !((typeName (_planRequest # 2)) isEqualTo "BOOL") exitWith {[false, "invalid_plan_orientation", []]};
+	if !((typeName (_planRequest # 3)) isEqualTo "BOOL") exitWith {[false, "invalid_plan_ramp", []]};
+	if !((typeName (_planRequest # 4)) isEqualTo "SCALAR") exitWith {[false, "invalid_plan_ramp_count", []]};
+	if !((typeName (_planRequest # 5)) isEqualTo "SCALAR") exitWith {[false, "invalid_plan_segment_count", []]};
+	if !((typeName (_planRequest # 6)) isEqualTo "SCALAR") exitWith {[false, "invalid_plan_pitch", []]};
+	private _rampCount = round (_planRequest # 4);
+	private _manualCount = round (_planRequest # 5);
+	private _pitch = _planRequest # 6;
+	if (_rampCount < 1 || {_rampCount > 20}) exitWith {[false, "plan_ramp_count_out_of_bounds", []]};
+	if (_manualCount < 0 || {_manualCount > 500}) exitWith {[false, "plan_segment_count_out_of_bounds", []]};
+	if (_pitch < -15 || {_pitch > 15}) exitWith {[false, "plan_pitch_out_of_bounds", []]};
+	[true, "accepted", ["bridge-plan-v1", _planRequest # 1, _planRequest # 2, _planRequest # 3, _rampCount, _manualCount, _pitch]]
 };
 
 YFU_bridge_validateServerRequest = {
@@ -274,31 +317,31 @@ YFU_bridge_ensureBoxDefaults = {
 	if (isNull _boxObject) exitWith {};
 
 	if (isNil {_boxObject getVariable "YFU_bridge_match_box_angle"}) then {
-		_boxObject setVariable ["YFU_bridge_match_box_angle", true, true];
+		_boxObject setVariable ["YFU_bridge_match_box_angle", true, false];
 	};
 	if (isNil {_boxObject getVariable "YFU_bridge_plan_widthwise"}) then {
-		_boxObject setVariable ["YFU_bridge_plan_widthwise", false, true];
+		_boxObject setVariable ["YFU_bridge_plan_widthwise", false, false];
 	};
 	if (isNil {_boxObject getVariable "YFU_bridge_plan_max_distance"}) then {
-		_boxObject setVariable ["YFU_bridge_plan_max_distance", 100, true];
+		_boxObject setVariable ["YFU_bridge_plan_max_distance", 50, false];
 	};
 	if (isNil {_boxObject getVariable "YFU_bridge_chain_search_radius"}) then {
 		_boxObject setVariable ["YFU_bridge_chain_search_radius", 100, true];
 	};
 	if (isNil {_boxObject getVariable "YFU_bridge_ramp_mode"}) then {
-		_boxObject setVariable ["YFU_bridge_ramp_mode", false, true];
+		_boxObject setVariable ["YFU_bridge_ramp_mode", false, false];
 	};
 	if (isNil {_boxObject getVariable "YFU_bridge_ramp_plank_count"}) then {
-		_boxObject setVariable ["YFU_bridge_ramp_plank_count", 2, true];
+		_boxObject setVariable ["YFU_bridge_ramp_plank_count", 2, false];
 	};
 	if (isNil {_boxObject getVariable "YFU_bridge_manual_plank_count"}) then {
-		_boxObject setVariable ["YFU_bridge_manual_plank_count", 0, true];
+		_boxObject setVariable ["YFU_bridge_manual_plank_count", 0, false];
 	};
 	if (isNil {_boxObject getVariable "YFU_bridge_pitch_offset_degrees"}) then {
-		_boxObject setVariable ["YFU_bridge_pitch_offset_degrees", 0, true];
+		_boxObject setVariable ["YFU_bridge_pitch_offset_degrees", 0, false];
 	};
 	if (isNil {_boxObject getVariable "YFU_bridge_allow_clipping"}) then {
-		_boxObject setVariable ["YFU_bridge_allow_clipping", true, true];
+		_boxObject setVariable ["YFU_bridge_allow_clipping", true, false];
 	};
 };
 
@@ -319,6 +362,56 @@ YFU_bridge_dialogGetBox = {
 
 YFU_bridge_dialogClose = {
 	closeDialog 0;
+};
+
+YFU_bridge_releasePlanner = {
+	params ["_boxObject", ["_requester", objNull], ["_leaseId", ""]];
+	if (!isServer) exitWith {
+		[_boxObject, player, _leaseId] remoteExecCall ["YFU_bridge_releasePlanner", 2];
+	};
+	private _owner = remoteExecutedOwner;
+	private _lease = _boxObject getVariable ["YFU_bridge_planner_lease", []];
+	if (
+		(count _lease) isEqualTo 5
+		&& {(_lease # 0) isEqualTo netId _requester}
+		&& {(_lease # 1) isEqualTo _owner}
+		&& {(_lease # 3) isEqualTo _leaseId}
+	) then {
+		_boxObject setVariable ["YFU_bridge_planner_lease", [], true];
+	};
+};
+
+YFU_bridge_renewPlanner = {
+	params ["_boxObject", ["_requester", objNull], ["_leaseId", ""]];
+	if (!isServer) exitWith {
+		[_boxObject, player, _leaseId] remoteExecCall ["YFU_bridge_renewPlanner", 2];
+	};
+	private _owner = remoteExecutedOwner;
+	private _lease = _boxObject getVariable ["YFU_bridge_planner_lease", []];
+	if (
+		(count _lease) isEqualTo 5
+		&& {(_lease # 0) isEqualTo netId _requester}
+		&& {(_lease # 1) isEqualTo _owner}
+		&& {(_lease # 3) isEqualTo _leaseId}
+	) then {
+		_lease set [4, serverTime + 15];
+		_boxObject setVariable ["YFU_bridge_planner_lease", _lease, true];
+	};
+};
+
+YFU_bridge_onDialogUnload = {
+	private _boxObject = call YFU_bridge_dialogGetBox;
+	private _leaseId = uiNamespace getVariable ["YFU_bridge_planner_lease_id", ""];
+	if (
+		!isNull _boxObject
+		&& {_leaseId isNotEqualTo ""}
+		&& {!(uiNamespace getVariable ["YFU_bridge_planner_submitting", false])}
+	) then {
+		[_boxObject, player, _leaseId] remoteExecCall ["YFU_bridge_releasePlanner", 2];
+	};
+	if !(uiNamespace getVariable ["YFU_bridge_planner_submitting", false]) then {
+		uiNamespace setVariable ["YFU_bridge_planner_lease_id", ""];
+	};
 };
 
 YFU_bridge_dialogRefresh = {
@@ -407,7 +500,7 @@ YFU_bridge_dialogRampCountChanged = {
 		_value = 2;
 	};
 	_value = ((round _value) max 1) min 20;
-	_boxObject setVariable ["YFU_bridge_ramp_plank_count", _value, true];
+	_boxObject setVariable ["YFU_bridge_ramp_plank_count", _value, false];
 	[_boxObject] call YFU_bridge_invalidatePlanPreviewCache;
 	_ctrl ctrlSetText str _value;
 	call YFU_bridge_dialogRefresh;
@@ -428,7 +521,7 @@ YFU_bridge_dialogPlankCountChanged = {
 		_value = 0;
 	};
 	_value = ((round _value) max 0) min 500;
-	_boxObject setVariable ["YFU_bridge_manual_plank_count", _value, true];
+	_boxObject setVariable ["YFU_bridge_manual_plank_count", _value, false];
 	[_boxObject] call YFU_bridge_invalidatePlanPreviewCache;
 	_ctrl ctrlSetText str _value;
 	call YFU_bridge_dialogRefresh;
@@ -446,7 +539,7 @@ YFU_bridge_dialogPitchOffsetChanged = {
 	private _ctrl = _display displayCtrl YFU_IDC_BRIDGE_PITCH_OFFSET;
 	private _value = parseNumber (ctrlText _ctrl);
 	_value = (_value max -15) min 15;
-	_boxObject setVariable ["YFU_bridge_pitch_offset_degrees", _value, true];
+	_boxObject setVariable ["YFU_bridge_pitch_offset_degrees", _value, false];
 	[_boxObject] call YFU_bridge_invalidatePlanPreviewCache;
 	_ctrl ctrlSetText str _value;
 	call YFU_bridge_dialogRefresh;
@@ -464,7 +557,7 @@ YFU_bridge_dialogAutoCalculate = {
 	private _segmentCount = _plan select 11;
 	private _hasEndHit = _plan select 12;
 	private _queue = [_boxObject, _segmentCount, "Land_Plank_01_4m_F", _widthwise, _hasEndHit] call YFU_bridge_buildQueueFromObject;
-	_boxObject setVariable ["YFU_bridge_manual_plank_count", count _queue, true];
+	_boxObject setVariable ["YFU_bridge_manual_plank_count", count _queue, false];
 	[_boxObject] call YFU_bridge_invalidatePlanPreviewCache;
 	call YFU_bridge_dialogRefresh;
 };
@@ -527,8 +620,11 @@ YFU_bridge_dialogSubmit = {
 	call YFU_bridge_dialogRampCountChanged;
 	call YFU_bridge_dialogPlankCountChanged;
 	call YFU_bridge_dialogPitchOffsetChanged;
+	uiNamespace setVariable ["YFU_bridge_planner_submitting", true];
 	closeDialog 0;
 	[_boxObject] call YFU_bridge_startBuildFromPlan;
+	uiNamespace setVariable ["YFU_bridge_planner_submitting", false];
+	uiNamespace setVariable ["YFU_bridge_planner_lease_id", ""];
 };
 
 YFU_bridge_dialogRemove = {
@@ -543,28 +639,66 @@ YFU_bridge_onDialogLoad = {
 	call YFU_bridge_dialogRefresh;
 };
 
-YFU_bridge_openBuilderDialog = {
-	params ["_boxObject"];
+YFU_bridge_openBuilderDialogLocal = {
+	params ["_boxObject", "_leaseId"];
+	[_boxObject, _leaseId] spawn {
+		params ["_boxObject", "_leaseId"];
+		uiNamespace setVariable ["YFU_bridge_planner_lease_id", _leaseId];
+		uiNamespace setVariable ["YFU_bridge_planner_submitting", false];
+		uiNamespace setVariable ["YFU_bridge_builder_box", _boxObject];
 
-	if (isNull _boxObject) exitWith {};
-	[_boxObject] call YFU_bridge_ensureBoxDefaults;
-
-	uiNamespace setVariable ["YFU_bridge_builder_box", _boxObject];
-
-	private _display = call YFU_bridge_getDialogDisplay;
-	if (isNull _display) then {
-		private _tabletDisplay = uiNamespace getVariable ["YSF_Tablet_Display", displayNull];
-		if (!isNull _tabletDisplay) then {
-			_display = _tabletDisplay createDisplay "YFU_BridgeBuilder_Dialog";
-			if (isNull _display) then {
+		private _display = call YFU_bridge_getDialogDisplay;
+		if (isNull _display) then {
+			private _tabletDisplay = uiNamespace getVariable ["YSF_Tablet_Display", displayNull];
+			if (!isNull _tabletDisplay) then {
+				_display = _tabletDisplay createDisplay "YFU_BridgeBuilder_Dialog";
+				if (isNull _display) then {createDialog "YFU_BridgeBuilder_Dialog";};
+			} else {
 				createDialog "YFU_BridgeBuilder_Dialog";
 			};
 		} else {
-			createDialog "YFU_BridgeBuilder_Dialog";
+			call YFU_bridge_dialogRefresh;
 		};
-	} else {
-		call YFU_bridge_dialogRefresh;
+
+		while {
+			uiSleep 5;
+			!isNull (call YFU_bridge_getDialogDisplay)
+			&& {(call YFU_bridge_dialogGetBox) isEqualTo _boxObject}
+		} do {
+			private _leaseId = uiNamespace getVariable ["YFU_bridge_planner_lease_id", ""];
+			if (_leaseId isNotEqualTo "") then {
+				[_boxObject, player, _leaseId] remoteExecCall ["YFU_bridge_renewPlanner", 2];
+			};
+		};
 	};
+};
+
+YFU_bridge_openBuilderDialog = {
+	params ["_boxObject", ["_requester", objNull], ["_leaseId", ""]];
+
+	if (isNull _boxObject) exitWith {};
+	[_boxObject] call YFU_bridge_ensureBoxDefaults;
+	if (!isServer) exitWith {
+		private _leaseId = ["planner"] call YFU_bridge_newRequestId;
+		[_boxObject, player, _leaseId] remoteExecCall ["YFU_bridge_openBuilderDialog", 2];
+	};
+	private _owner = remoteExecutedOwner;
+	private _validation = [_boxObject, _requester, _owner] call YFU_bridge_validateServerRequest;
+	if !(_validation # 0) exitWith {
+		_boxObject setVariable ["YFU_bridge_planner_last_result", [_leaseId, "rejected", _validation # 1, _owner, serverTime], true];
+	};
+	private _lease = _boxObject getVariable ["YFU_bridge_planner_lease", []];
+	private _active = (count _lease) isEqualTo 5 && {(_lease # 4) > serverTime};
+	if (_active && {(_lease # 1) isNotEqualTo _owner || {(_lease # 0) isNotEqualTo netId _requester}}) exitWith {
+		_boxObject setVariable ["YFU_bridge_planner_last_result", [_leaseId, "rejected", "planner_in_use", _owner, serverTime], true];
+		format ["Bridge planner is currently in use by %1.", _lease # 2] remoteExecCall ["hint", _owner];
+	};
+	_lease = [netId _requester, _owner, name _requester, _leaseId, serverTime + 15];
+	_boxObject setVariable ["YFU_bridge_planner_lease", _lease, true];
+	_boxObject setVariable ["YFU_bridge_planner_last_result", [_leaseId, "granted", "accepted", _owner, serverTime], true];
+	// The remote handler explicitly spawns the UI work because createDialog is
+	// not reliable when executed directly in a remote-call context.
+	[_boxObject, _leaseId] remoteExecCall ["YFU_bridge_openBuilderDialogLocal", _owner];
 };
 
 YFU_bridge_getPreviewColors = {
@@ -611,11 +745,11 @@ YFU_bridge_getPreviewSegmentColors = {
 };
 
 YFU_bridge_getEffectivePlanCount = {
-	params ["_boxObject", "_baseCount", "_hasExistingChain", ["_finalizeEnd", false]];
+	params ["_boxObject", "_baseCount", "_hasExistingChain", ["_finalizeEnd", false], ["_planRequest", []]];
 
 	private _effectiveCount = _baseCount max 0;
-	private _rampMode = _boxObject getVariable ["YFU_bridge_ramp_mode", false];
-	private _rampSegmentCount = [_boxObject] call YFU_bridge_getRampPlankCount;
+	private _rampMode = if (_planRequest isEqualTo []) then {_boxObject getVariable ["YFU_bridge_ramp_mode", false]} else {_planRequest # 3};
+	private _rampSegmentCount = if (_planRequest isEqualTo []) then {[_boxObject] call YFU_bridge_getRampPlankCount} else {_planRequest # 4};
 
 	if (_rampMode) then {
 		if (!_hasExistingChain) then {
@@ -634,11 +768,13 @@ YFU_bridge_getEffectivePlanCount = {
 };
 
 YFU_bridge_computePlan = {
-	params ["_sourceObject", ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_maxDistance", 500]];
+	params ["_sourceObject", ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_maxDistance", 500], ["_planRequest", []]];
 
 	if (isNull _sourceObject) exitWith {[]};
+	if (_planRequest isNotEqualTo []) then {_widthwise = _planRequest # 1;};
+	_maxDistance = (_maxDistance max 0) min 50;
 
-	private _modeData = [_sourceObject, _widthwise, _className] call YFU_bridge_getBuildModeData;
+	private _modeData = [_sourceObject, _widthwise, _className, _planRequest] call YFU_bridge_getBuildModeData;
 	private _buildDir = _modeData select 0;
 	private _segmentDir = _modeData select 1;
 	private _up = _modeData select 2;
@@ -648,7 +784,7 @@ YFU_bridge_computePlan = {
 	private _bridgeWidth = _bridgeMetrics select 1;
 	private _sourcePos = getPosASL _sourceObject;
 	private _sourceForwardSize = [_sourceObject] call YFU_bridge_getSourceForwardSize;
-	private _chainEnd = [_sourceObject, _className, _widthwise, _maxDistance + 30] call YFU_bridge_findNearbyChainEnd;
+	private _chainEnd = [_sourceObject, _className, _widthwise, _maxDistance + 30, _planRequest] call YFU_bridge_findNearbyChainEnd;
 	private _startCenter = if (isNull _chainEnd) then {
 		_sourcePos vectorAdd (_buildDir vectorMultiply ((_sourceForwardSize * 0.5) + (_step * 0.5)))
 	} else {
@@ -661,6 +797,13 @@ YFU_bridge_computePlan = {
 	};
 	private _laserEnd = _laserStart vectorAdd (_buildDir vectorMultiply _maxDistance);
 	private _hits = lineIntersectsSurfaces [_laserStart, _laserEnd, _sourceObject, objNull, true, 16, "FIRE", "GEOM"];
+	_hits = _hits select {
+		private _hitObject = _x # 2;
+		private _parentObject = _x # 3;
+		(isNull _hitObject && {isNull _parentObject})
+		|| {!isNull _hitObject && {_hitObject isKindOf "House"}}
+		|| {!isNull _parentObject && {_parentObject isKindOf "House"}}
+	};
 	private _planEnd = _laserEnd;
 	private _hasEndHit = false;
 	private _distance = _startCenter distance (_laserStart vectorAdd (_buildDir vectorMultiply _maxDistance));
@@ -672,7 +815,7 @@ YFU_bridge_computePlan = {
 	};
 
 	private _baseSegmentCount = floor ((_distance + (_step * 0.5)) / _step);
-	private _effectiveCount = [_sourceObject, _baseSegmentCount, !(isNull _chainEnd), _hasEndHit] call YFU_bridge_getEffectivePlanCount;
+	private _effectiveCount = [_sourceObject, _baseSegmentCount, !(isNull _chainEnd), _hasEndHit, _planRequest] call YFU_bridge_getEffectivePlanCount;
 	private _boundAxis = vectorNormalized (_up vectorCrossProduct _buildDir);
 	private _boundSpacing = if (_widthwise) then { _bridgeLength } else { _bridgeWidth };
 
@@ -786,7 +929,7 @@ YFU_bridge_getRemovalQueue = {
 
 	if (isNull _boxObject) exitWith {[]};
 
-	private _widthwise = _boxObject getVariable ["YFU_bridge_plan_widthwise", false];
+	private _widthwise = _boxObject getVariable ["YFU_bridge_box_mode_widthwise", false];
 	private _modeData = [_boxObject, _widthwise, _className] call YFU_bridge_getBuildModeData;
 	private _buildDir = _modeData select 0;
 	private _segmentDir = _modeData select 1;
@@ -916,13 +1059,15 @@ YFU_bridge_getCachedPlannedQueue = {
 };
 
 YFU_bridge_startBuildFromPlan = {
-	params ["_boxObject", ["_requester", objNull], ["_requestId", ""]];
+	params ["_boxObject", ["_requester", objNull], ["_requestId", ""], ["_planRequest", []], ["_leaseId", ""]];
 
 	if (!isServer) exitWith {
 		if (!isNull (missionNamespace getVariable ["YFU_bridge_active_plan_box", objNull])) then {call YFU_bridge_endPlanPreview;};
 		if (_requestId isEqualTo "") then {_requestId = ["build"] call YFU_bridge_newRequestId;};
+		_planRequest = [_boxObject] call YFU_bridge_capturePlanRequest;
+		_leaseId = uiNamespace getVariable ["YFU_bridge_planner_lease_id", ""];
 		missionNamespace setVariable ["YFU_bridge_last_request", [_requestId, "build", netId _boxObject]];
-		[_boxObject, player, _requestId] remoteExecCall ["YFU_bridge_startBuildFromPlan", 2];
+		[_boxObject, player, _requestId, _planRequest, _leaseId] remoteExecCall ["YFU_bridge_startBuildFromPlan", 2];
 		true
 	};
 
@@ -933,14 +1078,31 @@ YFU_bridge_startBuildFromPlan = {
 		[_boxObject, _requestId, "build", "failed", _validation # 1, [], _requestOwner] call YFU_bridge_publishResult;
 		false
 	};
+	private _planValidation = [_planRequest] call YFU_bridge_validatePlanRequest;
+	if !(_planValidation # 0) exitWith {
+		[_boxObject, _requestId, "build", "failed", _planValidation # 1, [], _requestOwner] call YFU_bridge_publishResult;
+		false
+	};
+	_planRequest = +(_planValidation # 2);
+	private _lease = _boxObject getVariable ["YFU_bridge_planner_lease", []];
+	if (
+		(count _lease) isNotEqualTo 5
+		|| {(_lease # 0) isNotEqualTo netId _requester}
+		|| {(_lease # 1) isNotEqualTo _requestOwner}
+		|| {(_lease # 3) isNotEqualTo _leaseId}
+		|| {(_lease # 4) <= serverTime}
+	) exitWith {
+		[_boxObject, _requestId, "build", "failed", "planner_lease_invalid", [], _requestOwner] call YFU_bridge_publishResult;
+		false
+	};
 	if (_boxObject getVariable ["YFU_bridge_building", false] || {_boxObject getVariable ["YFU_bridge_removing", false]}) exitWith {
 		[_boxObject, _requestId, "build", "failed", "operation_in_progress", [], _requestOwner] call YFU_bridge_publishResult;
 		false
 	};
 
-	private _widthwise = _boxObject getVariable ["YFU_bridge_plan_widthwise", false];
-	private _planRange = [_boxObject] call YFU_bridge_getPlanRange;
-	private _plan = [_boxObject, "Land_Plank_01_4m_F", _widthwise, _planRange] call YFU_bridge_computePlan;
+	private _widthwise = _planRequest # 1;
+	private _planRange = 50;
+	private _plan = [_boxObject, "Land_Plank_01_4m_F", _widthwise, _planRange, _planRequest] call YFU_bridge_computePlan;
 	if (_plan isEqualTo []) exitWith {
 		[_boxObject, _requestId, "build", "failed", "invalid_plan", [], _requestOwner] call YFU_bridge_publishResult;
 		false
@@ -948,20 +1110,28 @@ YFU_bridge_startBuildFromPlan = {
 
 	private _segmentCount = _plan select 11;
 	private _hasEndHit = _plan select 12;
-	private _manualCount = [_boxObject] call YFU_bridge_getManualPlankCount;
+	private _manualCount = _planRequest # 5;
 	if (_manualCount > 0) then {_segmentCount = _manualCount;};
 	if (_segmentCount <= 0) exitWith {
 		[_boxObject, _requestId, "build", "failed", "empty_plan", [], _requestOwner] call YFU_bridge_publishResult;
 		false
 	};
+	private _modeData = [_boxObject, _widthwise, "Land_Plank_01_4m_F", _planRequest] call YFU_bridge_getBuildModeData;
+	if ((_segmentCount * (_modeData # 3)) > 50.01) exitWith {
+		[_boxObject, _requestId, "build", "failed", "plan_span_out_of_bounds", [], _requestOwner] call YFU_bridge_publishResult;
+		false
+	};
 
-	private _queue = [_boxObject, _segmentCount, "Land_Plank_01_4m_F", _widthwise, _hasEndHit] call YFU_bridge_buildQueueFromObject;
+	private _queue = [_boxObject, _segmentCount, "Land_Plank_01_4m_F", _widthwise, _hasEndHit, _planRequest] call YFU_bridge_buildQueueFromObject;
 	if (_queue isEqualTo []) exitWith {
 		[_boxObject, _requestId, "build", "failed", "empty_queue", [], _requestOwner] call YFU_bridge_publishResult;
 		false
 	};
+	_boxObject setVariable ["YFU_bridge_planner_lease", [], true];
 	private _buildDelay = call YFU_bridge_getPerPlankBuildDelay;
-	_boxObject setVariable ["YFU_bridge_chain_search_radius", (_planRange + 100) max 600, true];
+	_boxObject setVariable ["YFU_bridge_chain_search_radius", (_planRange + 30) max 80, true];
+	_boxObject setVariable ["YFU_bridge_box_mode_widthwise", _widthwise, true];
+	_boxObject setVariable ["YFU_bridge_last_accepted_plan", +_planRequest, true];
 	_boxObject setVariable ["YFU_bridge_building", true, true];
 	_boxObject setVariable ["YFU_bridge_operation_id", _requestId, true];
 	[_boxObject, _requestId, "build", "accepted", "accepted", [], _requestOwner] call YFU_bridge_publishResult;
@@ -1207,25 +1377,26 @@ YFU_bridge_getRampOrientation = {
 };
 
 YFU_bridge_buildQueueFromObject = {
-	params ["_sourceObject", ["_segmentCount", 1], ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_finalizeEnd", false]];
+	params ["_sourceObject", ["_segmentCount", 1], ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_finalizeEnd", false], ["_planRequest", []]];
 
 	if (isNull _sourceObject) exitWith {[]};
+	if (_planRequest isNotEqualTo []) then {_widthwise = _planRequest # 1;};
 
-	private _modeData = [_sourceObject, _widthwise, _className] call YFU_bridge_getBuildModeData;
+	private _modeData = [_sourceObject, _widthwise, _className, _planRequest] call YFU_bridge_getBuildModeData;
 	private _buildDir = _modeData select 0;
 	private _segmentDir = _modeData select 1;
 	private _up = _modeData select 2;
 	private _step = _modeData select 3;
 	private _metrics = [_className] call YFU_bridge_getClassMetrics;
 	private _dedupeRadius = (((_metrics select 0) min (_metrics select 1)) * 0.35) max 0.5;
-	private _rampMode = _sourceObject getVariable ["YFU_bridge_ramp_mode", false];
+	private _rampMode = if (_planRequest isEqualTo []) then {_sourceObject getVariable ["YFU_bridge_ramp_mode", false]} else {_planRequest # 3};
 	private _rampDegrees = 30;
-	private _rampSegmentCount = [_sourceObject] call YFU_bridge_getRampPlankCount;
+	private _rampSegmentCount = if (_planRequest isEqualTo []) then {[_sourceObject] call YFU_bridge_getRampPlankCount} else {_planRequest # 4};
 	private _rampRise = _step * (sin _rampDegrees);
 	private _rampAdvance = _step * (cos _rampDegrees);
-	private _verticalOffset = [_sourceObject] call YFU_bridge_getVerticalOffset;
-	private _searchRadius = _sourceObject getVariable ["YFU_bridge_chain_search_radius", 600];
-	private _chainEnd = [_sourceObject, _className, _widthwise, _searchRadius] call YFU_bridge_findNearbyChainEnd;
+	private _verticalOffset = [_sourceObject, _planRequest] call YFU_bridge_getVerticalOffset;
+	private _searchRadius = if (_planRequest isEqualTo []) then {_sourceObject getVariable ["YFU_bridge_chain_search_radius", 600]} else {80};
+	private _chainEnd = [_sourceObject, _className, _widthwise, _searchRadius, _planRequest] call YFU_bridge_findNearbyChainEnd;
 	private _hasExistingChain = !(isNull _chainEnd);
 	private _startClipDistance = if (!_hasExistingChain) then {_step} else {0};
 	private _endClipCount = if (_finalizeEnd) then {1} else {0};
@@ -1279,12 +1450,13 @@ YFU_bridge_buildQueueFromObject = {
 };
 
 YFU_bridge_getBuildModeData = {
-	params ["_sourceObject", ["_widthwise", false], ["_className", "Land_Plank_01_4m_F"]];
+	params ["_sourceObject", ["_widthwise", false], ["_className", "Land_Plank_01_4m_F"], ["_planRequest", []]];
+	if (_planRequest isNotEqualTo []) then {_widthwise = _planRequest # 1;};
 
 	private _bridgeMetrics = [_className] call YFU_bridge_getClassMetrics;
 	private _bridgeLength = _bridgeMetrics select 0;
 	private _bridgeWidth = _bridgeMetrics select 1;
-	private _orientation = [_sourceObject, _widthwise] call YFU_bridge_getBuildOrientation;
+	private _orientation = [_sourceObject, _widthwise, _planRequest] call YFU_bridge_getBuildOrientation;
 	private _buildDir = _orientation select 0;
 	private _segmentDir = _orientation select 1;
 	private _up = _orientation select 2;
@@ -1387,11 +1559,12 @@ YFU_bridge_extendStraight = {
 };
 
 YFU_bridge_findNearbyChainEnd = {
-	params ["_sourceObject", ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_radius", 40]];
+	params ["_sourceObject", ["_className", "Land_Plank_01_4m_F"], ["_widthwise", false], ["_radius", 40], ["_planRequest", []]];
 
 	if (isNull _sourceObject) exitWith {objNull};
+	if (_planRequest isNotEqualTo []) then {_widthwise = _planRequest # 1;};
 
-	private _modeData = [_sourceObject, _widthwise, _className] call YFU_bridge_getBuildModeData;
+	private _modeData = [_sourceObject, _widthwise, _className, _planRequest] call YFU_bridge_getBuildModeData;
 	private _buildDir = _modeData select 0;
 	private _segmentDir = _modeData select 1;
 	private _step = _modeData select 3;

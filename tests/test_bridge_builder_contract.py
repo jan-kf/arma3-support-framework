@@ -51,11 +51,74 @@ class BridgeBuilderContractTests(unittest.TestCase):
         self.assertIn('["YFU_Bridge_Box", 0, [], _openUiAction]', self.source)
         self.assertIn("\n\t\t8\n\t] call ace_interact_menu_fnc_createAction", self.source)
 
+    def test_build_uses_a_versioned_server_validated_plan_snapshot(self) -> None:
+        build = self.source.index("YFU_bridge_startBuildFromPlan =")
+        remove = self.source.index("YFU_bridge_startRemoveFromBox =")
+        build_source = self.source[build:remove]
+        self.assertIn("YFU_bridge_capturePlanRequest", self.source)
+        self.assertIn('"bridge-plan-v1"', self.source)
+        self.assertIn("YFU_bridge_validatePlanRequest", build_source)
+        self.assertIn(
+            "[_boxObject, player, _requestId, _planRequest, _leaseId]",
+            build_source,
+        )
+        self.assertIn("private _planRange = 50;", build_source)
+        self.assertIn('"plan_span_out_of_bounds"', build_source)
+        self.assertNotIn(
+            '_boxObject getVariable ["YFU_bridge_plan_widthwise"',
+            build_source,
+        )
+        self.assertNotIn(
+            "call YFU_bridge_getManualPlankCount",
+            build_source,
+        )
+        self.assertIn('"planner_lease_invalid"', build_source)
+        self.assertIn("YFU_bridge_planner_lease", self.source)
+        self.assertIn("YFU_bridge_renewPlanner", self.source)
+        self.assertIn("YFU_bridge_releasePlanner", self.source)
+        self.assertIn("Bridge planner is currently in use by %1.", self.source)
+        self.assertIn(
+            'remoteExecCall ["YFU_bridge_openBuilderDialogLocal", _owner]',
+            self.source,
+        )
+        local_open = self.source.index("YFU_bridge_openBuilderDialogLocal =")
+        server_open = self.source.index("YFU_bridge_openBuilderDialog =")
+        self.assertIn("spawn", self.source[local_open:server_open])
+        self.assertIn("YFU_bridge_planner_last_result", self.source)
+        self.assertLess(
+            build_source.index("YFU_bridge_validatePlanRequest"),
+            build_source.index(
+                'setVariable ["YFU_bridge_planner_lease", [], true]'
+            ),
+        )
+        self.assertLess(
+            build_source.index('"operation_in_progress"'),
+            build_source.index(
+                'setVariable ["YFU_bridge_planner_lease", [], true]'
+            ),
+        )
+        self.assertIn('setVariable ["YFU_bridge_last_accepted_plan", +_planRequest, true]', build_source)
+        self.assertNotIn(
+            'setVariable ["YFU_bridge_plan_widthwise", _widthwise, true]',
+            self.source,
+        )
+
+    def test_auto_plan_only_accepts_terrain_or_building_support(self) -> None:
+        compute = self.source.index("YFU_bridge_computePlan =")
+        preview = self.source.index("YFU_bridge_beginPlanPreview =")
+        compute_source = self.source[compute:preview]
+        self.assertIn("_maxDistance = (_maxDistance max 0) min 50;", compute_source)
+        self.assertIn('isKindOf "House"', compute_source)
+        self.assertIn("isNull _hitObject && {isNull _parentObject}", compute_source)
+        self.assertNotIn('isKindOf "LandVehicle"', compute_source)
+
     def test_permanent_scenario_is_fail_closed_and_causal(self) -> None:
         self.assertEqual(self.scenario.review.outcome, "REWRITE BEFORE PERMANENT COVERAGE")
         self.assertIn("physical-traversal", self.scenario.review.evidence_types)
         self.assertIn("bridge.build.authority", self.scenario.server_expected)
         self.assertIn("bridge.remove.scope", self.scenario.server_expected)
+        self.assertIn("bridge.ramp.physical", self.scenario.server_expected)
+        self.assertIn("bridge.ramp.traversal", self.scenario.client_expected)
         self.assertIn("lineIntersectsSurfaces", self.scenario.client_sqf)
         self.assertIn("_contactSamples >= 3", self.scenario.client_sqf)
         self.assertIn("private _originASL = [10, 10, 0];", self.scenario.server_sqf)
@@ -69,9 +132,14 @@ class BridgeBuilderContractTests(unittest.TestCase):
         self.assertIn("TRIBUNAL_BRIDGE_REMOVE_OBSERVED", self.scenario.server_sqf)
         self.assertIn("TRIBUNAL_BRIDGE_REMOVE_OBSERVED", self.scenario.client_sqf)
         self.assertIn("private _cleanupDeadline = diag_tickTime + 2", self.scenario.server_sqf)
+        self.assertIn("_rampContacts >= 100", self.scenario.client_sqf)
+        self.assertIn("_rampTrajectory pushBack", self.scenario.client_sqf)
+        self.assertIn("_rampPeak - (_rampStart # 2)", self.scenario.client_sqf)
+        self.assertIn("_rampPeak - (_rampEnd # 2)", self.scenario.client_sqf)
         self.assertNotIn("setVariable [\"YFU_bridge_last_result\"", self.scenario.client_sqf)
         self.assertIn("diag_tickTime > _buildDeadline", self.scenario.server_sqf)
         self.assertIn("_dialogDeadline = diag_tickTime + 5", self.scenario.client_sqf)
+        self.assertIn("YFU_bridge_planner_last_result", self.scenario.client_sqf)
         self.assertNotIn("_heights selectMax", self.scenario.server_sqf)
         self.assertNotIn("_heights selectMin", self.scenario.server_sqf)
         self.assertIn("selectMax _heights", self.scenario.server_sqf)
