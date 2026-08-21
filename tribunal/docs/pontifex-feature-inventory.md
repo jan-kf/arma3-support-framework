@@ -155,7 +155,7 @@ locality, and client replication.
 #### 2.1.4 Installation, controls, and feedback
 
 * **Eden synchronized enable module** is **REFINED; ACCEPTED / COVERED**. Fresh autonomous proof uses two authentic typed modules with native Sync links, verifies server-local dispatch and retained non-disposable logic, rejects a forged client call, and causally proves two synchronized hard-kill interceptions against an unsynchronized same-threat physical-impact control. Multiple Eden modules aggregate.
-* **Zeus per-vehicle toggle** remains **REVIEWED / REFINE BEFORE PERMANENT COVERAGE**. Real curator transport, exactly-one selection, assigned-curator authority, placing-curator feedback, replay rejection, and own-disposable-logic cleanup remain unproven. See
+* **Zeus per-vehicle activation** is **REFINED; ACCEPTED / COVERED** for one authentic assigned-curator placement. Fresh proof binds exact placer/curator/logic/target/operation identity, causally compares disabled impact with activated interception, targets feedback only to the placing owner, rejects replay and a forged request, and retires the disposable logic/claim. Reverse ON-to-OFF entry, repeated placement in one retained curator display, client-B/JIP isolation, and ownership migration remain deferred. See
   [`advanced-systems-aps-module-review.md`](advanced-systems-aps-module-review.md).
 * **Enable/disable/re-enable lifecycle** is **REFINED; ACCEPTED / COVERED
   through the authentic current-client ACE control entry** for suspension/resume.
@@ -657,7 +657,7 @@ airdrop. General fabrication is outside the contract.
 
 ### 5.4 Eden/Zeus and CBA configuration
 
-* APS Eden activation is **REFINED; ACCEPTED / COVERED** through authentic typed mission entities and native Sync links. APS Zeus, CBR Eden/Zeus, Vigil whitelist Eden/Zeus, and Field Utilities Virtual Storage/Fabricator Eden activation remain **REVIEWED / REFINE BEFORE PERMANENT COVERAGE** in their linked reviews; those paths still lack authentic dispatch/curator authority proof. Field Utilities exposes no
+* APS Eden activation is **REFINED; ACCEPTED / COVERED** through authentic typed mission entities and native Sync links. APS Zeus activation is also **REFINED; ACCEPTED / COVERED** for one authentic assigned-curator placement and exact causal activation. CBR Eden/Zeus, Vigil whitelist Eden/Zeus, and Field Utilities Virtual Storage/Fabricator Eden activation remain **REVIEWED / REFINE BEFORE PERMANENT COVERAGE** in their linked reviews. Field Utilities exposes no
   Zeus tool. Vigil fixed-wing Eden/Zeus activation is also reviewed/REFINE in
   [`vigil-fixed-wing-module-review.md`](vigil-fixed-wing-module-review.md).
 * Cross-addon CBA setting declarations are **REFINED; ACCEPTED / COVERED**
@@ -752,7 +752,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 1. **Vigil fixed-wing UAV disabled guard.** The UI rejects UAV deployment but
    the authoritative deploy endpoint lacks the same guard.
 
-Next characterize the authentic APS Zeus curator-toggle path using the accepted typed Eden and physical APS oracles. Then consider the reviewed CBR module experiment, the
+Next consider the reviewed CBR module experiment, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
 the helicopter stabilizer. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary

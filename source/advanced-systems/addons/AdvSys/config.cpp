@@ -44,6 +44,8 @@ class CfgFunctions {
             class aps { preInit = 1; };
             class apsModuleEnable {};
             class apsModuleToggle {};
+            class apsZeusClaimServer {};
+            class apsZeusToggleResult {};
         };
         class IronDome {
             file = "\AdvSys\functions\iron_dome";

@@ -2166,6 +2166,15 @@ def run_multiplayer(
                             "--timeout", "300",
                         ]
                         evidence_kind = "interactive-designation-sequence"
+                    elif visual_driver == "zeus-placement":
+                        probe_args = [
+                            "exec", "-e", "DISPLAY=:0", client_name,
+                            "python3", "/pontifex/tools/tribunal_zeus_probe.py",
+                            "--output", f"/run/pontifex/{ui_output.name}",
+                            "--placements", str(ui_scenario.metadata.get("zeus_placements", 2)),
+                            "--timeout", "240",
+                        ]
+                        evidence_kind = "interactive-curator-placement-sequence"
                     elif visual_driver == "ace-interaction":
                         interaction_point = ui_scenario.metadata["interaction_point"]
                         point_marker = ui_scenario.metadata.get("interaction_point_marker")

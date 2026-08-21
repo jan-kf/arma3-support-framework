@@ -159,6 +159,16 @@ authenticated RFB session. XTest uses the already-present client library and
 container-local display socket and adds no capability, device, host publish,
 or external input path.
 
+Authentic curator-module input uses the same boundary. A scenario assigns a
+real curator, selects its exact configured module in display 312, publishes a
+data-derived screen point only after `curatorMouseOver` resolves the intended
+object, and the authenticated RFB driver performs one pointer click. The
+resulting `interactive-curator-placement-sequence` records input and frame
+artifacts; product code independently records exact curator, logic, target,
+owner, operation, mutation, and cleanup identities. Re-selecting or repeatedly
+placing disposable modules in one retained display is not a generic Tribunal
+guarantee and must be characterized separately if a product promises it.
+
 ## Network-condition boundary
 
 The client has an empty capability bounding set. A direct `tc netem` probe in
