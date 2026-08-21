@@ -3,10 +3,9 @@
 YSF_VERSION = "v0.8.0";
 
 YOSHI_getAllVehicles = {
-  private _whitelistConfigured = !(isNil "YSF_WHITELISTED_ASSETS_MODULE");
+  private _whitelistConfigured = missionNamespace getVariable ["YSF_WHITELIST_CONFIGURED", false];
   if (_whitelistConfigured) then {
-    private _vehicles = [];
-    {_vehicles pushBack (vehicle _x)} forEach (synchronizedObjects YSF_WHITELISTED_ASSETS_MODULE);
+    private _vehicles = +(missionNamespace getVariable ["YSF_WHITELISTED_ASSETS", []]);
     format ["Whitelisted assets loaded: %1", _vehicles] call YSF_fnc_debugMsg;
     _vehicles
   } else {

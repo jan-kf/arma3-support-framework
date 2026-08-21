@@ -24,10 +24,14 @@ from tools.tribunal_ui_probe import X11KeyInput, load_rfb_module  # noqa: E402
 
 def rpt_text() -> str:
     profile = Path("/run/pontifex/profile")
-    return "\n".join(
-        path.read_text(encoding="utf-8", errors="replace")
-        for path in sorted(profile.glob("*.rpt"))
-    )
+    reports = list(profile.glob("*.rpt"))
+    if not reports:
+        return ""
+    # Steam's persistent profile intentionally retains earlier RPTs. Reading
+    # all of them lets a prior run's DISPLAY_OPEN/PLACEMENT_READY markers drive
+    # the current run. The actively written RPT is the newest profile artifact.
+    current = max(reports, key=lambda path: path.stat().st_mtime_ns)
+    return current.read_text(encoding="utf-8", errors="replace")
 
 
 def wait_marker(pattern: re.Pattern[str], deadline: float) -> re.Match[str]:
@@ -103,11 +107,16 @@ def main() -> int:
             wait_marker(re.compile(re.escape(args.marker_prefix) + rf"\|HOVER_READY\|{index}\|"), deadline)
             rfb.pointer_click(x, y)
             wait_marker(re.compile(re.escape(args.marker_prefix) + rf"\|PLACED\|{index}\|"), deadline)
+            # Curator hover state can remain latched to the object used by the
+            # completed placement. Clear it before a repeated module operation
+            # so the next pointer move produces a fresh engine hover transition.
+            rfb.pointer_move(1, 1)
             report["inputs"].append({
                 "phase": index,
                 "type": "pointer-click",
                 "normalized_point": point,
                 "pixel_point": [x, y],
+                "pointer_moved_away": True,
                 "state_driven": True,
             })
             capture(f"placed-{index}")

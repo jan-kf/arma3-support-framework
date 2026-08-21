@@ -72,6 +72,10 @@ class CbrModuleContractTests(unittest.TestCase):
         self.assertIn("zeus_marker_prefix", runner)
         self.assertIn("--marker-prefix", driver)
         self.assertIn("re.escape(args.marker_prefix)", driver)
+        self.assertIn("max(reports, key=lambda path: path.stat().st_mtime_ns)", driver)
+        self.assertIn('rfb.pointer_move(1, 1)', driver)
+        self.assertIn('"pointer_moved_away": True', driver)
+        self.assertNotIn('for path in sorted(profile.glob("*.rpt"))', driver)
 
 
 if __name__ == "__main__":

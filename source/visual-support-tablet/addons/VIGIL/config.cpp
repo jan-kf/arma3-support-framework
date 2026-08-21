@@ -45,8 +45,11 @@ class CfgFunctions {
             class init { postInit = 1; };
             class utils {preInit = 1; };
             class initSettings {preInit = 1; };
+            class whitelistRegistry {preInit = 1; };
             class assetWhitelist {};
             class toggleObjectInWhitelist {};
+            class whitelistZeusClaimServer {};
+            class whitelistZeusResult {};
         };
         class Governor {
             file = "\VIGIL\functions\governor";

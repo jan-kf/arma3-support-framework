@@ -1,4 +1,2 @@
-params ["_logic", "_id", "_params"];
-
-YSF_WHITELISTED_ASSETS_MODULE = _logic;
-publicVariable "YSF_WHITELISTED_ASSETS_MODULE";
+params [["_logic", objNull, [objNull]], ["_id", 0], ["_params", []]];
+[_logic] call YSF_fnc_whitelistRegisterEden

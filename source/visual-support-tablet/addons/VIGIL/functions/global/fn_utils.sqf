@@ -32,16 +32,6 @@ YSF_fnc_emitSideChat = {
 
 YSF_toggleWhitelistedObject = {
   params ["_obj"];
-
-  if (isNil "YSF_WHITELISTED_ASSETS_MODULE") exitWith { ["Whitelist Module not initialized", "No Change"] call YSF_fnc_notifyCurator;};
-  private _whitelisted = [];
-  {_whitelisted pushBack (vehicle _x)} forEach (synchronizedObjects YSF_WHITELISTED_ASSETS_MODULE);
-  if (!((vehicle _obj) in _whitelisted)) then {
-    YSF_WHITELISTED_ASSETS_MODULE synchronizeObjectsAdd [vehicle _obj];
-    ["Added Asset to Whitelist", "Whitelist Updated"] call YSF_fnc_notifyCurator;
-  } else {
-	  YSF_WHITELISTED_ASSETS_MODULE synchronizeObjectsRemove [vehicle _obj];
-    ["Removed Asset from Whitelist", "Whitelist Updated"] call YSF_fnc_notifyCurator;
-  };
-
+  if (!isServer || {remoteExecutedOwner > 2}) exitWith {false};
+  [_obj] call YSF_fnc_whitelistToggleServer
 };

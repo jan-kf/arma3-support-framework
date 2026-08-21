@@ -2,121 +2,131 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** The accepted
-unwhitelisted mixed-fleet browser remains covered. A configured Eden whitelist
-and curator add/remove are real advertised entries, but their module dispatch,
-synchronization replication, authority, duplicate policy, and exact client
-membership have not been proven.
+**Classification: REFINED; PARTIALLY COVERED / ZEUS REMOVAL NEEDS
+EXPERIMENTATION.** Fresh autonomous proof covers authentic multiple-Eden-module
+aggregation and one authentic assigned-curator add. It does not claim a second
+curator placement/removal whose native hover stimulus could not be made
+deterministic. The accepted unwhitelisted mixed-fleet browser remains unchanged.
 
 ## Canonical review questions
 
 ### 1. What should the mission maker and curator observe?
 
-A real Eden whitelist should restrict each client's browser to eligible vehicles
-synchronized to that exact module. An authorized curator should add or remove one
-exact selected vehicle, after which refreshed clients observe the same global
-membership. Invalid, unauthorized, stale, or repeated requests must not alter it.
+Every authentic Eden whitelist module contributes its synchronized vehicles to
+one mission-wide discovery set. An assigned curator can add the exact vehicle
+selected through a genuine curator-module placement and receives the result
+privately. Replayed, forged, invalid, or unrelated operations change nothing.
+Clients refresh from the server-published exact membership snapshot.
 
 ### 2. What does the implementation actually do?
 
-The Eden module setter publishes one module object. Each client chooses either
-all `vehicles` when that variable is nil or `vehicle _x` for every synchronized
-object when configured, then applies existing category/side/live predicates.
-The Zeus module chooses its first synchronized object or `attachedTo` target,
-calls a global helper that adds/removes synchronization on the published Eden
-logic, emits a notification, and deletes the transient logic.
+Native Eden configured dispatch validates retained typed module logics on the
+server and rebuilds a server-private, deduplicated membership union. A separate
+public snapshot carries exact object identities to clients; browser discovery no
+longer depends on runtime synchronization replication. The native Zeus placement
+event submits an operation ID, exact module and hover target to a server claim
+boundary. The server validates the placing owner is an assigned curator, validates
+the module/target, rejects replay, applies the membership change once, retires
+only the transient module, and returns the result only to that curator.
 
-No permanent scenario enters either configured module function. The accepted
-browser scenario deliberately uses the no-whitelist path.
+The accepted slice proves one add. The toggle implementation can remove a member,
+but authentic second-placement removal is not yet permanent evidence.
 
 ### 3. Which machines and lifecycle own it?
 
-Both modules declare `isGlobal=0`, but actual framework execution locality is
-unmeasured. The Eden setter has no server/class/locality guard. Zeus handling has
-no server boundary, exact class, assigned-curator/requester validation, operation
-identity, replay guard, acknowledgment, or proven propagation. The browser is
-client-local and reads synchronization independently.
+The authoritative module registry and membership set are server-private. Eden
+module dispatch is server-local. Curator placement originates on the assigned
+curator's client; `remoteExecutedOwner` is bound to that curator and a fresh
+operation ID before server mutation. Published membership and result mirrors are
+observational only. Eden logics are retained because their module config is
+non-disposable; accepted transient Zeus logic is deleted after finalization.
 
 ### 4. Which mechanics are generic?
 
-Typed module/SQM Sync fixtures, configured-function receipts, exact object
-identity/locality, actual curator placement characterization, client tree-row
-extraction, and cleanup are generic Tribunal mechanics. Whitelist eligibility,
-mutation policy, and refresh semantics remain Vigil product behavior.
+Typed mission modules, native Sync links, configured-function receipts, assigned
+curator setup, real curator placement, exact identity/locality observation and
+targeted result transport reuse Tribunal mechanics. Eligibility, aggregation,
+membership mutation and browser refresh are Vigil product semantics.
 
 ### 5. Which behavior is product-owned?
 
-Fallback-all versus restricted mode, one/multiple/empty-module policy, authorized
-curators, valid target normalization, mission-global/JIP persistence, refresh
-cadence, duplicate handling, and feedback audience are Vigil semantics.
+Multiple Eden modules aggregate as a union. Assigned curators are authorized.
+Feedback goes only to the placing curator. Operation IDs make accepted/rejected
+operations idempotent. The whitelist controls discovery, not separate task
+authorization. Zero-module behavior retains the accepted unwhitelisted browser.
 
 ### 6. Are unusual engine requirements proven?
 
-No. `isGlobal=0` handler location, mission-native synchronization on clients,
-runtime `synchronizeObjectsAdd/Remove` replication, curator attach target shape,
-transient module deletion, and JIP persistence are unmeasured. Publishing the
-logic reference does not prove that its synchronization graph is shared.
+Yes, narrowly. Authentic typed Eden modules execute their configured handler and
+retain exact native Sync identities. A real assigned curator placement produces
+the expected `CuratorObjectPlaced` object event and authenticated server claim.
+Runtime synchronization is not required for client membership replication.
 
-### 7. Which details are fragile or incomplete?
+Curator hover is spatial and sensitive to object simulation/JIP state. A cold
+mission-authored settled target produced a deterministic first placement; moved,
+attached, frozen, or repeatedly targeted fixtures did not establish a reliable
+second hover stimulus. This is fixture/engine characterization, not a proven
+product removal defect.
 
-Last-setter-wins Eden globals, stale/deleted module references, zero-sync behavior,
-normalized duplicate vehicles, first-target selection, missing authority/result,
-client-local refresh, and CORDIS notification fallback are fragile. The helper is
-globally callable and can attempt mutation without proving a curator entry.
+### 7. Which details were fragile or incomplete?
+
+The prior last-setter-wins public logic reference, client-side Sync traversal,
+unguarded global toggle helper, broad feedback and absent replay identity were
+false-PASS and authority risks. They were replaced by server-private aggregation,
+an exact published snapshot, authenticated claims and requester-only results.
+Authentic removal, runtime Eden reconfiguration, zero-sync/deleted-module policy,
+duplicate normalized inputs and client-B/JIP remain incomplete.
 
 ### 8. Is a better native/existing mechanism available?
 
-Keep native Eden/curator modules after measuring their transport, but hold the
-authoritative whitelist in a server-owned exact-identity set. Native entries
-should submit validated operations; clients should receive a deliberate snapshot
-rather than depend on runtime synchronization replication. Do not select that
-refinement until the genuine framework locality/requester values are captured.
+Native Eden and curator entry mechanisms remain the public surface. Server-private
+membership is preferable to treating public variables or synchronization graphs
+as authority. The existing curator event/claim/result infrastructure is reused;
+Vigil does not import APS or CBR product meaning.
 
 ### 9. What is the stable contract and causal proof?
 
-For Eden, a fresh typed SQM module links exact eligible A, leaves same-class
-eligible B unsynchronized, and links ineligible C. Actual configured dispatch and
-server/client sync identities must be recorded; a real client refresh must have
-exact backing/tree set `{A}`. An otherwise identical no-module mission must list
-both eligible A/B and exclude controls.
+The fresh mission contains two authentic Eden modules synchronized to different
+eligible vehicles. Native dispatch yields their exact union, both retained module
+identities, and the same exact client snapshot. One assigned-curator placement on
+a third cold-authored vehicle reaches the authenticated claim, expands the union
+by that exact identity once, replicates to the client and emits a placer-only
+result. Duplicate replay and a forged invalid logic are receipt-proven rejected,
+with membership unchanged and unrelated objects preserved. Cleanup removes all
+scenario state.
 
-For Zeus, one actual authorized placement adds B and a later placement removes B.
-Exact logic/target/placer/owner receipt, authoritative membership, client backing
-and tree net IDs, and cleanup must correlate. Invalid selection, unauthorized raw
-call, replay, and stale/deleted-module controls must reach rejection and preserve
-membership. Notification or synchronization state alone is not the oracle.
+### 10. Which details remain replaceable?
 
-### 10. Which details must remain replaceable?
+Module positions/IDs, snapshot schema, handler names, operation-record layout,
+browser grouping/order, notification prose and hover-probe implementation remain
+free. Exact membership, assigned-curator authority, idempotence, targeted result,
+and client-visible consistency are stable for the accepted slice.
 
-Module positions, logic IDs, synchronization/snapshot implementation, action
-labels, tree grouping/order, refresh implementation, notifications, and handler
-names remain free. Exact eligible membership, authority, global consistency, and
-truthful result are stable.
+### 11. What remains unproven or requires experimentation?
 
-### 11. What remains unproven or requires decision?
-
-Choose authorized curator scope; one versus multiple Eden modules; zero-sync and
-deleted-module behavior; duplicate normalized targets; immediate versus explicit
-refresh; mission-global/JIP promise; and feedback audience. Typed Eden dispatch
-and runtime sync locality need a bounded engine experiment before refinement.
-Client-B/JIP remains separately deferred.
+Authentic Zeus removal and repeated placement on one retained curator display;
+runtime module deletion/reconfiguration; zero-sync and duplicate-module edge
+policy beyond exact union; client-B/JIP isolation; curator reassignment and
+ownership migration. Removal needs a fresh fixture whose second native hover
+stimulus is independently proven before its product transition can be accepted.
 
 ### 12. What belongs in Tribunal?
 
-Reuse the first proven typed module/Sync fixture, real curator transport
-characterization, exact net-ID sets, and browser tree observer. Vigil class names,
-eligibility, whitelist policy, and mutation authorization remain product-local.
+Only generic typed-module generation, Sync links, assigned-curator placement,
+hover/receipt telemetry and exact identity replication. Vigil membership policy,
+authorization decisions and browser interpretation remain product-local.
 
-## False-PASS boundary and continuation
+## False-PASS boundary and accepted evidence
 
-Directly calling the setter/helper, runtime-created plain Logic, a public module
-reference, internal sync array, notification, deleted Zeus logic, or browser row
-without exact dispatch and source identity does not prove the feature. Absence
-requires an independently valid eligible object and a proven refresh stimulus.
+Direct setter/helper calls, plain runtime Logic, a published module reference,
+internal Sync state, notification, deleted logic or cached browser rows are not
+proof. Negative claims require a proven boundary receipt and unchanged independent
+membership snapshot. Curator removal cannot pass unless a second authentic hover
+and placement are independently observed.
 
-Next: first establish the reusable typed Eden module fixture with a simpler
-consumer; run whitelist/no-whitelist exact-set A/B; measure genuine curator
-placement/locality/target resolution once; choose authority and lifecycle policy;
-then refine to server-owned membership and prove add/remove plus adversarial
-controls. Do not reopen the accepted unwhitelisted browser or use VNC unless real
-curator placement cannot be characterized through native data APIs.
+Fresh run `20260821T165814Z-d0a72396` passed with server 12/0 and client 9/0.
+It proved native Eden aggregation/retention, exact curator add, assigned-curator
+authority, replay/forgery rejection, own-logic cleanup, placer-only feedback,
+exact current-client replication and complete cleanup. Resume only the removal
+slice with a deterministic fresh placement fixture; do not re-prove the accepted
+browser or Eden/add path.
