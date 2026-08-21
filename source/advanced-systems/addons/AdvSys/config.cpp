@@ -38,6 +38,8 @@ class CfgFunctions {
             class cbr { preInit = 1; };
             class cbrModuleEnable {};
             class cbrModuleToggle {};
+            class cbrZeusClaimServer {};
+            class cbrZeusToggleResult {};
         };
         class APS {
             file = "\AdvSys\functions\aps";

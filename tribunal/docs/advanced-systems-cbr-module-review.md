@@ -9,15 +9,17 @@ identity, server transition, authority, feedback and transient logic cleanup.
 The already accepted CBR detection, prediction, marker, warning and lifecycle
 behavior remains governed by the main CBR review.
 
-**Classification: `REFINE BEFORE PERMANENT COVERAGE` (reviewed; not covered).**
+**Classification: `REFINED; ACCEPTED / COVERED`.**
 
-Both modules point to coherent handlers and the downstream CBR lifecycle is
-accepted. The entry boundary is not: the handlers accept any non-null logic,
-forward arbitrary client calls to the server, perform no class or curator
-validation, toggle mission-global state, and delete the caller-supplied object.
-The actual module-framework execution machine and curator transport have never
-been observed. Directly calling these handlers would bypass the feature under
-review.
+Fresh autonomous run `20260821T153013Z-0a8b2c91` passed 14 server and 8 client
+assertions. It proved native server-local Eden dispatch from the exact typed
+module, retained non-disposable logic, an authentic assigned-curator ground
+placement, placing-curator-only result delivery, replay/forgery rejection,
+own-logic cleanup, replication and complete run cleanup. The entry was tied to
+a narrow physical A/B: the enabled Eden phase tracked a real native artillery
+shell and authored its CBR marker pair; the Zeus-disabled phase fired the same
+fixture and independently observed its full flight/termination with no CBR
+cluster or marker.
 
 ## Candidate stable contract
 
@@ -124,27 +126,31 @@ entity and required-addon metadata. Do not expose arbitrary SQM. Curator
 placement should remain scenario-local until equivalence is proven and a second
 consumer justifies promotion.
 
-## Product decisions required
+## Established product decisions
 
-1. May every assigned curator toggle global CBR, or only a narrower authority?
-2. Is global mission-wide CBR state intentional for the Zeus tool?
-3. Should feedback go to the placing curator, all curators or all players?
-4. Is more than one Eden module valid and merely idempotent, or invalid setup?
-5. Should the non-disposable Eden logic remain after initialization?
+1. Every assigned curator may toggle the intentionally mission-global CBR state.
+2. Feedback goes only to the placing curator.
+3. Operation IDs are idempotent and bounded; replay cannot toggle again.
+4. Eden enable is idempotent and its non-disposable logic remains available.
 
-## Precise continuation point
+## Implementation and evidence
 
-First add the narrow typed mission-module fixture and run a fresh Eden/no-Eden
-A/B while recording module class, locality, owner, execution machine and
-`remoteExecutedOwner`. Reuse the accepted real-artillery/marker oracle. Then,
-in a curator-enabled session, place the real Zeus module and record the same
-transport facts. If only real UI placement reaches the path, one bounded VNC
-characterization is justified; permanent evidence should remain data-driven
-after equivalence is known.
+The Eden handler now accepts only the exact server-local typed class from native
+dispatch and retains it. The Zeus path observes `CuratorObjectPlaced` on the
+placing client, binds a fresh operation to the client-owned exact module and its
+assigned curator, revalidates on the server, consumes the claim once, toggles
+the accepted lifecycle, and returns the result only to that owner. Missing
+claims do not authorize deletion; accepted transient logic is deleted after its
+result. The operation cache has a 300-second TTL and deterministic size bound.
 
-Refine the handler only from that evidence: exact class, authentic transport,
-authorized requester if one exists, replay-safe operation ID, honest result and
-own-logic-only cleanup. Preserve downstream CBR behavior unchanged.
+Two engine facts were characterized without becoming specification: an
+unsynchronized Eden logic can have an empty `vehicleVarName` despite an SQM
+name, so evidence uses its exact netId; and a freshly placed ground module can
+be local while briefly reporting owner 0 on the placing client. The authority
+oracle therefore uses the server's later `owner(logic) == remoteExecutedOwner`
+predicate. `curatorMouseOver` is empty for ground placement, so the external
+adapter drives a scenario-declared screen point and success comes only from the
+exact native placement/claim/result chain.
 
 ## False-PASS audit
 
@@ -154,8 +160,11 @@ self-authored. Every positive needs fresh module identity plus physical CBR
 output; every disabled phase needs a real shell launch/flight/impact; every
 authority control needs a recorded request and unchanged independent state.
 
-## Terminal disposition
+## Remaining bounds
 
-The module surfaces are reviewed, reachable in config, and blocked at a precise
-engine-dispatch/authority experiment. They are not permanent coverage and do not
-alter the accepted CBR gameplay baseline.
+One authentic ON-to-OFF Zeus placement is covered. Reverse-direction placement,
+multiple Eden modules in one mission, repeated placement in one retained Zeus
+display, client-B/JIP isolation and ownership migration remain explicit
+follow-ups. They do not weaken the accepted single-operation authority and
+causal activation contract. The accepted downstream CBR gameplay baseline is
+unchanged.

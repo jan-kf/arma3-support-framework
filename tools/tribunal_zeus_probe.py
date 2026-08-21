@@ -43,6 +43,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--placements", type=int, default=2)
+    parser.add_argument("--marker-prefix", default="TRIBUNAL_APS_ZEUS")
     parser.add_argument("--timeout", type=float, default=180)
     args = parser.parse_args()
     if not 1 <= args.placements <= 8:
@@ -78,7 +79,7 @@ def main() -> int:
             open_attempts += 1
             keyboard.chord(ord("y"))
             try:
-                wait_marker(re.compile(r"TRIBUNAL_APS_ZEUS\|DISPLAY_OPEN"), min(deadline, time.monotonic() + 4))
+                wait_marker(re.compile(re.escape(args.marker_prefix) + r"\|DISPLAY_OPEN"), min(deadline, time.monotonic() + 4))
                 break
             except RuntimeError:
                 continue
@@ -89,7 +90,7 @@ def main() -> int:
 
         for index in range(1, args.placements + 1):
             match = wait_marker(
-                re.compile(rf"TRIBUNAL_APS_ZEUS\|PLACEMENT_READY\|{index}\|(\[[^\r\n]+\])"),
+                re.compile(re.escape(args.marker_prefix) + rf"\|PLACEMENT_READY\|{index}\|(\[[^\r\n]+\])"),
                 deadline,
             )
             point = json.loads(match.group(1))
@@ -99,9 +100,9 @@ def main() -> int:
             y = round(float(point[1]) * (rfb.height - 1))
             rfb.pointer_move(x, y)
             time.sleep(0.2)
-            wait_marker(re.compile(rf"TRIBUNAL_APS_ZEUS\|HOVER_READY\|{index}\|"), deadline)
+            wait_marker(re.compile(re.escape(args.marker_prefix) + rf"\|HOVER_READY\|{index}\|"), deadline)
             rfb.pointer_click(x, y)
-            wait_marker(re.compile(rf"TRIBUNAL_APS_ZEUS\|PLACED\|{index}\|"), deadline)
+            wait_marker(re.compile(re.escape(args.marker_prefix) + rf"\|PLACED\|{index}\|"), deadline)
             report["inputs"].append({
                 "phase": index,
                 "type": "pointer-click",

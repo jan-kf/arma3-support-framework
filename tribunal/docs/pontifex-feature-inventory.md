@@ -227,10 +227,14 @@ and the disabled and stop controls.
 * **Marker sharing policy** publishes zone and origin markers globally while the
   radio warning is side-filtered. **Implemented; REVIEWED / DEFERRED** as an open
   product decision; no test asserts a preferred answer.
-* **Eden enable / Zeus toggle** is **REVIEWED / REFINE BEFORE PERMANENT
-  COVERAGE**. The accepted API proves the lifecycle tail, not authentic typed
-  module or curator dispatch. Exact class/requester authority, replay, feedback,
-  and own-logic cleanup remain unproven. See
+* **Eden enable / Zeus toggle** is **REFINED; ACCEPTED / COVERED** for authentic
+  server-local typed Eden dispatch and one authentic assigned-curator ON-to-OFF
+  Zeus placement. Fresh run `20260821T153013Z-0a8b2c91` proved exact native
+  entry, real-shell detection versus same-fixture disabled flight, replay and
+  forgery rejection, placing-curator-only results, replication, retained Eden
+  logic, transient own-logic cleanup and full teardown. Reverse-direction,
+  repeated-display, client-B/JIP and ownership-migration cases remain bounded
+  follow-ups. See
   [`advanced-systems-cbr-module-review.md`](advanced-systems-cbr-module-review.md).
 
 Full analysis:
@@ -657,7 +661,7 @@ airdrop. General fabrication is outside the contract.
 
 ### 5.4 Eden/Zeus and CBA configuration
 
-* APS Eden activation is **REFINED; ACCEPTED / COVERED** through authentic typed mission entities and native Sync links. APS Zeus activation is also **REFINED; ACCEPTED / COVERED** for one authentic assigned-curator placement and exact causal activation. CBR Eden/Zeus, Vigil whitelist Eden/Zeus, and Field Utilities Virtual Storage/Fabricator Eden activation remain **REVIEWED / REFINE BEFORE PERMANENT COVERAGE** in their linked reviews. Field Utilities exposes no
+* APS Eden activation is **REFINED; ACCEPTED / COVERED** through authentic typed mission entities and native Sync links. APS Zeus activation is also **REFINED; ACCEPTED / COVERED** for one authentic assigned-curator placement and exact causal activation. CBR Eden/Zeus activation is likewise **REFINED; ACCEPTED / COVERED** for authentic typed dispatch and an assigned-curator global toggle. Vigil whitelist Eden/Zeus and Field Utilities Virtual Storage/Fabricator Eden activation remain **REVIEWED / REFINE BEFORE PERMANENT COVERAGE** in their linked reviews. Field Utilities exposes no
   Zeus tool. Vigil fixed-wing Eden/Zeus activation is also reviewed/REFINE in
   [`vigil-fixed-wing-module-review.md`](vigil-fixed-wing-module-review.md).
 * Cross-addon CBA setting declarations are **REFINED; ACCEPTED / COVERED**
@@ -731,7 +735,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
 | CBR confirmed-origin persistence | **REVIEWED / DEFERRED** | confirmed fix never expires; decay policy undecided |
 | CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; re-warning for a walking barrage undecided |
-| CBR module/Zeus activation | **REVIEWED / REFINE BEFORE COVERAGE** | real framework dispatch/locality and curator authority need one controlled module-path experiment |
+| CBR module/Zeus activation | **REFINED; ACCEPTED / COVERED** | fresh typed Eden + authentic assigned-curator proof; reverse/repeated/client-B cases bounded |
 | Iron Dome client-owned artillery | **REVIEWED / DEFERRED** | current server handler deliberately rejects non-server-local shells; no owner-routing product policy is chosen |
 | Iron Dome threat policy/audio | **REVIEWED / DEFERRED** | friendly/outgoing versus protected-impact-area filtering is undecided; audio is unproven under `-noSound` |
 | Fabricator delivery mass cap | **REVIEWED / OPEN DEFECT** | a fabricated crate reported `getMass = 1e-12` across six runs, so the carryability cap never fires; those runs were over water and it has not been re-measured on land |
@@ -749,11 +753,12 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-1. **Vigil fixed-wing UAV disabled guard.** The UI rejects UAV deployment but
-   the authoritative deploy endpoint lacks the same guard.
+1. **Field Utilities Eden module activation.** Reuse the now-proven typed module
+   fixture to secure authoritative catalogue/station provenance without
+   importing CBR or APS semantics.
 
-Next consider the reviewed CBR module experiment, the
-reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
+Next consider Field Utilities Eden activation, the reviewed-but-uncovered
+CORDIS decision matrix, remaining suite editor/Zeus modules, and
 the helicopter stabilizer. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product

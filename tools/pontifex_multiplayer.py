@@ -2172,6 +2172,7 @@ def run_multiplayer(
                             "python3", "/pontifex/tools/tribunal_zeus_probe.py",
                             "--output", f"/run/pontifex/{ui_output.name}",
                             "--placements", str(ui_scenario.metadata.get("zeus_placements", 2)),
+                            "--marker-prefix", str(ui_scenario.metadata.get("zeus_marker_prefix", "TRIBUNAL_APS_ZEUS")),
                             "--timeout", "240",
                         ]
                         evidence_kind = "interactive-curator-placement-sequence"

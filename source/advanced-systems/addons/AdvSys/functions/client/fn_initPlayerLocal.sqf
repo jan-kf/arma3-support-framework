@@ -18,6 +18,14 @@
 			if (!isNull _installedOn) then {
 				private _eh = _installedOn addEventHandler ["CuratorObjectPlaced", {
 					params ["_curator", "_logic"];
+					if (!isNull _logic && {typeOf _logic isEqualTo "YAS_CBR_Zeus_Toggle_Module"}) exitWith {
+						private _operationId = format ["%1:%2:%3", clientOwner, netId _logic, diag_tickTime];
+						_logic setVariable ["YAS_CBR_ZeusOperationId", _operationId, true];
+						private _rows = uiNamespace getVariable ["YAS_CBR_ZEUS_CLIENT_PLACEMENT_AUDIT", []];
+						_rows pushBack [_operationId, netId _logic, netId _curator, clientOwner, local _logic, owner _logic, diag_tickTime];
+						uiNamespace setVariable ["YAS_CBR_ZEUS_CLIENT_PLACEMENT_AUDIT", _rows];
+						[_logic, _curator, _operationId] remoteExecCall ["YAS_fnc_cbrZeusClaimServer", 2];
+					};
 					if (isNull _logic || {typeOf _logic isNotEqualTo "YAS_APS_Zeus_Toggle_Module"}) exitWith {};
 					private _targets = ((synchronizedObjects _logic) + [attachedTo _logic]) select {
 						!isNull _x && {_x isKindOf "AllVehicles"}
