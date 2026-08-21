@@ -154,20 +154,14 @@ locality, and client replication.
 
 #### 2.1.4 Installation, controls, and feedback
 
-* **Eden synchronized enable module** and **Zeus per-vehicle toggle** are
-  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE**. Accepted APIs prove the
-  lifecycle tail, not authentic typed-module or curator dispatch. Handlers do
-  not validate exact class, requester, locality, target ambiguity, or replay;
-  they delete caller-supplied logic, and Eden deletion contradicts its
-  non-disposable config. Add the typed module/Sync fixture and characterize one
-  real curator placement before authority refinement and physical A/B proof.
-  See
+* **Eden synchronized enable module** is **REFINED; ACCEPTED / COVERED**. Fresh autonomous proof uses two authentic typed modules with native Sync links, verifies server-local dispatch and retained non-disposable logic, rejects a forged client call, and causally proves two synchronized hard-kill interceptions against an unsynchronized same-threat physical-impact control. Multiple Eden modules aggregate.
+* **Zeus per-vehicle toggle** remains **REVIEWED / REFINE BEFORE PERMANENT COVERAGE**. Real curator transport, exactly-one selection, assigned-curator authority, placing-curator feedback, replay rejection, and own-disposable-logic cleanup remain unproven. See
   [`advanced-systems-aps-module-review.md`](advanced-systems-aps-module-review.md).
 * **Enable/disable/re-enable lifecycle** is **REFINED; ACCEPTED / COVERED
   through the authentic current-client ACE control entry** for suspension/resume.
   First install alone initializes resources/defaults; suspension and resume are
   idempotent and preserve hard/soft mode, voice, anti-drone preference, charges,
-  and fuel without resupply. Typed Eden/Zeus install/toggle, deletion, ownership
+  and fuel without resupply. Zeus toggle, ownership
   migration, and client-B/JIP remain separate. See
   [`advanced-systems-aps-lifecycle-review.md`](advanced-systems-aps-lifecycle-review.md).
 * The **LORICA ACE control menu** is **REFINED; ACCEPTED / COVERED** for
@@ -663,11 +657,7 @@ airdrop. General fabrication is outside the contract.
 
 ### 5.4 Eden/Zeus and CBA configuration
 
-* APS and CBR Eden/Zeus activation, Vigil whitelist Eden/Zeus activation,
-  and Field Utilities Virtual Storage/Fabricator Eden activation are
-  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE** in their linked feature
-  reviews: accepted scenarios call lifecycle APIs and do not prove authentic
-  synchronization, curator transport, or authority. Field Utilities exposes no
+* APS Eden activation is **REFINED; ACCEPTED / COVERED** through authentic typed mission entities and native Sync links. APS Zeus, CBR Eden/Zeus, Vigil whitelist Eden/Zeus, and Field Utilities Virtual Storage/Fabricator Eden activation remain **REVIEWED / REFINE BEFORE PERMANENT COVERAGE** in their linked reviews; those paths still lack authentic dispatch/curator authority proof. Field Utilities exposes no
   Zeus tool. Vigil fixed-wing Eden/Zeus activation is also reviewed/REFINE in
   [`vigil-fixed-wing-module-review.md`](vigil-fixed-wing-module-review.md).
 * Cross-addon CBA setting declarations are **REFINED; ACCEPTED / COVERED**
@@ -762,7 +752,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 1. **Vigil fixed-wing UAV disabled guard.** The UI rejects UAV deployment but
    the authoritative deploy endpoint lacks the same guard.
 
-Then consider the reviewed CBR module experiment, APS module activation, the
+Next characterize the authentic APS Zeus curator-toggle path using the accepted typed Eden and physical APS oracles. Then consider the reviewed CBR module experiment, the
 reviewed-but-uncovered CORDIS decision matrix, suite editor/Zeus modules, and
 the helicopter stabilizer. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary

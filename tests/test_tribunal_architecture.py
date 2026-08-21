@@ -14,7 +14,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
 from tribunal.discovery import discover  # noqa: E402
-from tribunal.runner.model import Scenario  # noqa: E402
+from tribunal.mission.entities import render_typed_entities
+from tribunal.runner.model import MissionEntity, MissionSync, Scenario  # noqa: E402
 import pontifex_multiplayer as multiplayer  # noqa: E402
 import pontifex_server as dedicated  # noqa: E402
 
@@ -136,6 +137,26 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertIn("bridge.interaction.conditions", bridge.client_expected)
         self.assertEqual(multiplayer.FEATURE_SCENARIOS["fieldutils-bridge-builder"], bridge)
         self.assertIn("fieldutils-bridge-builder", gameplay.selected)
+
+    def test_typed_mission_fixture_is_validated_and_renders_native_sync(self) -> None:
+        entities = (
+            MissionEntity("MODULE_A", "Example_Module", "Example_Addon", "Logic", (100, 5, 200)),
+            MissionEntity("TARGET_A", "Example_Target", "Example_Targets", "Object", (110, 5, 200)),
+        )
+        source, connections = render_typed_entities(
+            entities, (MissionSync("MODULE_A", "TARGET_A"),), first_item=2
+        )
+        self.assertIn('class Item2 { dataType="Logic";', source)
+        self.assertIn('name="MODULE_A"', source)
+        self.assertIn('class Item3 { dataType="Object";', source)
+        self.assertIn('side="Empty"; flags=7;', source)
+        self.assertIn('item0=100; item1=101;', connections)
+        self.assertIn('type="Sync";', connections)
+        self.assertIn('class LinkIDProvider { nextID=1; };', connections)
+        self.assertIn('linkID=0;', connections)
+        self.assertNotIn('id=102;', connections)
+        with self.assertRaises(ValueError):
+            Scenario("bad", "gameplay", frozenset(), frozenset(), "", "", mission_entities=entities, mission_syncs=(MissionSync("MODULE_A", "MISSING"),))
 
     def test_project_manifest_discovers_the_runtime_feature_scenario_set(self) -> None:
         manifest = json.loads((ROOT / "tribunal.project.json").read_text(encoding="utf-8"))

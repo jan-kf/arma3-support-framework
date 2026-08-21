@@ -341,7 +341,7 @@ input.
 
 Tribunal is data-first. Prefer engine-visible configuration, identities,
 locality, state transitions, physical contacts and authoritative results over
-pixels or synthetic input whenever those observations prove the contract.
+pixels or synthetic input whenever those observations prove the contract. Event absence alone is not a physical no-impact oracle: an engine event may be omitted for a particular editor-defined object. Exact path intersection, projectile identity and termination, bounded closest approach against independent object geometry, exact-ammunition damage callbacks, and material damage can jointly prove impact even when `HitPart` is absent. Conversely, no-impact claims require positive protection evidence, not merely a missing callback.
 Framebuffer/VNC evidence is reserved for behavior whose contract is itself
 visual (for example dialog layout, Draw3D, map rendering, or an animation with
 no reliable state proxy). Once a generic framework interaction mechanism is

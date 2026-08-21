@@ -38,6 +38,12 @@ with APS, then correlates its netId with the APS ledger and its own resource
 and protection assertions. This keeps projectile semantics reusable while
 preserving causal, feature-specific evidence.
 
+## Typed mission entity fixture contract
+
+`MissionEntity` and `MissionSync` let a scenario request validated typed Eden `Logic` or `Object` entities and named native Sync links. The mission composer owns SQM entity IDs, link IDs, required-addon metadata, and rendering. It rejects invalid names, unsupported data types, duplicate names/links, and links to unknown entities; feature scenarios cannot inject arbitrary raw SQM. Positions are explicit mission.sqm `(X, absolute world altitude, world Y)` values. Product class names, synchronization meaning, and behavioral assertions remain scenario-owned.
+
+The first consumer is authentic Advanced Systems APS Eden activation. Its fresh proof establishes configured server-local module dispatch, native Sync visibility, retained non-disposable logic, aggregate modules, and causal synchronized-versus-unsynchronized behavior.
+
 The runner treats protocol completion as terminal: complete PASS and complete
 FAIL both trigger ordinary teardown immediately. The configured deadline is
 only a fail-closed safety bound for incomplete or hung runs.

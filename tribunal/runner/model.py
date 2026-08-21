@@ -101,6 +101,38 @@ class TierPlan:
 
 
 @dataclass(frozen=True)
+class MissionEntity:
+    """Validated typed Eden entity with mission.sqm X/ASL-altitude/world-Y position."""
+
+    name: str
+    class_name: str
+    addon: str
+    data_type: str
+    position: tuple[float, float, float]
+
+    def __post_init__(self) -> None:
+        for label, value in (("name", self.name), ("class_name", self.class_name), ("addon", self.addon)):
+            if not value or not value.replace("_", "").isalnum():
+                raise ValueError(f"mission entity {label} must contain only letters, numbers, or underscores")
+        if self.data_type not in {"Logic", "Object"}:
+            raise ValueError("mission entity data_type must be Logic or Object")
+        if len(self.position) != 3 or any(not isinstance(value, (int, float)) or value != value or abs(value) > 1e7 for value in self.position):
+            raise ValueError("mission entity position must contain three finite scalars")
+
+
+@dataclass(frozen=True)
+class MissionSync:
+    """A typed Eden Sync connection between two named mission entities."""
+
+    source: str
+    target: str
+
+    def __post_init__(self) -> None:
+        if not self.source or not self.target or self.source == self.target:
+            raise ValueError("mission sync requires two distinct named entities")
+
+
+@dataclass(frozen=True)
 class Scenario:
     """A mod-provided, in-mission scenario consumed by a Tribunal runner."""
     identifier: str
@@ -114,6 +146,22 @@ class Scenario:
     client_expected_by_identity: Mapping[str, frozenset[str]] = field(default_factory=dict)
     client_sqf_by_identity: Mapping[str, str] = field(default_factory=dict)
     review: ScenarioReview | None = None
+    mission_entities: tuple[MissionEntity, ...] = ()
+    mission_syncs: tuple[MissionSync, ...] = ()
+
+    def __post_init__(self) -> None:
+        names = [entity.name for entity in self.mission_entities]
+        if len(set(names)) != len(names):
+            raise ValueError("scenario mission entity names must be unique")
+        known = set(names)
+        links = set()
+        for sync in self.mission_syncs:
+            if sync.source not in known or sync.target not in known:
+                raise ValueError("mission sync must reference named scenario entities")
+            key = (sync.source, sync.target)
+            if key in links:
+                raise ValueError("duplicate mission sync")
+            links.add(key)
 
     def expected_for(self, identity: str) -> frozenset[str]:
         """Return identity-specific assertions, retaining client-a compatibility."""

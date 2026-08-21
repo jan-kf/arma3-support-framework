@@ -23,6 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from tribunal.assertions.protocol import validate_origin
+from tribunal.mission.entities import render_typed_entities
 from tribunal.mission.projectiles import direct_fixture_sqf
 from tribunal.discovery import discover
 from tribunal.reporting.evidence import EvidenceAttachment, attach_evidence
@@ -809,13 +810,31 @@ def write_tier_mission(destination: Path, token: str, plan: TestPlan, *, live: b
             raise RuntimeError("scenario player_spawn must contain exactly x,y,z")
         player_position = parts
     player_x, player_y, player_z = player_position
+    selected_scenarios = [ALL_SCENARIOS[item] for item in sorted(plan.selected) if item in ALL_SCENARIOS]
+    mission_entities = tuple(entity for scenario in selected_scenarios for entity in scenario.mission_entities)
+    mission_syncs = tuple(sync for scenario in selected_scenarios for sync in scenario.mission_syncs)
+    entity_names = [entity.name for entity in mission_entities]
+    if len(set(entity_names)) != len(entity_names):
+        raise RuntimeError("selected scenarios contain duplicate mission entity names")
     vehicle_entity = ""
-    addons = '"A3_Characters_F"'
-    metadata = 'items=1; class Item0 { className="A3_Characters_F"; name="Characters"; author="Bohemia Interactive"; };'
+    base_entity_count = 1
+    addon_rows = [("A3_Characters_F", "Characters", "Bohemia Interactive")]
     if plan.gameplay:
-        addons += ',"A3_Soft_F"'
-        metadata = 'items=2; class Item0 { className="A3_Characters_F"; name="Characters"; author="Bohemia Interactive"; }; class Item1 { className="A3_Soft_F"; name="Soft Vehicles"; author="Bohemia Interactive"; };'
-        vehicle_entity = f''' class Item1 {{ dataType="Object"; class PositionInfo {{ position[]={{ {position_x + 8},16,2778 }}; }}; side="Empty"; flags=7; class Attributes {{ name="PONTIFEX_TIER_vehicle"; }}; id=2; type="C_Offroad_01_F"; }};'''
+        addon_rows.append(("A3_Soft_F", "Soft Vehicles", "Bohemia Interactive"))
+        base_entity_count = 2
+        vehicle_entity = f""" class Item1 {{ dataType="Object"; class PositionInfo {{ position[]={{ {position_x + 8},16,2778 }}; }}; side="Empty"; flags=7; class Attributes {{ name="PONTIFEX_TIER_vehicle"; }}; id=2; type="C_Offroad_01_F"; }};"""
+    for entity in mission_entities:
+        if entity.addon not in {row[0] for row in addon_rows}:
+            addon_rows.append((entity.addon, entity.addon, "Tribunal fixture"))
+    addons = ",".join("\"{}\"".format(addon) for addon, _, _ in addon_rows)
+    metadata_items = " ".join(
+        f"class Item{index} {{ className=\"{addon}\"; name=\"{name}\"; author=\"{author}\"; }};"
+        for index, (addon, name, author) in enumerate(addon_rows)
+    )
+    metadata = f"items={len(addon_rows)}; {metadata_items}"
+    fixture_entities, fixture_connections = render_typed_entities(
+        mission_entities, mission_syncs, first_item=base_entity_count
+    )
     mission_sqm = f'''version=54;
 binarizationWanted=0;
 sourceName="Pontifex{plan.name.title()}_{token}";
@@ -824,9 +843,9 @@ class AddonsMetaData {{ class List {{ {metadata} }}; }};
 randomSeed={int(token[-8:], 16)};
 class Mission {{
  class Intel {{ year=2035; month=7; day=6; hour=12; minute=0; startWeather=0; forecastWeather=0; }};
- class Entities {{ items={2 if plan.gameplay else 1};
-  class Item0 {{ dataType="Group"; side="West"; class Entities {{ items=1; class Item0 {{ dataType="Object"; class PositionInfo {{ position[]={{ {player_x},{player_y},{player_z} }}; }}; side="West"; flags=7; class Attributes {{ isPlayer=1; }}; id=1; type="B_Soldier_A_F"; }}; }}; class Attributes {{}}; id=0; }};{vehicle_entity}
- }};
+ class Entities {{ items={base_entity_count + len(mission_entities)};
+  class Item0 {{ dataType="Group"; side="West"; class Entities {{ items=1; class Item0 {{ dataType="Object"; class PositionInfo {{ position[]={{ {player_x},{player_y},{player_z} }}; }}; side="West"; flags=7; class Attributes {{ isPlayer=1; }}; id=1; type="B_Soldier_A_F"; }}; }}; class Attributes {{}}; id=0; }};{vehicle_entity}{fixture_entities}
+ }};{fixture_connections}
 }};
 '''
     requested_respawn = {
