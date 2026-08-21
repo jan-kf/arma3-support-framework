@@ -1,6 +1,8 @@
 #include "..\..\ui\idc.hpp"
 
 YFU_fabricatorGetItems = {
+    private _catalogue = missionNamespace getVariable ["YFU_VIRTUAL_STORAGE_OBJECTS", []];
+    if (_catalogue isNotEqualTo []) exitWith {+_catalogue};
     private _virtualStorage = missionNamespace getVariable ["YOSHI_VIRTUAL_STORAGE", objNull];
     if (isNull _virtualStorage) exitWith {[]};
     synchronizedObjects _virtualStorage

@@ -246,9 +246,11 @@ class FabricatorLocalInventoryTests(unittest.TestCase):
     def test_the_module_attribute_is_published_by_the_module_setter(self) -> None:
         setters = read(SETTERS)
         self.assertIn(
-            'YOSHI_FABRICATOR_LOCAL_INVENTORY = _logic getVariable ["Fabricator_Module_EnableLocalArsenal", true];',
+            '_logic getVariable ["Fabricator_Module_EnableLocalArsenal", true]',
             setters,
         )
+        self.assertIn('_inventoryValues pushBackUnique (_row # 2)', setters)
+        self.assertIn('(count _inventoryValues) isEqualTo 1', setters)
         self.assertIn('publicVariable "YOSHI_FABRICATOR_LOCAL_INVENTORY";', setters)
 
     def test_the_virtual_inventory_action_is_gated_by_that_attribute(self) -> None:

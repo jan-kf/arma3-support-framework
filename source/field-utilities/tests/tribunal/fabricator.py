@@ -560,7 +560,8 @@ private _farOk = (_far # 3)
 ["fabricator.control.outOfRange", _farOk, format ["result=%1|censusBefore=%2|censusAfter=%3|farDist=%4", _farResult, _far # 0, _far # 1, _scenarioPlayer distance _stationFar]] call _assert;
 
 // Phase 6: with no Virtual Storage registered there is no catalogue to order from.
-missionNamespace setVariable ["YOSHI_VIRTUAL_STORAGE", objNull, true];
+private _registeredCatalogue = +(localNamespace getVariable ["YFU_MODULE_CATALOGUE", []]);
+localNamespace setVariable ["YFU_MODULE_CATALOGUE", []];
 uiSleep 0.5;
 private _noStorage = ["noStorage", 90] call TRIBUNAL_FAB_fnc_runPhase;
 private _noStorageReport = _noStorage # 2;
@@ -570,7 +571,7 @@ private _noStorageOk = (_noStorage # 3)
     && {(_noStorageResult param [2, ""]) isEqualTo "no-storage"}
     && {(_noStorage # 1) isEqualTo (_noStorage # 0)};
 ["fabricator.control.noStorage", _noStorageOk, format ["result=%1|censusBefore=%2|censusAfter=%3", _noStorageResult, _noStorage # 0, _noStorage # 1]] call _assert;
-missionNamespace setVariable ["YOSHI_VIRTUAL_STORAGE", _storageLogic, true];
+localNamespace setVariable ["YFU_MODULE_CATALOGUE", _registeredCatalogue];
 
 // A transaction this client does not own, seeded server-side so the discard
 // control has something real to fail to destroy.
@@ -782,6 +783,9 @@ private _packed = [];
 } forEach ((call TRIBUNAL_FAB_fnc_census) # 0);
 {deleteVehicle _x;} forEach [_storageLogic, _fabricatorLogic];
 deleteGroup _logicGroup;
+localNamespace setVariable ["YFU_MODULE_STORAGE_RECORDS", createHashMap];
+localNamespace setVariable ["YFU_MODULE_FABRICATOR_RECORDS", createHashMap];
+call YFU_fnc_rebuildModuleRegistration;
 missionNamespace setVariable ["YOSHI_VIRTUAL_STORAGE", nil, true];
 missionNamespace setVariable ["YOSHI_FABRICATOR", nil, true];
 missionNamespace setVariable ["TRIBUNAL_FAB_FIXTURE", nil, true];

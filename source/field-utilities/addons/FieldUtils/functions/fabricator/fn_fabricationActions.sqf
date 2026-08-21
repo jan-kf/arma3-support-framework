@@ -7,11 +7,14 @@ Amen.
 */
 
 YFU_registerFabricatorMenuActions = {
-	private _fabricatorConfigured = !(isNil "YOSHI_FABRICATOR");
+	private _syncedFabricatorObjects = missionNamespace getVariable ["YFU_FABRICATOR_STATIONS", []];
+	private _fabricatorConfigured = _syncedFabricatorObjects isNotEqualTo [] || {!(isNil "YOSHI_FABRICATOR")};
 	if (!_fabricatorConfigured) exitWith {};
 
 	private _registered = uiNamespace getVariable ["YFU_registered_fabricator_actions", []];
-	private _syncedFabricatorObjects = synchronizedObjects YOSHI_FABRICATOR;
+	if (_syncedFabricatorObjects isEqualTo [] && {!(isNil "YOSHI_FABRICATOR")}) then {
+		_syncedFabricatorObjects = synchronizedObjects YOSHI_FABRICATOR;
+	};
 	{
 		private _fabricatorObject = _x;
 		private _fabricatorId = netId _fabricatorObject;
@@ -63,9 +66,12 @@ YFU_initVirtualInventoryActions = {
 			// gates this. It is the escape hatch for stock a mission maker forgot
 			// to synchronize, so it is deliberately optional per mission.
 			private _inventoryEnabled = missionNamespace getVariable ["YOSHI_FABRICATOR_LOCAL_INVENTORY", true];
-			private _fabricatorConfigured = !(isNil "YOSHI_FABRICATOR") && {_inventoryEnabled};
+			private _syncedFabricatorObjects = missionNamespace getVariable ["YFU_FABRICATOR_STATIONS", []];
+			private _fabricatorConfigured = (_syncedFabricatorObjects isNotEqualTo [] || {!(isNil "YOSHI_FABRICATOR")}) && {_inventoryEnabled};
 			if (_fabricatorConfigured) then {
-				private _syncedFabricatorObjects = synchronizedObjects YOSHI_FABRICATOR;
+				if (_syncedFabricatorObjects isEqualTo [] && {!(isNil "YOSHI_FABRICATOR")}) then {
+					_syncedFabricatorObjects = synchronizedObjects YOSHI_FABRICATOR;
+				};
 				{
 					if (_target distance _x < 20) exitWith {
 						_isNearFabricator = true;

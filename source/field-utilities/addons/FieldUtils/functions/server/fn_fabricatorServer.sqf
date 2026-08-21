@@ -155,12 +155,18 @@ YFU_fnc_fabricatorRefuse = {
 
 // The catalogue is a template source: fabricating never consumes it.
 YFU_fnc_fabricatorCatalogue = {
+	if (isServer) exitWith {+(localNamespace getVariable ["YFU_MODULE_CATALOGUE", []])};
+	private _mirror = missionNamespace getVariable ["YFU_VIRTUAL_STORAGE_OBJECTS", []];
+	if (_mirror isNotEqualTo []) exitWith {+_mirror};
 	private _storage = missionNamespace getVariable ["YOSHI_VIRTUAL_STORAGE", objNull];
 	if (isNull _storage) exitWith {[]};
 	synchronizedObjects _storage
 };
 
 YFU_fnc_fabricatorStations = {
+	if (isServer) exitWith {+(localNamespace getVariable ["YFU_MODULE_STATIONS", []])};
+	private _mirror = missionNamespace getVariable ["YFU_FABRICATOR_STATIONS", []];
+	if (_mirror isNotEqualTo []) exitWith {+_mirror};
 	private _logic = missionNamespace getVariable ["YOSHI_FABRICATOR", objNull];
 	if (isNull _logic) exitWith {[]};
 	synchronizedObjects _logic
