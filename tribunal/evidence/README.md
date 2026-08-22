@@ -68,8 +68,12 @@ publication status `corrected`. Consumers retain both records.
 The normal multiplayer terminal reporter emits `evidence-package.v1.json` next
 to `manifest.json` and `results.json`. Generic emission faithfully types legacy
 assertion outcomes but does not invent proposition evaluations or causal arms.
-Feature scenarios may enrich those fields when their test definition supplies
-structured scientific meaning.
+Feature scenarios enrich those fields by declaring `Scenario.evidence_contract`.
+The reporter publishes those semantics only when the run completed with literal
+PASS and exactly that one scenario was selected. Every declared arm assertion
+must resolve to a real passing result; missing names fail closed. Failed,
+cancelled, timed-out, aggregate, and semantics-free runs remain generic and
+cannot publish the feature's propositions or causal relationships.
 
 `tools/convert_accepted_evidence_v1.py` is the one-time migration for the four
 accepted APS, CBR, Fabricator, and Vigil runs. Its checked-in packages are in

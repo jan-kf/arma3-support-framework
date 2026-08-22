@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
-from typing import Mapping
+from typing import Any, Mapping
 
 
 TEST_TYPES = frozenset({"specification", "characterization", "tooling"})
@@ -148,6 +148,7 @@ class Scenario:
     review: ScenarioReview | None = None
     mission_entities: tuple[MissionEntity, ...] = ()
     mission_syncs: tuple[MissionSync, ...] = ()
+    evidence_contract: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         names = [entity.name for entity in self.mission_entities]
@@ -162,6 +163,14 @@ class Scenario:
             if key in links:
                 raise ValueError("duplicate mission sync")
             links.add(key)
+        if self.evidence_contract:
+            required = {"scenario", "knowledge_subject", "arms", "causal_relationships", "propositions"}
+            missing = required - set(self.evidence_contract)
+            if missing:
+                raise ValueError(f"scenario evidence contract missing: {', '.join(sorted(missing))}")
+            arm_keys = [arm.get("key") for arm in self.evidence_contract["arms"]]
+            if any(not key for key in arm_keys) or len(arm_keys) != len(set(arm_keys)):
+                raise ValueError("scenario evidence arms require unique keys")
 
     def expected_for(self, identity: str) -> frozenset[str]:
         """Return identity-specific assertions, retaining client-a compatibility."""

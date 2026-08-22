@@ -1671,6 +1671,11 @@ def run_multiplayer(
             "single_boot_batch": plan.name == "integration",
             "live_command_channel": live,
             "project_mods": plan.project_mods,
+            "evidence_contracts": {
+                scenario.identifier: scenario.evidence_contract
+                for scenario in (ALL_SCENARIOS[item] for item in sorted(plan.selected) if item in ALL_SCENARIOS)
+                if scenario.evidence_contract
+            },
         }
     if manual:
         manifest["manual_access"] = {

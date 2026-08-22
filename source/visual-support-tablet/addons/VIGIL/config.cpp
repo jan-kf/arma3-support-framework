@@ -83,12 +83,15 @@ class CfgFunctions {
         };
         class TaskFixedWing {
             file = "\VIGIL\functions\task_fixedWing";
+            class fwModuleRegistry { preInit = 1; };
             class initFixedWingFunctions { preInit = 1; };
             class fixedWing { preInit = 1; };
             class fwModuleAsset {};
             class fwModuleInfil {};
             class fwModuleExfil {};
             class fwModuleZeusAdd {};
+            class fwModuleZeusClaimServer {};
+            class fwModuleZeusResult {};
         };
         class Tablet {
             file = "\VIGIL\functions\tablet";

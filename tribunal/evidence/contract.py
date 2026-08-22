@@ -221,15 +221,17 @@ def build_execution_package(run_dir: Path, manifest: dict[str, Any], result: dic
     no proposition evaluation is invented here.
     """
     run_id = result["run_id"]
-    scenario_names = (manifest.get("test_plan") or {}).get("scenarios") or [f"run-family:{manifest.get('mode', 'unknown')}"]
+    test_plan = manifest.get("test_plan") or {}
+    scenario_names = test_plan.get("scenarios") or [f"run-family:{manifest.get('mode', 'unknown')}"]
+    evidence_contracts = test_plan.get("evidence_contracts") or {}
     scenarios = [
-        {
+        evidence_contracts.get(name, {}).get("scenario", {
             "id": name,
             "version": 1,
             "feature_family": name.split(".")[0].split("-")[0],
             "name": name,
             "definition": {"kind": "runner-selection", "reference": "manifest.json#test_plan"},
-        }
+        })
         for name in scenario_names
     ]
     default_scenario = scenarios[0]["id"]
@@ -275,6 +277,54 @@ def build_execution_package(run_dir: Path, manifest: dict[str, Any], result: dic
             "artifact_ids": [result_artifact] if result_artifact else [],
         })
     completed = result.get("reason") in {"complete", "assertion_failure"} and result.get("status") in {"PASS", "FAIL"}
+    experimental_arms: list[dict[str, Any]] = []
+    causal_relationships: list[dict[str, Any]] = []
+    proposition_evaluations: list[dict[str, Any]] = []
+    knowledge_subject = None
+    # Scientific meaning is published only for a literal successful execution
+    # of one scenario that supplied an explicit evidence contract. Failed and
+    # aggregate runs retain the generic assertion record and cannot overclaim.
+    if completed and result.get("status") == "PASS" and len(scenario_names) == 1:
+        semantics = evidence_contracts.get(default_scenario)
+        if semantics:
+            knowledge_subject = semantics["knowledge_subject"]
+            assertion_by_name = {
+                record["name"]: assertions[index]
+                for index, record in enumerate(result.get("assertions", []))
+            }
+            arm_ids: dict[str, str] = {}
+            for arm in semantics["arms"]:
+                arm_id = f"urn:tribunal:arm:{run_id}:{arm['key']}"
+                arm_ids[arm["key"]] = arm_id
+                names = arm.get("assertions", [])
+                observation_ids = [assertion_by_name[name]["observation_ids"][0] for name in names]
+                for name in names:
+                    observations[assertions.index(assertion_by_name[name])]["arm_id"] = arm_id
+                experimental_arms.append({
+                    "id": arm_id, "scenario_id": default_scenario,
+                    "role": arm["role"], "description": arm["description"],
+                    "observation_ids": observation_ids,
+                })
+            for relation in semantics["causal_relationships"]:
+                causal_relationships.append({
+                    "id": f"urn:tribunal:causal-relationship:{run_id}:{relation['key']}",
+                    "relation": relation["relation"],
+                    "source_arm_id": arm_ids[relation["source"]],
+                    "target_arm_id": arm_ids[relation["target"]],
+                    "controlled_dimensions": relation["controlled_dimensions"],
+                })
+            for proposition in semantics["propositions"]:
+                names = proposition["assertions"]
+                selected = [assertion_by_name[name] for name in names]
+                proposition_evaluations.append({
+                    "id": f"urn:tribunal:proposition-evaluation:{run_id}:{proposition['id']}",
+                    "proposition_id": proposition["id"], "text": proposition["text"],
+                    "outcome": proposition.get("outcome", "demonstrated"),
+                    "intended_use": proposition["intended_use"],
+                    "observation_ids": [item["observation_ids"][0] for item in selected],
+                    "assertion_ids": [item["id"] for item in selected],
+                    "rationale": proposition["rationale"],
+                })
     package = {
         "schema": CONTRACT_SCHEMA,
         "package_id": f"urn:tribunal:evidence-package:{run_id}:1",
@@ -314,9 +364,9 @@ def build_execution_package(run_dir: Path, manifest: dict[str, Any], result: dic
         "artifacts": artifacts,
         "observations": observations,
         "assertions": assertions,
-        "experimental_arms": [],
-        "causal_relationships": [],
-        "proposition_evaluations": [],
+        "experimental_arms": experimental_arms,
+        "causal_relationships": causal_relationships,
+        "proposition_evaluations": proposition_evaluations,
         "publication": {
             "status": "accepted" if completed else "candidate",
             "published_at": result["finished_at"],
@@ -324,6 +374,10 @@ def build_execution_package(run_dir: Path, manifest: dict[str, Any], result: dic
             "synthetic": False,
         },
     }
+    if knowledge_subject:
+        package["knowledge_subject"] = knowledge_subject
+    if completed and result.get("status") == "PASS" and len(scenario_names) == 1 and evidence_contracts.get(default_scenario):
+        package["unresolved"] = evidence_contracts[default_scenario].get("unresolved", [])
     return package
 
 

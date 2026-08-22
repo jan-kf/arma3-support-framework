@@ -97,14 +97,32 @@ def main() -> int:
                 re.compile(re.escape(args.marker_prefix) + rf"\|PLACEMENT_READY\|{index}\|(\[[^\r\n]+\])"),
                 deadline,
             )
-            point = json.loads(match.group(1))
-            if len(point) != 2 or not all(0 <= float(value) <= 1 for value in point):
-                raise RuntimeError(f"invalid normalized placement point: {point}")
-            x = round(float(point[0]) * (rfb.width - 1))
-            y = round(float(point[1]) * (rfb.height - 1))
-            rfb.pointer_move(x, y)
-            time.sleep(0.2)
-            wait_marker(re.compile(re.escape(args.marker_prefix) + rf"\|HOVER_READY\|{index}\|"), deadline)
+            payload = json.loads(match.group(1))
+            points = [payload] if len(payload) == 2 and all(isinstance(value, (int, float)) for value in payload) else payload
+            if not 1 <= len(points) <= 16 or any(len(point) != 2 or not all(0 <= float(value) <= 1 for value in point) for point in points):
+                raise RuntimeError(f"invalid normalized placement candidates: {payload}")
+            hover_pattern = re.compile(re.escape(args.marker_prefix) + rf"\|HOVER_READY\|{index}\|")
+            selected = None
+            while selected is None and time.monotonic() < deadline:
+                for point in points:
+                    x = round(float(point[0]) * (rfb.width - 1))
+                    y = round(float(point[1]) * (rfb.height - 1))
+                    # Camera movement does not necessarily refresh
+                    # curatorMouseOver when the requested point is already
+                    # under the pointer. Force a real transition before each
+                    # independently derived candidate.
+                    rfb.pointer_move(1, 1)
+                    time.sleep(0.1)
+                    rfb.pointer_move(x, y)
+                    try:
+                        wait_marker(hover_pattern, min(deadline, time.monotonic() + 0.5))
+                        selected = [point, x, y]
+                        break
+                    except RuntimeError:
+                        continue
+            if selected is None:
+                raise RuntimeError(f"none of the placement candidates resolved the asserted hover target: {points}")
+            point, x, y = selected
             rfb.pointer_click(x, y)
             wait_marker(re.compile(re.escape(args.marker_prefix) + rf"\|PLACED\|{index}\|"), deadline)
             # Curator hover state can remain latched to the object used by the
@@ -115,7 +133,9 @@ def main() -> int:
                 "phase": index,
                 "type": "pointer-click",
                 "normalized_point": point,
+                "normalized_candidates": points,
                 "pixel_point": [x, y],
+                "pointer_moved_in": True,
                 "pointer_moved_away": True,
                 "state_driven": True,
             })

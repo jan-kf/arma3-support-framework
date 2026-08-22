@@ -371,10 +371,12 @@ Utilities for fixed-wing airdrop.
 
 ### 3.7 Fixed-wing shared lifecycle
 
-* **Editor/Zeus registration** is **REVIEWED / REFINE BEFORE PERMANENT
-  COVERAGE**. Direct registry/default APIs are covered, but authentic typed
-  module dispatch, Sync/position input, duplicate precedence, curator identity,
-  replay/result, and own-logic cleanup are unproven and unguarded. See
+* **Editor/Zeus registration** is **REFINED; ACCEPTED / COVERED**. Authentic
+  typed modules aggregate exact synchronized planes and nearest ingress/egress
+  points; one assigned curator can add one exact plane with placer-only result,
+  replay/wrong-class rejection, replication, and full state cleanup. Mixed Sync,
+  point removal/reconfiguration, alternate large-plane curator acquisition, and
+  client-N isolation remain bounded follow-ups. See
   [`vigil-fixed-wing-module-review.md`](vigil-fixed-wing-module-review.md).
 * **Snapshot serialization** retains class, side, crew, fuel, damage, pylons,
   ammunition, role, and points while deleting the source and publishing a
@@ -667,7 +669,8 @@ airdrop. General fabrication is outside the contract.
 ### 5.4 Eden/Zeus and CBA configuration
 
 * APS Eden activation is **REFINED; ACCEPTED / COVERED** through authentic typed mission entities and native Sync links. APS Zeus activation is also **REFINED; ACCEPTED / COVERED** for one authentic assigned-curator placement and exact causal activation. CBR Eden/Zeus activation is likewise **REFINED; ACCEPTED / COVERED** for authentic typed dispatch and an assigned-curator global toggle. Field Utilities Virtual Storage/Fabricator Eden activation is now **REFINED; ACCEPTED / COVERED** for multiple typed modules, aggregated Sync provenance, and server-private authority. Vigil whitelist Eden aggregation and one authentic Zeus add are **REFINED; PARTIALLY COVERED**; authentic Zeus removal remains **NEEDS EXPERIMENTATION**. Field Utilities exposes no
-  Zeus tool. Vigil fixed-wing Eden/Zeus activation is also reviewed/REFINE in
+  Zeus tool. Vigil fixed-wing Eden/Zeus activation is **REFINED; ACCEPTED /
+  COVERED** in
   [`vigil-fixed-wing-module-review.md`](vigil-fixed-wing-module-review.md).
 * Cross-addon CBA setting declarations are **REFINED; ACCEPTED / COVERED**
   for 13 exact unique keys, types, defaults/bounds, global/local scope, live
@@ -713,6 +716,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-cas` | rotary CAS filtering, attack, timer, controls, RTB |
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
+| `vigil-fixed-wing-modules` | authentic typed Eden aggregation, nearest points, assigned-curator add, authority/replication/cleanup |
 | `fieldutils-fabricator` | server-authoritative atomic orders, catalogue fidelity, refusals, cleanup |
 | `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
 
@@ -758,12 +762,8 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-1. **Vigil fixed-wing Eden/Zeus activation.** Reuse only the typed-module and
-   authentic-curator mechanics; keep fixed-wing registry, position, role and
-   lifecycle semantics in Vigil.
-
-Next consider Vigil fixed-wing Eden/Zeus activation, the reviewed-but-uncovered
-CORDIS decision matrix, remaining suite editor/Zeus modules, and
+Next consider the reviewed-but-uncovered CORDIS decision matrix, remaining
+suite editor/Zeus modules, and
 the helicopter stabilizer. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product

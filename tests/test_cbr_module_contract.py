@@ -73,8 +73,12 @@ class CbrModuleContractTests(unittest.TestCase):
         self.assertIn("--marker-prefix", driver)
         self.assertIn("re.escape(args.marker_prefix)", driver)
         self.assertIn("max(reports, key=lambda path: path.stat().st_mtime_ns)", driver)
-        self.assertIn('rfb.pointer_move(1, 1)', driver)
+        self.assertEqual(driver.count('rfb.pointer_move(1, 1)'), 2)
+        self.assertIn('"pointer_moved_in": True', driver)
         self.assertIn('"pointer_moved_away": True', driver)
+        self.assertIn("not 1 <= len(points) <= 16", driver)
+        self.assertIn("wait_marker(hover_pattern", driver)
+        self.assertIn('"normalized_candidates": points', driver)
         self.assertNotIn('for path in sorted(profile.glob("*.rpt"))', driver)
 
 

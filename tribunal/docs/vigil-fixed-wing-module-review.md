@@ -7,13 +7,13 @@ and the curator-visible Add Fixed Wing Asset module. It does not reopen the
 accepted registry API, snapshot/reconstruction, deployment, strike, logistics,
 or RTB physical behavior.
 
-**Classification: `REFINE BEFORE PERMANENT COVERAGE` (reviewed; not covered).**
+**Classification: `KEEP AS-IS AND SPEC-TEST`; REFINED, ACCEPTED / COVERED.**
 
-The configured module handlers are reachable but authentic engine dispatch is
-unmeasured. They rely on `isGlobal=0` plus a server-only early exit, validate no
-exact module class/locality/requester, and return no correlated result. The
-curator handler can register/despawn a caller-selected plane and delete the
-caller-supplied logic without curator authorization.
+The refined handlers preserve the accepted fixed-wing registry/lifecycle while
+adding exact typed server authority, aggregated mission points, authenticated
+curator claims, replay protection, placer-only results, and bounded audit state.
+Fresh autonomous proof covers those boundaries without reopening strike or
+logistics combat behavior.
 
 ## Candidate stable contract
 
@@ -30,17 +30,17 @@ competing modules do not delete unrelated objects or partially rewrite policy.
    assets; ingress and egress modules define deployment/RTB points; an authorized
    curator can add a plane during play. These entries should feed the accepted
    fixed-wing lifecycle, not create alternate registry semantics.
-2. **What does it do now?** The asset handler ignores non-planes, registers each
-   valid synchronized plane through `YSF_fwRegisterAsset`, and leaves its logic.
-   Infil/exfil handlers publish module ASL positions, forcing altitude to 1200 m
-   below 200 m, and apply them to existing registry rows. Zeus chooses first
-   synchronized or attached target, registers it, notifies broadly, and deletes
-   its logic.
-3. **Which machines own it?** All handlers simply exit off-server. Whether
-   native `isGlobal=0` dispatch executes them on server is unmeasured. No exact
-   class, logic locality/owner, `remoteExecutedOwner`, assigned-curator,
-   operation, or replay validation exists. Registry mutation itself is correctly
-   server-owned once the tail API is reached.
+2. **What does it do now?** Exact typed asset modules register valid synchronized
+   planes and remain in the mission. Infil/exfil modules retain all positions;
+   deployment chooses the closest ingress to the requester and RTB chooses the
+   closest egress to the aircraft. Zeus accepts exactly one attached/synchronized
+   plane, registers it once, replies only to its placer, then deletes its own
+   disposable logic.
+3. **Which machines own it?** Native `isGlobal=0` Eden dispatch was observed once
+   per module on the server (`local=true`, owner 2, `remoteExecutedOwner=0`). A
+   curator-created logic is client-owned; server mutation requires a correlated
+   `CuratorObjectPlaced` claim whose remote owner owns the current player and
+   whose curator equals `getAssignedCuratorLogic` for that player.
 4. **Which mechanics are generic?** Typed mission Logic entities, native Sync
    links, configured-function receipts, module position/attributes, real curator
    placement, execution locality, and own-logic cleanup can be Tribunal
@@ -49,34 +49,37 @@ competing modules do not delete unrelated objects or partially rewrite policy.
    multiple asset/default modules, ingress/egress altitude semantics, default
    precedence/reconfiguration, authorized curator population, feedback audience,
    and disposable lifecycle are Vigil policy.
-6. **Are unusual engine requirements proven?** No run establishes native module
-   execution machine/count, synchronization visibility, curator attachment
-   identity, or equivalence of programmatic and UI curator placement. The 1200 m
-   floor/default and equal module priorities are not characterized requirements.
-7. **What is fragile or incomplete?** Multiple ingress/exfil modules are
-   last-writer/order dependent. Mixed valid/invalid asset sync partially
-   succeeds silently. Zeus first-target selection is ambiguous and unguarded;
-   feedback defaults broadly; its class does not state a disposal policy while
-   the handler deletes the logic. Direct remote invocation can reach server
-   handlers with arbitrary network-visible logic.
+6. **Are unusual engine requirements proven?** Yes for the accepted slice:
+   typed Sync is visible on the server, client-owned curator logic attaches to
+   the exact plane, and a real display-312 selection plus authenticated RFB click
+   reaches the configured handler. A large A-10's curator glyph was not located
+   reliably from model origin/physical geometry; a smaller valid civil plane
+   resolved through `curatorMouseOver`. That is fixture knowledge, not a product
+   restriction. The inherited below-200 m to 1200 m altitude floor is not a
+   separately accepted product promise.
+7. **What is fragile or incomplete?** Mixed valid/invalid Sync policy is not
+   specified beyond filtering valid planes. Multi-client audience isolation is
+   structurally owner-targeted but awaits client-N infrastructure. The 1200 m
+   floor and runtime reconfiguration/removal of retained point modules remain
+   uncharacterized.
 8. **Is a better mechanism available?** Keep the native module framework and
    accepted server registry/default APIs. Measure genuine dispatch before adding
    any transport. If curator placement originates client-side, use an
    authenticated exact operation rather than a generic public handler.
-9. **What is the stable contract and causal proof?** A fresh mission with real
-   typed modules must record exact handler identity/locality and independently
-   prove the exact synced plane became the accepted registry row while an
-   unsynced equal control did not. Exact module positions must produce the
-   independently observed deployment/egress defaults. A real curator placement
-   adds one exact plane; forged/invalid/replay controls reach rejection and
-   preserve unrelated objects/registry.
+9. **What is the stable contract and causal proof?** `vigil-fixed-wing-modules`
+   records exact configured dispatch/locality, derives registry IDs from
+   pre-deletion Sync identities, preserves an unsynchronized control, observes
+   nearest ingress/egress at consequential lifecycle boundaries, performs one
+   real curator placement, and delivers replay/wrong-class controls. Exact
+   registry, logic, target, operation, requester, result, replication, and
+   cleanup identities must all agree.
 10. **Which details remain free?** Function names, priority, registry schema,
     snapshot internals, notification prose, telemetry schema, altitude
     implementation, fixture coordinates, and exact transport mechanism.
-11. **Which mechanisms deserve characterization?** Typed Eden dispatch and Sync
-    first; then one real curator placement/attachment. Test multiple/default
-    modules only after precedence policy. One bounded VNC characterization is
-    justified only if native curator equivalence cannot be established by data.
+11. **Which mechanisms deserve characterization?** The accepted scenario covers
+    typed Eden dispatch/Sync, multiple nearest points, and one genuine curator
+    placement. Mixed Sync, point removal/reconfiguration, alternate large-plane
+    curator acquisition, and client-N isolation remain bounded follow-ups.
 12. **What belongs in Tribunal?** Reuse the same narrow typed-Logic/SQM-Sync and
     dispatch observer required by APS/CBR/Field Utilities modules. Keep module
     class, plane eligibility, default points, and registry outcomes in Vigil.
@@ -96,15 +99,21 @@ not module activation. Their evidence remains valid and can be reused as a
 bounded downstream oracle rather than rerunning the entire strike contract for
 every module case.
 
-## Decisions and continuation
+## Acceptance evidence and continuation
 
-Decide: one/multiple asset modules; atomic versus partial mixed-sync registration;
-one ingress/exfil module and duplicate precedence; supported altitude semantics;
-authorized curator scope; exactly-one Zeus selection; feedback audience; and
-Zeus logic disposal/replay policy.
+Fresh autonomous run `20260822T201311Z-cb69f3fa` proved all 14 product
+assertions (server 9, client 5; plus four smoke assertions per origin), emitted
+a valid Evidence Contract v1 package, and completed all container/network/state
+cleanup. Two asset, two ingress, and two egress modules
+dispatched natively. Registry identities `FW_2:17`/`FW_2:18` matched independent
+Sync identities, nearest points were `[4650,2800,1200]` and
+`[4750,3000,1200]`, and authentic curator operation
+`fixed-wing-4-26396-694314` attached logic `4:9` to plane `2:19`, producing
+`FW_2:19`. Delivered replay and wrong-class requests returned `duplicate` and
+`predicate_logic_class`; no fourth registry row appeared. Client-a resolved the
+same three authoritative rows and cleanup empties both private and public state.
 
-Then implement/reuse the typed module fixture, run typed module/no-module A/B,
-record actual execution/locality/Sync/position values, and refine only from that
-evidence. Characterize one real curator placement and prove authorized add plus
-invalid, unauthorized, unrelated-logic, and replay rejection. Preserve the
-accepted fixed-wing registry and physical lifecycle unchanged.
+Keep mixed-Sync policy, point removal/reconfiguration, inherited altitude-floor
+semantics, alternate large-plane curator acquisition, and client-B/JIP as
+explicit follow-ups. They do not weaken the accepted exact-valid, one-client
+contract above.

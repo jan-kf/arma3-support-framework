@@ -158,7 +158,12 @@ YSF_fwPublicEntryToMap = {
 };
 
 YSF_fwDefaultPos = {
-    params ["_kind"]; // "infil" | "exfil"
+    params ["_kind", ["_reference", []]]; // "infil" | "exfil"
+    private _selected = [];
+    if (isServer && {!isNil "YSF_fnc_fwSelectMissionPoint"}) then {
+        _selected = [_kind, _reference] call YSF_fnc_fwSelectMissionPoint;
+    };
+    if ((count _selected) >= 3) exitWith {_selected};
     private _var = if (_kind isEqualTo "infil") then {"YSF_FW_DEFAULT_INFIL_POS"} else {"YSF_FW_DEFAULT_EXFIL_POS"};
     private _pos = missionNamespace getVariable [_var, []];
     if ((count _pos) < 3) then {
@@ -601,8 +606,10 @@ YSF_fwRegisterAsset = {
         _id = format ["FW_%1", netId _vehicle];
     };
 
-    if ((count _infilPos) < 3) then {_infilPos = ["infil"] call YSF_fwDefaultPos;};
-    if ((count _exfilPos) < 3) then {_exfilPos = ["exfil"] call YSF_fwDefaultPos;};
+    private _dynamicInfil = (count _infilPos) < 3;
+    private _dynamicExfil = (count _exfilPos) < 3;
+    if (_dynamicInfil) then {_infilPos = [];};
+    if (_dynamicExfil) then {_exfilPos = [];};
 
     private _entry = createHashMapFromArray [
         ["id", _id],
@@ -614,6 +621,8 @@ YSF_fwRegisterAsset = {
         ["side", side _vehicle],
         ["infilPosASL", _infilPos],
         ["exfilPosASL", _exfilPos],
+        ["infilUsesMissionPoints", _dynamicInfil],
+        ["exfilUsesMissionPoints", _dynamicExfil],
         ["heading", getDir _vehicle],
         ["spawnedVeh", objNull],
         ["lastUpdate", serverTime]
@@ -777,7 +786,12 @@ YSF_fwDeployAsset = {
         _entry getOrDefault ["state", ""]
     ];
 
-    private _spawnPos = _entry getOrDefault ["infilPosASL", ["infil"] call YSF_fwDefaultPos];
+    private _spawnTarget = if (!isNull _caller) then {getPosASL _caller} else {["infil"] call YSF_fwDefaultPos};
+    private _spawnPos = if (_entry getOrDefault ["infilUsesMissionPoints", false]) then {
+        ["infil", _spawnTarget] call YSF_fwDefaultPos
+    } else {
+        _entry getOrDefault ["infilPosASL", ["infil", _spawnTarget] call YSF_fwDefaultPos]
+    };
     private _heading = _entry getOrDefault ["heading", 0];
     private _snapshot = _entry getOrDefault ["snapshot", []];
     if (_snapshot isEqualTo []) exitWith {
@@ -792,7 +806,6 @@ YSF_fwDeployAsset = {
         objNull
     };
 
-    private _spawnTarget = if (!isNull _caller) then {getPosASL _caller} else {_spawnPos};
     private _veh = [_spawnPos, _snapshot, _heading, (_spawnPos select 2), _spawnTarget, -1] call YOSHI_PASTE_VEHICLE;
     diag_log format [
         "[YSF][FWDBG] scope=SERVER owner=%1 deploySpawn id=%2 veh=%3 vehNetId=%4 vehOwner=%5 crew=%6 spawnPos=%7 target=%8",
@@ -812,6 +825,7 @@ YSF_fwDeployAsset = {
     _veh setVariable ["YSF_FW_LOITER_CENTER_ASL", _center, false];
 
     _entry set ["spawnedVeh", _veh];
+    _entry set ["lastInfilPosASL", _spawnPos];
     _entry set ["state", YSF_FW_STATE_ON_STATION];
     _entry set ["lastUpdate", serverTime];
 	[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntry;
@@ -1138,8 +1152,14 @@ YSF_fwRtbAsset = {
         true
     };
 
-    private _exfil = _entry getOrDefault ["exfilPosASL", ["exfil"] call YSF_fwDefaultPos];
+    private _exfilReference = getPosASL _vehicle;
+    private _exfil = if (_entry getOrDefault ["exfilUsesMissionPoints", false]) then {
+        ["exfil", _exfilReference] call YSF_fwDefaultPos
+    } else {
+        _entry getOrDefault ["exfilPosASL", ["exfil", _exfilReference] call YSF_fwDefaultPos]
+    };
     _entry set ["state", YSF_FW_STATE_RTB];
+    _entry set ["lastExfilPosASL", _exfil];
     _entry set ["lastUpdate", serverTime];
 	[YSF_FW_REGISTRY_TOKEN, _id, _entry] call YSF_fwSetEntry;
 
