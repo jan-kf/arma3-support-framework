@@ -1,0 +1,537 @@
+{
+  "artifacts": [
+    {
+      "description": "Original Tribunal run manifest",
+      "id": "urn:tribunal:artifact:sha256:d9497c5c58a60674b21811b072dff6082f51b85cf2eb06bf9b505c2513203c4e",
+      "reference": "manifest.json",
+      "sha256": "d9497c5c58a60674b21811b072dff6082f51b85cf2eb06bf9b505c2513203c4e",
+      "type": "run_manifest"
+    },
+    {
+      "description": "Original Tribunal terminal result",
+      "id": "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7",
+      "reference": "results.json",
+      "sha256": "32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7",
+      "type": "assertion_report"
+    },
+    {
+      "description": "Dedicated-server RPT",
+      "id": "urn:tribunal:artifact:sha256:dd590e873de1f41cfb0c2716b5c663a8793fbbf15acfded55778a26f6355617f",
+      "participant_id": "server",
+      "reference": "server/server.rpt",
+      "sha256": "dd590e873de1f41cfb0c2716b5c663a8793fbbf15acfded55778a26f6355617f",
+      "type": "server_log"
+    },
+    {
+      "description": "Player-client RPT",
+      "id": "urn:tribunal:artifact:sha256:9ff78e9f25af977899f6383c1b00c760805b7931ba0a9cc0b70d4b614742d29c",
+      "participant_id": "client-a",
+      "reference": "client-a/client.rpt",
+      "sha256": "9ff78e9f25af977899f6383c1b00c760805b7931ba0a9cc0b70d4b614742d29c",
+      "type": "client_log"
+    },
+    {
+      "description": "Accepted semantic review and false-PASS boundary",
+      "id": "urn:tribunal:artifact:sha256:de64f5c1d809f34bc86dae97638a75f6803d87cf6d6fd694114febee156d4782",
+      "reference": "tribunal/docs/vigil-asset-whitelist-review.md",
+      "sha256": "de64f5c1d809f34bc86dae97638a75f6803d87cf6d6fd694114febee156d4782",
+      "type": "accepted_review"
+    },
+    {
+      "description": "Exact Tribunal scenario definition",
+      "id": "urn:tribunal:artifact:sha256:80a836d98e89daa0fb193d3a05e274aa91f575a96b292b50e6ef2ac3d27798b2",
+      "reference": "source/visual-support-tablet/tests/tribunal/vigil_whitelist_modules.py",
+      "sha256": "80a836d98e89daa0fb193d3a05e274aa91f575a96b292b50e6ef2ac3d27798b2",
+      "type": "scenario_definition"
+    }
+  ],
+  "assertions": [
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:vigil.whitelist.edenAggregate",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.edenAggregate",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:eden-union"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:vigil.whitelist.edenRetained",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.edenRetained",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:eden-union"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:vigil.whitelist.clientEdenSource",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.clientEdenSource",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:eden-union"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:vigil.whitelist.clientReplication",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.clientReplication",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:eden-union"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:vigil.whitelist.zeusTransition1",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.zeusTransition1",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:zeus-add"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:vigil.whitelist.zeusAuthority",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.zeusAuthority",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:zeus-add"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:vigil.whitelist.zeusCleanup",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.zeusCleanup",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:zeus-add"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:vigil.whitelist.idempotence",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.idempotence",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:zeus-add"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:vigil.whitelist.feedbackAndNegatives",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.feedbackAndNegatives",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:zeus-add"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "type": "custom"
+    }
+  ],
+  "causal_relationships": [],
+  "context": {
+    "branch": "stable",
+    "client_build": "24672225",
+    "mission": {
+      "footer_sha1_valid": true,
+      "mission_sha256": "7765aa15299583dcea0b0791b74e0b186aec85a629a86d31e9574c7369f6a797",
+      "pbo": "/mnt/services/pontifex/server/runtime/install/mpmissions/PontifexGameplay_20260821T165814Z_d0a72396.Stratis.pbo",
+      "pbo_sha256": "549a25338351b0c4a12382e6270f99b7f191f4bb177cc9ca15ed9b5c15845b01",
+      "pbo_size": 24397,
+      "plan": "gameplay",
+      "source": "/mnt/services/pontifex/runs/20260821T165814Z-d0a72396/mission/PontifexGameplay_20260821T165814Z_d0a72396.Stratis",
+      "token": "gameplay-20260821T165814Z-d0a72396-943fb4350d41"
+    },
+    "mods": [
+      {
+        "archive": "CBA_A3_v3.18.6.zip",
+        "directory": "@CBA_A3",
+        "id": "cba",
+        "installed": true,
+        "name": "Community Base Addons A3",
+        "path": "/mnt/services/pontifex/server/dependencies/@CBA_A3",
+        "sha256": "80fedfbd9cb57b2393a34c84f80a5268ce8a51b31013976d84232be04c72bf8d",
+        "url": "https://github.com/CBATeam/CBA_A3/releases/download/v3.18.6/CBA_A3_v3.18.6.zip",
+        "version": "3.18.6"
+      },
+      {
+        "archive": "ace3_3.21.0.zip",
+        "directory": "@ace",
+        "id": "ace",
+        "installed": true,
+        "name": "ACE3",
+        "path": "/mnt/services/pontifex/server/dependencies/@ace",
+        "sha256": "48cb7a90e5200b0b313dff05c4b57b828ca56780c03c0e6de07067a28c544acc",
+        "url": "https://github.com/acemod/ACE3/releases/download/v3.21.0/ace3_3.21.0.zip",
+        "version": "3.21.0"
+      },
+      {
+        "archive": "zen_1.15.1.zip",
+        "directory": "@zen",
+        "id": "zen",
+        "installed": true,
+        "name": "Zeus Enhanced",
+        "path": "/mnt/services/pontifex/server/dependencies/@zen",
+        "sha256": "740aa11d1d6c3afa6cd4d8301aac3809bb82a53f9f96621eceba46c1d58f6eea",
+        "url": "https://github.com/zen-mod/ZEN/releases/download/v1.15.1/zen_1.15.1.zip",
+        "version": "1.15.1"
+      }
+    ],
+    "product": "Arma 3",
+    "server_build": "24672274",
+    "server_kind": "dedicated",
+    "session": "multiplayer",
+    "version": "2.22.153995"
+  },
+  "experimental_arms": [
+    {
+      "description": "Multiple retained real Eden modules produced a deterministic server-private deduplicated whitelist union visible to client-a.",
+      "id": "urn:tribunal:experimental-arm:20260821T165814Z-d0a72396:eden-union",
+      "role": "treatment",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation"
+    },
+    {
+      "description": "One authenticated native Zeus placement added the exact target once, returned requester-targeted feedback, rejected replay/negative boundary requests, and cleaned transient logic.",
+      "id": "urn:tribunal:experimental-arm:20260821T165814Z-d0a72396:zeus-add",
+      "role": "treatment",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation"
+    }
+  ],
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "tribunal-canonical-json/v1",
+    "payload_sha256": "6937f5a4d844f22228f08964e0975bb4817d5479439fe32624ea308498700047"
+  },
+  "knowledge_subject": {
+    "aliases": [
+      "Vigil whitelist"
+    ],
+    "biki_context": [
+      "arma:arma-3-cfgremoteexec"
+    ],
+    "key": "pontifex:vigil:asset-whitelist",
+    "kind": "pontifex.feature",
+    "label": "Pontifex Vigil Asset Whitelist"
+  },
+  "migration": {
+    "selection_reason": "Shows a partially covered Vigil feature where one authenticated add is established but removal/repeated placement must remain an open conjecture.",
+    "source_contract": "arma-knowledge.tribunal-curation/v1"
+  },
+  "observations": [
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260821T165814Z-d0a72396:eden-union",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "corroborating_participant_ids": [
+        "server"
+      ],
+      "id": "urn:tribunal:observation:20260821T165814Z-d0a72396:eden-union",
+      "observed_at": "2026-08-21T16:59:37.960278Z",
+      "participant_id": "client-a",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "vigil.whitelist.edenAggregate",
+            "detail": "audit=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "vigil.whitelist.edenRetained",
+            "detail": "modules=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "vigil.whitelist.clientEdenSource",
+            "detail": "source=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "vigil.whitelist.clientReplication",
+            "detail": "result=[",
+            "result": "pass"
+          }
+        ],
+        "role": "OBSERVATION",
+        "summary": "Multiple retained real Eden modules produced a deterministic server-private deduplicated whitelist union visible to client-a."
+      }
+    },
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260821T165814Z-d0a72396:zeus-add",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:32afb03970503b873d32acdbdd612478a5d080fccd8744b2fca9c12df901c1e7"
+      ],
+      "corroborating_participant_ids": [
+        "server"
+      ],
+      "id": "urn:tribunal:observation:20260821T165814Z-d0a72396:zeus-add",
+      "observed_at": "2026-08-21T16:59:37.960278Z",
+      "participant_id": "client-a",
+      "scenario_id": "pontifex.vigil.asset-whitelist.activation",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "vigil.whitelist.zeusTransition1",
+            "detail": "phase=1|toggles=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "vigil.whitelist.zeusAuthority",
+            "detail": "claims=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "vigil.whitelist.zeusCleanup",
+            "detail": "ids=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "vigil.whitelist.idempotence",
+            "detail": "claims=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "vigil.whitelist.feedbackAndNegatives",
+            "detail": "results=[[",
+            "result": "pass"
+          }
+        ],
+        "role": "CAUSAL_CONTROL",
+        "summary": "One authenticated native Zeus placement added the exact target once, returned requester-targeted feedback, rejected replay/negative boundary requests, and cleaned transient logic."
+      }
+    }
+  ],
+  "package_id": "urn:tribunal:evidence-package:20260821T165814Z-d0a72396:1",
+  "package_revision": 1,
+  "participants": [
+    {
+      "id": "server",
+      "role": "dedicated_server",
+      "runtime": {
+        "binary": "/mnt/services/arma3-server/pufferpanel/data/servers/80e9c1f3/arma3server_x64",
+        "binary_sha256": "e84472a7f47a1a120fd23698d8d64de35a74b716a896f6069bb4eb5693a1724d",
+        "steam_build_id": "24672274",
+        "version": "2.22.153995"
+      }
+    },
+    {
+      "id": "client-a",
+      "role": "player_client",
+      "runtime": {
+        "address_offset": 20,
+        "arma_executable": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Arma 3/arma3_x64.exe",
+        "arma_installed": true,
+        "character_payload": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Arma 3/Addons/characters_f.pbo",
+        "diagnostic_vnc_port": 5904,
+        "executable_sha256": "4e9207dfe687769db544326c22f20527344361ffbd433348f668a15fe5827958",
+        "home": "/mnt/services/pontifex/client/runtime/home",
+        "image": "pontifex-arma-client:phase3",
+        "image_id": "sha256:86b03b37405080fc80b3b5ede3adb46d5785f6693fba46cd967bfc10e0bd4e3c",
+        "image_ready": true,
+        "profile_name": "PontifexClientA",
+        "proton": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Proton - Experimental/proton",
+        "steam_build_id": "24672225",
+        "steam_home": "/mnt/services/pontifex/client/runtime/home",
+        "steam_session_present": true,
+        "version": "2.22.153995"
+      }
+    }
+  ],
+  "proposition_evaluations": [
+    {
+      "assertion_ids": [
+        "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.edenAggregate",
+        "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.edenRetained",
+        "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.clientEdenSource",
+        "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.clientReplication",
+        "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.zeusTransition1",
+        "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.zeusAuthority",
+        "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.zeusCleanup",
+        "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.idempotence",
+        "urn:tribunal:assertion-result:20260821T165814Z-d0a72396:vigil.whitelist.feedbackAndNegatives"
+      ],
+      "id": "urn:tribunal:proposition-evaluation:20260821T165814Z-d0a72396:pontifex:vigil:whitelist-union-and-add:demonstrated",
+      "intended_use": "primary_result",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:eden-union",
+        "urn:tribunal:observation:20260821T165814Z-d0a72396:zeus-add"
+      ],
+      "outcome": "demonstrated",
+      "proposition_id": "pontifex:vigil:whitelist-union-and-add",
+      "rationale": "Accepted only for the multiple-Eden union and one-placement add slice.",
+      "text": "Under the tested dedicated-server/single-curator conditions, retained Eden whitelist modules form a deterministic deduplicated union and one authenticated native Zeus placement adds the exact target once with targeted feedback and replay protection."
+    },
+    {
+      "assertion_ids": [],
+      "id": "urn:tribunal:proposition-evaluation:20260821T165814Z-d0a72396:pontifex:vigil:whitelist-authentic-removal:not_established",
+      "intended_use": "open_question",
+      "observation_ids": [],
+      "outcome": "not_established",
+      "proposition_id": "pontifex:vigil:whitelist-authentic-removal",
+      "rationale": "Removal and repeated native placement were not causally established; the accepted run proves one add only.",
+      "text": "A later authentic Zeus placement can remove an already whitelisted asset."
+    }
+  ],
+  "publication": {
+    "acceptance_basis": "tribunal/docs/vigil-asset-whitelist-review.md",
+    "published_at": "2026-08-22T12:00:00Z",
+    "publisher": "accepted arma-knowledge Tribunal migration f35fa0c",
+    "status": "accepted",
+    "synthetic": false,
+    "unresolved": [
+      "authentic removal",
+      "repeated placement",
+      "runtime Eden reconfiguration",
+      "zero-sync/deleted-module policy",
+      "client-B/JIP"
+    ]
+  },
+  "run": {
+    "execution_state": "completed",
+    "finished_at": "2026-08-21T16:59:37.960278Z",
+    "id": "20260821T165814Z-d0a72396",
+    "mode": "tier-gameplay",
+    "outcome": "positive",
+    "reason": "complete",
+    "runner_status": "PASS",
+    "started_at": "2026-08-21T16:58:14.589825Z"
+  },
+  "scenarios": [
+    {
+      "definition": {
+        "kind": "source_snapshot",
+        "legacy_experiment_key": "tribunal:vigil-whitelist-modules",
+        "protocol_revision": "source/visual-support-tablet/tests/tribunal/vigil_whitelist_modules.py@2e256e9",
+        "reference": "source/visual-support-tablet/tests/tribunal/vigil_whitelist_modules.py"
+      },
+      "feature_family": "vigil/asset-whitelist",
+      "id": "pontifex.vigil.asset-whitelist.activation",
+      "name": "Vigil whitelist Eden and Zeus activation",
+      "version": 1
+    }
+  ],
+  "schema": "tribunal.evidence/v1",
+  "source_snapshots": [
+    {
+      "builds": [
+        {
+          "path": "build/current/@AdvSys/addons/AdvSys.pbo",
+          "sha256": "b45d0d94c5faa7c58d104e5588fbb9a955ca8b33e08f0113ae92670ce098adac",
+          "size": 2744827
+        },
+        {
+          "path": "build/current/@CORDIS/addons/CORDIS.pbo",
+          "sha256": "f928ad00cc982fc82664ce9a53b5224bde23633090df12a18f281d22013e9fb7",
+          "size": 26339
+        },
+        {
+          "path": "build/current/@FieldUtils/addons/FieldUtils.pbo",
+          "sha256": "c9c12c7ab8060299245a26f5f467bcc0e0d8417c011df21a6ccf38464006e51c",
+          "size": 2451810
+        },
+        {
+          "path": "build/current/@VIGIL_Support_Tablet/addons/VIGIL.pbo",
+          "sha256": "c0b10fd6d36938662e86fe012db3874c903b26b9f7592d531150c726c91bc995",
+          "size": 3088201
+        }
+      ],
+      "changed_paths": [
+        " M source/visual-support-tablet/addons/VIGIL/config.cpp",
+        " M source/visual-support-tablet/addons/VIGIL/functions/client/fn_initPlayerLocal.sqf",
+        " M source/visual-support-tablet/addons/VIGIL/functions/global/fn_assetWhitelist.sqf",
+        " M source/visual-support-tablet/addons/VIGIL/functions/global/fn_toggleObjectInWhitelist.sqf",
+        " M source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf",
+        " M source/visual-support-tablet/addons/VIGIL/functions/tablet/fn_assets.sqf",
+        " M tests/test_cbr_module_contract.py",
+        " M tools/tribunal_zeus_probe.py",
+        "?? source/visual-support-tablet/addons/VIGIL/functions/global/fn_whitelistRegistry.sqf",
+        "?? source/visual-support-tablet/addons/VIGIL/functions/global/fn_whitelistZeusClaimServer.sqf",
+        "?? source/visual-support-tablet/addons/VIGIL/functions/global/fn_whitelistZeusResult.sqf",
+        "?? source/visual-support-tablet/tests/tribunal/vigil_whitelist_modules.py",
+        "?? tests/test_vigil_whitelist_module_contract.py"
+      ],
+      "commit": "2e256e95fdd9541bbfadeeb74af5c26c0eb92b93",
+      "files": [
+        {
+          "path": "source/visual-support-tablet/tests/tribunal/vigil_whitelist_modules.py",
+          "sha256": "80a836d98e89daa0fb193d3a05e274aa91f575a96b292b50e6ef2ac3d27798b2"
+        },
+        {
+          "path": "tribunal/docs/vigil-asset-whitelist-review.md",
+          "sha256": "de64f5c1d809f34bc86dae97638a75f6803d87cf6d6fd694114febee156d4782"
+        }
+      ],
+      "id": "urn:tribunal:source-snapshot:sha256:1c5255f13944ec8507e30c4719ab4f4a78f23145f3e751254f11cf9eaeae2c37",
+      "repository": "pontifex",
+      "tree_state": "dirty"
+    }
+  ]
+}

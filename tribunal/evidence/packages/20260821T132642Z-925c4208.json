@@ -1,0 +1,568 @@
+{
+  "artifacts": [
+    {
+      "description": "Original Tribunal run manifest",
+      "id": "urn:tribunal:artifact:sha256:6ce13c8e6d4bdca997e11fa98d1fb6810f565db213f7e78ae6b3d98199ebcbb3",
+      "reference": "manifest.json",
+      "sha256": "6ce13c8e6d4bdca997e11fa98d1fb6810f565db213f7e78ae6b3d98199ebcbb3",
+      "type": "run_manifest"
+    },
+    {
+      "description": "Original Tribunal terminal result",
+      "id": "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06",
+      "reference": "results.json",
+      "sha256": "8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06",
+      "type": "assertion_report"
+    },
+    {
+      "description": "Dedicated-server RPT",
+      "id": "urn:tribunal:artifact:sha256:f912784f4b7d12b0d980966b21a413d18583db8b3646e3877015ce9ad1792c16",
+      "participant_id": "server",
+      "reference": "server/server.rpt",
+      "sha256": "f912784f4b7d12b0d980966b21a413d18583db8b3646e3877015ce9ad1792c16",
+      "type": "server_log"
+    },
+    {
+      "description": "Player-client RPT",
+      "id": "urn:tribunal:artifact:sha256:70ae897a4d2cf83a3b636db6a841c9c2df9c75b44f0975261091fb10253a01ba",
+      "participant_id": "client-a",
+      "reference": "client-a/client.rpt",
+      "sha256": "70ae897a4d2cf83a3b636db6a841c9c2df9c75b44f0975261091fb10253a01ba",
+      "type": "client_log"
+    },
+    {
+      "description": "Accepted semantic review and false-PASS boundary",
+      "id": "urn:tribunal:artifact:sha256:a2176a20d82ee6fcc944d2c95a101b9837c76ba7cc1683afeed35be7d22a5177",
+      "reference": "tribunal/docs/advanced-systems-aps-module-review.md",
+      "sha256": "a2176a20d82ee6fcc944d2c95a101b9837c76ba7cc1683afeed35be7d22a5177",
+      "type": "accepted_review"
+    },
+    {
+      "description": "Exact Tribunal scenario definition",
+      "id": "urn:tribunal:artifact:sha256:0617a1cd6b88890d1f43fd871a2eabf3347feed4df38da2576183b578d7f7aa5",
+      "reference": "source/advanced-systems/tests/tribunal/aps_eden_module.py",
+      "sha256": "0617a1cd6b88890d1f43fd871a2eabf3347feed4df38da2576183b578d7f7aa5",
+      "type": "scenario_definition"
+    }
+  ],
+  "assertions": [
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:aps.module.dispatch",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.dispatch",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:activation"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:aps.module.retained",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.retained",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:activation"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:aps.module.targets",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.targets",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:activation"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:aps.module.locality",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.locality",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:activation"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:aps.module.clientReplication",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.clientReplication",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:activation"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:aps.module.intercepts",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.intercepts",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:physical-positive"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:aps.module.multiple",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.multiple",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:physical-positive"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:aps.module.unsyncedImpact",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.unsyncedImpact",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:unsynced-control"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "type": "custom"
+    }
+  ],
+  "causal_relationships": [
+    {
+      "controlled_dimensions": [
+        "run",
+        "scenario",
+        "Arma build",
+        "dedicated server",
+        "single authenticated client"
+      ],
+      "id": "urn:tribunal:causal-pair:20260821T132642Z-925c4208:0",
+      "relation": "CAUSAL_PAIR_WITH",
+      "source_arm_id": "urn:tribunal:experimental-arm:20260821T132642Z-925c4208:physical-positive",
+      "target_arm_id": "urn:tribunal:experimental-arm:20260821T132642Z-925c4208:unsynced-control"
+    }
+  ],
+  "context": {
+    "branch": "stable",
+    "client_build": "24672225",
+    "mission": {
+      "footer_sha1_valid": true,
+      "mission_sha256": "debe16eef68f6cf1d59fc9b8ea131d1d6bc0d94f89b855396e1d2828ecb3d401",
+      "pbo": "/mnt/services/pontifex/server/runtime/install/mpmissions/PontifexGameplay_20260821T132642Z_925c4208.Stratis.pbo",
+      "pbo_sha256": "2d71e82ad179a3b2a5790e05b0570205844795a4743c0dbbda965bf1e108fc9b",
+      "pbo_size": 25668,
+      "plan": "gameplay",
+      "source": "/mnt/services/pontifex/runs/20260821T132642Z-925c4208/mission/PontifexGameplay_20260821T132642Z_925c4208.Stratis",
+      "token": "gameplay-20260821T132642Z-925c4208-cdd6da8e8618"
+    },
+    "mods": [
+      {
+        "archive": "CBA_A3_v3.18.6.zip",
+        "directory": "@CBA_A3",
+        "id": "cba",
+        "installed": true,
+        "name": "Community Base Addons A3",
+        "path": "/mnt/services/pontifex/server/dependencies/@CBA_A3",
+        "sha256": "80fedfbd9cb57b2393a34c84f80a5268ce8a51b31013976d84232be04c72bf8d",
+        "url": "https://github.com/CBATeam/CBA_A3/releases/download/v3.18.6/CBA_A3_v3.18.6.zip",
+        "version": "3.18.6"
+      },
+      {
+        "archive": "ace3_3.21.0.zip",
+        "directory": "@ace",
+        "id": "ace",
+        "installed": true,
+        "name": "ACE3",
+        "path": "/mnt/services/pontifex/server/dependencies/@ace",
+        "sha256": "48cb7a90e5200b0b313dff05c4b57b828ca56780c03c0e6de07067a28c544acc",
+        "url": "https://github.com/acemod/ACE3/releases/download/v3.21.0/ace3_3.21.0.zip",
+        "version": "3.21.0"
+      },
+      {
+        "archive": "zen_1.15.1.zip",
+        "directory": "@zen",
+        "id": "zen",
+        "installed": true,
+        "name": "Zeus Enhanced",
+        "path": "/mnt/services/pontifex/server/dependencies/@zen",
+        "sha256": "740aa11d1d6c3afa6cd4d8301aac3809bb82a53f9f96621eceba46c1d58f6eea",
+        "url": "https://github.com/zen-mod/ZEN/releases/download/v1.15.1/zen_1.15.1.zip",
+        "version": "1.15.1"
+      }
+    ],
+    "product": "Arma 3",
+    "server_build": "24672274",
+    "server_kind": "dedicated",
+    "session": "multiplayer",
+    "version": "2.22.153995"
+  },
+  "experimental_arms": [
+    {
+      "description": "Two native typed Eden modules retained exact Sync links and independently enabled their synchronized server-owned vehicles.",
+      "id": "urn:tribunal:experimental-arm:20260821T132642Z-925c4208:activation",
+      "role": "treatment",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation"
+    },
+    {
+      "description": "Two exact threats were hard-killed, each consumed one APS charge, terminated before impact, and caused no damage.",
+      "id": "urn:tribunal:experimental-arm:20260821T132642Z-925c4208:physical-positive",
+      "role": "treatment",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation"
+    },
+    {
+      "description": "The unsynchronized control target received the intersecting projectile and damage, with no APS event or charge change.",
+      "id": "urn:tribunal:experimental-arm:20260821T132642Z-925c4208:unsynced-control",
+      "role": "negative_control",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation"
+    }
+  ],
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "tribunal-canonical-json/v1",
+    "payload_sha256": "845d4f03b866532b022646bfb8cdd5a193571171ede30f06ffb9b6f5fa962880"
+  },
+  "knowledge_subject": {
+    "aliases": [
+      "APS",
+      "LORICA APS"
+    ],
+    "biki_context": [
+      "arma:arma-3-cfgremoteexec"
+    ],
+    "key": "pontifex:advanced-systems:aps",
+    "kind": "pontifex.feature",
+    "label": "Pontifex APS"
+  },
+  "migration": {
+    "selection_reason": "Combines typed-module authenticity, server authority, replicated client identity, positive physical interception and an unsynchronized negative control.",
+    "source_contract": "arma-knowledge.tribunal-curation/v1"
+  },
+  "observations": [
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260821T132642Z-925c4208:activation",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "corroborating_participant_ids": [
+        "server"
+      ],
+      "id": "urn:tribunal:observation:20260821T132642Z-925c4208:activation",
+      "observed_at": "2026-08-21T13:28:14.376052Z",
+      "participant_id": "client-a",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "aps.module.dispatch",
+            "detail": "audit=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "aps.module.retained",
+            "detail": "modules=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "aps.module.targets",
+            "detail": "ids=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "aps.module.locality",
+            "detail": "targets=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "aps.module.clientReplication",
+            "detail": "ids=[",
+            "result": "pass"
+          }
+        ],
+        "role": "OBSERVATION",
+        "summary": "Two native typed Eden modules retained exact Sync links and independently enabled their synchronized server-owned vehicles."
+      }
+    },
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260821T132642Z-925c4208:physical-positive",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "corroborating_participant_ids": [],
+      "id": "urn:tribunal:observation:20260821T132642Z-925c4208:physical-positive",
+      "observed_at": "2026-08-21T13:28:14.376052Z",
+      "participant_id": "server",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "aps.module.intercepts",
+            "detail": "a=[true,",
+            "result": "pass"
+          },
+          {
+            "definition_id": "aps.module.multiple",
+            "detail": "charges=[[40,40,0]]",
+            "result": "pass"
+          }
+        ],
+        "role": "OBSERVATION",
+        "summary": "Two exact threats were hard-killed, each consumed one APS charge, terminated before impact, and caused no damage."
+      }
+    },
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260821T132642Z-925c4208:unsynced-control",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:8cb0a96819dd6089a304ea51a460ed3a9d14c45de6078fd5e148c01a3446ab06"
+      ],
+      "corroborating_participant_ids": [],
+      "id": "urn:tribunal:observation:20260821T132642Z-925c4208:unsynced-control",
+      "observed_at": "2026-08-21T13:28:14.376052Z",
+      "participant_id": "server",
+      "scenario_id": "pontifex.advanced-systems.aps.eden_activation",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "aps.module.unsyncedImpact",
+            "detail": "control=[true,",
+            "result": "pass"
+          }
+        ],
+        "role": "NEGATIVE_CONTROL",
+        "summary": "The unsynchronized control target received the intersecting projectile and damage, with no APS event or charge change."
+      }
+    }
+  ],
+  "package_id": "urn:tribunal:evidence-package:20260821T132642Z-925c4208:1",
+  "package_revision": 1,
+  "participants": [
+    {
+      "id": "server",
+      "role": "dedicated_server",
+      "runtime": {
+        "binary": "/mnt/services/arma3-server/pufferpanel/data/servers/80e9c1f3/arma3server_x64",
+        "binary_sha256": "e84472a7f47a1a120fd23698d8d64de35a74b716a896f6069bb4eb5693a1724d",
+        "steam_build_id": "24672274",
+        "version": "2.22.153995"
+      }
+    },
+    {
+      "id": "client-a",
+      "role": "player_client",
+      "runtime": {
+        "address_offset": 20,
+        "arma_executable": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Arma 3/arma3_x64.exe",
+        "arma_installed": true,
+        "character_payload": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Arma 3/Addons/characters_f.pbo",
+        "diagnostic_vnc_port": 5904,
+        "executable_sha256": "4e9207dfe687769db544326c22f20527344361ffbd433348f668a15fe5827958",
+        "home": "/mnt/services/pontifex/client/runtime/home",
+        "image": "pontifex-arma-client:phase3",
+        "image_id": "sha256:86b03b37405080fc80b3b5ede3adb46d5785f6693fba46cd967bfc10e0bd4e3c",
+        "image_ready": true,
+        "profile_name": "PontifexClientA",
+        "proton": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Proton - Experimental/proton",
+        "steam_build_id": "24672225",
+        "steam_home": "/mnt/services/pontifex/client/runtime/home",
+        "steam_session_present": true,
+        "version": "2.22.153995"
+      }
+    }
+  ],
+  "proposition_evaluations": [
+    {
+      "assertion_ids": [],
+      "id": "urn:tribunal:proposition-evaluation:20260821T132642Z-925c4208:pontifex:aps:eden-activates-all-nearby:not_established",
+      "intended_use": "open_question",
+      "observation_ids": [],
+      "outcome": "not_established",
+      "proposition_id": "pontifex:aps:eden-activates-all-nearby",
+      "rationale": "Deliberately broad pre-evidence claim retained for counterexample/refinement history.",
+      "text": "A typed APS Eden module activates APS behavior on every nearby vehicle."
+    },
+    {
+      "assertion_ids": [
+        "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.unsyncedImpact"
+      ],
+      "id": "urn:tribunal:proposition-evaluation:20260821T132642Z-925c4208:pontifex:aps:eden-activates-all-nearby:counterexample_observed",
+      "intended_use": "counterexample",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:unsynced-control"
+      ],
+      "outcome": "counterexample_observed",
+      "proposition_id": "pontifex:aps:eden-activates-all-nearby",
+      "rationale": "The unsynchronized nearby control was physically hit without an APS event or charge consumption.",
+      "supersedes_outcome": "CONJECTURE",
+      "text": "A typed APS Eden module activates APS behavior on every nearby vehicle."
+    },
+    {
+      "assertion_ids": [
+        "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.dispatch",
+        "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.retained",
+        "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.targets",
+        "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.locality",
+        "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.clientReplication",
+        "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.intercepts",
+        "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.multiple",
+        "urn:tribunal:assertion-result:20260821T132642Z-925c4208:aps.module.unsyncedImpact"
+      ],
+      "id": "urn:tribunal:proposition-evaluation:20260821T132642Z-925c4208:pontifex:aps:eden-exact-sync:demonstrated",
+      "intended_use": "primary_result",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T132642Z-925c4208:activation",
+        "urn:tribunal:observation:20260821T132642Z-925c4208:physical-positive",
+        "urn:tribunal:observation:20260821T132642Z-925c4208:unsynced-control"
+      ],
+      "outcome": "demonstrated",
+      "proposition_id": "pontifex:aps:eden-exact-sync",
+      "rationale": "Accepted causal feature result, scoped to the exact run domain.",
+      "specializes_proposition_id": "pontifex:aps:eden-activates-all-nearby",
+      "text": "Under the tested dedicated-server/client conditions, authentic typed APS Eden modules activate their exact synchronized server-owned vehicles; exact threats are intercepted while an unsynchronized valid-impact control is not."
+    }
+  ],
+  "publication": {
+    "acceptance_basis": "tribunal/docs/advanced-systems-aps-module-review.md",
+    "published_at": "2026-08-22T12:00:00Z",
+    "publisher": "accepted arma-knowledge Tribunal migration f35fa0c",
+    "status": "accepted",
+    "synthetic": false,
+    "unresolved": [
+      "Zeus reverse ON-to-OFF entry",
+      "repeated placement in one retained display",
+      "client-B/JIP isolation",
+      "ownership migration"
+    ]
+  },
+  "run": {
+    "execution_state": "completed",
+    "finished_at": "2026-08-21T13:28:14.376052Z",
+    "id": "20260821T132642Z-925c4208",
+    "mode": "tier-gameplay",
+    "outcome": "positive",
+    "reason": "complete",
+    "runner_status": "PASS",
+    "started_at": "2026-08-21T13:26:42.682925Z"
+  },
+  "scenarios": [
+    {
+      "definition": {
+        "kind": "source_snapshot",
+        "legacy_experiment_key": "tribunal:aps-eden-module",
+        "protocol_revision": "source/advanced-systems/tests/tribunal/aps_eden_module.py@f0537f1",
+        "reference": "source/advanced-systems/tests/tribunal/aps_eden_module.py"
+      },
+      "feature_family": "advanced-systems/aps",
+      "id": "pontifex.advanced-systems.aps.eden_activation",
+      "name": "APS typed Eden activation",
+      "version": 1
+    }
+  ],
+  "schema": "tribunal.evidence/v1",
+  "source_snapshots": [
+    {
+      "builds": [
+        {
+          "path": "build/current/@AdvSys/addons/AdvSys.pbo",
+          "sha256": "ae816fa2511a3fdbf02cf6c27aa3574c62f2c5bc4316ac77b5e569d65c82f91b",
+          "size": 2700912
+        },
+        {
+          "path": "build/current/@CORDIS/addons/CORDIS.pbo",
+          "sha256": "39962a0311c6c70a6d33194d5375d853a16170bf5d1e195b328474d7ff4005ba",
+          "size": 26339
+        },
+        {
+          "path": "build/current/@FieldUtils/addons/FieldUtils.pbo",
+          "sha256": "d57576740f32e0f363b63830918f05a10ae8beea1bc8db7c452f73654a06a573",
+          "size": 2442118
+        },
+        {
+          "path": "build/current/@VIGIL_Support_Tablet/addons/VIGIL.pbo",
+          "sha256": "4f7b4b260b96e3f8f8b3eeda2acff40d419c43216d3e407c8267f27dbaab8a90",
+          "size": 3061273
+        }
+      ],
+      "changed_paths": [
+        " M source/advanced-systems/addons/AdvSys/functions/aps/fn_apsModuleEnable.sqf",
+        " M tests/test_tribunal_architecture.py",
+        " M tools/pontifex_multiplayer.py",
+        " M tribunal/docs/advanced-systems-aps-module-review.md",
+        " M tribunal/docs/architecture.md",
+        " M tribunal/docs/burst-mode-ledger.md",
+        " M tribunal/docs/pontifex-feature-inventory.md",
+        " M tribunal/docs/testing-methodology.md",
+        " M tribunal/runner/model.py",
+        "?? source/advanced-systems/tests/tribunal/aps_eden_module.py",
+        "?? tests/test_aps_module_contract.py",
+        "?? tribunal/mission/entities.py"
+      ],
+      "commit": "f0537f13c40dabeb190b3672810ede6426fd7a34",
+      "files": [
+        {
+          "path": "source/advanced-systems/tests/tribunal/aps_eden_module.py",
+          "sha256": "0617a1cd6b88890d1f43fd871a2eabf3347feed4df38da2576183b578d7f7aa5"
+        },
+        {
+          "path": "tribunal/docs/advanced-systems-aps-module-review.md",
+          "sha256": "a2176a20d82ee6fcc944d2c95a101b9837c76ba7cc1683afeed35be7d22a5177"
+        }
+      ],
+      "id": "urn:tribunal:source-snapshot:sha256:3084df162cca78004ba6d45289209c43989a75d428b2ab58b2af53789cbf1586",
+      "repository": "pontifex",
+      "tree_state": "dirty"
+    }
+  ]
+}

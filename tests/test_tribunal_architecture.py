@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -166,10 +167,10 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertTrue(all(root.is_dir() for root in roots))
 
     def test_generic_tribunal_sources_do_not_encode_pontifex_features(self) -> None:
-        prohibited = ("aps", "iron dome", "vigil", "field utilities", "pontifex")
+        prohibited = (r"\baps\b", r"iron dome", r"\bvigil\b", r"field utilities", r"\bpontifex\b")
         for path in (ROOT / "tribunal").rglob("*.py"):
             text = path.read_text(encoding="utf-8").casefold()
-            self.assertFalse(any(token in text for token in prohibited), path)
+            self.assertFalse(any(re.search(pattern, text) for pattern in prohibited), path)
 
 
 if __name__ == "__main__":

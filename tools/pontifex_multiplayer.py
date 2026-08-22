@@ -23,6 +23,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from tribunal.assertions.protocol import validate_origin
+from tribunal.evidence import emit_execution_package
 from tribunal.mission.entities import render_typed_entities
 from tribunal.mission.projectiles import direct_fixture_sqf
 from tribunal.discovery import discover
@@ -759,6 +760,13 @@ def run_join_adapter(
 def write_result(run_dir: Path, result: dict) -> None:
     result["finished_at"] = dedicated.utc_now()
     dedicated.atomic_json(run_dir / "results.json", result)
+    manifest_path = run_dir / "manifest.json"
+    if manifest_path.is_file():
+        emit_execution_package(
+            run_dir,
+            json.loads(manifest_path.read_text(encoding="utf-8")),
+            result,
+        )
     print(f"result: {result['status']} ({result['reason']})")
     print(f"evidence: {run_dir}")
 
@@ -1657,6 +1665,7 @@ def run_multiplayer(
     if plan is not None:
         manifest["test_plan"] = {
             "tier": plan.name,
+            "scenarios": sorted(plan.selected),
             "server_expected": sorted(plan.server_expected),
             "client_expected": sorted(plan.client_expected),
             "single_boot_batch": plan.name == "integration",

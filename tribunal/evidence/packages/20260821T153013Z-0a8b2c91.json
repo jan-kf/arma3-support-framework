@@ -1,0 +1,608 @@
+{
+  "artifacts": [
+    {
+      "description": "Original Tribunal run manifest",
+      "id": "urn:tribunal:artifact:sha256:c0db5b0163e4af8e09d8df979077ac9bed420055470d4555d6c5378c3cf282ed",
+      "reference": "manifest.json",
+      "sha256": "c0db5b0163e4af8e09d8df979077ac9bed420055470d4555d6c5378c3cf282ed",
+      "type": "run_manifest"
+    },
+    {
+      "description": "Original Tribunal terminal result",
+      "id": "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda",
+      "reference": "results.json",
+      "sha256": "555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda",
+      "type": "assertion_report"
+    },
+    {
+      "description": "Dedicated-server RPT",
+      "id": "urn:tribunal:artifact:sha256:6e076adb4e73477f27f018fce79914fd3d1451a4acd1a488f276c04812a0fb96",
+      "participant_id": "server",
+      "reference": "server/server.rpt",
+      "sha256": "6e076adb4e73477f27f018fce79914fd3d1451a4acd1a488f276c04812a0fb96",
+      "type": "server_log"
+    },
+    {
+      "description": "Player-client RPT",
+      "id": "urn:tribunal:artifact:sha256:a555f525979ab47dac83eccec0c6b70af2c9bc9a64f49e8e649350d30157123c",
+      "participant_id": "client-a",
+      "reference": "client-a/client.rpt",
+      "sha256": "a555f525979ab47dac83eccec0c6b70af2c9bc9a64f49e8e649350d30157123c",
+      "type": "client_log"
+    },
+    {
+      "description": "Accepted semantic review and false-PASS boundary",
+      "id": "urn:tribunal:artifact:sha256:9c20047fea3c43e186932acd8f65dda1f4f8e2f1d313e5b9fd1c33bcc35d9015",
+      "reference": "tribunal/docs/advanced-systems-cbr-module-review.md",
+      "sha256": "9c20047fea3c43e186932acd8f65dda1f4f8e2f1d313e5b9fd1c33bcc35d9015",
+      "type": "accepted_review"
+    },
+    {
+      "description": "Exact Tribunal scenario definition",
+      "id": "urn:tribunal:artifact:sha256:76d0aab554f1742f8e3e7ac1fa2540cdc26d2245adeeed85348a573cf011cd7e",
+      "reference": "source/advanced-systems/tests/tribunal/counter_battery_radar_modules.py",
+      "sha256": "76d0aab554f1742f8e3e7ac1fa2540cdc26d2245adeeed85348a573cf011cd7e",
+      "type": "scenario_definition"
+    }
+  ],
+  "assertions": [
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.edenDispatch",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.edenDispatch",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:eden-positive"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.edenRetained",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.edenRetained",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:eden-positive"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.edenCausalDetection",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.edenCausalDetection",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:eden-positive"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.zeusOffTransition",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.zeusOffTransition",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:zeus-off-control"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.zeusOffPhysicalControl",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.zeusOffPhysicalControl",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:zeus-off-control"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.zeusAuthority",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.zeusAuthority",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:zeus-off-control"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.clientAssigned",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.clientAssigned",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:replication"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.nativePlacement",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.nativePlacement",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:replication"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.feedbackAndNegativeReceipts",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.feedbackAndNegativeReceipts",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:replication"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.clientReplication",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.clientReplication",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:replication"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:cbr.module.cleanup",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.cleanup",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:replication"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "type": "custom"
+    }
+  ],
+  "causal_relationships": [
+    {
+      "controlled_dimensions": [
+        "run",
+        "scenario",
+        "Arma build",
+        "dedicated server",
+        "single authenticated client"
+      ],
+      "id": "urn:tribunal:causal-pair:20260821T153013Z-0a8b2c91:0",
+      "relation": "CAUSAL_PAIR_WITH",
+      "source_arm_id": "urn:tribunal:experimental-arm:20260821T153013Z-0a8b2c91:replication",
+      "target_arm_id": "urn:tribunal:experimental-arm:20260821T153013Z-0a8b2c91:zeus-off-control"
+    }
+  ],
+  "context": {
+    "branch": "stable",
+    "client_build": "24672225",
+    "mission": {
+      "footer_sha1_valid": true,
+      "mission_sha256": "98a72c1a530b8a3713ab3f8c287c08ea2179b6c0b8ae48f5b7b1ba9eb25c95c6",
+      "pbo": "/mnt/services/pontifex/server/runtime/install/mpmissions/PontifexGameplay_20260821T153013Z_0a8b2c91.Stratis.pbo",
+      "pbo_sha256": "3c7c0c491c30dc18c07eee1fb5df82e0bc15a28c00676a93bfb49419fa22aa74",
+      "pbo_size": 32107,
+      "plan": "gameplay",
+      "source": "/mnt/services/pontifex/runs/20260821T153013Z-0a8b2c91/mission/PontifexGameplay_20260821T153013Z_0a8b2c91.Stratis",
+      "token": "gameplay-20260821T153013Z-0a8b2c91-439e3f02b51b"
+    },
+    "mods": [
+      {
+        "archive": "CBA_A3_v3.18.6.zip",
+        "directory": "@CBA_A3",
+        "id": "cba",
+        "installed": true,
+        "name": "Community Base Addons A3",
+        "path": "/mnt/services/pontifex/server/dependencies/@CBA_A3",
+        "sha256": "80fedfbd9cb57b2393a34c84f80a5268ce8a51b31013976d84232be04c72bf8d",
+        "url": "https://github.com/CBATeam/CBA_A3/releases/download/v3.18.6/CBA_A3_v3.18.6.zip",
+        "version": "3.18.6"
+      },
+      {
+        "archive": "ace3_3.21.0.zip",
+        "directory": "@ace",
+        "id": "ace",
+        "installed": true,
+        "name": "ACE3",
+        "path": "/mnt/services/pontifex/server/dependencies/@ace",
+        "sha256": "48cb7a90e5200b0b313dff05c4b57b828ca56780c03c0e6de07067a28c544acc",
+        "url": "https://github.com/acemod/ACE3/releases/download/v3.21.0/ace3_3.21.0.zip",
+        "version": "3.21.0"
+      },
+      {
+        "archive": "zen_1.15.1.zip",
+        "directory": "@zen",
+        "id": "zen",
+        "installed": true,
+        "name": "Zeus Enhanced",
+        "path": "/mnt/services/pontifex/server/dependencies/@zen",
+        "sha256": "740aa11d1d6c3afa6cd4d8301aac3809bb82a53f9f96621eceba46c1d58f6eea",
+        "url": "https://github.com/zen-mod/ZEN/releases/download/v1.15.1/zen_1.15.1.zip",
+        "version": "1.15.1"
+      }
+    ],
+    "product": "Arma 3",
+    "server_build": "24672274",
+    "server_kind": "dedicated",
+    "session": "multiplayer",
+    "version": "2.22.153995"
+  },
+  "experimental_arms": [
+    {
+      "description": "The real typed Eden module was server-local, retained, accepted once, and enabled detection for a fresh native artillery shell.",
+      "id": "urn:tribunal:experimental-arm:20260821T153013Z-0a8b2c91:eden-positive",
+      "role": "treatment",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation"
+    },
+    {
+      "description": "After one authenticated native Zeus OFF transition, the same artillery produced a valid physical shell path but no CBR markers or warning.",
+      "id": "urn:tribunal:experimental-arm:20260821T153013Z-0a8b2c91:zeus-off-control",
+      "role": "negative_control",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation"
+    },
+    {
+      "description": "Client-a observed the assigned curator, native placement, targeted receipts, and replicated result while the server owned feature mutation and cleanup.",
+      "id": "urn:tribunal:experimental-arm:20260821T153013Z-0a8b2c91:replication",
+      "role": "treatment",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation"
+    }
+  ],
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "tribunal-canonical-json/v1",
+    "payload_sha256": "24f05a74e2c5d86fb57b7ca456205692b8b3ac660984406c24d2a09752831354"
+  },
+  "knowledge_subject": {
+    "aliases": [
+      "CBR"
+    ],
+    "biki_context": [
+      "arma:arma-3-cfgremoteexec"
+    ],
+    "key": "pontifex:advanced-systems:cbr",
+    "kind": "pontifex.feature",
+    "label": "Pontifex Counter Battery Radar"
+  },
+  "migration": {
+    "selection_reason": "Demonstrates server/client separation and a same-artillery causal A/B: enabled detection versus disabled physical shell with no CBR output.",
+    "source_contract": "arma-knowledge.tribunal-curation/v1"
+  },
+  "observations": [
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260821T153013Z-0a8b2c91:eden-positive",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "corroborating_participant_ids": [],
+      "id": "urn:tribunal:observation:20260821T153013Z-0a8b2c91:eden-positive",
+      "observed_at": "2026-08-21T15:32:34.784771Z",
+      "participant_id": "server",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "cbr.module.edenDispatch",
+            "detail": "module=2:11|local=true|owner=2|audit=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "cbr.module.edenRetained",
+            "detail": "module=2:11|class=YAS_CBR_Module",
+            "result": "pass"
+          },
+          {
+            "definition_id": "cbr.module.edenCausalDetection",
+            "detail": "result=[true,true,1,[",
+            "result": "pass"
+          }
+        ],
+        "role": "OBSERVATION",
+        "summary": "The real typed Eden module was server-local, retained, accepted once, and enabled detection for a fresh native artillery shell."
+      }
+    },
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260821T153013Z-0a8b2c91:zeus-off-control",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "corroborating_participant_ids": [],
+      "id": "urn:tribunal:observation:20260821T153013Z-0a8b2c91:zeus-off-control",
+      "observed_at": "2026-08-21T15:32:34.784771Z",
+      "participant_id": "server",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "cbr.module.zeusOffTransition",
+            "detail": "audit=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "cbr.module.zeusOffPhysicalControl",
+            "detail": "result=[true,true,0,[],[4001.19,3495.57,217.412],449,true]",
+            "result": "pass"
+          },
+          {
+            "definition_id": "cbr.module.zeusAuthority",
+            "detail": "claims=[[",
+            "result": "pass"
+          }
+        ],
+        "role": "CAUSAL_CONTROL",
+        "summary": "After one authenticated native Zeus OFF transition, the same artillery produced a valid physical shell path but no CBR markers or warning."
+      }
+    },
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260821T153013Z-0a8b2c91:replication",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:555bc1c998226417a89f1ae6e863690a20d00f4ee106430424392fef5324cdda"
+      ],
+      "corroborating_participant_ids": [
+        "server"
+      ],
+      "id": "urn:tribunal:observation:20260821T153013Z-0a8b2c91:replication",
+      "observed_at": "2026-08-21T15:32:34.784771Z",
+      "participant_id": "client-a",
+      "scenario_id": "pontifex.advanced-systems.cbr.module_activation",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "cbr.module.clientAssigned",
+            "detail": "player=4:5|owner=4|curator=2:148",
+            "result": "pass"
+          },
+          {
+            "definition_id": "cbr.module.nativePlacement",
+            "detail": "path=[21,1]|point=[0.5,0.5]|hover=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "cbr.module.feedbackAndNegativeReceipts",
+            "detail": "results=[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "cbr.module.clientReplication",
+            "detail": "result=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "cbr.module.cleanup",
+            "detail": "clientDone=gameplay-20260821T153013Z-0a8b2c91-439e3f02b51b|gun=true|module=true|curator=true",
+            "result": "pass"
+          }
+        ],
+        "role": "OBSERVATION",
+        "summary": "Client-a observed the assigned curator, native placement, targeted receipts, and replicated result while the server owned feature mutation and cleanup."
+      }
+    }
+  ],
+  "package_id": "urn:tribunal:evidence-package:20260821T153013Z-0a8b2c91:1",
+  "package_revision": 1,
+  "participants": [
+    {
+      "id": "server",
+      "role": "dedicated_server",
+      "runtime": {
+        "binary": "/mnt/services/arma3-server/pufferpanel/data/servers/80e9c1f3/arma3server_x64",
+        "binary_sha256": "e84472a7f47a1a120fd23698d8d64de35a74b716a896f6069bb4eb5693a1724d",
+        "steam_build_id": "24672274",
+        "version": "2.22.153995"
+      }
+    },
+    {
+      "id": "client-a",
+      "role": "player_client",
+      "runtime": {
+        "address_offset": 20,
+        "arma_executable": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Arma 3/arma3_x64.exe",
+        "arma_installed": true,
+        "character_payload": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Arma 3/Addons/characters_f.pbo",
+        "diagnostic_vnc_port": 5904,
+        "executable_sha256": "4e9207dfe687769db544326c22f20527344361ffbd433348f668a15fe5827958",
+        "home": "/mnt/services/pontifex/client/runtime/home",
+        "image": "pontifex-arma-client:phase3",
+        "image_id": "sha256:86b03b37405080fc80b3b5ede3adb46d5785f6693fba46cd967bfc10e0bd4e3c",
+        "image_ready": true,
+        "profile_name": "PontifexClientA",
+        "proton": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Proton - Experimental/proton",
+        "steam_build_id": "24672225",
+        "steam_home": "/mnt/services/pontifex/client/runtime/home",
+        "steam_session_present": true,
+        "version": "2.22.153995"
+      }
+    }
+  ],
+  "proposition_evaluations": [
+    {
+      "assertion_ids": [
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.edenDispatch",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.edenRetained",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.edenCausalDetection",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.zeusOffTransition",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.zeusOffPhysicalControl",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.zeusAuthority",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.clientAssigned",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.nativePlacement",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.feedbackAndNegativeReceipts",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.clientReplication",
+        "urn:tribunal:assertion-result:20260821T153013Z-0a8b2c91:cbr.module.cleanup"
+      ],
+      "id": "urn:tribunal:proposition-evaluation:20260821T153013Z-0a8b2c91:pontifex:cbr:module-causal-toggle:demonstrated",
+      "intended_use": "primary_result",
+      "observation_ids": [
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:eden-positive",
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:zeus-off-control",
+        "urn:tribunal:observation:20260821T153013Z-0a8b2c91:replication"
+      ],
+      "outcome": "demonstrated",
+      "proposition_id": "pontifex:cbr:module-causal-toggle",
+      "rationale": "Accepted same-system causal comparison with authority and physical controls.",
+      "text": "Under the tested dedicated-server/client conditions, authentic CBR Eden/Zeus module operations change server-owned CBR state: enabled detects a fresh shell, while authenticated OFF leaves a valid same-artillery shell path with no markers or warning."
+    }
+  ],
+  "publication": {
+    "acceptance_basis": "tribunal/docs/advanced-systems-cbr-module-review.md",
+    "published_at": "2026-08-22T12:00:00Z",
+    "publisher": "accepted arma-knowledge Tribunal migration f35fa0c",
+    "status": "accepted",
+    "synthetic": false,
+    "unresolved": [
+      "isGlobal=0 engine execution locality",
+      "client-B/JIP",
+      "reverse OFF-to-ON placement",
+      "ownership migration"
+    ]
+  },
+  "run": {
+    "execution_state": "completed",
+    "finished_at": "2026-08-21T15:32:34.784771Z",
+    "id": "20260821T153013Z-0a8b2c91",
+    "mode": "tier-gameplay",
+    "outcome": "positive",
+    "reason": "complete",
+    "runner_status": "PASS",
+    "started_at": "2026-08-21T15:30:13.772851Z"
+  },
+  "scenarios": [
+    {
+      "definition": {
+        "kind": "source_snapshot",
+        "legacy_experiment_key": "tribunal:cbr-modules",
+        "protocol_revision": "source/advanced-systems/tests/tribunal/counter_battery_radar_modules.py@8a88f03",
+        "reference": "source/advanced-systems/tests/tribunal/counter_battery_radar_modules.py"
+      },
+      "feature_family": "advanced-systems/cbr",
+      "id": "pontifex.advanced-systems.cbr.module_activation",
+      "name": "CBR Eden and Zeus activation",
+      "version": 1
+    }
+  ],
+  "schema": "tribunal.evidence/v1",
+  "source_snapshots": [
+    {
+      "builds": [
+        {
+          "path": "build/current/@AdvSys/addons/AdvSys.pbo",
+          "sha256": "4253a0fa3fb407e1d67265154843ed2535145819aa26917d2c59eacbc0e5fc94",
+          "size": 2744827
+        },
+        {
+          "path": "build/current/@CORDIS/addons/CORDIS.pbo",
+          "sha256": "e9f08908caec78e9ba5b3cd3c4251d1f19e81c587a85dd66e07c408d1a041e3b",
+          "size": 26339
+        },
+        {
+          "path": "build/current/@FieldUtils/addons/FieldUtils.pbo",
+          "sha256": "28616d1bfa8f320056316116ea2b398276288aaade1a9568636d3b0528a0892c",
+          "size": 2442118
+        },
+        {
+          "path": "build/current/@VIGIL_Support_Tablet/addons/VIGIL.pbo",
+          "sha256": "4ebf029ddbdbd76f9bbb170dd7d1d3275b287ba7c73eff92983a57a37ac8986d",
+          "size": 3061273
+        }
+      ],
+      "changed_paths": [
+        " M source/advanced-systems/addons/AdvSys/config.cpp",
+        " M source/advanced-systems/addons/AdvSys/functions/cbr/fn_cbrModuleEnable.sqf",
+        " M source/advanced-systems/addons/AdvSys/functions/cbr/fn_cbrModuleToggle.sqf",
+        " M source/advanced-systems/addons/AdvSys/functions/client/fn_initPlayerLocal.sqf",
+        " M tools/pontifex_multiplayer.py",
+        " M tools/tribunal_zeus_probe.py",
+        " M tribunal/docs/advanced-systems-cbr-module-review.md",
+        " M tribunal/docs/burst-mode-ledger.md",
+        " M tribunal/docs/pontifex-feature-inventory.md",
+        "?? source/advanced-systems/addons/AdvSys/functions/cbr/fn_cbrZeusClaimServer.sqf",
+        "?? source/advanced-systems/addons/AdvSys/functions/cbr/fn_cbrZeusToggleResult.sqf",
+        "?? source/advanced-systems/tests/tribunal/counter_battery_radar_modules.py",
+        "?? tests/test_cbr_module_contract.py"
+      ],
+      "commit": "8a88f0342e69c9745e0569103cd1f3313b0e925a",
+      "files": [
+        {
+          "path": "source/advanced-systems/tests/tribunal/counter_battery_radar_modules.py",
+          "sha256": "76d0aab554f1742f8e3e7ac1fa2540cdc26d2245adeeed85348a573cf011cd7e"
+        },
+        {
+          "path": "tribunal/docs/advanced-systems-cbr-module-review.md",
+          "sha256": "9c20047fea3c43e186932acd8f65dda1f4f8e2f1d313e5b9fd1c33bcc35d9015"
+        }
+      ],
+      "id": "urn:tribunal:source-snapshot:sha256:e7a2f541877272b37ec660eabc050bf3830cd5e9ddc6af35bafff53c94499e46",
+      "repository": "pontifex",
+      "tree_state": "dirty"
+    }
+  ]
+}

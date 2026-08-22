@@ -1,0 +1,746 @@
+{
+  "artifacts": [
+    {
+      "description": "Original Tribunal run manifest",
+      "id": "urn:tribunal:artifact:sha256:b18a2e07134978821a3e881a7e5c9c3b95c8c2f9bd21cbae35a018d476beb598",
+      "reference": "manifest.json",
+      "sha256": "b18a2e07134978821a3e881a7e5c9c3b95c8c2f9bd21cbae35a018d476beb598",
+      "type": "run_manifest"
+    },
+    {
+      "description": "Original Tribunal terminal result",
+      "id": "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf",
+      "reference": "results.json",
+      "sha256": "a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf",
+      "type": "assertion_report"
+    },
+    {
+      "description": "Dedicated-server RPT",
+      "id": "urn:tribunal:artifact:sha256:a9a1194a5fc3464fb001e93fa3155b8d3a1918c633d05fd1c41e135c948a7360",
+      "participant_id": "server",
+      "reference": "server/server.rpt",
+      "sha256": "a9a1194a5fc3464fb001e93fa3155b8d3a1918c633d05fd1c41e135c948a7360",
+      "type": "server_log"
+    },
+    {
+      "description": "Player-client RPT",
+      "id": "urn:tribunal:artifact:sha256:1d67e2aaf9d3d51e49548c29baaada7be6912a2160105b5becef7c19702d074d",
+      "participant_id": "client-a",
+      "reference": "client-a/client.rpt",
+      "sha256": "1d67e2aaf9d3d51e49548c29baaada7be6912a2160105b5becef7c19702d074d",
+      "type": "client_log"
+    },
+    {
+      "description": "Accepted semantic review and false-PASS boundary",
+      "id": "urn:tribunal:artifact:sha256:e513a0d74e4de84898ecdfad516762fb573f3aef0f74d8750f01de2aaed5cc06",
+      "reference": "tribunal/docs/field-utilities-fabricator-review.md",
+      "sha256": "e513a0d74e4de84898ecdfad516762fb573f3aef0f74d8750f01de2aaed5cc06",
+      "type": "accepted_review"
+    },
+    {
+      "description": "Exact Tribunal scenario definition",
+      "id": "urn:tribunal:artifact:sha256:47e6ca7a76efc29deaaf5900e138093b91a15348b726ce13bfc2d96f43bb0bce",
+      "reference": "source/field-utilities/tests/tribunal/fabricator.py",
+      "sha256": "47e6ca7a76efc29deaaf5900e138093b91a15348b726ce13bfc2d96f43bb0bce",
+      "type": "scenario_definition"
+    }
+  ],
+  "assertions": [
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.authority.serverOwned",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.authority.serverOwned",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:server-transaction"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.fidelity.cargo",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.fidelity.cargo",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:server-transaction"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.catalogue.notConsumed",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.catalogue.notConsumed",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:server-transaction"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.delivery.packed",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.delivery.packed",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:server-transaction"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.client.orderAccepted",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.client.orderAccepted",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:client-replication"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.client.noLocalCreation",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.client.noLocalCreation",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:client-replication"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.client.deliveryReplicated",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.client.deliveryReplicated",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:client-replication"
+      ],
+      "observed": true,
+      "participant_id": "client-a",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.control.unregistered",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.unregistered",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.control.outOfRange",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.outOfRange",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.control.noStorage",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.noStorage",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.control.duplicateRequest",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.duplicateRequest",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.control.airdropUnauthorized",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.airdropUnauthorized",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.control.malformedRefused",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.malformedRefused",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.control.foreignDiscardRefused",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.foreignDiscardRefused",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.control.activeDiscardAtomic",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.activeDiscardAtomic",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.control.watchdogAtomic",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.watchdogAtomic",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    },
+    {
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "definition_id": "urn:tribunal:assertion-definition:fabricator.cleanup",
+      "expected": true,
+      "id": "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.cleanup",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "observed": true,
+      "participant_id": "server",
+      "result": "pass",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "type": "custom"
+    }
+  ],
+  "causal_relationships": [
+    {
+      "controlled_dimensions": [
+        "run",
+        "scenario",
+        "Arma build",
+        "dedicated server",
+        "single authenticated client"
+      ],
+      "id": "urn:tribunal:causal-pair:20260818T213059Z-4a086b37:0",
+      "relation": "CAUSAL_PAIR_WITH",
+      "source_arm_id": "urn:tribunal:experimental-arm:20260818T213059Z-4a086b37:client-replication",
+      "target_arm_id": "urn:tribunal:experimental-arm:20260818T213059Z-4a086b37:refusal-controls"
+    }
+  ],
+  "context": {
+    "branch": "stable",
+    "client_build": "24672225",
+    "mission": {
+      "footer_sha1_valid": true,
+      "mission_sha256": "2812aa34514330a036c64ffa2af61347e5fc8d3138fb4e13a78bdb537889b3d9",
+      "pbo": "/mnt/services/pontifex/server/runtime/install/mpmissions/PontifexGameplay_20260818T213059Z_4a086b37.Stratis.pbo",
+      "pbo_sha256": "377b72b847ceb896faa6041f2ce17bd9df9bedaf1ee39cb174e0f16814ff9380",
+      "pbo_size": 51162,
+      "plan": "gameplay",
+      "source": "/mnt/services/pontifex/runs/20260818T213059Z-4a086b37/mission/PontifexGameplay_20260818T213059Z_4a086b37.Stratis",
+      "token": "gameplay-20260818T213059Z-4a086b37-c714b179f6a9"
+    },
+    "mods": [
+      {
+        "archive": "CBA_A3_v3.18.6.zip",
+        "directory": "@CBA_A3",
+        "id": "cba",
+        "installed": true,
+        "name": "Community Base Addons A3",
+        "path": "/mnt/services/pontifex/server/dependencies/@CBA_A3",
+        "sha256": "80fedfbd9cb57b2393a34c84f80a5268ce8a51b31013976d84232be04c72bf8d",
+        "url": "https://github.com/CBATeam/CBA_A3/releases/download/v3.18.6/CBA_A3_v3.18.6.zip",
+        "version": "3.18.6"
+      },
+      {
+        "archive": "ace3_3.21.0.zip",
+        "directory": "@ace",
+        "id": "ace",
+        "installed": true,
+        "name": "ACE3",
+        "path": "/mnt/services/pontifex/server/dependencies/@ace",
+        "sha256": "48cb7a90e5200b0b313dff05c4b57b828ca56780c03c0e6de07067a28c544acc",
+        "url": "https://github.com/acemod/ACE3/releases/download/v3.21.0/ace3_3.21.0.zip",
+        "version": "3.21.0"
+      },
+      {
+        "archive": "zen_1.15.1.zip",
+        "directory": "@zen",
+        "id": "zen",
+        "installed": true,
+        "name": "Zeus Enhanced",
+        "path": "/mnt/services/pontifex/server/dependencies/@zen",
+        "sha256": "740aa11d1d6c3afa6cd4d8301aac3809bb82a53f9f96621eceba46c1d58f6eea",
+        "url": "https://github.com/zen-mod/ZEN/releases/download/v1.15.1/zen_1.15.1.zip",
+        "version": "1.15.1"
+      }
+    ],
+    "product": "Arma 3",
+    "server_build": "24672274",
+    "server_kind": "dedicated",
+    "session": "multiplayer",
+    "version": "2.22.153995"
+  },
+  "experimental_arms": [
+    {
+      "description": "The authenticated order created the clone on the server, preserved exact cargo, did not consume the catalogue source, and delivered the packed result.",
+      "id": "urn:tribunal:experimental-arm:20260818T213059Z-4a086b37:server-transaction",
+      "role": "treatment",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction"
+    },
+    {
+      "description": "Client-a observed acceptance and exact replicated delivery while confirming the clone was not locally created on the client.",
+      "id": "urn:tribunal:experimental-arm:20260818T213059Z-4a086b37:client-replication",
+      "role": "treatment",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction"
+    },
+    {
+      "description": "Unregistered, out-of-range, no-storage, duplicate, unauthorized, malformed and foreign-discard requests were refused without violating the object census; active-discard/watchdog paths were atomic.",
+      "id": "urn:tribunal:experimental-arm:20260818T213059Z-4a086b37:refusal-controls",
+      "role": "negative_control",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction"
+    }
+  ],
+  "integrity": {
+    "algorithm": "sha256",
+    "canonicalization": "tribunal-canonical-json/v1",
+    "payload_sha256": "de421ab8871f43cc80954bfffdacd7223830a016fe539fe1f4a37eb8c02e9bf0"
+  },
+  "knowledge_subject": {
+    "aliases": [
+      "Fabricator"
+    ],
+    "biki_context": [
+      "arma:createvehicle"
+    ],
+    "key": "pontifex:field-utilities:fabricator",
+    "kind": "pontifex.feature",
+    "label": "Pontifex Fabricator"
+  },
+  "migration": {
+    "selection_reason": "Pressure-tests an evidence-backed transactional feature, exact cargo/output identity, server authority, refusal controls and bounded cleanup rather than a single happy-path assertion.",
+    "source_contract": "arma-knowledge.tribunal-curation/v1"
+  },
+  "observations": [
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260818T213059Z-4a086b37:server-transaction",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "corroborating_participant_ids": [],
+      "id": "urn:tribunal:observation:20260818T213059Z-4a086b37:server-transaction",
+      "observed_at": "2026-08-18T21:33:57.762486Z",
+      "participant_id": "server",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "fabricator.authority.serverOwned",
+            "detail": "result=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.fidelity.cargo",
+            "detail": "clone=[[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.catalogue.notConsumed",
+            "detail": "catalogue=3|sourceAlive=true|cargo=[[[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.delivery.packed",
+            "detail": "result=[",
+            "result": "pass"
+          }
+        ],
+        "role": "OBSERVATION",
+        "summary": "The authenticated order created the clone on the server, preserved exact cargo, did not consume the catalogue source, and delivered the packed result."
+      }
+    },
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260818T213059Z-4a086b37:client-replication",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "corroborating_participant_ids": [],
+      "id": "urn:tribunal:observation:20260818T213059Z-4a086b37:client-replication",
+      "observed_at": "2026-08-18T21:33:57.762486Z",
+      "participant_id": "client-a",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "fabricator.client.orderAccepted",
+            "detail": "report=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.client.noLocalCreation",
+            "detail": "clone=2:191|localHere=false|type=Box_NATO_Ammo_F",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.client.deliveryReplicated",
+            "detail": "dist=3.24843|weapons=[[",
+            "result": "pass"
+          }
+        ],
+        "role": "OBSERVATION",
+        "summary": "Client-a observed acceptance and exact replicated delivery while confirming the clone was not locally created on the client."
+      }
+    },
+    {
+      "arm_id": "urn:tribunal:experimental-arm:20260818T213059Z-4a086b37:refusal-controls",
+      "artifact_ids": [
+        "urn:tribunal:artifact:sha256:a59b21da91ddfde63fced64e916ea5bbfa36df5a250daf9fff13a8b9c05ab3bf"
+      ],
+      "corroborating_participant_ids": [],
+      "id": "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls",
+      "observed_at": "2026-08-18T21:33:57.762486Z",
+      "participant_id": "server",
+      "scenario_id": "pontifex.field-utilities.fabricator.transaction",
+      "schema_id": "tribunal.assertion-group/v1",
+      "type": "record",
+      "value": {
+        "assertions": [
+          {
+            "definition_id": "fabricator.control.unregistered",
+            "detail": "result=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.control.outOfRange",
+            "detail": "result=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.control.noStorage",
+            "detail": "result=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.control.duplicateRequest",
+            "detail": "result=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.control.airdropUnauthorized",
+            "detail": "result=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.control.malformedRefused",
+            "detail": "malformed=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.control.foreignDiscardRefused",
+            "detail": "receipt=[[131.722,",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.control.activeDiscardAtomic",
+            "detail": "created=true|terminated=[[160.498,",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.control.watchdogAtomic",
+            "detail": "result=[",
+            "result": "pass"
+          },
+          {
+            "definition_id": "fabricator.cleanup",
+            "detail": "census=[[],0]|stationGone=true|logicsCleared=true|txRemaining=[]|resultKeysGone=true|registryKeys=[]",
+            "result": "pass"
+          }
+        ],
+        "role": "NEGATIVE_CONTROL",
+        "summary": "Unregistered, out-of-range, no-storage, duplicate, unauthorized, malformed and foreign-discard requests were refused without violating the object census; active-discard/watchdog paths were atomic."
+      }
+    }
+  ],
+  "package_id": "urn:tribunal:evidence-package:20260818T213059Z-4a086b37:1",
+  "package_revision": 1,
+  "participants": [
+    {
+      "id": "server",
+      "role": "dedicated_server",
+      "runtime": {
+        "binary": "/mnt/services/arma3-server/pufferpanel/data/servers/80e9c1f3/arma3server_x64",
+        "binary_sha256": "e84472a7f47a1a120fd23698d8d64de35a74b716a896f6069bb4eb5693a1724d",
+        "steam_build_id": "24672274",
+        "version": "2.22.153995"
+      }
+    },
+    {
+      "id": "client-a",
+      "role": "player_client",
+      "runtime": {
+        "address_offset": 20,
+        "arma_executable": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Arma 3/arma3_x64.exe",
+        "arma_installed": true,
+        "character_payload": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Arma 3/Addons/characters_f.pbo",
+        "diagnostic_vnc_port": 5904,
+        "executable_sha256": "4e9207dfe687769db544326c22f20527344361ffbd433348f668a15fe5827958",
+        "home": "/mnt/services/pontifex/client/runtime/home",
+        "image": "pontifex-arma-client:phase3",
+        "image_id": "sha256:86b03b37405080fc80b3b5ede3adb46d5785f6693fba46cd967bfc10e0bd4e3c",
+        "image_ready": true,
+        "profile_name": "PontifexClientA",
+        "proton": "/mnt/services/pontifex/client/runtime/home/.steam/debian-installation/steamapps/common/Proton - Experimental/proton",
+        "steam_build_id": "24672225",
+        "steam_home": "/mnt/services/pontifex/client/runtime/home",
+        "steam_session_present": true,
+        "version": "2.22.153995"
+      }
+    }
+  ],
+  "proposition_evaluations": [
+    {
+      "assertion_ids": [
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.authority.serverOwned",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.fidelity.cargo",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.catalogue.notConsumed",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.delivery.packed",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.client.orderAccepted",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.client.noLocalCreation",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.client.deliveryReplicated"
+      ],
+      "id": "urn:tribunal:proposition-evaluation:20260818T213059Z-4a086b37:pontifex:fabricator:server-owned-delivery:demonstrated",
+      "intended_use": "primary_result",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:server-transaction",
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:client-replication"
+      ],
+      "outcome": "demonstrated",
+      "proposition_id": "pontifex:fabricator:server-owned-delivery",
+      "rationale": "Accepted physical and replicated behavior with exact authority evidence.",
+      "text": "Under the tested dedicated-server/single-client conditions, an authenticated Fabricator order is executed server-side, preserves exact cargo into one replicated delivery, and does not create the clone locally on the requesting client."
+    },
+    {
+      "assertion_ids": [
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.unregistered",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.outOfRange",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.noStorage",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.duplicateRequest",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.airdropUnauthorized",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.malformedRefused",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.foreignDiscardRefused",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.activeDiscardAtomic",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.control.watchdogAtomic",
+        "urn:tribunal:assertion-result:20260818T213059Z-4a086b37:fabricator.cleanup"
+      ],
+      "id": "urn:tribunal:proposition-evaluation:20260818T213059Z-4a086b37:pontifex:fabricator:atomic-refusal-controls:demonstrated",
+      "intended_use": "supporting_result",
+      "observation_ids": [
+        "urn:tribunal:observation:20260818T213059Z-4a086b37:refusal-controls"
+      ],
+      "outcome": "demonstrated",
+      "proposition_id": "pontifex:fabricator:atomic-refusal-controls",
+      "rationale": "Established control lemma used by the broader transaction result; not a claim about every possible invalid input.",
+      "text": "In the tested Fabricator matrix, invalid and duplicate requests plus bounded termination paths preserve atomic census and cleanup invariants."
+    }
+  ],
+  "publication": {
+    "acceptance_basis": "tribunal/docs/field-utilities-fabricator-review.md",
+    "published_at": "2026-08-22T12:00:00Z",
+    "publisher": "accepted arma-knowledge Tribunal migration f35fa0c",
+    "status": "accepted",
+    "synthetic": false,
+    "unresolved": [
+      "staging-depth necessity",
+      "settle timing as engine requirement",
+      "client-B/JIP",
+      "all possible malformed inputs"
+    ]
+  },
+  "run": {
+    "execution_state": "completed",
+    "finished_at": "2026-08-18T21:33:57.762486Z",
+    "id": "20260818T213059Z-4a086b37",
+    "mode": "tier-gameplay",
+    "outcome": "positive",
+    "reason": "complete",
+    "runner_status": "PASS",
+    "started_at": "2026-08-18T21:30:59.861036Z"
+  },
+  "scenarios": [
+    {
+      "definition": {
+        "kind": "source_snapshot",
+        "legacy_experiment_key": "tribunal:fieldutils-fabricator",
+        "protocol_revision": "source/field-utilities/tests/tribunal/fabricator.py@d20d011",
+        "reference": "source/field-utilities/tests/tribunal/fabricator.py"
+      },
+      "feature_family": "field-utilities/fabricator",
+      "id": "pontifex.field-utilities.fabricator.transaction",
+      "name": "Fabricator authenticated transaction",
+      "version": 1
+    }
+  ],
+  "schema": "tribunal.evidence/v1",
+  "source_snapshots": [
+    {
+      "builds": [
+        {
+          "path": "build/current/@AdvSys/addons/AdvSys.pbo",
+          "sha256": "1c880879583d9989c61e7545afe1d8ea598049844f7d14470429cf8712d83893",
+          "size": 2655085
+        },
+        {
+          "path": "build/current/@CORDIS/addons/CORDIS.pbo",
+          "sha256": "c7bd6685b5773fc26c7696a5d96dd9bb6df9af222b4323e03ecad511b33cc3fe",
+          "size": 26339
+        },
+        {
+          "path": "build/current/@FieldUtils/addons/FieldUtils.pbo",
+          "sha256": "0690920f5ca1c0925774abb1e84f38fffa3705d1f33542e5d37c1050578452fa",
+          "size": 2424313
+        },
+        {
+          "path": "build/current/@VIGIL_Support_Tablet/addons/VIGIL.pbo",
+          "sha256": "47c4ca6203e33f5a30c5acf29c036ac72290d4f3bdad46e75830421b3914be41",
+          "size": 3057335
+        }
+      ],
+      "changed_paths": [
+        " M source/field-utilities/addons/FieldUtils/functions/fabricator/fn_boxPacking.sqf",
+        " M source/field-utilities/addons/FieldUtils/functions/global/fn_fabricator.sqf",
+        " M source/field-utilities/addons/FieldUtils/functions/server/fn_fabricatorServer.sqf",
+        " M source/field-utilities/tests/tribunal/fabricator.py",
+        " M source/visual-support-tablet/addons/VIGIL/functions/task_fixedWing/fn_initFixedWingFunctions.sqf",
+        " M tests/test_fabricator_contract.py",
+        " M tribunal/docs/field-utilities-fabricator-review.md",
+        " M tribunal/docs/pontifex-feature-inventory.md",
+        " M tribunal/docs/testing-methodology.md"
+      ],
+      "commit": "d20d0117c8ff771044d372f4d6bc1d2bc57f452a",
+      "files": [
+        {
+          "path": "source/field-utilities/tests/tribunal/fabricator.py",
+          "sha256": "47e6ca7a76efc29deaaf5900e138093b91a15348b726ce13bfc2d96f43bb0bce"
+        },
+        {
+          "path": "tribunal/docs/field-utilities-fabricator-review.md",
+          "sha256": "e513a0d74e4de84898ecdfad516762fb573f3aef0f74d8750f01de2aaed5cc06"
+        }
+      ],
+      "id": "urn:tribunal:source-snapshot:sha256:75dcd8433536ca8b13760ad97192f343b1dcec379aa3a87d40fdba561a28565b",
+      "repository": "pontifex",
+      "tree_state": "dirty"
+    }
+  ]
+}
