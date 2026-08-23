@@ -300,15 +300,16 @@ Utilities for fixed-wing airdrop.
   live commander side is preferred and class affiliation is the bounded fallback.
   Fixed-wing registry rows and the dormant recon branch remain separate. See
   [`vigil-asset-browser-review.md`](vigil-asset-browser-review.md).
-* **Eden whitelist and Zeus activation** are **REFINED; PARTIALLY COVERED / ZEUS
-  REMOVAL NEEDS EXPERIMENTATION**. Fresh run
-  `20260821T165814Z-d0a72396` proved authentic multiple-module aggregation,
-  retained typed modules, server-private exact membership, one authentic
-  assigned-curator add, replay/forgery rejection, placing-curator-only feedback,
-  current-client replication, and cleanup (server 12/0, client 9/0). Authentic
-  removal/repeated placement, runtime reconfiguration, zero-sync/deleted-module
-  edge policy, and client-B/JIP remain unproven. The accepted unwhitelisted
-  browser remains unchanged. See
+* **Eden whitelist and Zeus activation** are **REFINED; ACCEPTED / COVERED**.
+  Fresh run `20260823T173648Z-86506466` proved authentic multiple-module
+  aggregation, retained typed modules, server-private exact membership, and two
+  authentic operations in one assigned-curator display: add an absent vehicle,
+  then remove a distinct present vehicle. Exact operation/logic/curator/target
+  identities, replay/forgery rejection, placing-curator-only feedback,
+  current-client replication, state retirement, and cleanup passed (server 14/0,
+  client 10/0), following an independent cold repeat. Runtime reconfiguration,
+  zero-sync/deleted-module edge policy, and client-B/JIP remain unproven. The
+  accepted unwhitelisted browser remains unchanged. See
   [`vigil-asset-whitelist-review.md`](vigil-asset-whitelist-review.md).
 
 ### 3.3 Coordinates, vehicle tasking, and governor
@@ -666,7 +667,7 @@ airdrop. General fabrication is outside the contract.
 
 ### 5.4 Eden/Zeus and CBA configuration
 
-* APS Eden activation is **REFINED; ACCEPTED / COVERED** through authentic typed mission entities and native Sync links. APS Zeus activation is also **REFINED; ACCEPTED / COVERED** for one authentic assigned-curator placement and exact causal activation. CBR Eden/Zeus activation is likewise **REFINED; ACCEPTED / COVERED** for authentic typed dispatch and an assigned-curator global toggle. Field Utilities Virtual Storage/Fabricator Eden activation is now **REFINED; ACCEPTED / COVERED** for multiple typed modules, aggregated Sync provenance, and server-private authority. Vigil whitelist Eden aggregation and one authentic Zeus add are **REFINED; PARTIALLY COVERED**; authentic Zeus removal remains **NEEDS EXPERIMENTATION**. Field Utilities exposes no
+* APS Eden activation is **REFINED; ACCEPTED / COVERED** through authentic typed mission entities and native Sync links. APS Zeus activation is also **REFINED; ACCEPTED / COVERED** for one authentic assigned-curator placement and exact causal activation. CBR Eden/Zeus activation is likewise **REFINED; ACCEPTED / COVERED** for authentic typed dispatch and an assigned-curator global toggle. Field Utilities Virtual Storage/Fabricator Eden activation is now **REFINED; ACCEPTED / COVERED** for multiple typed modules, aggregated Sync provenance, and server-private authority. Vigil whitelist Eden aggregation and assigned-curator add/removal are **REFINED; ACCEPTED / COVERED**. Field Utilities exposes no
   Zeus tool. Vigil fixed-wing Eden/Zeus activation is **REFINED; ACCEPTED /
   COVERED** in
   [`vigil-fixed-wing-module-review.md`](vigil-fixed-wing-module-review.md).

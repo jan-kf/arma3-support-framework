@@ -13,19 +13,19 @@ Vigil 36, Field Utilities 20, and cross-mod composition 13. This convenient
 total is a consequence of the selected inventory surfaces, not a target fitted
 to the result.
 
-## Before and after helicopter stabilizer disposition
+## Current estimate after Vigil whitelist closure
 
 | Measure | Before | After | Reasonable after range | Confidence |
 | --- | ---: | ---: | ---: | --- |
-| Feature-review program | ~85% | ~86% | 82–90% | medium |
-| Permanent automated coverage | ~65% | ~65% | 61–70% | medium |
+| Feature-review program | ~86% | ~87% | 83–91% | medium |
+| Permanent automated coverage | ~65% | ~66% | 62–71% | medium |
 
-The stabilizer surface moved from an unresolved experiment to a controlled
-negative disposition: the current algorithm is not accepted and automatic use
-is off. Review understanding rises modestly; permanent feature coverage does
-not receive credit for a capability that is deliberately deferred. The existing
-transport scenario now permanently protects the no-force decision and cleanup,
-but that is not counted as stabilizer functionality.
+The remaining authentic Vigil whitelist-removal experiment moved from partial
+coverage to accepted coverage. Two opposite operations now run through one
+retained assigned-curator display with exact end-to-end identity correlation,
+negative controls, replication, state retirement, and an independent cold repeat.
+The modest increase reflects closure of a bounded existing surface rather than a
+new large subsystem.
 
 ## Current family estimate
 
@@ -33,10 +33,10 @@ but that is not counted as stabilizer functionality.
 | --- | ---: | ---: | ---: | --- |
 | CORDIS | 10 | ~90% | ~84% | sound/radio presentation, debug observation, ownership migration, client-N/JIP |
 | Advanced Systems | 21 | ~86% | ~67% | APS anti-drone policy/authority, CBR concurrency policy, Iron Dome client-owned threats and audio |
-| Vigil | 36 | ~88% | ~65% | task governor rewrite, recon/homepage decisions, whitelist removal, feedback policy, any future stabilizer rewrite |
+| Vigil | 36 | ~90% | ~68% | task governor rewrite, recon/homepage decisions, feedback policy, any future stabilizer rewrite |
 | Field Utilities | 20 | ~81% | ~46% | FPV authority/effects, towing, object handling/loading, airdrop feedback, land mass/terrain experiments |
 | Cross-mod composition | 13 | ~89% | ~80% | true client-B/JIP, ownership migration, remaining partial module reversals, broader replicated-state lifecycle |
-| **Overall** | **100** | **~86%** | **~65%** | weighted combination above |
+| **Overall** | **100** | **~87%** | **~66%** | weighted combination above |
 
 ## Sensitivity and next block
 
@@ -47,7 +47,7 @@ permanent-coverage number is lower-confidence for presentation/audio and
 multi-client behavior because the autonomous client uses `-noSound` and only
 one independently authenticated identity exists.
 
-The stabilizer review is terminal at `DEFER`: reactivation is not the next
-feature. Select the highest-value unblocked suite editor/Zeus activation surface
-from the inventory. The authentic Vigil whitelist-removal path remains a
-narrower alternative if its second native hover stimulus becomes available.
+The whitelist removal/repeated-placement slice is terminal at `ACCEPTED / COVERED`; its runtime reconfiguration and client-N/JIP questions remain separate.
+The next recommended unblocked feature is Field Utilities towing, whose product
+decisions are established and whose reviewed implementation still requires
+refinement and causal permanent coverage.

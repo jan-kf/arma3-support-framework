@@ -8,11 +8,13 @@ if (!isServer || {isNull _logic} || {typeOf _logic isNotEqualTo "YSF_Toggle_To_W
 	private _claim = [];
 	waitUntil {uiSleep 0.01; _claim = (localNamespace getVariable ["YSF_WHITELIST_ZEUS_CLAIMS", createHashMap]) getOrDefault [_logicId, []]; _claim isNotEqualTo [] || {isNull _logic} || {diag_tickTime > _deadline}};
 	if (isNull _logic || {_claim isEqualTo []}) exitWith {};
-	_claim params ["_operationId", "_curatorId", "_requesterOwner", "_status"];
+	_claim params ["_operationId", "_curatorId", "_requesterOwner", "_status", ["_claimedTarget", objNull, [objNull]]];
 	if (_status isNotEqualTo "claimed") exitWith {};
 	private _claims = localNamespace getVariable ["YSF_WHITELIST_ZEUS_CLAIMS", createHashMap];
 	_claim set [3, "processing"]; _claims set [_logicId, _claim]; localNamespace setVariable ["YSF_WHITELIST_ZEUS_CLAIMS", _claims];
-	private _targets = (synchronizedObjects _logic) apply {vehicle _x};
+	private _targets = [];
+	if (!isNull _claimedTarget) then {_targets pushBackUnique (vehicle _claimedTarget);};
+	{_targets pushBackUnique (vehicle _x);} forEach synchronizedObjects _logic;
 	private _attached = attachedTo _logic;
 	if (!isNull _attached) then {_targets pushBackUnique (vehicle _attached);};
 	private _result = if ((count _targets) isEqualTo 1) then {[_targets # 0] call YSF_fnc_whitelistToggleServer} else {[false, "invalid_target_count", false]};

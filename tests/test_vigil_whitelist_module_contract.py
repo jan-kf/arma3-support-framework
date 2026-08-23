@@ -14,14 +14,36 @@ class VigilWhitelistModuleContractTests(unittest.TestCase):
         self.scenario = multiplayer.FEATURE_SCENARIOS["vigil-whitelist-modules"]
         self.addon = ROOT / "source/visual-support-tablet/addons/VIGIL"
 
-    def test_authentic_entries_and_one_placement_are_permanent(self) -> None:
-        self.assertEqual(self.scenario.metadata["zeus_placements"], 1)
+    def test_authentic_entries_and_two_opposite_placements_are_permanent(self) -> None:
+        self.assertEqual(self.scenario.metadata["zeus_placements"], 2)
         self.assertEqual(self.scenario.metadata["zeus_marker_prefix"], "TRIBUNAL_VIGIL_WHITELIST_ZEUS")
         self.assertEqual(len([e for e in self.scenario.mission_entities if e.data_type == "Logic"]), 2)
         self.assertEqual(len(self.scenario.mission_syncs), 2)
         self.assertNotIn("call YSF_fnc_assetWhitelist", self.scenario.server_sqf)
         self.assertNotIn("call YSF_fnc_toggleObjectInWhitelist", self.scenario.server_sqf)
         self.assertIn("Add/Remove from Whitelist", self.scenario.client_sqf)
+        self.assertIn('for "_phase" from 1 to 2 do', self.scenario.server_sqf)
+        self.assertIn('for "_phase" from 1 to 2 do', self.scenario.client_sqf)
+        self.assertIn('[netId _assetC, netId _assetA]', self.scenario.server_sqf)
+        self.assertIn('[true, false]', self.scenario.server_sqf)
+        self.assertIn('[true, false]', self.scenario.client_sqf)
+        self.assertIn("(_acceptedClaims apply {_x # 0}) isEqualTo (_acceptedToggles apply {_x # 0})", self.scenario.server_sqf)
+        self.assertIn("(_acceptedClaims apply {_x # 1}) isEqualTo (_acceptedToggles apply {_x # 1})", self.scenario.server_sqf)
+        self.assertIn("(_placementAudit apply {_x # 0}) isEqualTo (_placements apply {_x # 3 # 0})", self.scenario.client_sqf)
+        self.assertIn("(_placementAudit apply {_x # 1}) isEqualTo (_placements apply {_x # 3 # 1})", self.scenario.client_sqf)
+        self.assertIn("vigil.whitelist.zeusTransition2", self.scenario.server_expected)
+        self.assertIn("vigil.whitelist.fixtureStable", self.scenario.server_expected)
+        self.assertIn("setVehiclePosition", self.scenario.server_sqf)
+        self.assertIn("isTouchingGround", self.scenario.server_sqf)
+        self.assertIn("diag_tickTime - _stableSince >= 1", self.scenario.server_sqf)
+        self.assertIn("vigil.whitelist.clientFixtureStable", self.scenario.client_expected)
+        self.assertIn("diag_tickTime - _replicaStableSince >= 1", self.scenario.client_sqf)
+        self.assertIn("_x distance (_replicaAnchor # _forEachIndex)", self.scenario.client_sqf)
+        self.assertIn("[netId _x, getPosASL _x, velocity _x, angularVelocity _x, isTouchingGround _x]", self.scenario.client_sqf)
+        self.assertIn("lineIntersectsSurfaces", self.scenario.client_sqf)
+        self.assertIn("getCenterOfMass _target", self.scenario.client_sqf)
+        self.assertIn("_points arrayIntersect _points", self.scenario.client_sqf)
+        self.assertNotIn("enableSimulation false", self.scenario.server_sqf + self.scenario.client_sqf)
 
     def test_authority_and_discovery_use_server_snapshot(self) -> None:
         registry = (self.addon / "functions/global/fn_whitelistRegistry.sqf").read_text()
@@ -31,15 +53,41 @@ class VigilWhitelistModuleContractTests(unittest.TestCase):
         self.assertIn('localNamespace getVariable ["YSF_WHITELIST_MEMBERS"', registry)
         self.assertIn('missionNamespace setVariable ["YSF_WHITELISTED_ASSETS"', registry)
         self.assertNotIn("accepted_legacy", registry)
-        for value in ("remoteExecutedOwner", "getAssignedCuratorLogic", "YSF_WHITELIST_ZEUS_OPERATIONS", '"duplicate"'):
+        for value in ("remoteExecutedOwner", "getAssignedCuratorLogic", "target", "YSF_WHITELIST_ZEUS_OPERATIONS", '"duplicate"'):
             self.assertIn(value, claim)
         self.assertIn("BIS_fnc_showCuratorFeedbackMessage", result)
+        for state_name in (
+            "YSF_WHITELIST_ZEUS_CLAIMS",
+            "YSF_WHITELIST_ZEUS_OPERATIONS",
+            "YSF_WHITELIST_ZEUS_CLAIM_AUDIT",
+            "YSF_WHITELIST_ZEUS_TOGGLE_AUDIT",
+        ):
+            self.assertIn(state_name, self.scenario.server_sqf)
+        self.assertIn('uiNamespace setVariable ["YSF_WHITELIST_ZEUS_RESULTS", []]', self.scenario.client_sqf)
+        self.assertIn('uiNamespace setVariable ["YSF_WHITELIST_ZEUS_PLACEMENT_AUDIT", []]', self.scenario.client_sqf)
         self.assertIn('missionNamespace getVariable ["YSF_WHITELISTED_ASSETS"', browser)
         self.assertNotIn("synchronizedObjects YSF_WHITELISTED_ASSETS_MODULE", browser)
+
+    def test_evidence_contract_covers_every_permanent_assertion(self) -> None:
+        contract = self.scenario.evidence_contract
+        declared = {name for arm in contract["arms"] for name in arm["assertions"]}
+        expected = set(self.scenario.server_expected) | set(self.scenario.client_expected)
+        self.assertEqual(declared, expected)
+        self.assertEqual(
+            contract["knowledge_subject"]["key"],
+            "pontifex:vigil:asset-whitelist-modules",
+        )
+        self.assertEqual(
+            {proposition["intended_use"] for proposition in contract["propositions"]},
+            {"primary_result"},
+        )
+        self.assertTrue(contract["causal_relationships"])
 
     def test_curator_placement_uses_the_assigned_curator_object_event(self) -> None:
         client_init = (self.addon / "functions/client/fn_initPlayerLocal.sqf").read_text()
         self.assertIn('addEventHandler ["CuratorObjectPlaced"', client_init)
+        self.assertIn("curatorMouseOver", client_init)
+        self.assertIn("[_logic, _curator, _operationId, _target] remoteExecCall", client_init)
         self.assertIn("getAssignedCuratorLogic player", client_init)
         self.assertIn('removeEventHandler ["CuratorObjectPlaced"', client_init)
         self.assertNotIn("call CBA_fnc_addEventHandler", client_init)

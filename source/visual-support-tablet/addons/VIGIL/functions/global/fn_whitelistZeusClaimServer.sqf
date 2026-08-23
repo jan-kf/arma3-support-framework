@@ -1,4 +1,4 @@
-params ["_logic", "_curator", "_operationId"];
+params ["_logic", "_curator", "_operationId", ["_target", objNull, [objNull]]];
 
 if (!isServer) exitWith {false};
 private _requesterOwner = remoteExecutedOwner;
@@ -25,8 +25,8 @@ if (_operationId isEqualType "" && {_operationId isNotEqualTo ""}) then {
 	};
 	localNamespace setVariable ["YSF_WHITELIST_ZEUS_OPERATIONS", _operations];
 };
-[_logic, _curator, _operationId, _requesterOwner, _logicId, _curatorId] spawn {
-	params ["_logic", "_curator", "_operationId", "_requesterOwner", "_logicId", "_curatorId"];
+[_logic, _curator, _operationId, _target, _requesterOwner, _logicId, _curatorId] spawn {
+	params ["_logic", "_curator", "_operationId", "_target", "_requesterOwner", "_logicId", "_curatorId"];
 	private _requester = objNull;
 	{if (owner _x isEqualTo _requesterOwner) exitWith {_requester = _x;};} forEach allPlayers;
 	private _predicates = [
@@ -34,12 +34,13 @@ if (_operationId isEqualType "" && {_operationId isNotEqualTo ""}) then {
 		["operation_id", _operationId isEqualType "" && {_operationId isNotEqualTo ""}],
 		["logic_class", !isNull _logic && {typeOf _logic isEqualTo "YSF_Toggle_To_Whitelist_Module"}],
 		["logic_owner", !isNull _logic && {owner _logic isEqualTo _requesterOwner}],
-		["assigned_curator", !isNull _requester && {(getAssignedCuratorLogic _requester) isEqualTo _curator}]
+		["assigned_curator", !isNull _requester && {(getAssignedCuratorLogic _requester) isEqualTo _curator}],
+		["target", !isNull _target]
 	];
 	private _failed = _predicates select {!(_x # 1)};
 	private _valid = _failed isEqualTo [];
 	private _reason = if (_valid) then {"accepted"} else {format ["predicate_%1", (_failed # 0) # 0]};
-	if (_valid) then {private _claims = localNamespace getVariable ["YSF_WHITELIST_ZEUS_CLAIMS", createHashMap]; _claims set [_logicId, [_operationId, _curatorId, _requesterOwner, "claimed"]]; localNamespace setVariable ["YSF_WHITELIST_ZEUS_CLAIMS", _claims];};
+	if (_valid) then {private _claims = localNamespace getVariable ["YSF_WHITELIST_ZEUS_CLAIMS", createHashMap]; _claims set [_logicId, [_operationId, _curatorId, _requesterOwner, "claimed", _target]]; localNamespace setVariable ["YSF_WHITELIST_ZEUS_CLAIMS", _claims];};
 	private _operations = localNamespace getVariable ["YSF_WHITELIST_ZEUS_OPERATIONS", createHashMap];
 	_operations set [_operationId, [_logicId, _curatorId, _requesterOwner, _reason, diag_tickTime]];
 	localNamespace setVariable ["YSF_WHITELIST_ZEUS_OPERATIONS", _operations];

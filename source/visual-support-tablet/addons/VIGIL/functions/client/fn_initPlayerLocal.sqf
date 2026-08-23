@@ -37,11 +37,28 @@ Amen.
 					};
 					if (_route isEqualTo []) exitWith {};
 					_route params ["_prefix", "_auditName", "_claimFunction"];
-					private _operationId = format ["%1-%2-%3-%4", _prefix, clientOwner, floor (diag_tickTime * 1000), floor random 1000000];
-					private _rows = uiNamespace getVariable [_auditName, []];
-					_rows pushBack [_operationId, netId _logic, _class, owner _logic, netId (attachedTo _logic), clientOwner, diag_tickTime];
-					uiNamespace setVariable [_auditName, _rows];
-					[_logic, _curator, _operationId] remoteExecCall [_claimFunction, 2];
+					private _eventHover = curatorMouseOver;
+					private _eventTarget = if (toLowerANSI (_eventHover param [0, ""]) isEqualTo "object") then {_eventHover param [1, objNull]} else {objNull};
+					[_logic, _curator, _class, _prefix, _auditName, _claimFunction, _eventTarget] spawn {
+						params ["_logic", "_curator", "_class", "_prefix", "_auditName", "_claimFunction", "_target"];
+						private _source = if (isNull _target) then {"pending"} else {"event_hover"};
+						private _targetDeadline = diag_tickTime + 1;
+						waitUntil {
+							uiSleep 0.01;
+							private _attached = attachedTo _logic;
+							if (!isNull _attached) then {_target = _attached; _source = "attached";};
+							if (isNull _target) then {
+								private _hover = curatorMouseOver;
+								if (toLowerANSI (_hover param [0, ""]) isEqualTo "object") then {_target = _hover param [1, objNull]; _source = "deferred_hover";};
+							};
+							!isNull _target || {diag_tickTime > _targetDeadline}
+						};
+						private _operationId = format ["%1-%2-%3-%4", _prefix, clientOwner, floor (diag_tickTime * 1000), floor random 1000000];
+						private _rows = uiNamespace getVariable [_auditName, []];
+						_rows pushBack [_operationId, netId _logic, _class, owner _logic, netId _target, clientOwner, diag_tickTime, _source];
+						uiNamespace setVariable [_auditName, _rows];
+						[_logic, _curator, _operationId, _target] remoteExecCall [_claimFunction, 2];
+					};
 				}];
 				_installedOn setVariable ["YSF_WHITELIST_ZeusPlacementEH", _eh];
 			};
