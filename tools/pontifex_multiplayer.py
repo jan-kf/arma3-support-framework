@@ -598,6 +598,19 @@ def container_inspect(container: str) -> dict | None:
     return json.loads(result.stdout)[0]
 
 
+def capture_container_log_if_present(container: str, target: Path) -> bool:
+    """Capture live container output without destroying an already-retained log.
+
+    A user-requested Live stop can remove the container before the durable
+    worker reaches its finalizer.  In that case Docker's lookup error is not
+    runtime evidence and the existing polled artifact must remain untouched.
+    """
+    if not container or container_inspect(container) is None:
+        return False
+    target.write_text(container_logs(container), encoding="utf-8")
+    return True
+
+
 def validated_remove_container(container: str, run_id: str) -> bool:
     data = container_inspect(container)
     if data is None:
@@ -2101,9 +2114,13 @@ def run_multiplayer(
             ui_probe_reports: dict[str, dict] = {}
             reason = "timeout"
             while time.monotonic() < deadline:
-                server_text = container_logs(server_name)
-                (server_dir / "console.log").write_text(server_text, encoding="utf-8")
-                (server_dir / "server.rpt").write_text(server_text, encoding="utf-8")
+                if capture_container_log_if_present(server_name, server_dir / "console.log"):
+                    server_text = (server_dir / "console.log").read_text(encoding="utf-8")
+                    shutil.copy2(server_dir / "console.log", server_dir / "server.rpt")
+                elif (server_dir / "server.rpt").is_file():
+                    server_text = (server_dir / "server.rpt").read_text(encoding="utf-8")
+                else:
+                    server_text = ""
                 server_assertions, server_complete = dedicated.parse_protocol(server_text)
                 server_assertions = [item for item in server_assertions if item["origin"] == "server"]
                 if client_dir.exists():
@@ -2325,11 +2342,9 @@ def run_multiplayer(
             result["reason"] = "runner_error"
             result["error"] = f"{type(exc).__name__}: {exc}"
         finally:
-            if server_name:
-                (server_dir / "console.log").write_text(container_logs(server_name), encoding="utf-8")
+            if capture_container_log_if_present(server_name, server_dir / "console.log"):
                 shutil.copy2(server_dir / "console.log", server_dir / "server.rpt")
-            if client_name:
-                (client_dir / "console.log").write_text(container_logs(client_name), encoding="utf-8")
+            if capture_container_log_if_present(client_name, client_dir / "console.log"):
                 combine_rpts(client_dir, client_dir / "client.rpt")
             if live and result["status"] == "READY":
                 cleanup = {"deferred": True, "state_removed": False}

@@ -20,7 +20,7 @@ YSF_handlers_transport = {
     ["init", {
       params ["_v","_t","_d"];
 	    format ["[YSF_TransportTask] Initializing transport task for vehicle %1", _v] call YSF_fnc_debugMsg;
-      _d params ["_destATL", ["_maxAlt", 20], ["_enableStabilization", true], ["_ignoreEn", false], ["_playRadio", true], ["_mode", "dispatch"], ["_completionVariable", ""]];
+      _d params ["_destATL", ["_maxAlt", 20], ["_enableStabilization", false], ["_ignoreEn", false], ["_playRadio", true], ["_mode", "dispatch"], ["_completionVariable", ""]];
 
       if !(alive _v && {!isNull driver _v} && {alive driver _v}) exitWith {
         _v setVariable ["YSF_transport_state", "failed", true];
@@ -40,7 +40,6 @@ YSF_handlers_transport = {
 
       if (_enableStabilization) then {
         YSF_STABILIZE_HELICOPTERS pushBackUnique _v;
-        publicVariable "YSF_STABILIZE_HELICOPTERS";
       };
 
       if (_ignoreEn) then {
@@ -135,14 +134,10 @@ YSF_handlers_transport = {
     ["finally", {
       params ["_v","_t","_d"];
 
-      _d params ["_destATL", ["_maxAlt", 20], ["_enableStabilization", true], ["_ignoreEn", true], ["_playRadio", true], ["_mode", "dispatch"], ["_completionVariable", ""]];
+      _d params ["_destATL", ["_maxAlt", 20], ["_enableStabilization", false], ["_ignoreEn", true], ["_playRadio", true], ["_mode", "dispatch"], ["_completionVariable", ""]];
 
       if (_enableStabilization) then {
-        private _ix = YSF_STABILIZE_HELICOPTERS findIf { _v isEqualTo _x };
-        if (_ix > -1) then {
-          YSF_STABILIZE_HELICOPTERS deleteAt _ix;
-          publicVariable "YSF_STABILIZE_HELICOPTERS";
-        };
+        [_v] call YSF_helicopterStab_unregister;
       };
      
       [_v] call YOSHI_rebootAI;

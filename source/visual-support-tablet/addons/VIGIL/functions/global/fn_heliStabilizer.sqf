@@ -11,6 +11,13 @@ if (isNil "YSF_helicopterStab_helicopterDecel") then { YSF_helicopterStab_helico
 YSF_helicopterStab_pfhFrameId = nil;
 YSF_helicopterStab_pfhSecondId = nil;
 
+YSF_helicopterStab_unregister = {
+  params ["_helicopter"];
+  YSF_STABILIZE_HELICOPTERS = YSF_STABILIZE_HELICOPTERS select {!(_x isEqualTo _helicopter)};
+  YSF_helicopterStab_helicopterDecel = YSF_helicopterStab_helicopterDecel select {!((_x # 0) isEqualTo _helicopter)};
+  _helicopter setVariable ["YSF_helicopterStab_speedAlt", nil];
+};
+
 YSF_helicopterStab_perFrame = {
   params ["_t","_id"];
   if (isGamePaused) exitWith {};

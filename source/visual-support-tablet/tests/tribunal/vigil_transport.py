@@ -19,6 +19,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "vigil.transport.rtb.flight",
         "vigil.transport.home",
         "vigil.transport.cleanup",
+        "vigil.transport.stabilizer.deferred",
     }),
     client_expected=frozenset({
         "vigil.transport.client.locality",
@@ -54,6 +55,15 @@ private _localityOk = local _aircraft && {!isNull _pilot} && {local _pilot}
     && {local (group _pilot)} && {isServer};
 ["vigil.transport.locality", _localityOk, format ["aircraftLocal=%1|pilotLocal=%2|groupLocal=%3|aircraftOwner=%4|pilotOwner=%5", local _aircraft, if (isNull _pilot) then {false} else {local _pilot}, if (isNull _pilot) then {false} else {local (group _pilot)}, owner _aircraft, if (isNull _pilot) then {-1} else {owner _pilot}]] call _assert;
 missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_FIXTURE", [_token, _aircraftId, _home, _destination], true];
+private _stabilizerSeen = false;
+missionNamespace setVariable ["TRIBUNAL_VIGIL_STABILIZER_SEEN", false];
+private _stabilizerMonitor = [{
+    params ["_args"];
+    _args params ["_observed", "_seenRef"];
+    if (_observed in YSF_STABILIZE_HELICOPTERS || {YSF_helicopterStab_helicopterDecel findIf {(_x # 0) isEqualTo _observed} > -1}) then {
+        missionNamespace setVariable [_seenRef, true];
+    };
+}, 0.05, [_aircraft, "TRIBUNAL_VIGIL_STABILIZER_SEEN"]] call CBA_fnc_addPerFrameHandler;
 
 private _dispatchDeadline = diag_tickTime + 30;
 waitUntil {
@@ -129,6 +139,13 @@ private _homeOk = (_aircraft getVariable ["YSF_transport_state", ""]) isEqualTo 
 missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_HOME", [_token, _aircraftId], true];
 uiSleep 2;
 
+[_stabilizerMonitor] call CBA_fnc_removePerFrameHandler;
+_stabilizerSeen = missionNamespace getVariable ["TRIBUNAL_VIGIL_STABILIZER_SEEN", false];
+private _stabilizerClean = !_stabilizerSeen && {!(_aircraft in YSF_STABILIZE_HELICOPTERS)}
+    && {YSF_helicopterStab_helicopterDecel findIf {(_x # 0) isEqualTo _aircraft} < 0}
+    && {isNil {_aircraft getVariable "YSF_helicopterStab_speedAlt"}};
+["vigil.transport.stabilizer.deferred", _stabilizerClean, format ["seen=%1|registered=%2|active=%3|sample=%4", _stabilizerSeen, _aircraft in YSF_STABILIZE_HELICOPTERS, YSF_helicopterStab_helicopterDecel findIf {(_x # 0) isEqualTo _aircraft}, _aircraft getVariable ["YSF_helicopterStab_speedAlt", []]]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_VIGIL_STABILIZER_SEEN", nil];
 private _manager = (call YSF__mgr) getOrDefault [str _aircraft, objNull];
 private _managerIdle = typeName _manager isEqualTo "HASHMAP" && {!(_manager getOrDefault ["enabled", true])};
 deleteVehicleCrew _aircraft;
@@ -157,7 +174,7 @@ uiNamespace setVariable ["YSF_current_selected_asset", _aircraft];
 private _state = call YOSHI_taskTransport_GetState;
 _state set ["grid", _destination];
 _state set ["alt", 20];
-_state set ["do_not_climb", true];
+_state set ["do_not_climb", false];
 _state set ["ignore_en", false];
 uiNamespace setVariable ["YOSHI_taskTransport_state", _state];
 call YOSHI_taskTRN_submit;

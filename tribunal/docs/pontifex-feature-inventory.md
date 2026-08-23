@@ -432,11 +432,12 @@ Full analysis: [`vigil-developer-laser-harness-review.md`](vigil-developer-laser
 
 ### 3.11 Other Vigil support systems
 
-* **Helicopter stabilization** is **REVIEWED / NEEDS EXPERIMENTATION**.
-  Broad automatic registration is commented out, but normal transport/RTB tasks
-  enroll aircraft by default and retained runs reach the force path. No matched
-  enabled/disabled flight proves a useful or safe causal effect; cancellation
-  cleanup and the hidden always-on default also remain unresolved. See
+* **Helicopter stabilization** is **REVIEWED / DEFERRED**. Controlled real
+  transport A/B reached the force on an eligible flat corridor but missed
+  predeclared 5 m altitude and 1 m/s vertical-speed usefulness gates; another
+  corridor proved the model-forward terrain guard can suppress all sampling.
+  Normal transport and CAS RTB no longer enroll automatically. Explicit
+  experimental finalization now clears all stabilizer state. See
   [`vigil-helicopter-stabilizer-review.md`](vigil-helicopter-stabilizer-review.md).
 * **Radio/chat/debug/curator feedback** wraps CORDIS. **REVIEWED / NEEDS
   PRODUCT DECISION; PRESENTATION EXPERIMENT DEFERRED.** Real task callers exist,
@@ -733,7 +734,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Vigil homepage task management | **REVIEWED / DEFERRED** | unreachable commented page; incompatible client/server data shape and no authoritative cancellation contract |
 | Vigil reconnaissance | **REVIEWED / DEFERRED** | role/state only; unreachable form, no submit, empty task, no sensor/output/lifecycle |
 | Fixed-wing UAV deploy | **REVIEWED / NEEDS EXPERIMENTATION** | explicitly rejected as unstable |
-| Helicopter stabilizer | **REVIEWED / NEEDS EXPERIMENTATION** | transport/RTB enrolls by default and retained runs reach the force path; matched flight causality, safety, and cancellation cleanup unproven |
+| Helicopter stabilizer | **REVIEWED / DEFERRED** | controlled physical A/B missed predeclared usefulness gates; automatic transport/CAS enrollment is off; any future mechanism requires a new bounded rewrite/experiment |
 | 3CB Hellfire mapping | **REVIEWED / NEEDS EXPERIMENTATION** | no compatible installed pylon row for A/B |
 | VLS target handshake | **REVIEWED / CHARACTERIZED** | four fresh physical A/B pairs prove the combined knowledge step is required; individual calls remain unisolated |
 | Transport hidden-pad landing | **REVIEWED / NEEDS EXPERIMENTATION** | landing works; exact mechanism necessity unproven |
@@ -760,8 +761,9 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Next consider the Vigil helicopter stabilizer, remaining suite editor/Zeus
-modules, and other unblocked reviewed experiment boundaries. APS anti-drone is now
+Next consider remaining suite editor/Zeus modules and other unblocked reviewed
+experiment boundaries. The Vigil helicopter stabilizer is closed as deferred;
+do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product
 decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume

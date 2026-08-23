@@ -86,6 +86,7 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn("vigil.transport.arrival", server)
         self.assertIn("vigil.transport.rtb.flight", server)
         self.assertIn("vigil.transport.home", server)
+        self.assertIn("vigil.transport.stabilizer.deferred", server)
         self.assertIn("isTouchingGround _aircraft", server)
         self.assertIn("call YOSHI_taskTRN_submit", client)
         self.assertIn("call YOSHI_taskTRN_rtb", client)
@@ -96,15 +97,24 @@ class TierFrameworkTests(unittest.TestCase):
         core = (root / "functions" / "global" / "fn_core.sqf").read_text(encoding="utf-8")
         request = (root / "functions" / "task_transport" / "fn_transport.sqf").read_text(encoding="utf-8")
         task = (root / "functions" / "task_transport" / "fn_transport_task.sqf").read_text(encoding="utf-8")
+        stabilizer = (root / "functions" / "global" / "fn_heliStabilizer.sqf").read_text(encoding="utf-8")
         self.assertIn("side (group _commander)", core)
         self.assertIn("YOSHI_taskTRN_rtb", request)
-        self.assertIn("_ignoreEn, true, \"dispatch\"", request)
+        self.assertIn('["do_not_climb",false]', request)
+        self.assertIn("_do_not_climb, _ignoreEn, true, \"dispatch\"", request)
         self.assertIn("YSF_TRX_TASK_TIMEOUT", task)
         self.assertIn("YSF_TRX_SETTLE_SECONDS", task)
         self.assertIn("setPosATL _newPadLoc", task)
         self.assertNotIn("setPosASL _newPadLoc", task)
         self.assertIn('"duplicate_rejected"', task)
         self.assertIn('["waiting", "home"] select', task)
+        self.assertIn('["_enableStabilization", false]', task)
+        self.assertNotIn('publicVariable "YSF_STABILIZE_HELICOPTERS"', task)
+        self.assertIn('[_v] call YSF_helicopterStab_unregister', task)
+        self.assertIn('YSF_helicopterStab_unregister = {', stabilizer)
+        self.assertIn('YSF_STABILIZE_HELICOPTERS select', stabilizer)
+        self.assertIn('YSF_helicopterStab_helicopterDecel select', stabilizer)
+        self.assertIn('setVariable ["YSF_helicopterStab_speedAlt", nil]', stabilizer)
 
     def test_vigil_cas_is_scoped_fail_closed_and_uses_real_rtb(self) -> None:
         root = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
@@ -119,7 +129,7 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertNotIn('getPosASL _v', task)
         self.assertIn('YSF_transport_homeATL", _home', task)
         self.assertIn('[_v] call YOSHI_rebootAI;', task)
-        self.assertIn('[_destPos, 20, true, false, false, "rtb", "YSF_cas_state"]', task)
+        self.assertIn('[_destPos, 20, false, false, false, "rtb", "YSF_cas_state"]', task)
         self.assertIn('[_v, _dest, "MOVE", 2]', task)
         self.assertIn('[_v, _dest, "LOITER", 2]', task)
         self.assertLess(task.index('[_v, _dest, "MOVE", 2]'), task.index('[_v, _dest, "LOITER", 2]'))
@@ -305,6 +315,18 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn("vigil.logistics.client.replication", client)
         self.assertIn("vigil.logistics.client.inventory", client)
         self.assertIn("vigil.logistics.client.locality", client)
+
+    def test_live_finalizer_preserves_polled_log_after_external_stop(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            target = Path(temporary) / "server.rpt"
+            target.write_text("retained physical series", encoding="utf-8")
+            with patch.object(multiplayer, "container_inspect", return_value=None), patch.object(multiplayer, "container_logs") as logs:
+                self.assertFalse(multiplayer.capture_container_log_if_present("removed-container", target))
+            logs.assert_not_called()
+            self.assertEqual(target.read_text(encoding="utf-8"), "retained physical series")
+            with patch.object(multiplayer, "container_inspect", return_value={"State": {"Running": True}}), patch.object(multiplayer, "container_logs", return_value="fresh output"):
+                self.assertTrue(multiplayer.capture_container_log_if_present("running-container", target))
+            self.assertEqual(target.read_text(encoding="utf-8"), "fresh output")
 
     def test_terminal_lifecycle_outcomes_short_circuit_only_complete_non_live_runs(self) -> None:
         passed = {"status": "PASS", "assertions": 1, "failures": 0}

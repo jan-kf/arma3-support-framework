@@ -7,7 +7,7 @@ YOSHI_taskTransport_GetState = {
       ["grid", [0,0,0]],
       ["alt",20],
       ["ignore_en",false],
-      ["do_not_climb",true]
+      ["do_not_climb",false]
     ];
     uiNamespace setVariable ["YOSHI_taskTransport_state", _s];
   };

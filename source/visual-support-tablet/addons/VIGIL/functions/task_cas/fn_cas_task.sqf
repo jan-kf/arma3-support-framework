@@ -149,7 +149,7 @@ YSF_handlers_cas = {
 
 		_v setVariable ["YSF_cas_state", "returning", true];
 		[_v] call YOSHI_rebootAI;
-		private _task = ["transport", _v, _handlers, [_destPos, 20, true, false, false, "rtb", "YSF_cas_state"], 10, 3] call YSF_taskNew;
+		private _task = ["transport", _v, _handlers, [_destPos, 20, false, false, false, "rtb", "YSF_cas_state"], 10, 3] call YSF_taskNew;
 		[_v, _task] call YSF_taskAssign;
 
 		"complete"

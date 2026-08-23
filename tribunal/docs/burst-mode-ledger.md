@@ -12,7 +12,7 @@ decisions remain in each canonical feature review and the feature inventory.
 | CBR Eden/Zeus activation | REFINED; ACCEPTED / COVERED | this commit | `20260821T153013Z-0a8b2c91`; server 14/0, client 8/0 | reverse OFF/ON placement, repeated retained display, client-B/JIP, ownership migration | retain typed Eden + authentic curator + same-artillery A/B; next Field Utilities Eden activation |
 | Vigil homepage task management | REVIEWED / DEFERRED | `902d0f5` | none; unreachable static scaffold | whether page ships; task visibility, cancellation authority/history/finalization | no implementation until product decisions exist |
 | Field Utilities towing | REVIEWED / REFINE BEFORE COVERAGE | `dd7a310` | none; static boundary review | eligibility/authority, feature-owned ropes, parent/breakage/finalization policy; physical locality A/B | decide contract, then run exact ACE tow/stow and paired-trajectory experiment |
-| Vigil helicopter stabilizer | REVIEWED / NEEDS EXPERIMENTATION | `ead2d3e` | retained `20260813T184341Z-317a1605`, `20260816T151957Z-c7e7de23` reach force path; no causal A/B | enabled policy/outcome bound/owner scope; matched flights and cancellation/terrain controls | run paired enabled/disabled transport experiment after product outcome decision |
+| Vigil helicopter stabilizer | REVIEWED / DEFERRED; automatic path disabled | this commit | Live `20260823T144525Z-a5b9d6a6` negative A/B; Tier 3 `20260823T150347Z-06abb5c7` 16/0 server + 10/0 client proves automatic no-force round trip | future mechanism needs bounded rewrite, multiple aircraft/corridors, cancellation and ownership trials | retain normal transport no-force assertion; do not reactivate legacy formula |
 | Tribunal manifest discovery | ACCEPTED / COVERED | `146cd38` | static CLI lists all 12 runtime product scenarios; 104 tests pass | none | retain independent manifest/runtime parity regression |
 | Vigil developer laser harness | REVIEWED / DEFERRED | `0badf72` | none; exhaustive static reachability/boundary review | remove, move to dev/Tribunal, or capability-gate with bounded execution/storage | do not use as product evidence; decide disposition before reuse |
 | Field object handling / supply loading | REVIEWED / REFINE BEFORE COVERAGE | `3c17d1a` | none; static boundary review; 104 tests/static checks pass | split contact vs cargo policy; eligibility, authority, unload/finalization; locality/return experiments | run isolated exact ACE cargo and physical-contact A/B after decisions |
@@ -43,6 +43,7 @@ decisions remain in each canonical feature review and the feature inventory.
 | APS enable/disable/re-enable lifecycle | REFINED; ACCEPTED / COVERED through ACE control entry | `c156eae` | `20260820T222348Z-a22110d3`; preservation + impact/interception | typed Eden/Zeus install, deletion, ownership/JIP | retain no-resupply idempotent suspend/resume; fold install proof into module review |
 | APS + Field Utilities ACE composition | KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED current-client | this commit | `20260820T223222Z-3046910b`; server 18/0, client 11/0 | client-B/JIP, explicit uninstall, deletion, repeated init, ownership migration | retain exact combined census; next authentic APS Zeus activation |
 
-Current closeout is CORDIS routing/deduplication/fan-out. Exact next recommended
-feature is the Vigil helicopter stabilizer controlled physical A/B; do not reopen
-CORDIS merely to claim deferred GUI/audio or client-N behavior.
+Current closeout is the Vigil helicopter stabilizer negative physical A/B and
+automatic deactivation. The next recommended feature is the highest-value
+unblocked remaining suite editor/Zeus activation surface; do not reopen this
+legacy force without a new bounded mechanism and causal experiment.
