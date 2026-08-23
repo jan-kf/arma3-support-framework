@@ -2,222 +2,214 @@
 
 ## Scope and result
 
-This review applies the canonical feature-review program to the shared CORDIS
-runtime in `source/core`: named-function routing to the server, object owner and
-group owner; local/server TTL claims; once-routed operations; recipient
-resolution and scoped fan-out; side chat/radio, curator notification and debug
-wrappers; and bootstrap state.
+This review applies the canonical 12-question program to named-operation
+routing to the server/object owner/group owner; server TTL deduplication;
+recipient resolution and scoped fan-out; curator notification boundaries; and
+bootstrap cache state in `source/core/addons/CORDIS`.
 
-**Classification: `REFINE BEFORE PERMANENT COVERAGE` (reviewed; not covered).**
+**Classification: `REFINED; KEEP AS-IS AND SPEC-TEST — ACCEPTED / COVERED`.**
 
-CORDIS has a coherent and heavily consumed locality-routing purpose, but the
-current implementation conflates queued, accepted and executed results; claims
-dedupe keys before proving downstream delivery; shares raw keys across unrelated
-operations; silently treats missing functions as success; and turns an empty
-curator scope into a broadcast. Most importantly, the repository does not say
-whether named operations are trusted internal calls or an authorization
-boundary. Permanent coverage would otherwise fossilize accidental security and
-failure semantics relied on by several accepted features.
+CORDIS remains a trusted broker between cooperating Pontifex components, not a
+public adversarial RPC or gameplay-authorization boundary. The refinement makes
+its routing result honest, resolves owner IDs only where Arma documents them as
+authoritative, scopes once-keys by route and operation, validates work before
+claim, prevents explicit empty scopes from broadening, and safely prunes expired
+keys. Permanent `cordis-routing` coverage owns this product contract.
 
-## Candidate stable contract
+Curator UI presentation, side-radio audible output, debug presentation,
+ownership migration, multiple-client fan-out, disconnect, and JIP remain
+outside this accepted one-client broker contract.
 
-A trusted named operation routes once to the declared server, object owner or
-group owner. A nonempty operation-scoped key suppresses duplicate accepted
-operations for its stated TTL and becomes reusable after expiry. Invalid
-destinations and unknown operations fail without consuming the key. Recipient
-resolution includes only the requested live real players; an empty scoped
-recipient set delivers to nobody. A request result distinguishes queued,
-accepted, executed and rejected states, and consequential consumers provide
-their own authorization plus terminal acknowledgment.
+## Stable contract
 
-This candidate records the smallest coherent runtime behavior. The trust,
-receipt, key namespace and empty-delivery decisions below must be confirmed
-before it becomes an accepted contract.
+A known trusted operation routes to the declared server, object owner, or group
+owner. Caller-visible results distinguish `rejected`, `queued`, `accepted`, and
+`executed` broker boundaries; none claims remote gameplay completion. A
+nonempty route-and-operation-scoped key suppresses a duplicate accepted request
+within its positive TTL and is reusable after expiry. Unknown operations,
+invalid destinations/TTLs, and empty recipient sets reject without consuming a
+key. Scope `0` deliberately targets every live human player; an explicit side,
+object, or list targets only matching live human players, and an empty/wrong
+scope delivers nowhere. Consequential consumers own authorization and terminal
+acknowledgment.
 
-## Canonical review
+## Sacred Texts used first
 
-### 1. User or integrator observation
+Sacred Texts resolved the important engine boundaries before refinement:
 
-CORDIS is a framework dependency rather than standalone gameplay. Its README
-promises authority-aware execution, one-shot/TTL deduplication, reliable target
-resolution, scoped feedback and shared diagnostics. Consuming mods call it by
-global named functions. An integrator should therefore observe the operation on
-the intended machine, no duplicate within the agreed window, delivery only to
-the requested players, and an honest failure/result—not a UI effect specific to
-any consuming feature.
+* `owner` is authoritative on the server and otherwise returns `0`; clients use
+  `clientOwner` for their own identity.
+* `groupOwner` works only on the server and always returns `0` on clients.
+* `setGroupOwner` is server-only, moves a non-player-led group and its units,
+  and reports whether locality changed.
+* `remoteExecCall` selects unscheduled remote execution; “Call” does not mean
+  immediate or completed execution.
+* `remoteExecutedOwner` identifies the remote initiator, with documented `0`
+  contexts. The existing verified native Eden-dispatch lemma is narrower and
+  was not generalized to CORDIS.
+* `allPlayers` includes ordinary players plus headless and virtual entities, so
+  a real-player scope needs explicit filtering.
 
-### 2. Current behavior and negative paths
+These texts prevented client-side owner targeting and false completion claims.
+They also exposed that historical `introduced_in` versions remain currently
+applicable, not historical-only limits. `BIS_fnc_listPlayers` was absent as a
+retrievable canonical subject and returned empty in the tested dedicated
+context, so the accepted implementation uses documented `allPlayers` plus an
+alive-human intersection.
 
-Basic routes call a mission-namespace function locally when already at the
-declared destination or `remoteExecCall` the supplied function name otherwise.
-Missing names resolve to `{}`, so local calls silently do nothing. Remote routes
-return `nil`; once wrappers generally return `true` as soon as a request is sent
-or a key is claimed.
+## Canonical 12-question review
 
-Server and local caches store raw key expiry times. Empty keys bypass dedupe;
-zero or negative TTLs expire immediately. The once server/object/group wrappers
-claim a server key before executing or routing. Missing functions, invalid
-downstream owners and failed remote execution can therefore consume a key while
-the wrapper reports success. All operations and callers share one raw-key
-namespace.
+1. **What should an integrator observe?** A trusted named operation runs on the
+   requested authority exactly once within a requested TTL; scoped messages go
+   only to resolved live human players; invalid work produces an explicit
+   rejection and no later suppression.
 
-Recipient resolution supports scope `0`, side, one object or an array and
-filters to alive players. Scoped emit claims before resolution, so an empty
-scope consumes the key and returns false. Curator notification instead converts
-every empty resolved scope—including a wrong side or dead/invalid player—into a
-broadcast to all alive players. Chat/radio wrappers inherit the generic fan-out.
+2. **What did it do before refinement?** Missing names became `{}` and silently
+   succeeded; remote requests returned `nil`/`true` without distinguishing
+   queueing from execution; raw keys collided and were claimed before
+   destination/recipient validation; group routing used unit locality while
+   targeting group ownership; empty curator scopes became broadcast; resolver
+   argument/control-flow defects rejected valid object/list scopes; cache
+   pruning mutated a hashmap during iteration and could skip expired keys.
 
-### 3. Authority, locality and lifecycle
+3. **Which machines own it?** The server owns nonlocal destination resolution,
+   deduplication, and recipient selection. A machine already local to the
+   object/group may execute a basic route directly. The permanent scenario
+   records server owner `2`, client owner `4`, `remoteExecutedOwner`, object and
+   group locality, and exact destination callback counts. Client-B/JIP and
+   ownership migration remain deferred.
 
-CORDIS chooses an execution destination; it does not currently establish that
-the caller is authorized. The `*Once` gateways accept caller-provided function
-names and arguments, and server guards do not validate `remoteExecutedOwner` or
-an operation registry. Consequential accepted features have added their own
-capabilities/request validation, which is evidence that routing is not itself a
-security decision.
+4. **Which mechanics are generic?** Native `remoteExecCall`, `owner`,
+   `groupOwner`, `setGroupOwner`, `local`, `allPlayers`, and transport-origin
+   observation are Arma mechanics. The scenario-local transferred group and
+   receipts are fixtures; Tribunal needs no new generic primitive.
 
-Object routes use `owner _object` and shortcut on `local _object`. Group routes
-target `groupOwner group _unit` but shortcut on `local _unit`, not locality of
-the group. That mixed criterion needs a controlled owner/group-owner A/B; it
-must not be declared correct from source alone. Ownership migration, disconnect
-and JIP behavior are unproven.
+5. **Which behavior is product-owned?** CORDIS owns supported routes, operation
+   validation, status vocabulary, key namespace/TTL policy, recipient filtering,
+   explicit broadcast, and empty-scope rejection. Consumers own operation
+   authorization, payload meaning, resources, transactions, and terminal
+   gameplay outcomes.
 
-There is no generic execution receipt. A client-side `true` means only that a
-request was queued, while a server-side `true` can mean a key was consumed even
-if no named operation ran. This return-shape ambiguity is unsafe for resource or
-transaction decisions.
+6. **Are unusual engine requirements proven?** No product workaround is frozen.
+   Sacred Texts already document server-only owner queries. The run proves a
+   settled non-player-led AI group transfers successfully, but the one-second
+   fixture settle is not claimed as engine-required characterization.
 
-### 4. Generic mechanics
+7. **Which details were fragile or incomplete?** Default-empty function lookup,
+   mixed booleans, pre-validation claims, raw global keys, unit/group locality
+   mismatch, branch-heavy heterogeneous scope decoding, mutation during hashmap
+   iteration, and curator broadcast fallback were false-PASS risks and were
+   removed. Reserved init-settings/utils files remain scaffold only.
 
-Object/group ownership transitions, execution-machine identity, exact receipts,
-timing and target-client observation are Tribunal mechanics. The existing
-`locality-probe` already proves server-to-client object ownership and exact
-client execution without CORDIS semantics. CORDIS owns the routing, key and
-recipient policy interpreted from that evidence.
+8. **Is a better mechanism available?** Native remote execution and ownership
+   commands remain appropriate. A generic terminal-receipt subsystem would add
+   machinery that no current consumer needs; existing consequential consumers
+   already publish feature-owned terminal state. Explicit candidate
+   normalization and operation-qualified keys are the smallest supported repair.
 
-### 5. Product-owned behavior
+9. **What is the causal proof?** Destination callbacks independently record
+   exact token, count, machine and transport origin. Inside-TTL duplicate,
+   same-key/different-operation, comfortably post-expiry reuse,
+   missing-then-defined, null-then-valid, explicit-empty, wrong-side, and
+   deliberate-global arms all reach their decision boundary. Exact client
+   callbacks independently prove emit delivery and negative-scope absence.
+   Curator notification coverage stops at the server recipient-decision boundary:
+   Arma marks both BIS GUI functions final, so the rejected override experiment
+   is not treated as a delivery oracle. Cache/result flags alone are never the
+   oracle for execution or fan-out.
 
-CORDIS owns supported destination types, operation registration/trust, key
-namespace and TTL rules, failure/result semantics, recipient filtering,
-empty-scope behavior and feedback routing. Consuming mods own authorization for
-their gameplay operations and the meaning of their payloads. CORDIS must not
-turn “owner-local” into permission to mutate an object.
+10. **Which details remain free?** Function/cache variable names, hashmap shape,
+    pruning cadence, status array representation, transport syntax, fixture
+    classes/coordinates, exact TTL duration, and callback schema may change
+    while the stable outcome remains.
 
-### 6. Claimed engine requirements
+11. **What deserves characterization?** Nothing new. The run supplies a product
+    specification. Its native group-transfer and transport observations are
+    supporting fixture evidence, not sufficiently isolated cross-context Arma
+    lemmas.
 
-No CORDIS-specific engine workaround is characterized. Tribunal has separately
-established that a newly created network object must first report stable owner
-2 before transfer on this dedicated build; that capability fact does not prove
-CORDIS group routing, remote result semantics or ownership-migration behavior.
-Audio remains unproven under autonomous `-noSound` clients.
+12. **What belongs in Tribunal?** Only the existing generic scenario runner,
+    identity-aware assertions, evidence packaging, and cleanup machinery.
+    `cordis-routing` stays in `source/core/tests/tribunal`; no CORDIS semantics
+    enter generic Tribunal code.
 
-### 7. Fragile or incomplete details
+## Permanent evidence matrix
 
-Unknown names becoming empty code, unqualified global keys, pre-delivery claims,
-mixed queued/executed booleans, group shortcut mismatch, heterogeneous list
-assumptions, and empty-curator broadcast are false-PASS or boundary risks.
-Debug calls are globally routable and optional client messages are not
-acknowledged. The two reserved preInit files have no behavior and should not
-receive tests.
+| Claim | Independent evidence and controls |
+| --- | --- |
+| Honest result boundary | local server receipt, client queued result, direct transport positive control, server callback origin |
+| Operation-aware TTL | exact callback counts for first/duplicate/different-operation/expired requests |
+| Failure does not claim | missing-then-defined and null-object-then-valid pairs reuse the same operation/key |
+| Object/group destination | server-local callbacks plus client-owned object and explicitly transferred AI-group receipts |
+| Exact emit recipients | client callback census for object/list/global; delivered duplicate/empty/wrong-side controls |
+| Curator notification decision | exact live-player, explicit-empty, and wrong-side server decisions; visible BIS GUI output explicitly unproven |
+| Cleanup | client completion acknowledgment, transferred group returned/deleted, object deletion, and no tokenized cache key after prune |
 
-### 8. Better native or existing mechanisms
+The scenario carries Evidence Contract v1 product semantics with treatment,
+negative-control, replication, causal relationships, bounded applicability, and
+three explicit propositions. It intentionally does not convert passing
+assertions into generic engine theorems.
 
-Arma native `remoteExecCall`, `owner`, `groupOwner` and target arrays are the
-underlying mechanisms already used. Tribunal's locality fixture can observe the
-generic engine boundary; it is not a replacement product runtime. An explicit
-registered-operation surface and terminal receipt may be safer than arbitrary
-names, but adopting one requires the trust and compatibility decisions below
-plus a controlled migration of real consumers.
+## Controlled investigation history
 
-### 9. Stable contract and causal proof
+Fresh diagnostic runs failed closed and each drove one bounded correction:
 
-Permanent proof must correlate a unique operation identity with the actual
-execution machine and an independently recorded execution count. It must cover:
+* `20260823T122837Z-899d9d43` exposed malformed filter call shapes, local-object
+  validation ordering, an invalid default-player-group fixture, and a callback
+  absent from the client preflight surface.
+* `20260823T123303Z-e987fce6` proved server-local routes/dedupe but showed the
+  transferred-group fixture needed a settle and direct transport control.
+* `20260823T123858Z-cb82be29` proved client object/group ownership and
+  client-to-server origin, isolating recipient resolution.
+* Live run `20260823T124142Z-c028c123` recorded one connected real player with
+  `isPlayer=true`, alive, `Man=true`, headless=false; direct filtering and array
+  scope succeeded while object and scalar branch shapes diverged.
+* `20260823T124442Z-8f049a62` proved deliberate global delivery and exposed an
+  expired hashmap entry skipped during mutation-in-iteration pruning.
+* `20260823T124814Z-ec8b53d3` confirmed safe pruning and kept the remaining
+  failure strictly at heterogeneous object/list normalization.
+* `20260823T130120Z-e2a5b7fc` proved the cold scenario retained an init-time
+  player unit after Arma had retired it: owner remained `4`, but it was dead,
+  no longer a player, and absent from `allPlayers`. The fixture now reacquires
+  and asserts the sole live client-owned player at the consequential boundary.
+* `20260823T130433Z-48f72009` proved all routing/fan-out assertions, then exposed
+  the invalid GUI oracle: Arma rejected attempts to override final BIS curator
+  functions. That oracle was removed and its claim explicitly deferred.
+* `20260823T130828Z-567a712a` passed the narrowed matrix (server 16/0, client
+  8/0), with complete cleanup. Its package then failed ingestion before mutation
+  because human-readable pseudo-keys were not canonical Sacred Texts concept
+  keys; the source contract was corrected and regenerated in the final run.
 
-* local and remote server/object/group destinations;
-* one accepted operation, a duplicate comfortably inside TTL, and reuse well
-  beyond expiry;
-* same raw caller key used by different operations/callers, according to the
-  chosen namespace policy;
-* missing operation, null/invalid destination and no-recipient failures without
-  false success or unintended key consumption;
-* global, side, object and list fan-out with exact recipients, plus proven
-  wrong-side/empty controls;
-* ownership transfer and cleanup;
-* one-client replication only, with multi-client/JIP explicitly deferred.
+Run `20260823T131215Z-e3def785` passed and first proved canonical-key ingestion;
+the adversarial review then caught a stale rationale describing the already
+rejected GUI interception. Final fresh run `20260823T131712Z-6210a6c1`
+regenerated the corrected artifact and passed server 16/0 and client 8/0 with
+client/server containers, private network, and run state removed. Its Evidence
+Contract v1 package ingested successfully into `arma-knowledge`; a second
+identical ingest left all database counts unchanged. The product dossier contains
+three exact-domain theorems. Reviewed distillation classified all three as
+`project_specific_only` (zero generic theorems/lemmas/conjectures), because the
+run corroborates documented engine mechanics but isolates CORDIS policy.
 
-Cache state is not the oracle for execution. Every phase needs a destination-
-side receipt containing operation ID, machine identity, owner/locality and
-transport origin. Negative controls must prove the request reached the decision
-boundary.
+## False-PASS audit and unresolved boundaries
 
-### 10. Replaceable implementation details
+A wrapper state, key entry, missing callback, or consumer guard cannot establish
+correct CORDIS routing. The permanent scenario therefore requires destination
+receipts and exact positive/negative emit-recipient observations; notification
+coverage is explicitly limited to the authoritative recipient-decision boundary. Unique run tokens,
+operation-qualified keys, a 1.5-second margin beyond a 1-second TTL, direct
+transport control, and post-run cache/object cleanup prevent stale satisfaction.
 
-Function names, cache variable names and hashmap layout, time source, transport
-syntax, key representation, pruning cadence, wrapper return representation,
-radio normalization and notification UI are replaceable. The eventual promise
-is honest destination, dedupe, recipient and result behavior.
-
-### 11. Characterization
-
-Nothing new is characterized. In particular, local-unit group shortcut,
-pre-routing key claim and raw global keys have no retained alternatives proving
-they are engine-required or deliberately architectural.
-
-### 12. Tribunal promotion
-
-No new generic primitive is justified initially. Extend or compose the existing
-locality evidence with scenario-local execution receipts. Only promote a generic
-group-ownership or recipient-fan-out observer if the first CORDIS scenario shows
-a product-neutral gap and another real consumer.
-
-## Required product decisions
-
-1. Are arbitrary named routes a trusted internal API, or must CORDIS authorize a
-   registered set of remotely callable operations?
-2. Does a route report queued, accepted or completed execution, and is a generic
-   terminal receipt part of the API?
-3. Are dedupe keys global raw strings, or qualified by operation and optionally
-   caller/target?
-4. Does an invalid/missing operation, destination or recipient consume a key?
-5. Is an empty explicit scope always no delivery, or may any named API request a
-   deliberate broadcast fallback?
-6. Which alive/dead players, headless clients and JIP identities belong in each
-   recipient scope?
-7. What compatibility guarantee applies when object/group ownership changes
-   between request and execution?
-
-## Precise continuation point
-
-First select the trusted-operation and result/receipt policies. In one retained
-Live session, register a harmless tokenized callback and execute the scout's
-bounded matrix: client-to-server duplicate/expiry; server-to-client-owned object
-routing; AI group-owner routing; missing function and invalid object; same key
-across two operations; global/side/object/list emission; and a wrong-side empty
-curator notification. Record execution owner, locality, `remoteExecutedOwner`,
-exact count, key reuse and recipient identities.
-
-Refine only the failures demonstrated by that matrix. At minimum, unknown or
-undeliverable operations must not return success or burn a key, explicit empty
-scopes must not broaden into broadcasts, and group routing must follow the
-proven group owner. Migrate one non-consequential consumer first; accepted
-gameplay consumers must retain their own authorization and terminal semantics.
-
-## False-PASS audit
-
-A wrapper return, cache entry, emitted hint or accepted consumer outcome does
-not prove CORDIS selected the correct machine, executed once or reached the
-correct recipient. A missing callback can look deduplicated; an empty wrong-side
-scope can look delivered because of the current broadcast fallback; a local
-shortcut can hide incorrect owner targeting; a consumer's own duplicate guard
-can mask broken CORDIS dedupe; and one client cannot prove fan-out or JIP.
-Future assertions must use fresh operation IDs, independent destination receipts
-and comfortably separated TTL timing, and must fail closed on every absent,
-extra or wrong-recipient execution.
+Still unresolved: visible curator notification delivery, second-client
+fan-out/isolation, JIP/disconnect, locality migration during an accepted request,
+audible side radio under a sound-enabled observer, and debug/systemChat
+presentation. These do not weaken the accepted one-client trusted-broker
+contract and must not be inferred from it.
 
 ## Terminal disposition
 
-CORDIS is now reviewed but remains uncovered. The current routing can continue
-as an internal dependency, but it must not be described as an authorization or
-completion boundary. The seven decisions and one-session discriminating matrix
-are the exact gate before product refinement and permanent coverage.
+CORDIS routing, once-deduplication, result boundaries, recipient resolution, and
+curator recipient-decision behavior are refined and permanently covered for
+dedicated server plus one authenticated client. Visible curator GUI presentation
+is not claimed. The contract is deliberately narrower than public RPC security
+or remote gameplay completion.

@@ -49,7 +49,7 @@ Five top-level runtime families are present:
 
 | Family | Purpose | Primary locations | Overall state | Coverage summary |
 | --- | --- | --- | --- | --- |
-| CORDIS shared runtime | Locality routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Implemented, with reserved bootstrap files | **REVIEWED / REFINE BEFORE COVERAGE**; trust, result, and key semantics remain undecided |
+| CORDIS shared runtime | Locality routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Refined, with reserved bootstrap files | **ACCEPTED / COVERED** for the one-client trusted broker; GUI/audio/debug and client-N/JIP remain deferred |
 | Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS, Counter Battery Radar, and Iron Dome strong; APS anti-drone remains uncovered |
 | Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
 | Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fixed-wing logistics and the reviewed Bridge Builder core |
@@ -65,43 +65,39 @@ locations are `source/core/addons/CORDIS/config.cpp` and `functions/`.
 
 ### 1.1 Authority-aware execution
 
-* **Server routing** calls a named function locally on the server or sends it to
-  owner `2`. **Implemented; REVIEWED / REFINE BEFORE COVERAGE.** Routing is not
-  an authorization or completion boundary.
-* **Object-owner routing** executes on the machine local to a projectile,
-  vehicle, UAV, or cargo object. **Implemented; REVIEWED / NEEDS
-  EXPERIMENTATION.** APS, Vigil strike, FPV actions, and towing consume it;
-  migration and terminal acknowledgment remain unproven.
-* **Group-owner routing** targets `groupOwner`, but the local shortcut tests the
-  unit instead of the group. **Implemented; REVIEWED / NEEDS EXPERIMENTATION.**
-* **Once-only routed execution** combines routes with server TTL keys.
-  **Implemented; REVIEWED / REFINE BEFORE COVERAGE.** Raw global keys may be
-  consumed before missing or undeliverable work; success does not prove
-  execution. Vigil's own guards do not prove the CORDIS contract.
+* **Server, object-owner, and group-owner routing** are **REFINED; ACCEPTED /
+  COVERED** for server plus one authenticated client. The server resolves
+  nonlocal ownership; the local group shortcut checks group locality; exact
+  destination callbacks record execution machine and transport origin.
+* **Once-only routed execution** is **REFINED; ACCEPTED / COVERED** for trusted
+  cooperating operations. Results distinguish rejected/queued/accepted/executed
+  broker boundaries; operation-qualified positive-TTL keys are claimed only
+  after validation. Routing remains neither authorization nor remote gameplay
+  completion. Ownership migration, disconnect, and client-N/JIP remain deferred.
 
 The completed review separates locality from authorization and result meaning;
 see [`core-cordis-review.md`](core-cordis-review.md).
 
 ### 1.2 Deduplication and fan-out
 
-* **Server/local TTL caches** claim and prune once keys. **Implemented; REVIEWED
-  / REFINE BEFORE COVERAGE.** Key namespace and failed-delivery semantics need
-  product decisions.
-* **Recipient resolution** handles all players, a side, a player object, or a
-  list while filtering dead/non-player units. **Implemented; REVIEWED / NEEDS
-  EXPERIMENTATION.** Headless/JIP policy and heterogeneous input are unproven.
-* **Scoped emit** performs server-deduplicated dispatch to resolved recipients.
-  **Implemented; REVIEWED / REFINE BEFORE COVERAGE.** It claims before target
-  resolution; curator notification broadens every empty scope to broadcast.
+* **Server/local TTL caches** are **REFINED; ACCEPTED / COVERED** for
+  operation-aware positive TTLs, invalid-work non-claim, expiry reuse, and safe
+  post-iteration pruning.
+* **Recipient resolution and scoped emit** are **REFINED; ACCEPTED / COVERED**
+  for live real-player global/side/object/list scopes with one authenticated
+  client. Exact callbacks prove positive fan-out; duplicate, explicit-empty,
+  wrong-side, dead/non-player, virtual, and headless candidates do not broaden
+  delivery. Client-N/JIP audience behavior remains deferred.
 
 ### 1.3 Feedback, diagnostics, and bootstrap
 
 * **Side chat/radio** provide setting-aware scoped messages, speaker
   normalization, and `CfgRadio` lookup. **Implemented; REVIEWED / NEEDS
   EXPERIMENTATION.** Audio is unproven under autonomous `-noSound` clients.
-* **Curator notifications** and **debug logging** provide deduplicated hints and
-  server-normalized logs/optional `systemChat`. **Implemented; REVIEWED / REFINE
-  BEFORE COVERAGE.** Empty scoped curator targets currently broadcast globally.
+* **Curator notification recipient decisions** are **REFINED; ACCEPTED /
+  COVERED** for live, explicit-empty, and wrong-side scopes; empty scopes no
+  longer broaden to broadcast. Actual final BIS GUI presentation and debug
+  `systemChat` remain **REVIEWED / DEFERRED AS PRESENTATION**.
 * **Server cache initialization** and **client initialized marker** are
   implemented and incidentally smoke-covered, not feature contracts.
 * `fn_initSettings.sqf` and `fn_utils.sqf` contain no behavior. **Scaffolded;
@@ -640,9 +636,10 @@ Full analysis: [`field-utilities-map-helpers-review.md`](field-utilities-map-hel
 ### 5.1 CORDIS consumer contract
 
 All feature addons declare CORDIS and use authority, dedupe, feedback, or
-logging. **Implemented; PARTIALLY COVERED incidentally.** APS/Vigil multiplayer
-success proves use, but no scenario promises CORDIS behavior across owners,
-sides, JIP, disconnects, or multiple clients.
+logging. The shared trusted-broker contract is **REFINED; ACCEPTED / COVERED**
+for server plus one authenticated client by `cordis-routing`; consequential
+consumer authorization/outcomes remain feature-owned. JIP, disconnects,
+ownership migration, and multiple clients remain deferred.
 
 ### 5.2 Vigil–Field Utilities logistics bridge
 
@@ -708,6 +705,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 
 | Scenario | Reviewed behavior |
 | --- | --- |
+| `cordis-routing` | trusted server/object/group routing, operation-aware TTL dedupe, exact scoped fan-out, recipient decisions, cleanup |
 | `aps-intercept` | APS hard/soft kill, controls, locality, resources, replication |
 | `vigil-ui` | real tablet open/navigation/close/reopen and UI locality |
 | `vigil-markers` | artillery preview rendering/state lifecycle and cleanup |
@@ -725,7 +723,7 @@ not product features. Promote generic backlog mechanics only for a concrete
 consumer.
 
 The project manifest and Pontifex runtime now discover the same feature scenario
-set across Advanced Systems, Field Utilities, and Vigil. A regression compares
+set across Core/CORDIS, Advanced Systems, Field Utilities, and Vigil. A regression compares
 their independently loaded identifiers so future manifest drift fails closed.
 
 ## Deferred, incomplete, disabled, and unclear areas
@@ -762,9 +760,8 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Next consider the reviewed-but-uncovered CORDIS decision matrix, remaining
-suite editor/Zeus modules, and
-the helicopter stabilizer. APS anti-drone is now
+Next consider the Vigil helicopter stabilizer, remaining suite editor/Zeus
+modules, and other unblocked reviewed experiment boundaries. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product
 decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume

@@ -10,71 +10,128 @@ Multiplayer scripting primitives:
 
 YCD_fnc_getFn = {
     params ["_fnName"];
-    missionNamespace getVariable [_fnName, {}]
+    private _fn = missionNamespace getVariable [_fnName, objNull];
+    if !(_fn isEqualType {}) exitWith {nil};
+    _fn
+};
+
+YCD_fnc_hasFn = {
+    params ["_fnName"];
+    (missionNamespace getVariable [_fnName, objNull]) isEqualType {}
+};
+
+YCD_fnc_routeResult = {
+    params ["_state", ["_reason", ""]];
+    [_state, _reason]
 };
 
 YCD_fnc_callFn = {
     params ["_fnName", ["_args", []]];
 
+    if !([_fnName] call YCD_fnc_hasFn) exitWith {
+        ["rejected", "unknown_operation"] call YCD_fnc_routeResult
+    };
     private _fn = [_fnName] call YCD_fnc_getFn;
-    _args call _fn
+    _args call _fn;
+    ["executed"] call YCD_fnc_routeResult
 };
 
 YCD_fnc_runOnServer = {
     params ["_fnName", ["_args", []]];
 
+    if !([_fnName] call YCD_fnc_hasFn) exitWith {
+        ["rejected", "unknown_operation"] call YCD_fnc_routeResult
+    };
     if (isServer) exitWith {
         [_fnName, _args] call YCD_fnc_callFn
     };
 
     _args remoteExecCall [_fnName, 2];
-    nil
+    ["queued", "server"] call YCD_fnc_routeResult
 };
 
 YCD_fnc_runOnObjectOwner = {
     params ["_fnName", "_object", ["_args", []]];
 
-    if (isNull _object) exitWith {nil};
-
-    private _target = owner _object;
-    if (_target < 0) exitWith {nil};
+    if !([_fnName] call YCD_fnc_hasFn) exitWith {
+        ["rejected", "unknown_operation"] call YCD_fnc_routeResult
+    };
+    if (isNull _object) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
 
     if (local _object) exitWith {
         [_fnName, _args] call YCD_fnc_callFn
     };
 
+    if (!isServer) exitWith {
+        [_fnName, _object, _args] remoteExecCall ["YCD_fnc_runOnObjectOwner", 2];
+        ["queued", "server_resolution"] call YCD_fnc_routeResult
+    };
+
+    private _target = owner _object;
+    if (_target < 2) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
     _args remoteExecCall [_fnName, _target];
-    nil
+    ["queued", "object_owner"] call YCD_fnc_routeResult
 };
 
 YCD_fnc_runOnGroupOwner = {
     params ["_fnName", "_unit", ["_args", []]];
 
-    if (isNull _unit) exitWith {nil};
+    if !([_fnName] call YCD_fnc_hasFn) exitWith {
+        ["rejected", "unknown_operation"] call YCD_fnc_routeResult
+    };
+    if (isNull _unit) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
 
     private _group = group _unit;
-    if (isNull _group) exitWith {nil};
+    if (isNull _group) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
 
-    private _target = groupOwner _group;
-    if (_target < 0) exitWith {nil};
-
-    if (local _unit) exitWith {
+    if (local _group) exitWith {
         [_fnName, _args] call YCD_fnc_callFn
     };
 
+    if (!isServer) exitWith {
+        [_fnName, _unit, _args] remoteExecCall ["YCD_fnc_runOnGroupOwner", 2];
+        ["queued", "server_resolution"] call YCD_fnc_routeResult
+    };
+
+    private _target = groupOwner _group;
+    if (_target < 2) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
     _args remoteExecCall [_fnName, _target];
-    nil
+    ["queued", "group_owner"] call YCD_fnc_routeResult
+};
+
+YCD_fnc_onceCacheKey = {
+    params ["_route", "_fnName", "_onceKey"];
+    format ["%1|%2|%3", _route, _fnName, _onceKey]
+};
+
+YCD_fnc_validateOnceRequest = {
+    params ["_fnName", "_onceKey", "_ttl"];
+    if !([_fnName] call YCD_fnc_hasFn) exitWith {[false, "unknown_operation"]};
+    if (_onceKey isNotEqualTo "" && {_ttl <= 0}) exitWith {[false, "invalid_ttl"]};
+    [true, ""]
 };
 
 YCD_fnc_pruneLocalOnceCache = {
     private _cache = missionNamespace getVariable ["YCD_localOnceCache", createHashMap];
     private _now = diag_tickTime;
 
+    private _expired = [];
     {
         if (_y <= _now) then {
-            _cache deleteAt _x;
+            _expired pushBack _x;
         };
     } forEach _cache;
+    {_cache deleteAt _x;} forEach _expired;
 
     missionNamespace setVariable ["YCD_localOnceCache", _cache];
 };
@@ -102,11 +159,13 @@ YCD_fnc_pruneOnceCache = {
     private _cache = missionNamespace getVariable ["YCD_onceCache", createHashMap];
     private _now = serverTime;
 
+    private _expired = [];
     {
         if (_y <= _now) then {
-            _cache deleteAt _x;
+            _expired pushBack _x;
         };
     } forEach _cache;
+    {_cache deleteAt _x;} forEach _expired;
 
     missionNamespace setVariable ["YCD_onceCache", _cache];
 };
@@ -132,107 +191,150 @@ YCD_fnc_claimOnceKey = {
 YCD_fnc_runOnServerOnce = {
     params ["_fnName", ["_args", []], ["_onceKey", ""], ["_ttl", 3]];
 
+    private _validation = [_fnName, _onceKey, _ttl] call YCD_fnc_validateOnceRequest;
+    if !(_validation # 0) exitWith {
+        ["rejected", _validation # 1] call YCD_fnc_routeResult
+    };
     if (!isServer) exitWith {
         [_fnName, _args, _onceKey, _ttl] remoteExecCall ["YCD_fnc_runOnServerOnce", 2];
-        true
+        ["queued", "server"] call YCD_fnc_routeResult
     };
 
-    if !([_onceKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {false};
+    private _cacheKey = if (_onceKey isEqualTo "") then {""} else {["server", _fnName, _onceKey] call YCD_fnc_onceCacheKey};
+    if !([_cacheKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {
+        ["rejected", "duplicate"] call YCD_fnc_routeResult
+    };
 
-    [_fnName, _args] call YCD_fnc_callFn;
-    true
+    [_fnName, _args] call YCD_fnc_callFn
 };
 
 YCD_fnc_runOnObjectOwnerOnce = {
     params ["_fnName", "_object", ["_args", []], ["_onceKey", ""], ["_ttl", 3]];
 
-    if (isNull _object) exitWith {false};
+    private _validation = [_fnName, _onceKey, _ttl] call YCD_fnc_validateOnceRequest;
+    if !(_validation # 0) exitWith {
+        ["rejected", _validation # 1] call YCD_fnc_routeResult
+    };
+    if (isNull _object) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
 
     if (!isServer) exitWith {
         [_fnName, _object, _args, _onceKey, _ttl] remoteExecCall ["YCD_fnc_runOnObjectOwnerOnce", 2];
-        true
+        ["queued", "server"] call YCD_fnc_routeResult
     };
 
-    if !([_onceKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {false};
+    if (!local _object && {(owner _object) < 2}) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
+    private _cacheKey = if (_onceKey isEqualTo "") then {""} else {["object", _fnName, _onceKey] call YCD_fnc_onceCacheKey};
+    if !([_cacheKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {
+        ["rejected", "duplicate"] call YCD_fnc_routeResult
+    };
 
-    [_fnName, _object, _args] call YCD_fnc_runOnObjectOwner;
-    true
+    private _result = [_fnName, _object, _args] call YCD_fnc_runOnObjectOwner;
+    if ((_result # 0) isEqualTo "queued") exitWith {
+        ["accepted", "object_owner"] call YCD_fnc_routeResult
+    };
+    _result
 };
 
 YCD_fnc_runOnGroupOwnerOnce = {
     params ["_fnName", "_unit", ["_args", []], ["_onceKey", ""], ["_ttl", 3]];
 
-    if (isNull _unit) exitWith {false};
+    private _validation = [_fnName, _onceKey, _ttl] call YCD_fnc_validateOnceRequest;
+    if !(_validation # 0) exitWith {
+        ["rejected", _validation # 1] call YCD_fnc_routeResult
+    };
+    if (isNull _unit) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
+    private _group = group _unit;
+    if (isNull _group) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
 
     if (!isServer) exitWith {
         [_fnName, _unit, _args, _onceKey, _ttl] remoteExecCall ["YCD_fnc_runOnGroupOwnerOnce", 2];
-        true
+        ["queued", "server"] call YCD_fnc_routeResult
     };
 
-    if !([_onceKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {false};
+    if (!local _group && {(groupOwner _group) < 2}) exitWith {
+        ["rejected", "invalid_destination"] call YCD_fnc_routeResult
+    };
+    private _cacheKey = if (_onceKey isEqualTo "") then {""} else {["group", _fnName, _onceKey] call YCD_fnc_onceCacheKey};
+    if !([_cacheKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {
+        ["rejected", "duplicate"] call YCD_fnc_routeResult
+    };
 
-    [_fnName, _unit, _args] call YCD_fnc_runOnGroupOwner;
-    true
+    private _result = [_fnName, _unit, _args] call YCD_fnc_runOnGroupOwner;
+    if ((_result # 0) isEqualTo "queued") exitWith {
+        ["accepted", "group_owner"] call YCD_fnc_routeResult
+    };
+    _result
 };
 
 YCD_fnc_filterPlayerUnits = {
-    params ["_units"];
-
-    if (_units isEqualType objNull) exitWith {
-        if (isNull _units) then {
-            []
-        } else {
-            if (isPlayer _units && {alive _units}) then {[_units]} else {[]}
-        }
-    };
-
+    params [["_units", []]];
     if !(_units isEqualType []) exitWith {[]};
-
-    _units select {isPlayer _x && {alive _x}}
+    (_units arrayIntersect allPlayers) select {
+        alive _x
+        && {_x isKindOf "Man"}
+        && {!(_x isKindOf "HeadlessClient_F")}
+    }
 };
-
 YCD_fnc_targetsFromSide = {
     params ["_side"];
 
-    (allPlayers select {alive _x && {side _x isEqualTo _side}}) call YCD_fnc_filterPlayerUnits
+    [(allPlayers select {side _x isEqualTo _side})] call YCD_fnc_filterPlayerUnits
 };
 
 YCD_fnc_resolveTargets = {
-    params [["_scope", 0]];
+    private _scope = if (_this isEqualTo []) then {0} else {_this # 0};
 
-    if (_scope isEqualType sideUnknown) exitWith {
-        [_scope] call YCD_fnc_targetsFromSide
+    private _candidates = [];
+    switch (typeName _scope) do {
+        case "SIDE": {
+            _candidates = allPlayers select {side _x isEqualTo _scope};
+        };
+        case "ARRAY": {
+            _candidates = _scope;
+        };
+        case "OBJECT": {
+            if (!isNull _scope) then {_candidates = [_scope];};
+        };
+        case "SCALAR": {
+            if (_scope == 0) then {_candidates = allPlayers;};
+        };
     };
 
-    if (_scope isEqualType []) exitWith {
-        _scope call YCD_fnc_filterPlayerUnits
-    };
-
-    if (_scope isEqualType objNull) exitWith {
-        if (isNull _scope) then {[]} else {_scope call YCD_fnc_filterPlayerUnits}
-    };
-
-    if (_scope isEqualType 0) then {
-        if (_scope == 0) exitWith {allPlayers select {alive _x}};
-    };
-
-    []
+    [_candidates] call YCD_fnc_filterPlayerUnits
 };
-
 YCD_fnc_emitToTargets = {
     params ["_command", "_payload", ["_scope", 0], ["_onceKey", ""], ["_ttl", 3]];
 
+    if !([_command] call YCD_fnc_hasFn) exitWith {
+        ["rejected", "unknown_operation"] call YCD_fnc_routeResult
+    };
+    if (_onceKey isNotEqualTo "" && {_ttl <= 0}) exitWith {
+        ["rejected", "invalid_ttl"] call YCD_fnc_routeResult
+    };
     if (!isServer) exitWith {
         [_command, _payload, _scope, _onceKey, _ttl] remoteExecCall ["YCD_fnc_emitToTargets", 2];
+        ["queued", "server"] call YCD_fnc_routeResult
     };
 
-    if !([_onceKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {false};
-
     private _targets = [_scope] call YCD_fnc_resolveTargets;
-    if (_targets isEqualTo []) exitWith {false};
+    if (_targets isEqualTo []) exitWith {
+        ["rejected", "no_recipients"] call YCD_fnc_routeResult
+    };
+    private _cacheKey = if (_onceKey isEqualTo "") then {""} else {["emit", _command, _onceKey] call YCD_fnc_onceCacheKey};
+    if !([_cacheKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {
+        ["rejected", "duplicate"] call YCD_fnc_routeResult
+    };
 
     _payload remoteExecCall [_command, _targets];
-    true
+    ["accepted", "recipients"] call YCD_fnc_routeResult
 };
 
 YCD_fnc_sideFromVehicleConfig = {
@@ -387,18 +489,24 @@ YCD_fnc_debugMsg = {
 YCD_fnc_notifyCurator = {
     params ["_msg", ["_title", "Notification"], ["_duration", 5], ["_targets", 0], ["_onceKey", ""], ["_ttl", 3]];
 
+    if (_onceKey isNotEqualTo "" && {_ttl <= 0}) exitWith {
+        ["rejected", "invalid_ttl"] call YCD_fnc_routeResult
+    };
     if (!isServer) exitWith {
         [_msg, _title, _duration, _targets, _onceKey, _ttl] remoteExecCall ["YCD_fnc_notifyCurator", 2];
+        ["queued", "server"] call YCD_fnc_routeResult
     };
 
-    if !([_onceKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {false};
-
     private _resolvedTargets = [_targets] call YCD_fnc_resolveTargets;
-    if (_resolvedTargets isEqualTo []) then {
-        _resolvedTargets = allPlayers select {alive _x};
+    if (_resolvedTargets isEqualTo []) exitWith {
+        ["rejected", "no_recipients"] call YCD_fnc_routeResult
+    };
+    private _cacheKey = if (_onceKey isEqualTo "") then {""} else {["notify", "YCD_fnc_notifyCurator", _onceKey] call YCD_fnc_onceCacheKey};
+    if !([_cacheKey, _ttl] call YCD_fnc_claimOnceKey) exitWith {
+        ["rejected", "duplicate"] call YCD_fnc_routeResult
     };
 
     [objNull, _msg] remoteExecCall ["BIS_fnc_showCuratorFeedbackMessage", _resolvedTargets];
     [_title, _msg, _duration] remoteExecCall ["BIS_fnc_curatorHint", _resolvedTargets];
-    true
+    ["accepted", "recipients"] call YCD_fnc_routeResult
 };
