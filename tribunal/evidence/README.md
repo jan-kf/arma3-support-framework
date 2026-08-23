@@ -8,6 +8,14 @@ uniqueness, vocabulary, references, execution-state semantics, and integrity.
 Unknown fields are deliberately allowed so v1 readers tolerate additive
 extensions. Removing a required semantic field is invalid.
 
+This document owns the evidence format, not the feature-review procedure. A
+memoryless Pontifex reviewer starts at
+[`../docs/feature-review-program.md`](../docs/feature-review-program.md), which
+defines when feature semantics may be published, the fresh-run acceptance gate,
+`/mnt/services/arma-knowledge` ingestion/idempotency/audit commands, and the
+reviewed generic-distillation boundary. Do not invent arms or propositions here
+from generic assertion output.
+
 ## Model
 
 - `package_id` identifies one published scientific record. `package_revision`

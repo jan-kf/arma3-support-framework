@@ -37,15 +37,26 @@ Hard boundaries, enforced by `tests/test_tribunal_architecture.py`:
 * [`tribunal/docs/pontifex-feature-inventory.md`](tribunal/docs/pontifex-feature-inventory.md)
   — **the feature inventory and review queue.** Pick the next review from its
   prioritized list; a completed review updates its statuses.
+* [`tribunal/evidence/README.md`](tribunal/evidence/README.md) — the portable
+  Evidence Contract v1 producer boundary. The canonical review program tells
+  you when and how to publish, ingest, and distill it.
+* `/mnt/services/arma-knowledge/README.md` — the Sacred Texts, applicability,
+  evidence-ingestion, audit, and reviewed generic-distillation consumer
+  interface used by the canonical review program.
 
 Completed reviews are durable evidence and live beside the program:
 `tribunal/docs/*-review.md`. Read the relevant one before touching a covered
 feature.
 
-"Perform the canonical feature-review program" means the whole thing: review,
-experiments, evidence-supported refinements only, justified permanent coverage,
-Live Mode where useful, a **fresh autonomous cold run**, validation, inventory
-update, commit, report. Do not wait to be asked for the individual phases.
+"Perform the canonical feature-review program" means the whole thing described
+in that one document: inventory-based selection when unnamed, Sacred Texts
+first, review, controlled evidence, evidence-supported refinements only,
+justified permanent coverage, Live Mode where useful, a **fresh autonomous cold
+run**, Evidence Contract/knowledge closeout, weighted progress, validation,
+inventory update, commit, and report. Do not wait to be asked for individual
+phases. The short prompt quoted in the canonical program is sufficient; select
+one feature, finish it, recommend the next, and do not start the next unless the
+request explicitly asks for sequential continuation.
 
 ## Test ownership separation
 

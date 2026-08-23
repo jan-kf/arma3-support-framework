@@ -52,11 +52,12 @@ variant of its checklist.
 In compact form, the workflow remains:
 
 ```text
-inventory -> feature-specific scope -> canonical review -> contract/classification
-          -> controlled experiment or evidence-supported refinement when needed
+inventory/priority -> Sacred Texts -> feature-specific scope -> 12-question review
+          -> contract/classification -> controlled evidence/refinement when needed
           -> generic tooling boundary -> permanent scenario when justified
           -> Live iteration -> fresh autonomous proof -> validation
-          -> inventory update -> commit/clean closeout
+          -> Evidence Contract -> knowledge ingest/audit/reviewed distillation
+          -> inventory + weighted progress -> commit/report/clean closeout
 ```
 
 `ScenarioReview` is intentionally small. It records the canonical program's

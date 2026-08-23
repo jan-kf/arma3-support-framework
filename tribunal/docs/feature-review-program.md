@@ -19,6 +19,11 @@ Related repository sources:
   metadata produced by this program;
 * [`pontifex-feature-inventory.md`](pontifex-feature-inventory.md) is Pontifex's
   project-specific review queue and coverage record, and links back here.
+* [`../evidence/README.md`](../evidence/README.md) defines Tribunal Evidence
+  Contract v1 production and correction semantics;
+* `/mnt/services/arma-knowledge/README.md` defines Sacred Texts retrieval,
+  Evidence Contract ingestion, applicability, audit, and reviewed generic
+  distillation.
 
 ## How to invoke this program
 
@@ -33,6 +38,62 @@ feature-review and validation program” means: complete the review, run needed
 experiments, make only evidence-supported refinements, add justified permanent
 coverage, prove it in Live Mode where useful and in a fresh autonomous run,
 validate, update the inventory, commit, and report the final state.
+
+The following is also a complete invocation; it does not require a larger
+prompt or conversational history:
+
+> Look into uncovered features in Pontifex, select and cover the next best
+> candidate, and report back the conclusions.
+
+### Selecting the feature
+
+When the request does not name a feature:
+
+1. Start from the actual current
+   [`pontifex-feature-inventory.md`](pontifex-feature-inventory.md), its
+   prioritized-next section, applicable author decisions, and the newest
+   `pontifex-progress-estimate-*.md`. Confirm the accepted HEAD and worktree
+   before changing anything.
+2. Exclude already `COVERED` surfaces unless the inventory names a bounded gap;
+   exclude work blocked by an unavailable product decision, dependency,
+   authenticated client identity, or engine fixture. Record those blockers
+   rather than silently skipping them.
+3. Prefer the highest-value unblocked surface, considering its inventory
+   weight, user impact, architectural dependencies, risk, ability to unlock
+   other work, and likelihood that controlled evidence can reach a justified
+   terminal state. “Next best” does not mean merely the smallest change.
+4. Read the feature's existing review, accepted adjacent contracts, source,
+   entry points, configuration, and history before proposing a contract. State
+   why the selected feature outranks the alternatives.
+5. Recommend the next candidate at closeout, but do not begin it unless the
+   user explicitly requested sequential or self-continuing work.
+
+### Sacred Texts first
+
+Before substantive product investigation, implementation, external research,
+or engine assumptions, inspect the feature enough to identify the Arma/ACE/CBA
+mechanisms it actually uses, then retrieve their Sacred Texts dossiers:
+
+```bash
+cd /mnt/services/arma-knowledge
+.venv/bin/arma-knowledge dossier '<concept>'
+# Use --offline when a fresh release-context refresh is unnecessary/unavailable.
+```
+
+Record useful canonical BIKI documentation, attributed community reports,
+`OUR VERIFIED NOTES`, generic `OPEN CONJECTURES`, project findings, tested build
+and applicability, and unanswered questions. Source documentation is not engine
+proof; community reports are not verified facts.
+
+Version annotations have distinct meanings. `introduced_in` and
+`available_since` normally describe an open-ended currently applicable range
+unless later evidence establishes `changed_in`, `deprecated_in`, `removed_in`,
+or a narrower validity range. `documented_on`, `tested_on`, and `verified_on`
+describe evidence scope, not validity end-points. Distinguish continuity-based
+`CURRENTLY_APPLICABLE`, `DIRECTLY_VERIFIED_ON_CURRENT_BUILD`,
+`LAST_VERIFIED_ON_OLDER_BUILD`, historical introduction, and actual
+changed/removed/deprecated behavior. Never report old introduction metadata as
+historical-only guidance.
 
 ## Layer 1 — canonical/static review program
 
@@ -220,6 +281,12 @@ Use these classifications:
 | `REWRITE BEFORE PERMANENT COVERAGE` | Current implementation cannot safely/coherently satisfy the contract. | Rewrite within the established contract; do not preserve the broken mechanism. |
 | `NEEDS EXPERIMENTATION` | Evidence cannot decide a mechanism, compatibility claim, or behavior. | Run controlled experiments before freezing/changing it; separable contract areas may proceed. |
 | `DEFER` | No coherent contract, insufficient value, missing decisions, or intentionally deferred capability. | Stop; document evidence/decisions needed and add no permanent gameplay coverage. |
+| `RETIRE / REMOVE` | Evidence establishes that the reachable behavior is unwanted, unsafe, obsolete, or has no supported product contract. | Remove or disable only the proven surface, protect the intended absence where valuable, and do not award functional coverage for the retired capability. |
+
+A `KEEP` result, or a completed `REFINE`/`REWRITE`, becomes `ACCEPTED / COVERED`
+only after its permanent scenario and fresh proof pass. Review classification and
+inventory coverage status answer different questions; do not use “accepted” to
+hide an uncompleted progression gate.
 
 `ScenarioReview` stores `DEFER` as `DEFER / insufficient value`, the current
 metadata enum. Review documents may use the concise label. A complex feature
@@ -253,6 +320,12 @@ state agreeing with itself.
 
 These rules follow from that enumeration and apply to every scenario:
 
+* **Use authentic engine stimulus where practical.** Prefer native firing,
+  movement, module dispatch, registered interaction statements, and real product
+  entry points over synthetic end-state injection. A synthetic fixture must be
+  identified and cannot prove the omitted engine/product pipeline. Visual input
+  automation is necessary only when the contract is visual or no dependable data
+  oracle exists.
 * **A negative control must prove its own stimulus.** Asserting that nothing
   happened means something only once the run has independently proven, through a
   separate oracle, that the input the feature was supposed to ignore actually
@@ -299,28 +372,42 @@ rewrites or present-day overclaims.
 Use the smallest applicable sequence; record why a phase is unnecessary rather
 than silently omitting it.
 
-1. **Baseline/scope:** inspect repository/inventory and capture current positive
+1. **Selection/preflight:** select from the current inventory as described
+   above; record accepted HEAD, worktree state, current review/coverage estimate,
+   related contracts, and blockers.
+2. **Sacred Texts:** retrieve dossiers for the mechanisms actually used and
+   record their applicability and gaps before substantive changes.
+3. **Baseline/scope:** inspect repository/inventory and capture current positive
    and negative behavior without changing it.
-2. **Twelve-question review:** classify capabilities; write contract,
+4. **Twelve-question review:** classify capabilities; write contract,
    replaceable details, dependencies, locality, false-PASS risks, and evidence.
-3. **Controlled experiments:** use one-variable A/B for uncertain engine
+5. **Controlled experiments:** use one-variable A/B for uncertain engine
    requirements/native alternatives. Retain artifacts; do not shotgun changes.
-4. **Refine/rewrite when classified:** change only evidence-proven defects and
+6. **Refine/rewrite when classified:** change only evidence-proven defects and
    repeat the relevant baseline/control.
-5. **Tooling boundary:** reuse Tribunal first; promote only narrow
+7. **Tooling boundary:** reuse Tribunal first; promote only narrow
    product-neutral mechanics with a concrete consumer.
-6. **Permanent scenario:** keep semantics beside the owning mod; declare all
+8. **Permanent scenario:** keep semantics beside the owning mod; declare all
    assertions; use bounded waits, causal controls, locality, and cleanup; add
    complete `ScenarioReview` metadata.
-7. **Live Mode:** investigate, calibrate, repeat, and check leaks/order dependence
+9. **Live Mode:** investigate, calibrate, repeat, and check leaks/order dependence
    in retained state where useful. Live success is not final proof.
-8. **Fresh autonomous proof:** stop Live Mode and run the complete permanent
-   scenario cold, with independent lifecycle ownership and no human input.
-9. **Validation:** run focused regressions, relevant static checks, and the
-   owning repository's full validation.
-10. **Closeout:** update feature/review docs and inventory status, inspect diff,
-    commit, report evidence/run/assertions as applicable plus commit/worktree
-    state, and leave the tree clean unless instructed otherwise.
+10. **Fresh autonomous proof:** stop Live Mode and run the complete permanent
+    scenario cold, with independent lifecycle ownership and no human input.
+11. **Validation:** run focused regressions, relevant static checks, and the
+    owning repository's full validation.
+12. **Evidence and knowledge:** publish/retain Evidence Contract v1, ingest it
+    idempotently, audit the knowledge ledger, perform reviewed generic
+    distillation, and retrieve affected Sacred Texts again as described below.
+13. **Closeout:** update feature/review docs, inventory status, weighted progress
+    and remaining-priority surfaces; inspect the diff, commit, report, and leave
+    the tree clean unless instructed otherwise.
+
+For a pure `DEFER`, `NEEDS EXPERIMENTATION`, or documentation-only terminal
+review, phases that would falsely imply accepted runtime behavior may be
+inapplicable. Say why they were omitted. A new/refined permanent gameplay
+contract requires a fresh single-scenario autonomous proof; Live or a stale run
+cannot substitute for it.
 
 Terminal success requires all declared server/client assertions, zero failures,
 complete acknowledgments/results, prompt teardown, and cleanup. Terminal
@@ -340,6 +427,104 @@ Two rules govern how a run is read:
   diagnostics that capture the deciding state at the moment of use so a
   recurrence diagnoses itself, and record residual nondeterminism honestly
   rather than declaring it solved.
+
+### Evidence Contract and knowledge closeout
+
+Accepted characterization uses `tribunal.evidence/v1`. Feature-owned scenario
+semantics belong in `Scenario.evidence_contract`; Tribunal's generic reporter
+must not infer a product proposition from line assertions. The package names a
+stable scenario and proposition intent, treatment/control arms and causal
+relationships, participants/locality, typed observations and assertions,
+applicability/build, source snapshot, and durable artifacts. An assertion PASS
+is an execution fact, not automatically a theorem. Failed, timed-out,
+cancelled, aggregate, or semantics-free runs cannot publish accepted feature
+propositions. A scientifically valid negative characterization may publish a
+negative/counterexample outcome without pretending the rejected product claim
+passed. Published bytes are immutable; corrections use a new revision and
+`supersedes_package_id`.
+
+After accepting a package, use the supported consumer interface:
+
+```bash
+cd /mnt/services/arma-knowledge
+.venv/bin/arma-knowledge counts
+.venv/bin/arma-knowledge ingest-evidence-v1 --package-file /mnt/services/pontifex/runs/<run-id>/evidence-package.v1.json
+.venv/bin/arma-knowledge counts
+# Run the identical ingest again; the second post-ingest counts must not change.
+.venv/bin/arma-knowledge ingest-evidence-v1 --package-file /mnt/services/pontifex/runs/<run-id>/evidence-package.v1.json
+.venv/bin/arma-knowledge counts
+.venv/bin/arma-knowledge audit
+```
+
+If an immutable corrected revision exists, ingest its named predecessor first,
+then the correction, then repeat the correction for idempotency. Never repair an
+accepted package in place. Retrieve the feature and affected mechanism dossiers
+again after ingestion and record exactly what changed.
+
+Every potentially reusable finding receives a reviewed disposition before
+running the accepted `.venv/bin/arma-knowledge distill-tribunal` workflow:
+
+* `PROJECT-SPECIFIC ONLY`;
+* `GENERIC ARMA LEMMA DIRECTLY DEMONSTRATED`;
+* `GENERIC ARMA CONJECTURE SUGGESTED`;
+* `ALREADY REPRESENTED GENERICALLY`;
+* `NEEDS DEDICATED CHARACTERIZATION`.
+
+The permanent semantic boundary is strict: **`OUR VERIFIED NOTES` contains only
+generic Arma lemmas**, meaningful after all Pontifex/mod terminology is removed,
+directly supported by exact observations and passing assertion identities, and
+scoped no wider than the source evidence. Project findings remain attached to
+project concepts. A suggested but unproved reusable claim may appear only as a
+generic `OPEN CONJECTURE`, never a verified note. Zero generic findings is a
+valid result; do not run extra experiments or broaden a proposition merely to
+manufacture reusable knowledge. The reviewed manifest and safeguards are
+documented in `/mnt/services/arma-knowledge/docs/TRIBUNAL_GENERIC_DISTILLATION_REPORT.md`.
+
+### Progress accounting and final report
+
+Update the newest `pontifex-progress-estimate-*.md` using the established
+weighted meaningful-feature-surface model, not assertion counts and not a
+denominator chosen to improve the percentage. Report two separate measures:
+
+* **Feature-review completion:** credit for durable understanding and a
+  justified terminal classification. Reviewed/refined/rewritten/deferred/retired
+  surfaces may advance this measure.
+* **Permanent automated coverage:** credit only for accepted behavioral
+  contracts with proportionate permanent proof. Deferred, retired,
+  experimentation-needed, incidental, static-only, or intellectually understood
+  behavior receives no invented functional-coverage credit.
+
+Preserve the current family weights unless repository-grounded inventory change
+requires an explicit recalculation. Report before/after point estimates,
+ranges/confidence, the per-family table, and the largest gaps. As completion
+approaches, classify remaining surfaces operationally:
+
+* **MUST:** blocks a core accepted product contract, authority, safety, cleanup,
+  or trustworthy suite acceptance;
+* **SHOULD:** meaningful supported behavior worth permanent coverage but not a
+  release/authority blocker;
+* **DEFERRED:** explicitly blocked, rejected, retired, or awaiting a named
+  product decision/dependency/experiment;
+* **OPTIONAL:** presentation, breadth, or low-value characterization that is not
+  currently promised.
+
+A normal concise final report includes:
+
+1. selected feature and why it was highest-value/unblocked;
+2. starting/ending commit and final review classification;
+3. important product, adapter, or generic-infrastructure changes;
+4. fresh autonomous run ID, server/client totals, terminal result, and cleanup,
+   or the exact documented stopping gate when runtime proof is inapplicable;
+5. important behavior causally proven, disproven, or left unproven;
+6. Sacred Texts that materially affected the investigation;
+7. generic Arma lemmas/conjectures added, or an explicit zero result;
+8. project findings intentionally kept non-generic;
+9. remaining boundaries, including client-N/JIP and unavailable dependencies;
+10. focused/full/static validation and final worktree state;
+11. feature-review and permanent-coverage percentages before/after, ranges,
+    confidence, per-family table, and remaining MUST/SHOULD/DEFERRED/OPTIONAL
+    surfaces when useful;
+12. recommended next candidate without starting it unless requested.
 
 ### Required review outputs
 
