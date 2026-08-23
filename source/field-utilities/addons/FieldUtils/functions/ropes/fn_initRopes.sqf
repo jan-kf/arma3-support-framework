@@ -1,30 +1,30 @@
 YOSHI_getVehicleInterceptPoints = {
 	params ["_object", ["_modifier", -1]];
 
-	_corners = boundingBoxReal _object; 
-	_center = ([_object] call YOSHI_getCenterOfMass) select 0; 
-	_dir = vectorDir _object; 
-	_xdir = (_corners select 0) select 0; 
-	_ydir = ((_corners select 0) select 1); 
-	_magnitude = sqrt ((_xdir ^ 2) + (_ydir ^ 2)); 
-	_vector = _dir vectorMultiply (_magnitude * _modifier); 
-	_checkLoc = _center vectorAdd _vector; // ASL or World (ASL is like 5 inches higher) 
+	_corners = boundingBoxReal _object;
+	_center = ([_object] call YOSHI_getCenterOfMass) select 0;
+	_dir = vectorDir _object;
+	_xdir = (_corners select 0) select 0;
+	_ydir = ((_corners select 0) select 1);
+	_magnitude = sqrt ((_xdir ^ 2) + (_ydir ^ 2));
+	_vector = _dir vectorMultiply (_magnitude * _modifier);
+	_checkLoc = _center vectorAdd _vector; // ASL or World (ASL is like 5 inches higher)
 	_checkLoc2 = _center vectorAdd (_vector vectorMultiply -1);
 
 	[_checkLoc, _checkLoc2]
 };
 
 // TODO: make sure to only check intersects that are of the relevant object
-YOSHI_getTowLocation = { 
-	params ["_object", ["_isTowing", true], ['_otherObject', objNull]]; 
-	
-	_modifier = 1; 
-	if (_isTowing) then {_modifier = -1}; 
-	
+YOSHI_getTowLocation = {
+	params ["_object", ["_isTowing", true], ['_otherObject', objNull]];
+
+	_modifier = 1;
+	if (_isTowing) then {_modifier = -1};
+
 	_interceptPoints = [_object, _modifier] call YOSHI_getVehicleInterceptPoints;
 	_checkLoc = _interceptPoints select 0;
 	_checkLoc2 = _interceptPoints select 1;
-	
+
 	if (_isTowing) then {
 		_intersects = lineIntersectsSurfaces [_checkLoc, _checkLoc2, _otherObject, objNull, true, 5, "FIRE", "GEOM"];
 		_hits = [];
@@ -35,10 +35,10 @@ YOSHI_getTowLocation = {
 			}
 		} forEach _intersects;
 
-		if ((count _hits) > 0) then { 
+		if ((count _hits) > 0) then {
 			_hits
-		} else { 
-			[_checkLoc] 
+		} else {
+			[_checkLoc]
 		};
 	} else {
 		_checks = [_checkLoc, _checkLoc2] call YOSHI_sweepAngle;
@@ -57,15 +57,15 @@ YOSHI_getTowLocation = {
 				_hits pushBack (_x select 0);
 			}
 		} forEach _intersects;
-		
 
-		if ((count _hits) > 0) then { 
+
+		if ((count _hits) > 0) then {
 			_hits
-		} else { 
-			[_checkLoc] 
+		} else {
+			[_checkLoc]
 		};
-	}; 
-}; 
+	};
+};
 
 YFU_fnc_setTowParent = {
 	params ["_child", "_parent"];
@@ -79,62 +79,42 @@ YFU_fnc_setTowParent = {
 	_child setTowParent _parent;
 };
 
+YFU_fnc_resolveTowGeometry = {
+	params ["_towVic", "_cargo"];
+	if (isNull _towVic || {isNull _cargo}) exitWith {[[], []]};
+
+	private _towDeg = -(getDir _towVic);
+	private _cargoDeg = -(getDir _cargo);
+	private _towLookup = [_towVic] call YOSHI_getTowingPoints;
+	private _cargoLookup = [_cargo] call YOSHI_getTowingPoints;
+	private _towPoint = [0, 0, 0];
+	private _cargoPoints = [[0, 0, 0]];
+
+	if (_towLookup isNotEqualTo []) then {
+		_towPoint = (_towLookup select 1) select 0;
+	} else {
+		private _towLocations = [_towVic, true, _cargo] call YOSHI_getTowLocation;
+		private _towRear = ([getPosWorld _towVic, [_towLocations select 0]] call YOSHI_realToLocal) select 0;
+		_towPoint = [_towRear, -_towDeg] call YOSHI_rotateZ;
+	};
+
+	if (_cargoLookup isNotEqualTo []) then {
+		_cargoPoints = _cargoLookup select 0;
+	} else {
+		private _cargoLocations = [_cargo, false, _towVic] call YOSHI_getTowLocation;
+		private _cargoLocalPoints = [];
+		{
+			_cargoLocalPoints pushBack (([getPosWorld _cargo, [_x]] call YOSHI_realToLocal) select 0);
+		} forEach _cargoLocations;
+		_cargoPoints = _cargoLocalPoints apply {[_x, -_cargoDeg] call YOSHI_rotateZ};
+	};
+
+	[_towPoint, _cargoPoints]
+};
+
 YOSHI_deployTowRopes = {
-	params ["_towVic", "_cargo"]; 
-	
-	private _towDeg = -(getDir _towVic);  
-	private _cargoDeg = -(getDir _cargo);  
-
-	_towVicLookup = [_towVic] call YOSHI_getTowingPoints;
-	_cargoLookup = [_cargo] call YOSHI_getTowingPoints;
-	_rot_tr = [0,0,0];
-	_rotatedCargoAttachPoints = [[0,0,0]];
-
-	if ((count _towVicLookup) > 0) then {
-		_rot_tr = (_towVicLookup select 1) select 0;
-	} else {
-		_realTowerTowLocation =  [_towVic, true, _cargo] call YOSHI_getTowLocation;
-		_towRear = ([getPosWorld _towVic, [_realTowerTowLocation select 0]] call YOSHI_realToLocal) select 0; 
-		_rot_tr = [_towRear, -_towDeg] call YOSHI_rotateZ;
-	};
-
-
-
-	if ((count _cargoLookup) > 0) then {
-		_rotatedCargoAttachPoints = _cargoLookup select 0;
-	} else {
-		_realCargoTowLocation =  [_cargo, false, _towVic] call YOSHI_getTowLocation;
-
-		_cargoFrontAttachPoints = [];
-
-		{
-			_cargoFrontAttachPoints pushBack (([getPosWorld _cargo, [_x]] call YOSHI_realToLocal) select 0);
-		} forEach _realCargoTowLocation;
-
-
-		_rotatedCargoAttachPoints = [];
-		{
-			_rotatedCargoAttachPoints pushBack ([_x, -_cargoDeg] call YOSHI_rotateZ);
-		} forEach _cargoFrontAttachPoints;
-	};
-
-	_createdRopes = [];
-	{
-		_createdRopes pushBack (ropeCreate [_towVic, _rot_tr, _cargo, _x, 5, ["RopeEnd", [0, 0, 1]], ["RopeEnd", [0, 0, 1]], "Spring1xRope"]);
-	} forEach _rotatedCargoAttachPoints;
-
-	_shouldSetParent = false;
-	{
-		if (!isNull _x) then {
-			_shouldSetParent = true;
-		};
-	} forEach _createdRopes;
-
-	// TODO: get this to work
-	if (_shouldSetParent) then {
-		[_cargo, _towVic] call YFU_fnc_setTowParent;
-		// TODO: add check to reset tow parent once rope no longer exists 
-	};
+	params ["_towVic", "_cargo", ["_operationId", ""]];
+	[_towVic, _cargo, _operationId] call YFU_fnc_towRequestAttach
 };
 
 YOSHI_attachHeliLiftRopes = {
@@ -153,7 +133,7 @@ YOSHI_attachHeliLiftRopes = {
 	private _createdRopes = [];
 
 	[_heli] call YOSHI_stowTowRopes;
-	
+
 	for "_i" from 0 to 3 do {
 		private _objPoint = _liftCorners select _i;
 		_createdRopes pushBack (
@@ -179,7 +159,7 @@ YOSHI_stowTowRopes = {
 	private _attachedObjects = ropeAttachedObjects _vic;
 
 	{ [_x, objNull] call YFU_fnc_setTowParent } forEach _attachedObjects;
-	
+
 	private _ropes = ropes _vic;
 
 	{ ropeDestroy _x } forEach _ropes;
@@ -212,7 +192,7 @@ YOSHI_towRopeActions = {
 	{
 		private _cargo = _x select 2;
 
-		if (_cargo isKindOf "AllVehicles") exitWith {
+		if (_cargo isKindOf "LandVehicle") exitWith {
 
 			private _vehicleClass = typeOf _cargo;
 			private _vehicleDisplayName = getText (configFile >> "CfgVehicles" >> _vehicleClass >> "displayName");
@@ -221,27 +201,23 @@ YOSHI_towRopeActions = {
 				format["%1-deployTow", netId _towVic], format["Attach tow rope to %1", _vehicleDisplayName], "\A3\ui_f\data\map\markers\military\join_CA.paa",
 				{
 					params ["_target", "_caller", "_args"];
-					// statement 
+					// statement
 					private _towVic = _args select 0;
 					private _cargo = _args select 1;
 
 					[_towVic, _cargo] call YOSHI_deployTowRopes;
 
-				}, 
+				},
 				{
 					params ["_target", "_caller", "_args"];
 					// // Condition code here
 					private _towVic = _args select 0;
 					private _cargo = _args select 1;
 
-					private _check = true;
-					{
-						if (_x == _cargo) then {
-							_check = false;
-						}
-					} forEach (ropeAttachedObjects _towVic);
-
-					_check
+					(_towVic getVariable ["YFU_TOW_ACTIVE", []]) isEqualTo []
+						&& {(_cargo getVariable ["YFU_TOW_ACTIVE", []]) isEqualTo []}
+						&& {!([_towVic] call YFU_fnc_towHasRelationship)}
+						&& {!([_cargo] call YFU_fnc_towHasRelationship)}
 
 				},
 				{}, // 5: Insert children code <CODE> (Optional)
@@ -252,15 +228,15 @@ YOSHI_towRopeActions = {
 		};
 	} forEach _intersects;
 
-	if ((count (ropeAttachedObjects _towVic)) > 0) then {
+	if ((_towVic getVariable ["YFU_TOW_ACTIVE", []]) isNotEqualTo []) then {
 		private _vicStowTowAction = [
 			format["%1-StowTow", netId _towVic], "Stow tow ropes", "\A3\ui_f\data\map\markers\nato\respawn_unknown_ca.paa",
 			{
 				params ["_target", "_caller", "_towVic"];
-				// statement 
+				// statement
 
-				[_towVic] call YOSHI_stowTowRopes;
-			}, 
+				[_towVic] call YFU_fnc_towRequestStow;
+			},
 			{
 				params ["_target", "_caller", "_towVic"];
 				// // Condition code here

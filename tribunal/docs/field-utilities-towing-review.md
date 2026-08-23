@@ -2,143 +2,146 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: `REFINE BEFORE PERMANENT COVERAGE`.** The ACE entry is
-reachable, but the current implementation has no authoritative transaction,
-does not retain feature-owned rope identity, and cannot reliably finalize tow
-state. No permanent scenario is justified until the decisions and controlled
-experiment below are completed.
+**Classification: `REFINED; ACCEPTED / COVERED` for one authenticated client
+and server-local land vehicles.** Fresh autonomous run
+`20260823T190019Z-39badbd1` passed 14 server and 13 client assertions with
+complete cleanup. Player-owned vehicle locality, ownership migration,
+client-B/JIP, broad fallback geometry, deletion/disconnect, and a natural
+projectile-cut rope remain explicit follow-ups.
 
 ## Scope
 
-In scope: the `LandVehicle` ACE tow/stow actions, configured and
-geometry-derived tow points, rope creation/destruction, and `setTowParent`
-routing in `fn_initRopes.sqf` and `fn_ropeActions.sqf`. The separate
-`YOSHI_attachHeliLiftRopes` helper is excluded because no normal product entry
-invoking it was found.
+The accepted surface is the reachable `LandVehicle` ACE attach/stow path,
+configured or geometry-derived tow points, authenticated request boundary,
+feature-owned rope lifecycle, native tow parenting, physical movement, and
+client result/replication. The orphan four-point helicopter sling helper remains
+separately deferred.
 
 ## Canonical review questions
 
-### 1. What should the user or integrator observe?
+### 1. What should the user observe?
 
-An eligible actor near two eligible vehicles should see an ACE tow action for
-the exact intended cargo. Activation should establish a physical tow between
-that exact pair. Stowing should remove only that tow and leave both vehicles in
-a coherent untowed state.
+A nearby authenticated player can select an exact eligible land vehicle and
+request a tow. Acceptance creates one complete tow operation; the cargo follows
+the moving tower. A conflicting, distant, or wrong-class request changes
+nothing. Stow or rope loss detaches the pair without destroying unrelated ropes,
+and the pair can be reused.
 
-### 2. What does the feature actually do now, including negative paths?
+### 2. What does the feature actually do?
 
-Client initialization registers an ACE class action on every `LandVehicle`.
-Its dynamic child selects the first nearby intersected `AllVehicles` object
-and calls `YOSHI_deployTowRopes` on the actor client. That function calculates
-configured or bounding-box fallback points and calls `ropeCreate` twice. It
-discards both handles, then owner-routes only `setTowParent` through CORDIS.
-Stow clears the tow parent of every `ropeAttachedObjects` result and destroys
-every rope on the selected vehicle.
+The ACE child resolves an exact `LandVehicle` pair and sends an operation ID to
+`YFU_fnc_towRequestServer`. The server authenticates
+`remoteExecutedOwner`, the owning player, range, class, movement, and existing
+rope/tow claims. It computes the existing configured/fallback geometry, creates
+all ropes atomically, retains their exact handles, applies `setTowParent`, and
+publishes exact transaction/vehicle/rope identities. Stow and the loss monitor
+destroy only those handles, clear the exact cargo parent and claims, publish a
+requester-only result, and retire state.
 
-There is no result for failed or partial creation, no exact-pair transaction,
-and no supported negative path for ineligible, moving, distant, concurrent,
-deleted, ownership-migrated, or disconnected participants.
+### 3. Which machines and lifecycle stages own it?
 
-### 3. Which machines and lifecycle stages own the behavior?
+The server owns authorization, mutation, rope handles, audit, active claims,
+monitoring, and finalization for the accepted server-local topology. The client
+owns ACE resolution and requests, then observes targeted receipts and replicated
+transaction/rope identities. `getTowParent` was observed as locality-specific:
+the authoritative server saw the exact parent while the non-owning client
+correctly saw none, so the client proof does not demand a false replicated
+parent.
 
-ACE resolution, rope creation, and destruction run on the actor client. Only
-the cargo vehicle's parent mutation is routed to its owner. The server does not
-authorize or finalize the operation. Without retained rope handles or an
-operation generation, no authority owns breakage, deletion, migration,
-disconnect, or competing-request cleanup.
+### 4. Which mechanics are generic?
 
-### 4. Which mechanics are generic concerns?
-
-ACE action resolution, object locality and identity, rope observation,
-tow-parent observation, and paired trajectory sampling are generic. Existing
-Tribunal action/locality techniques are sufficient for the first experiment;
-towing semantics remain in Field Utilities.
+ACE data inspection, exact object/netId correlation, locality recording, paired
+trajectory sampling, negative-stimulus delivery, and bounded cleanup are generic
+testing mechanics. No new Tribunal primitive was needed.
 
 ### 5. Which behavior is product-owned?
 
-Vehicle/requester eligibility, distance and motion limits, one-versus-many
-cargo policy, tow points, parent semantics, feature rope ownership, breakage,
-resources, and cleanup/finalization are product decisions.
+Land-vehicle eligibility, 10 m requester range, 20 m pair range, 5 km/h motion
+limit, single active relationship per object, server authority, exact rope
+ownership, tow-parent use, requester-only results, and terminal cleanup remain
+Field Utilities policy.
 
 ### 6. Are unusual engine requirements proven?
 
-No. Configured points, fallback geometry, local `ropeCreate`, and
-`setTowParent` have not been characterized in a controlled A/B. Source TODOs
-explicitly question parent behavior and reset after rope loss.
+Yes, narrowly on Arma 3 2.22.153995: server-local `B_MRAP_01_F` plus
+`C_Offroad_01_F`, native ropes and `setTowParent`, caused the cargo to follow
+a naturally AI-driven tower. In the final A/B, the no-tow tower moved 26.3958 m
+while cargo moved 0 m; treatment tower moved 27.0593 m while the exact cargo moved
+28.3352 m. This does not generalize to every class or locality topology.
 
-### 7. Which details are fragile or incomplete?
+### 7. Which prior defects were refined?
 
-First-match spatial selection is not a committed exact target. Rope handles are
-discarded. Stow can destroy unrelated ropes and clear unrelated parent state.
-Natural rope loss cannot deterministically finalize the parent. Fallback
-geometry, partial two-rope creation, and concurrency are unmeasured.
+The actor client formerly mutated world state, discarded rope handles, accepted
+broad `AllVehicles`, and stow destroyed every rope on the tower. There was no
+atomic result, conflict ownership, loss finalizer, reuse proof, or causal
+movement control. The authoritative transaction removes those false-PASS and
+broad-destruction paths.
 
 ### 8. Is a better mechanism available and proven?
 
-Not yet. Compare the current mechanism against a physical no-tow control under
-its real locality before choosing a replacement. This review does not
-fossilize `setTowParent` as product specification.
+The retained native rope plus tow-parent mechanism is sufficient for the proven
+topology. No custom physics replacement is justified. The server rejects or
+fails closed when its complete relationship cannot be observed.
 
 ### 9. What is the stable contract and causal proof?
 
-Candidate contract, pending decisions:
+> A nearby authenticated player may establish one exact, complete,
+> server-authoritative land-vehicle tow. The same physical movement tows cargo
+> only with the accepted operation. Conflicts and invalid requests do not
+> mutate state; stow or rope loss removes only feature-owned state and permits
+> reuse.
 
-> An eligible authenticated actor can request one tow between exact eligible
-> tow and cargo vehicles. The authoritative operation either establishes its
-> complete feature-owned rope/tow state or changes nothing. Cargo then follows
-> physically. Stow or terminal loss removes exactly that operation without
-> disturbing unrelated ropes.
+The permanent scenario correlates requester, exact pair, operation, exact rope
+IDs, authoritative parent, client-visible transaction/ropes, and paired
+trajectories. Its matched no-tow arm is an independent physical oracle.
 
-Proof must correlate exact actor/vehicle identities, an accepted transaction,
-feature-owned rope identities, parent state, and paired trajectories. The same
-movement without a tow is the independent control. Observe cleanup before
-fixture deletion.
+### 10. Which details remain replaceable?
 
-### 10. Which details must remain replaceable?
+ACE labels/icons, helper names, operation storage, rope type/count/length, point
+coordinates, audit representation, monitor cadence, and the native mechanism
+remain implementation details unless a later contract requires them.
 
-ACE labels/icons, point coordinates, rope count/type/length, helper names,
-transaction representation, polling cadence, and the verified physical
-mechanism.
+### 11. Which follow-up characterization remains?
 
-### 11. Which mechanisms deserve characterization?
+Player-owned vehicles, ownership migration, client-B/JIP, natural projectile
+rope cutting, deletion/disconnect during an active operation, and multiple
+unconfigured vehicle geometries. These do not dilute the accepted topology.
 
-Whether rope plus parent makes cargo follow in the dedicated topology; which
-machine must create/destroy ropes; locality changes; natural breakage; and
-fallback geometry on one unconfigured class. Do not promote observations to
-requirements without an A/B.
+### 12. What was promoted into Tribunal or Sacred Texts?
 
-### 12. What should be promoted into Tribunal?
+No product semantics moved into Tribunal. The scenario uses existing generic
+assertion, locality, and evidence machinery. Evidence Contract v1 was ingested
+idempotently and the knowledge audit passed. Both propositions are
+`PROJECT-SPECIFIC ONLY`; the product transaction does not independently prove
+a context-free engine theorem, so zero generic distillation is correct.
 
-Nothing yet. Exact rope enumeration and paired trajectories may become generic
-after a second consumer. Eligibility, transactions, and cleanup stay in the
-product.
+## Permanent evidence
 
-## Product decisions required
+Scenario: `source/field-utilities/tests/tribunal/towing.py`.
 
-1. Eligible tow/cargo classes, mass/size, range, and motion state.
-2. Eligible requester and authoritative machine.
-3. Whether either vehicle may join multiple tow operations.
-4. Whether tow parenting is intended or only a workaround.
-5. Which ropes are feature-owned and what stow may remove.
-6. Finalization on break, deletion, migration, disconnect, and concurrency.
-7. Whether towing consumes a resource.
+Fresh run `20260823T190019Z-39badbd1`:
 
-## First discriminating experiment
+- server 14/0; client 13/0;
+- exact treatment ropes `2:160`, `2:161`;
+- no-tow cargo 0 m versus treatment cargo 28.3352 m;
+- active-object conflict rejected with delivered `active-conflict` receipt;
+- exact feature ropes removed while unrelated rope `2:162` survived;
+- destroyed feature rope triggered `rope-lost`, cleared the parent/claims, and
+  the same pair attached and stowed again;
+- distant requester and wrong-class cargo were delivered and rejected without
+  mutation;
+- all fixture objects, operations, claims, containers, network, and run state
+  were removed.
 
-In one retained Live session, use settled server-owned
-`B_MRAP_01_F` and `C_Offroad_01_F`. Resolve the exact registered ACE child
-and invoke its real statement. Record actor, vehicles, locality, rope handles,
-attachments, and parent state on both machines. Move the tow vehicle 25–30 m
-and independently sample both trajectories. Invoke exact stow and prove only
-feature-owned state is removed. Repeat the movement without a tow as control.
-Then add invalid-distance and second-request probes after policies are chosen.
-
-Do not pass on action presence, rope count, parent state, or cargo movement
-alone: unrelated ropes, stale state, attachment without movement, and fixture
-cleanup are false-PASS paths.
+Evidence emission initially failed closed on a noncanonical arm role and
+knowledge ingestion rejected display-name BIKI context. Those metadata defects
+were corrected to `baseline` and canonical `biki-page:*` keys; the regenerated
+package validated, first ingest changed counts, second ingest was idempotent,
+and the full knowledge audit passed.
 
 ## Disposition
 
-**Reviewed, not covered; refine before permanent coverage.** Continue after the
-product decisions with the one-session physical/authority experiment. The
-helicopter sling helper remains separately unreviewed.
+**REFINED; ACCEPTED / COVERED** within the stated server-local, one-client
+boundary. Retain the permanent causal scenario and focused static contract.
+Treat the separate helicopter sling helper and the locality/client-N experiments
+as independent future work.

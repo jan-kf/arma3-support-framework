@@ -11,7 +11,7 @@ decisions remain in each canonical feature review and the feature inventory.
 | CORDIS routing/dedupe | REFINED; ACCEPTED / COVERED (one-client trusted broker) | this commit | `20260823T131712Z-6210a6c1`; server 16/0, client 8/0; Evidence Contract ingested idempotently | visible curator GUI, audio/debug, ownership migration, disconnect, client-N/JIP | retain exact route/dedupe/fan-out matrix; next Vigil helicopter stabilizer A/B |
 | CBR Eden/Zeus activation | REFINED; ACCEPTED / COVERED | this commit | `20260821T153013Z-0a8b2c91`; server 14/0, client 8/0 | reverse OFF/ON placement, repeated retained display, client-B/JIP, ownership migration | retain typed Eden + authentic curator + same-artillery A/B; next Field Utilities Eden activation |
 | Vigil homepage task management | REVIEWED / DEFERRED | `902d0f5` | none; unreachable static scaffold | whether page ships; task visibility, cancellation authority/history/finalization | no implementation until product decisions exist |
-| Field Utilities towing | REVIEWED / REFINE BEFORE COVERAGE | `dd7a310` | none; static boundary review | eligibility/authority, feature-owned ropes, parent/breakage/finalization policy; physical locality A/B | decide contract, then run exact ACE tow/stow and paired-trajectory experiment |
+| Field Utilities towing | REFINED; ACCEPTED / COVERED (server-local, one client) | this commit | `20260823T190019Z-39badbd1`; server 14/0, client 13/0; Evidence Contract ingested idempotently | player-owned/migration, client-B/JIP, natural projectile cut, deletion/disconnect, broad fallback geometry | retain exact physical A/B and lifecycle matrix; next Field object handling / supply loading |
 | Vigil helicopter stabilizer | REVIEWED / DEFERRED; automatic path disabled | this commit | Live `20260823T144525Z-a5b9d6a6` negative A/B; Tier 3 `20260823T150347Z-06abb5c7` 16/0 server + 10/0 client proves automatic no-force round trip | future mechanism needs bounded rewrite, multiple aircraft/corridors, cancellation and ownership trials | retain normal transport no-force assertion; do not reactivate legacy formula |
 | Tribunal manifest discovery | ACCEPTED / COVERED | `146cd38` | static CLI lists all 12 runtime product scenarios; 104 tests pass | none | retain independent manifest/runtime parity regression |
 | Vigil developer laser harness | REVIEWED / DEFERRED | `0badf72` | none; exhaustive static reachability/boundary review | remove, move to dev/Tribunal, or capability-gate with bounded execution/storage | do not use as product evidence; decide disposition before reuse |
@@ -43,7 +43,8 @@ decisions remain in each canonical feature review and the feature inventory.
 | APS enable/disable/re-enable lifecycle | REFINED; ACCEPTED / COVERED through ACE control entry | `c156eae` | `20260820T222348Z-a22110d3`; preservation + impact/interception | typed Eden/Zeus install, deletion, ownership/JIP | retain no-resupply idempotent suspend/resume; fold install proof into module review |
 | APS + Field Utilities ACE composition | KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED current-client | this commit | `20260820T223222Z-3046910b`; server 18/0, client 11/0 | client-B/JIP, explicit uninstall, deletion, repeated init, ownership migration | retain exact combined census; next authentic APS Zeus activation |
 
-Current closeout is the accepted Vigil whitelist Eden/Zeus aggregation and
-assigned-curator add/removal contract. The next recommended unblocked feature is
-Field Utilities towing; retain the whitelist's separate runtime-reconfiguration
-and client-N/JIP questions without reopening the accepted operations.
+Current closeout is accepted server-authoritative Field Utilities towing with
+exact physical A/B, scoped rope lifecycle, fail-closed controls, and clean reuse.
+The next recommended unblocked feature is Field Utilities object handling /
+explicit nearby supply loading; keep contact attachment and cargo loading as
+separate contracts and do not reopen accepted towing.

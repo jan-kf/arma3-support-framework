@@ -56,6 +56,7 @@ class CfgFunctions {
         class Ropes {
             file = "\FieldUtils\functions\ropes";
             class initRopes { preInit = 1; };
+            class towingServer { preInit = 1; };
             class ropeActions {preInit = 1;};
         };
         class Server {

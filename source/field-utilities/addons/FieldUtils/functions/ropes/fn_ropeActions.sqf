@@ -34,13 +34,13 @@ YFU_initTowingActions = {
 		"YOSHI_StowRopes", "Stow ropes", "\A3\ui_f\data\map\markers\nato\respawn_unknown_ca.paa",
 		{
 			params ["_target", "_caller", "_args"];
-			[_target] call YOSHI_stowTowRopes;
+			[_target] call YFU_fnc_towRequestStow;
 		},
 		{
 			params ["_target", "_caller", "_args"];
 			(vehicle _caller == _target) &&
 			{(driver _target) isEqualTo _caller} &&
-			{(count (ropes _target)) > 0}
+			{(_target getVariable ["YFU_TOW_ACTIVE", []]) isNotEqualTo []}
 		}
 	] call ace_interact_menu_fnc_createAction;
 	

@@ -52,7 +52,7 @@ Five top-level runtime families are present:
 | CORDIS shared runtime | Locality routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Refined, with reserved bootstrap files | **ACCEPTED / COVERED** for the one-client trusted broker; GUI/audio/debug and client-N/JIP remain deferred |
 | Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS, Counter Battery Radar, and Iron Dome strong; APS anti-drone remains uncovered |
 | Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
-| Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fixed-wing logistics and the reviewed Bridge Builder core |
+| Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fabrication, logistics, Bridge Builder, and accepted authoritative physical towing |
 | Cross-mod composition | Contracts joining CORDIS, Vigil, Field Utilities, ACE/CBA, and editor/Zeus surfaces | calls across all addons/configs | Implemented, some optional/degraded paths | **PARTIALLY COVERED**; one composite path direct, most incidental |
 
 Tribunal/Pontifex validation is documented separately below. It is substantial
@@ -565,13 +565,19 @@ Full analysis: [`field-utilities-object-handling-review.md`](field-utilities-obj
 
 ### 4.4 Towing and sling ropes
 
-* **Tow points/rope deployment** use configured or geometry-derived points and
-  owner-local tow parent. **REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** The
-  actor client creates ropes, discards their handles, and only owner-routes the
-  parent mutation; authority, atomicity, and terminal cleanup are unresolved.
-* **ACE tow/stow actions** are registered on vehicles. **REVIEWED / REFINE
-  BEFORE PERMANENT COVERAGE.** The path is reachable, but stow can destroy
-  unrelated ropes and physical towing has no controlled causal proof.
+* **Tow points/rope deployment** preserve configured or geometry-derived
+  points behind a server-authoritative exact-pair transaction. **REFINED;
+  ACCEPTED / COVERED** for server-local land vehicles and one authenticated
+  client. Exact feature rope handles, parent state, claims, receipts, loss
+  finalization, and reuse are retained and fail closed.
+* **ACE tow/stow actions** are **REFINED; ACCEPTED / COVERED**. Fresh run
+  `20260823T190019Z-39badbd1` proved the exact registered child, 0 m no-tow
+  cargo movement versus 28.3352 m with the same movement under treatment,
+  active-conflict and invalid-request controls, preservation of unrelated rope
+  `2:162`, rope-loss cleanup, reuse, locality-aware replication, and complete
+  cleanup (server 14/0; client 13/0). Player-owned vehicles, migration,
+  client-B/JIP, natural projectile cuts, deletion/disconnect, and broad fallback
+  geometry remain separate experiments.
 * **Four-point helicopter sling helper** is **REVIEWED / DEFERRED**. It is a
   compiled orphan with no supported caller; it destroys all helicopter ropes
   before non-atomic local creation and has no authority/cleanup contract.
@@ -751,7 +757,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Fabricator placement suitability | **REVIEWED / NEEDS EXPERIMENTATION** | delivery is bounded to the recipient; water/gradient/obstruction unproven |
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
 | Fabricator staging depths | **REVIEWED / NEEDS EXPERIMENTATION** | underground staging and the settle tick have no retained controlled alternative |
-| Field towing | **REVIEWED / REFINE BEFORE COVERAGE** | client-owned, non-atomic rope lifecycle; exact physical/locality A/B and product policy required |
+| Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles and one authenticated client | exact authority/rope identity, matched physical A/B, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; player-owned/migration/client-N remain deferred |
 | Field object handling / supply loading | **REVIEWED / REFINE BEFORE COVERAGE** | contact attachment and explicit cargo loading conflate locality-sensitive paths without authority, exact result, or cleanup |
 | Field ID/location markers | **REVIEWED / DEFERRED** | no product caller; global marker authority/lifetime/cleanup undefined |
 | Field airdrop direction/ETA | **REVIEWED / NEEDS PRODUCT DECISION AND EXPERIMENTATION** | direction/audience/ETA interval undefined; current fall formula omits ingress and parachute descent |
