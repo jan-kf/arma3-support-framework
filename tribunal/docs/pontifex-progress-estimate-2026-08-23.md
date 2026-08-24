@@ -13,14 +13,14 @@ Vigil 36, Field Utilities 20, and cross-mod composition 13. This convenient
 total is a consequence of the selected inventory surfaces, not a target fitted
 to the result.
 
-## Current estimate after Fabricator bounded land-placement closure
+## Current estimate after Field contact-handler closure
 
 | Measure | Before | After | Reasonable after range | Confidence |
 | --- | ---: | ---: | ---: | --- |
-| Feature-review program | ~89% | ~89% | 85–93% | medium |
-| Permanent automated coverage | ~69% | ~70% | 65–74% | medium |
+| Feature-review program | ~89% | ~90% | 86–94% | medium |
+| Permanent automated coverage | ~70% | ~71% | 66–75% | medium |
 
-Fabricator bounded land placement moved from experimentation to accepted permanent coverage for one exact server-owned single delivery and its announced target beside a land recipient. A positive Stratis sea-origin control proves the `surfaceIsWater` oracle is active. The mass-cap investigation improved understanding without earning coverage: source mass was 500 while the exact clone remained `1e-12` on server and client, and the tested creation-mode, threshold, fallback, and staging alternatives did not fix it. Broader terrain, mass, client-B, and JIP remain unclaimed.
+The Field contact hook moved from experimentation to bounded accepted permanent coverage. A matched server-local `B_supplyCrate_F`/`B_Truck_01_transport_F` physical A/B proves exact contact in both arms, treatment-only attachment, client-a replication, no added carrier instability relative to the handler-free control, and controlled no-leak teardown. Client ownership/migration, broader classes/surfaces, repeated contacts, deletion while attached, client-B, and JIP remain unclaimed.
 
 ## Current family estimate
 
@@ -29,9 +29,9 @@ Fabricator bounded land placement moved from experimentation to accepted permane
 | CORDIS | 10 | ~90% | ~84% | sound/radio presentation, debug observation, ownership migration, client-N/JIP |
 | Advanced Systems | 21 | ~86% | ~67% | APS anti-drone policy/authority, CBR concurrency policy, Iron Dome client-owned threats and audio |
 | Vigil | 36 | ~90% | ~68% | task governor rewrite, recon/homepage decisions, feedback policy, any future stabilizer rewrite |
-| Field Utilities | 20 | ~91% | ~63% | FPV authority/effects, contact attachment, airdrop feedback, mass and broader-terrain experiments, towing locality breadth |
+| Field Utilities | 20 | ~93% | ~66% | FPV authority/effects, broader contact topology, airdrop feedback, mass and broader-terrain experiments, towing locality breadth |
 | Cross-mod composition | 13 | ~89% | ~80% | true client-B/JIP, ownership migration, remaining partial module reversals, broader replicated-state lifecycle |
-| **Overall** | **100** | **~89%** | **~70%** | weighted combination above |
+| **Overall** | **100** | **~90%** | **~71%** | weighted combination above |
 
 ## Sensitivity and next block
 
@@ -42,4 +42,4 @@ permanent-coverage number is lower-confidence for presentation/audio and
 multi-client behavior because the autonomous client uses `-noSound` and only
 one independently authenticated identity exists.
 
-Fabricator bounded land placement is terminal at KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED for one land recipient and exact server-owned single delivery. The mass cap remains an open defect after land and matched creation-mode experiments. The next recommended unblocked feature is the Field contact-handler locality/collision experiment; automatic attachment, detach, and cleanup remain separate from accepted explicit nearby supply loading.
+Field automatic contact attachment is terminal at KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED for the declared server-owned crate/truck topology. Broader classes/localities remain open. The next recommended unblocked feature is a controlled Vigil transport hidden-pad landing-mechanism A/B; the Fabricator mass cap remains an open defect after several rejected alternatives.

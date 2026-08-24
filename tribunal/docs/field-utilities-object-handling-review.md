@@ -2,7 +2,7 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: split outcome.** Explicit nearby supply loading is **REFINED; ACCEPTED / COVERED** for server-owned objects and one authenticated client. Automatic physical-contact attachment remains **REVIEWED / NEEDS EXPERIMENTATION** and outside that contract.
+**Classification: KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED (bounded split contract).** Explicit nearby supply loading remains **REFINED; ACCEPTED / COVERED** for server-owned objects and one authenticated client. Automatic physical-contact attachment is now **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** only for a server-owned `B_supplyCrate_F` contacting a server-owned `B_Truck_01_transport_F`, observed by one remote client.
 
 ## Scope
 
@@ -55,10 +55,7 @@ product decisions.
 
 ### 6. Are unusual engine requirements proven?
 
-No. Fabricator evidence only established that the server's EntityCreated path
-replicated `ace_cargo_size=-1` to a client-created box. It did not prove the
-server-local contact handler fires for that nonlocal object. The required
-locality of `setVehicleCargo`, `attachTo`, and contact EHs is uncharacterized.
+Partly. The accepted explicit-load proof characterizes server-local `setVehicleCargo`. The new physical A/B proves `EpeContactStart` and `attachTo` only for server-local `B_supplyCrate_F` and `B_Truck_01_transport_F`, including remote observation. Client-owned objects, migration, and broader contact classes remain uncharacterized.
 
 ### 7. Which details are fragile or incomplete?
 
@@ -93,26 +90,23 @@ transaction representation, and attachment/cargo mechanism.
 
 ### 11. Which mechanisms deserve characterization?
 
-Contact EH locality for server- and client-owned boxes; `setVehicleCargo`
-locality/return/replication; full-capacity behavior; attachment collision
-effects; and deletion/ownership migration.
+Contact EH locality for client-owned boxes; broader surface/class combinations; repeated contacts; `setVehicleCargo` client locality and full-capacity behavior; deletion while attached; and ownership migration.
 
 ### 12. What should be promoted into Tribunal?
 
-Existing Tribunal mechanics are sufficient. The accepted cargo result supports one narrow generic setVehicleCargo lemma; Field Utilities rules remain project-owned.
+Existing Tribunal mechanics are sufficient. The accepted cargo result supports one narrow generic `setVehicleCargo` lemma. The contact A/B supports bounded generic observations about a server-local `EpeContactStart` callback and remote `attachedTo` identity; eligibility and automatic-attachment policy remain project-owned.
 
 ## Acceptance decision
 
-Explicit loading preserved the existing eligible families, 10 m geometry, and conservative two-Boolean capacity rule, but moved consequential mutation to authenticated server authority with exact receipts. Contact attachment remains a separate product decision and experiment.
+Explicit loading preserved the existing eligible families, 10 m geometry, and conservative two-Boolean capacity rule, but moved consequential mutation to authenticated server authority with exact receipts. The existing contact hook is retained for the bounded server-owned crate/truck topology proven below; broader automatic-attachment policy remains open.
 
 ## Disposition
 
-**Split disposition.** Explicit nearby supply loading is REFINED; ACCEPTED / COVERED for the declared topology. Contact attachment remains REVIEWED / NEEDS EXPERIMENTATION.
+**Bounded split disposition.** Explicit nearby supply loading remains REFINED; ACCEPTED / COVERED for the declared topology. Automatic contact attachment is KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED for the declared server-local crate/truck topology.
 
 ## Accepted continuation — explicit nearby supply loading
 
-This continuation supersedes the prospective cargo-loading statements above;
-the automatic contact path remains at the original experimentation boundary.
+This continuation supersedes the prospective cargo-loading statements above. The later contact continuation below supersedes the original experimentation boundary only for its declared topology.
 
 The accepted contract is: a nearby authenticated player can invoke the exact
 registered Field Utilities child for one eligible supply/carrier pair. Success
@@ -154,6 +148,17 @@ Tribunal code was added; existing action-data, exact-identity, replication,
 negative-control, Evidence Contract, and cleanup facilities were sufficient.
 
 Client-owned objects, ownership migration, disconnect, client-B/JIP,
-full-carrier breadth, and unload UX are not claimed. Automatic contact
-attachment remains REVIEWED / NEEDS EXPERIMENTATION because handler locality,
-eligible surfaces, attach collision safety, detach, and cleanup remain unknown.
+full-carrier breadth, and unload UX are not claimed. Automatic contact attachment outside the bounded server-owned crate/truck topology remains REVIEWED / NEEDS EXPERIMENTATION because client ownership/migration, broader eligible surfaces/classes, repeated contacts, and deletion while attached remain unknown.
+
+
+## Accepted continuation — automatic contact attachment
+
+The next-best unblocked candidate was the automatic contact hook. APS anti-drone, CBR concurrency, and FPV modifications remain behind product-policy decisions; client-B/JIP remains behind an independent identity; and the Fabricator mass defect had already rejected several isolated alternatives. The Opus reconnaissance was used only to identify possible collision risk. Source, canonical review, retrieved Sacred Texts, and a fresh controlled experiment established the conclusion.
+
+The retained contract is deliberately narrow: when a server-owned `B_supplyCrate_F` physically contacts a server-owned `B_Truck_01_transport_F`, the existing server-installed hook attaches the exact crate to the exact truck. Client-a observes the same exact `attachedTo` identity. Controlled harness teardown removes the handler, freezes and detaches the crate, then deletes every fixture. This is cleanup evidence, not a user-facing detach promise. No promise is made for other classes or surfaces, client-owned objects, ownership migration, repeated contacts, deletion while attached, client-B, or JIP.
+
+Final autonomous runs `20260824T152814Z-a9dd0df5` and `20260824T152942Z-0e8c4083` independently passed 9 server and 5 client feature assertions across the combined scenario (13 and 9 including smoke), with zero failures and complete acknowledgements. In the later run both matched server-local crates generated exact `EpeContactStart` observations against their identical parked trucks at force magnitudes `324.731` and `324.717`. Only treatment retained the product handler and attached to its exact truck; the handler-free control remained unattached. Client-a resolved the same treatment attachment while all four objects remained server-owned. Over four seconds treatment/control trucks reached only `0.148514`/`0.162602` m/s, retained minimum up-vector Z `0.999945`/`0.999726`, and displaced `0.026345`/`0.025389` m. Both began at zero damage and both damage deltas remained zero. Controlled handler removal, detach, and exact deletion completed. The preceding final repeat reported the same contact forces, treatment-only attachment, zero damage deltas, and comparably negligible motion.
+
+The experiment also corrected an important false-PASS hazard. Raw final damage differed because the treatment truck already had `0.211829` damage at the pre-impact baseline while the control began at zero; both damage deltas were zero. A preliminary raw-final-damage comparison therefore could not support a collision-harm or retirement conclusion. A later repeat also showed that `detach` while the live handler remained in contact could immediately reattach; deterministic harness cleanup now freezes the crate and removes the handler first, while live-contact detach remains explicitly unclaimed. A trial bottom-offset refinement and a trial hook retirement were withdrawn after they failed to change that pre-existing asymmetry. No Pontifex product source change is retained.
+
+Sacred Texts warns, through a community note rather than an official guarantee, that attaching PhysX containers can destabilize vehicles. That warning was not reproduced for this exact pair and duration, but the accepted result does not generalize beyond it. `disableCollisionWith` was rejected because the official documentation says it does not disable collision between PhysX objects. `setPhysicsCollisionFlag` was rejected as too broad and lacking a verified restoration/getter contract. Existing Tribunal exact-identity, physical-stimulus, causal-pair, locality, replication, delta, and cleanup mechanics were sufficient; no generic Tribunal runtime code was added. Evidence package `20260824T152942Z-0e8c4083` was ingested twice with unchanged counts (5 packages, 5 runs, 67 assertions, 33 observations, 8 proofs, 10 judgments), and the knowledge audit passed. Reviewed distillation added two build-scoped generic Sacred Texts lemmas: server-local `EpeContactStart` exact-contact observation and server-local `attachTo` exact client replication with bounded four-second stability. Distillation advanced to 14 reviewed findings, 6 lemmas, 6 proofs, and 7 propositions.

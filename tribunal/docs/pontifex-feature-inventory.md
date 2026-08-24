@@ -552,7 +552,7 @@ Full analysis: [`field-utilities-bridge-builder-review.md`](field-utilities-brid
 
 ### 4.3 Logistics and object handling
 
-* **Automatic pallet/container handling** makes pallets draggable/carryable and adds a server-installed box contact/attachment hook. **REVIEWED / NEEDS EXPERIMENTATION.** Contact locality, eligible surfaces, attachment collision safety, ownership, detach, and cleanup remain undefined.
+* **Automatic pallet/container handling** makes pallets draggable/carryable and adds a server-installed box contact/attachment hook. **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for a server-owned `B_supplyCrate_F` physically contacting a server-owned `B_Truck_01_transport_F`, with exact treatment/control contact, treatment-only attachment, carrier-state deltas, client-a replication, and controlled no-leak teardown. Final independent runs `20260824T152814Z-a9dd0df5` and `20260824T152942Z-0e8c4083` each passed 9/0 server and 5/0 client feature assertions. Client ownership/migration, broader classes/surfaces, repeated contacts, deletion while attached, client-B, and JIP remain unproven.
 * **Nearby supply actions** expose eligible nearby carriers through ACE. **REFINED; ACCEPTED / COVERED** for server-owned objects and one authenticated client. The server authenticates the requester, revalidates exact class/state/range/capacity, rejects replay and invalid work, requires literal native success plus exact replicated membership, returns an exact private receipt, and cleans up. Fresh run `20260824T135424Z-777de3e6` passed 5/0 server and 4/0 client feature assertions.
 * **Safe-fall/fling/attach helpers** support delivery/packing. **Implemented;
   PARTIALLY COVERED** only in fixed-wing cargo.
@@ -755,7 +755,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
 | Fabricator staging choreography | **REVIEWED / NEEDS EXPERIMENTATION** | current surface staging, hide/unhide and settle cadence have no retained controlled alternative; clear-land staging did not repair mass |
 | Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles and one authenticated client | exact authority/rope identity, matched physical A/B, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; player-owned/migration/client-N remain deferred |
-| Field contact handling | **REVIEWED / NEEDS EXPERIMENTATION** | explicit cargo loading is split and covered; contact locality, collision safety, detach and cleanup remain unknown |
+| Field contact handling | **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for one server-owned crate/truck topology | exact matched physical contact, treatment-only attachment, carrier-state deltas, client-a replication and controlled no-leak teardown; broader classes/localities/lifecycle remain open |
 | Field nearby supply loading | **REFINED; ACCEPTED / COVERED** for server-owned, one-client topology | exact ACE child, authenticated authority, command + membership receipt, negatives, replication and cleanup |
 | Field ID/location markers | **REVIEWED / DEFERRED** | no product caller; global marker authority/lifetime/cleanup undefined |
 | Field airdrop direction/ETA | **REVIEWED / NEEDS PRODUCT DECISION AND EXPERIMENTATION** | direction/audience/ETA interval undefined; current fall formula omits ingress and parachute descent |
@@ -766,7 +766,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Bounded Fabricator land placement is accepted; its mass cap remains an isolated open defect. Next consider the Field contact-handler locality/collision experiment and other unblocked reviewed experiment boundaries. Explicit nearby supply loading is accepted; automatic contact attachment remains a separate experiment. The Vigil helicopter stabilizer is closed as deferred;
+Bounded Field contact attachment is accepted for one server-owned crate/truck topology, while broader classes/localities remain open. The next recommended unblocked candidate is the Vigil transport hidden-pad landing-mechanism A/B; Fabricator mass isolation remains an open defect after several rejected alternatives. Explicit nearby supply loading remains accepted. The Vigil helicopter stabilizer is closed as deferred;
 do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product
