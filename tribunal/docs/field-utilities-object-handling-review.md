@@ -2,10 +2,7 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: `REFINE BEFORE PERMANENT COVERAGE`.** Both shipped paths
-are reachable, but neither has an authoritative, exact, fail-closed lifecycle.
-Automatic contact attachment and explicit ACE cargo loading must be treated as
-separate features during refinement and proof.
+**Classification: split outcome.** Explicit nearby supply loading is **REFINED; ACCEPTED / COVERED** for server-owned objects and one authenticated client. Automatic physical-contact attachment remains **REVIEWED / NEEDS EXPERIMENTATION** and outside that contract.
 
 ## Scope
 
@@ -102,25 +99,61 @@ effects; and deletion/ownership migration.
 
 ### 12. What should be promoted into Tribunal?
 
-Nothing yet. Exact cargo membership and contact observation may be generic
-after another consumer. Field Utilities rules must not leak into Tribunal.
+Existing Tribunal mechanics are sufficient. The accepted cargo result supports one narrow generic setVehicleCargo lemma; Field Utilities rules remain project-owned.
 
-## Decisions and first experiment
+## Acceptance decision
 
-Decide eligible carriers/supplies, whether automatic contact attachment ships,
-requester/authority, capacity failure, and unload/detach semantics.
-
-Then use one Live session but isolated phases. First disable/avoid contact and
-resolve the exact registered ACE child for tokenized server-owned box/carrier
-IDs; invoke it and require literal command success plus exact replicated cargo
-membership. Controls: out of range, full/ineligible carrier, wrong ownership,
-and a second request with no collateral change. Separately drop the exact box
-onto eligible and ineligible surfaces, recording contact, locality, attachment,
-position, and cleanup. Never infer load from proximity, disappearance, or
-movement alone.
+Explicit loading preserved the existing eligible families, 10 m geometry, and conservative two-Boolean capacity rule, but moved consequential mutation to authenticated server authority with exact receipts. Contact attachment remains a separate product decision and experiment.
 
 ## Disposition
 
-**Reviewed, not covered; refine before permanent coverage.** The continuation
-point is the product decisions followed by the separated locality/transaction
-experiment above.
+**Split disposition.** Explicit nearby supply loading is REFINED; ACCEPTED / COVERED for the declared topology. Contact attachment remains REVIEWED / NEEDS EXPERIMENTATION.
+
+## Accepted continuation — explicit nearby supply loading
+
+This continuation supersedes the prospective cargo-loading statements above;
+the automatic contact path remains at the original experimentation boundary.
+
+The accepted contract is: a nearby authenticated player can invoke the exact
+registered Field Utilities child for one eligible supply/carrier pair. Success
+requires literal native command success plus exact isVehicleCargo membership on
+server and client-a. Delivered replay, distant-requester, and wrong-class
+requests fail without loading unrelated objects. Teardown unloads the exact
+supply and deletes every fixture.
+
+The refinement replaced the local fire-and-forget statement and literal-true
+child condition with activation-time eligibility, remoteExecutedOwner
+authentication, live-player resolution, server validation of class/state/range/
+capacity, bounded replay keys, an exact pending claim, requester-only receipts,
+and server verification of command return plus membership. Product eligibility,
+the 10 m bounds, the conservative two-Boolean capacity policy, and result meaning
+remain Field Utilities semantics. Labels, scan/order details, operation IDs,
+audit layout, and the engine's internal representation remain replaceable.
+
+Fresh autonomous run 20260824T135424Z-777de3e6 passed all 5 server and 4 client
+feature assertions with zero failures and complete acknowledgments. Owner 4
+invoked the exact ACE child; the server-owned B_supplyCrate_F loaded into the
+exact server-owned B_T_VTOL_01_vehicle_F; the same isVehicleCargo identity
+replicated to client-a; replay/range/class controls were delivered and rejected;
+the unrelated supply remained unchanged; unload, deletion, containers, network,
+and state all cleaned up.
+
+The precursor run 20260824T135058Z-1b2764ad usefully disproved a scenario
+assumption: native loaded cargo also reported the carrier through attachedTo on
+both machines. Because that is not a promised outcome and exact isVehicleCargo
+plus literal command success already excludes contact-only false passes, the
+accidental post-load not-attached constraint was removed.
+
+Sacred Texts documented setVehicleCargo's Boolean and canVehicleCargo's tuple,
+but no locality rule. The accepted run directly supports one generic lemma,
+scoped to Arma 2.22.153995, these two classes, server locality, dedicated
+multiplayer, and client-a: server-local setVehicleCargo returned true and exact
+isVehicleCargo membership was observed on both server and client. Authorization,
+eligibility, replay, receipts, and cleanup stayed project-specific. No generic
+Tribunal code was added; existing action-data, exact-identity, replication,
+negative-control, Evidence Contract, and cleanup facilities were sufficient.
+
+Client-owned objects, ownership migration, disconnect, client-B/JIP,
+full-carrier breadth, and unload UX are not claimed. Automatic contact
+attachment remains REVIEWED / NEEDS EXPERIMENTATION because handler locality,
+eligible surfaces, attach collision safety, detach, and cleanup remain unknown.

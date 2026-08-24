@@ -13,19 +13,14 @@ Vigil 36, Field Utilities 20, and cross-mod composition 13. This convenient
 total is a consequence of the selected inventory surfaces, not a target fitted
 to the result.
 
-## Current estimate after Field Utilities towing closure
+## Current estimate after Field Utilities nearby supply-loading closure
 
 | Measure | Before | After | Reasonable after range | Confidence |
 | --- | ---: | ---: | ---: | --- |
-| Feature-review program | ~87% | ~88% | 84–92% | medium |
-| Permanent automated coverage | ~66% | ~68% | 64–73% | medium |
+| Feature-review program | ~88% | ~89% | 85–93% | medium |
+| Permanent automated coverage | ~68% | ~69% | 65–74% | medium |
 
-Field Utilities towing moved from a static refinement boundary to accepted
-coverage for the server-local, one-client topology. The closure adds an
-authenticated exact-pair transaction, a matched physical no-tow/tow A/B, scoped
-rope cleanup, loss finalization, reuse, delivered negative controls, replication,
-and clean teardown. The increase remains bounded because player-owned locality,
-migration, client-N/JIP, and broad geometry are explicitly unclaimed.
+Field Utilities explicit nearby supply loading moved from a static refinement boundary to accepted coverage for server-owned objects and one authenticated client. The closure adds exact ACE-child invocation, transport-derived identity, server validation, literal native success plus exact membership, requester-only receipts, delivered replay/range/class negatives, replication, unrelated-object controls, unload and clean teardown. Contact attachment, client-owned objects, migration and client-N/JIP remain unclaimed.
 
 ## Current family estimate
 
@@ -34,9 +29,9 @@ migration, client-N/JIP, and broad geometry are explicitly unclaimed.
 | CORDIS | 10 | ~90% | ~84% | sound/radio presentation, debug observation, ownership migration, client-N/JIP |
 | Advanced Systems | 21 | ~86% | ~67% | APS anti-drone policy/authority, CBR concurrency policy, Iron Dome client-owned threats and audio |
 | Vigil | 36 | ~90% | ~68% | task governor rewrite, recon/homepage decisions, feedback policy, any future stabilizer rewrite |
-| Field Utilities | 20 | ~86% | ~56% | FPV authority/effects, object handling/loading, airdrop feedback, land mass/terrain experiments, towing locality breadth |
+| Field Utilities | 20 | ~90% | ~61% | FPV authority/effects, contact attachment, airdrop feedback, land mass/terrain experiments, towing locality breadth |
 | Cross-mod composition | 13 | ~89% | ~80% | true client-B/JIP, ownership migration, remaining partial module reversals, broader replicated-state lifecycle |
-| **Overall** | **100** | **~88%** | **~68%** | weighted combination above |
+| **Overall** | **100** | **~89%** | **~69%** | weighted combination above |
 
 ## Sensitivity and next block
 
@@ -47,9 +42,4 @@ permanent-coverage number is lower-confidence for presentation/audio and
 multi-client behavior because the autonomous client uses `-noSound` and only
 one independently authenticated identity exists.
 
-Field Utilities towing is terminal at `REFINED; ACCEPTED / COVERED` for
-server-local vehicles and one authenticated client; player-owned locality,
-migration, client-N/JIP, natural rope cuts, and broad geometry remain separate.
-The next recommended unblocked feature is Field Utilities object handling /
-nearby supply loading, beginning by separating contact attachment from explicit
-cargo loading and preserving their distinct authority/finalization contracts.
+Explicit nearby supply loading is terminal at REFINED; ACCEPTED / COVERED for server-owned objects and one authenticated client. Contact attachment remains separate and experimentation-bound. The next recommended unblocked feature is the Fabricator land mass/placement experiment, beginning with the recorded degenerate getMass result and a destination-created land control.

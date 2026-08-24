@@ -550,14 +550,8 @@ Full analysis: [`field-utilities-bridge-builder-review.md`](field-utilities-brid
 
 ### 4.3 Logistics and object handling
 
-* **Automatic pallet/container handling** makes pallets draggable/carryable and
-  adds a server-installed box contact/attachment hook. **REVIEWED / REFINE
-  BEFORE PERMANENT COVERAGE.** Contact locality, eligible surfaces, ownership,
-  detach, and cleanup are undefined.
-* **Nearby supply actions** expose eligible nearby carriers through ACE.
-  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** The client invokes
-  `setVehicleCargo` without authority or result handling; exact replicated
-  cargo membership is unproven.
+* **Automatic pallet/container handling** makes pallets draggable/carryable and adds a server-installed box contact/attachment hook. **REVIEWED / NEEDS EXPERIMENTATION.** Contact locality, eligible surfaces, attachment collision safety, ownership, detach, and cleanup remain undefined.
+* **Nearby supply actions** expose eligible nearby carriers through ACE. **REFINED; ACCEPTED / COVERED** for server-owned objects and one authenticated client. The server authenticates the requester, revalidates exact class/state/range/capacity, rejects replay and invalid work, requires literal native success plus exact replicated membership, returns an exact private receipt, and cleans up. Fresh run `20260824T135424Z-777de3e6` passed 5/0 server and 4/0 client feature assertions.
 * **Safe-fall/fling/attach helpers** support delivery/packing. **Implemented;
   PARTIALLY COVERED** only in fixed-wing cargo.
 
@@ -723,6 +717,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
 | `vigil-fixed-wing-modules` | authentic typed Eden aggregation, nearest points, assigned-curator add, authority/replication/cleanup |
+| `fieldutils-cargo-loading` | nearby authenticated exact-pair vehicle cargo loading, rejection, replication, cleanup |
 | `fieldutils-fabricator` | server-authoritative atomic orders, catalogue fidelity, refusals, cleanup |
 | `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
 
@@ -758,7 +753,8 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
 | Fabricator staging depths | **REVIEWED / NEEDS EXPERIMENTATION** | underground staging and the settle tick have no retained controlled alternative |
 | Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles and one authenticated client | exact authority/rope identity, matched physical A/B, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; player-owned/migration/client-N remain deferred |
-| Field object handling / supply loading | **REVIEWED / REFINE BEFORE COVERAGE** | contact attachment and explicit cargo loading conflate locality-sensitive paths without authority, exact result, or cleanup |
+| Field contact handling | **REVIEWED / NEEDS EXPERIMENTATION** | explicit cargo loading is split and covered; contact locality, collision safety, detach and cleanup remain unknown |
+| Field nearby supply loading | **REFINED; ACCEPTED / COVERED** for server-owned, one-client topology | exact ACE child, authenticated authority, command + membership receipt, negatives, replication and cleanup |
 | Field ID/location markers | **REVIEWED / DEFERRED** | no product caller; global marker authority/lifetime/cleanup undefined |
 | Field airdrop direction/ETA | **REVIEWED / NEEDS PRODUCT DECISION AND EXPERIMENTATION** | direction/audience/ETA interval undefined; current fall formula omits ingress and parachute descent |
 | Helicopter sling helper | **REVIEWED / DEFERRED** | compiled orphan; destructive all-rope stow, non-atomic creation, no supported entry/authority/cleanup |
@@ -768,8 +764,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Next consider remaining suite editor/Zeus modules and other unblocked reviewed
-experiment boundaries. The Vigil helicopter stabilizer is closed as deferred;
+Next consider the bounded Fabricator land mass/placement experiment and other unblocked reviewed experiment boundaries. Explicit nearby supply loading is accepted; automatic contact attachment remains a separate experiment. The Vigil helicopter stabilizer is closed as deferred;
 do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product
