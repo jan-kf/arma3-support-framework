@@ -13,14 +13,14 @@ Vigil 36, Field Utilities 20, and cross-mod composition 13. This convenient
 total is a consequence of the selected inventory surfaces, not a target fitted
 to the result.
 
-## Current estimate after Field Utilities nearby supply-loading closure
+## Current estimate after Fabricator bounded land-placement closure
 
 | Measure | Before | After | Reasonable after range | Confidence |
 | --- | ---: | ---: | ---: | --- |
-| Feature-review program | ~88% | ~89% | 85–93% | medium |
-| Permanent automated coverage | ~68% | ~69% | 65–74% | medium |
+| Feature-review program | ~89% | ~89% | 85–93% | medium |
+| Permanent automated coverage | ~69% | ~70% | 65–74% | medium |
 
-Field Utilities explicit nearby supply loading moved from a static refinement boundary to accepted coverage for server-owned objects and one authenticated client. The closure adds exact ACE-child invocation, transport-derived identity, server validation, literal native success plus exact membership, requester-only receipts, delivered replay/range/class negatives, replication, unrelated-object controls, unload and clean teardown. Contact attachment, client-owned objects, migration and client-N/JIP remain unclaimed.
+Fabricator bounded land placement moved from experimentation to accepted permanent coverage for one exact server-owned single delivery and its announced target beside a land recipient. A positive Stratis sea-origin control proves the `surfaceIsWater` oracle is active. The mass-cap investigation improved understanding without earning coverage: source mass was 500 while the exact clone remained `1e-12` on server and client, and the tested creation-mode, threshold, fallback, and staging alternatives did not fix it. Broader terrain, mass, client-B, and JIP remain unclaimed.
 
 ## Current family estimate
 
@@ -29,9 +29,9 @@ Field Utilities explicit nearby supply loading moved from a static refinement bo
 | CORDIS | 10 | ~90% | ~84% | sound/radio presentation, debug observation, ownership migration, client-N/JIP |
 | Advanced Systems | 21 | ~86% | ~67% | APS anti-drone policy/authority, CBR concurrency policy, Iron Dome client-owned threats and audio |
 | Vigil | 36 | ~90% | ~68% | task governor rewrite, recon/homepage decisions, feedback policy, any future stabilizer rewrite |
-| Field Utilities | 20 | ~90% | ~61% | FPV authority/effects, contact attachment, airdrop feedback, land mass/terrain experiments, towing locality breadth |
+| Field Utilities | 20 | ~91% | ~63% | FPV authority/effects, contact attachment, airdrop feedback, mass and broader-terrain experiments, towing locality breadth |
 | Cross-mod composition | 13 | ~89% | ~80% | true client-B/JIP, ownership migration, remaining partial module reversals, broader replicated-state lifecycle |
-| **Overall** | **100** | **~89%** | **~69%** | weighted combination above |
+| **Overall** | **100** | **~89%** | **~70%** | weighted combination above |
 
 ## Sensitivity and next block
 
@@ -42,4 +42,4 @@ permanent-coverage number is lower-confidence for presentation/audio and
 multi-client behavior because the autonomous client uses `-noSound` and only
 one independently authenticated identity exists.
 
-Explicit nearby supply loading is terminal at REFINED; ACCEPTED / COVERED for server-owned objects and one authenticated client. Contact attachment remains separate and experimentation-bound. The next recommended unblocked feature is the Fabricator land mass/placement experiment, beginning with the recorded degenerate getMass result and a destination-created land control.
+Fabricator bounded land placement is terminal at KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED for one land recipient and exact server-owned single delivery. The mass cap remains an open defect after land and matched creation-mode experiments. The next recommended unblocked feature is the Field contact-handler locality/collision experiment; automatic attachment, detach, and cleanup remain separate from accepted explicit nearby supply loading.

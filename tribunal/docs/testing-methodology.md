@@ -327,7 +327,11 @@ given a land spawn
 sits at the map origin, which on Stratis is open water - every earlier delivery in
 this feature was made over the sea, which is what actually defeated a
 `surfaceIsWater` placement check that had been reported as a world-configuration
-problem. Full analysis is in
+problem. A later bounded land experiment permanently covered the exact server-owned
+single delivery and announced target as non-water for a land recipient, while a
+known sea-origin control proved the surface oracle active. It did not generalize
+to gradients, ponds, obstruction, coastlines, or water recipients. Full analysis
+is in
 [`field-utilities-fabricator-review.md`](field-utilities-fabricator-review.md).
 
 ## Generic Tribunal capability backlog

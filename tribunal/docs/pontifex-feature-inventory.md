@@ -463,8 +463,9 @@ the feature is now **COVERED** by `fieldutils-fabricator`. Orders are
 server-authoritative and atomic, the catalogue is an unlimited template source,
 and the local virtual-inventory toggle is restored. Active owner cancellation
 terminates the transaction worker before rollback and retirement. The delivery
-mass cap is preserved but could not be validated at runtime and is asserted by
-nothing - see the review.
+mass cap remains an open defect after land retesting; bounded land
+placement is now covered for a land recipient and exact server-owned delivery.
+See the review for excluded terrain cases and failed mass hypotheses.
 
 * **Mission-maker Eden registration** is **REFINED; ACCEPTED / COVERED** for
   authentic typed dispatch, native Sync links, retained server-local logics,
@@ -512,10 +513,11 @@ nothing - see the review.
   validator. The exact aircraft must be alive, registered/on-station, LOGI-role,
   same-side, and not already busy. Vigil registry mutation has its own private
   capability boundary. **Implemented; COVERED for one authenticated client.**
-* **Delivery placement** is contracted only as *server-owned delivery within a
-  bounded distance of the recipient*. Terrain/water/obstruction suitability is
-  **REVIEWED / NEEDS EXPERIMENTATION**; the earlier `surfaceIsWater` failure was
-  caused by the fixture spawning at the map origin over water, not by the world.
+* **Delivery placement** is **REVIEWED; KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for an exact
+  server-owned single delivery and announced target on land, within bounded
+  distance of a land recipient. The same oracle positively identifies Stratis
+  sea origin as water. Gradient, ponds, obstruction clearance, coastline
+  fallback and water recipients remain **NEEDS EXPERIMENTATION**.
 * **Airdrop handoff** calls Vigil delivery and observes authoritative parachute
   results. **Implemented; COVERED as a cross-mod composite.** Missing API fails
   closed.
@@ -748,10 +750,10 @@ their independently loaded identifiers so future manifest drift fails closed.
 | CBR module/Zeus activation | **REFINED; ACCEPTED / COVERED** | fresh typed Eden + authentic assigned-curator proof; reverse/repeated/client-B cases bounded |
 | Iron Dome client-owned artillery | **REVIEWED / DEFERRED** | current server handler deliberately rejects non-server-local shells; no owner-routing product policy is chosen |
 | Iron Dome threat policy/audio | **REVIEWED / DEFERRED** | friendly/outgoing versus protected-impact-area filtering is undecided; audio is unproven under `-noSound` |
-| Fabricator delivery mass cap | **REVIEWED / OPEN DEFECT** | a fabricated crate reported `getMass = 1e-12` across six runs, so the carryability cap never fires; those runs were over water and it has not been re-measured on land |
-| Fabricator placement suitability | **REVIEWED / NEEDS EXPERIMENTATION** | delivery is bounded to the recipient; water/gradient/obstruction unproven |
+| Fabricator delivery mass cap | **REVIEWED / OPEN DEFECT** | land removed the confound: exact server/client clone remained `1e-12` while source was 500; creation mode, higher wait threshold, source fallback and clear-land staging did not fix it |
+| Fabricator bounded land placement | **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** | exact delivery and announced target are land for a land recipient, with a positive known-water control; broader terrain remains unproven |
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
-| Fabricator staging depths | **REVIEWED / NEEDS EXPERIMENTATION** | underground staging and the settle tick have no retained controlled alternative |
+| Fabricator staging choreography | **REVIEWED / NEEDS EXPERIMENTATION** | current surface staging, hide/unhide and settle cadence have no retained controlled alternative; clear-land staging did not repair mass |
 | Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles and one authenticated client | exact authority/rope identity, matched physical A/B, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; player-owned/migration/client-N remain deferred |
 | Field contact handling | **REVIEWED / NEEDS EXPERIMENTATION** | explicit cargo loading is split and covered; contact locality, collision safety, detach and cleanup remain unknown |
 | Field nearby supply loading | **REFINED; ACCEPTED / COVERED** for server-owned, one-client topology | exact ACE child, authenticated authority, command + membership receipt, negatives, replication and cleanup |
@@ -764,7 +766,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Next consider the bounded Fabricator land mass/placement experiment and other unblocked reviewed experiment boundaries. Explicit nearby supply loading is accepted; automatic contact attachment remains a separate experiment. The Vigil helicopter stabilizer is closed as deferred;
+Bounded Fabricator land placement is accepted; its mass cap remains an isolated open defect. Next consider the Field contact-handler locality/collision experiment and other unblocked reviewed experiment boundaries. Explicit nearby supply loading is accepted; automatic contact attachment remains a separate experiment. The Vigil helicopter stabilizer is closed as deferred;
 do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product

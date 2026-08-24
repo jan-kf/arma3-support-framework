@@ -289,6 +289,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "fabricator.fixture",
         "fabricator.authority.serverOwned",
         "fabricator.fidelity.cargo",
+        "fabricator.delivery.landPlacement",
         "fabricator.catalogue.notConsumed",
         "fabricator.delivery.packed",
         "fabricator.control.unpackableAtomic",
@@ -496,6 +497,23 @@ private _cloneCargo = [getWeaponCargo _clone, getMagazineCargo _clone, getItemCa
 
 // Fabricated crates are capped so a player can still carry the delivery. This is
 // intended usability behavior, not mass fidelity.
+
+// The fixture deliberately supplies both sides of the surface oracle: the
+// recipient and exact delivered object are on Stratis land, while the map
+// origin is known open water. This proves the bounded land placement claim
+// without pretending to cover gradients, ponds, or obstruction clearance.
+private _baseIsWater = surfaceIsWater _base;
+private _originIsWater = surfaceIsWater [0, 0, 0];
+private _cloneIsWater = surfaceIsWater (getPosATL _clone);
+private _resultDrop = (_singleResult param [5, []]) param [0, []];
+private _landPlacementOk = !_baseIsWater
+    && {_originIsWater}
+    && {!_cloneIsWater}
+    && {(count _resultDrop) isEqualTo 3}
+    && {!surfaceIsWater _resultDrop}
+    && {(_clone distance _scenarioPlayer) < 12};
+["fabricator.delivery.landPlacement", _landPlacementOk, format ["base=%1|baseWater=%2|originWater=%3|clonePos=%4|cloneWater=%5|resultDrop=%6|distToResult=%7", _base, _baseIsWater, _originIsWater, getPosATL _clone, _cloneIsWater, _resultDrop, (getPosATL _clone) distance _resultDrop]] call _assert;
+
 // The catalogue is a template source, never stock.
 private _catalogueAfter = synchronizedObjects _storageLogic;
 private _sourceCargoAfter = [getWeaponCargo _heavy, getMagazineCargo _heavy, getItemCargo _heavy, getBackpackCargo _heavy];
@@ -837,7 +855,7 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
     },
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
+        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. For a recipient on the proven land fixture, a single delivery and its announced target remain on land. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
         outcome="REFINE BEFORE PERMANENT COVERAGE",
         rationale="Baseline fabrication ran entirely on the ordering client with no server validation, and reported success for orders it had only partly filled while orphaning the remainder under the map. Coverage is permanent only after orders became server-authoritative, owner-bound and atomic, with runtime adversarial controls for worker bypass, duplicate request, unauthorized airdrop, malformed orders and foreign discard.",
         dependencies=(

@@ -423,28 +423,41 @@ id rather than being taken from `allPlayers` ordering.
 
 ## Placement contract
 
-The permanent contract is narrowed to what is proven: **a server-owned delivery
-placed within a bounded distance of the recipient**. Terrain, water, obstruction
-and settling suitability are *not* claimed.
+The permanent contract now proves **a server-owned single delivery placed on land
+within a bounded distance of a recipient who is on land**. The exact delivered
+net ID and the independently published target both report non-water positions.
+The same run proves the observer can distinguish water because
+`surfaceIsWater [0,0,0]` is true at Stratis sea origin; missing/always-false
+observation therefore cannot pass the assertion.
 
 The earlier `surfaceIsWater` experiment was reported as failing because the tier
 runs `-world=empty`. That explanation was wrong and is withdrawn: `-world=empty`
 is only the server's startup world, and the mission itself is `.Stratis`. The real
 cause was the fixture. The scenario did not set `respawn_on_start`, so the player
-respawned at the map origin - open water on Stratis - and every delivery in every
-earlier run was made over the sea. `surfaceIsWater` was correctly refusing every
-candidate. With `respawn_on_start = "0"` the observer is on land and deliveries
-land at real positions such as `[4705.07, 2780.97, 0.0025]`. Re-testing a
-suitability check on land is now the obvious next step and is left as follow-up
-rather than claimed here.
+respawned at the map origin over water. With `respawn_on_start = "0"`, the final
+cold run `20260824T143714Z-6bb99e1c` passed 27 server and 10 client assertions.
+Its exact clone was on land at `[4702,2779,1.38931]`, the announced target was on
+land at `[4702,2781,0.00282764]`, the recipient base was non-water, and the clone
+remained 2.82 m from the announced target after physics settling. This is
+`KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED` for the bounded land fixture.
+Gradient, pond detection, obstruction clearance, coastline fallback and a water
+recipient remain experimentation boundaries, not implied suitability promises.
 
 ## Unresolved
 
-* **Delivery mass cap.** Preserved as one named rule and asserted by nothing. A
-  fabricated crate reported `getMass = 1e-12` and never gained a real mass across
-  six runs. Note that those runs were also over water; whether a crate delivered
-  on land reports a real mass has not been re-measured.
-* **Terrain suitability**, per the section above.
+* **Delivery mass cap.** Preserved as one named rule and asserted by nothing.
+  Land removed the prior confound but did not fix it: runs
+  `20260824T141149Z-e94699db`, `20260824T141708Z-cb060664`,
+  `20260824T142213Z-2664619a`, `20260824T142659Z-23dd851a`, and
+  `20260824T143212Z-c4291fda` all observed the exact server-owned and remotely
+  replicated clone at `getMass = 1e-12` while its source reported 500. A matched
+  `createVehicle` `NONE`/`CAN_COLLIDE` land comparison was stable at
+  `[[500,500],[500,500],[500,500]]`, disproving creation mode as the cause. A
+  `> 0.001` wait, source-mass fallback, and clear-land staging each failed and
+  were reverted rather than fossilized. The mass mechanism remains an open
+  defect requiring a more isolated cargo/hide/physics experiment.
+* **Broader terrain suitability**, per the section above; bounded land
+  placement is covered.
 * **Client-b and JIP.** One authenticated client is the proof boundary.
 * **ACE-side action presence.** ACE 3.21 stores object actions where neither an
   object variable nor the class-keyed `ace_interact_menu_ActNamespace` exposes
@@ -462,7 +475,7 @@ The accepted milestone covers one authenticated client, server-authoritative
 atomic fabrication, unlimited catalogue semantics, exact cargo, packed delivery,
 the shared Vigil authorization boundary, adversarial request receipts,
 active-cancellation and watchdog rollback, result retirement, and complete
-scenario isolation. The mass cap,
-terrain suitability, actual client-b/JIP behavior, ACE-internal action visibility,
+scenario isolation, and bounded land placement. The mass cap, broader terrain
+suitability, actual client-b/JIP behavior, ACE-internal action visibility,
 runtime-created editor synchronization, and Live-snippet supervision remain the
 explicit follow-ups listed above; none is implied by the accepted PASS.
