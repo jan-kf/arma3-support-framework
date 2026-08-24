@@ -351,8 +351,7 @@ Utilities for fixed-wing airdrop.
   settles at the LZ. **Implemented; COVERED** by `vigil-transport`.
 * **RTB/reinsertion** returns to recorded home, settles, and cleans resources.
   **Implemented; COVERED.** Reinsertion is not a separate implementation.
-* Hidden-pad plus `land "LAND"` is **REVIEWED / NEEDS EXPERIMENTATION** as a
-  characterization candidate; visible landing is covered without freezing it.
+* Hidden-pad plus `land "LAND"` is **KEEP + CHARACTERIZE ENGINE REQUIREMENT; ACCEPTED / COVERED** for one server-local airborne `B_Heli_Light_01_F`, clear Stratis corridor, `doMove` approach, and 90-second landing deadline. Three independent final A/B runs prove the no-pad control reaches the arrival radius but remains airborne beyond 104 m while the exact `Land_HelipadEmpty_F` treatment lands within 25 m and holds three continuous settled seconds. Other classes, terrain, approaches, landing modes, waypoint-only behavior, locality, client-B, and JIP remain unclaimed.
 
 ### 3.6 Rotary-wing CAS
 
@@ -715,6 +714,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-markers` | artillery preview rendering/state lifecycle and cleanup |
 | `vigil-artillery` | circle/line artillery, controls, VLS, locality/cleanup |
 | `vigil-transport` | helicopter outbound/LZ/wait/RTB lifecycle |
+| `vigil-transport-pad-ab` | bounded hidden-pad versus no-pad landing characterization |
 | `vigil-cas` | rotary CAS filtering, attack, timer, controls, RTB |
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
@@ -741,7 +741,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Helicopter stabilizer | **REVIEWED / DEFERRED** | controlled physical A/B missed predeclared usefulness gates; automatic transport/CAS enrollment is off; any future mechanism requires a new bounded rewrite/experiment |
 | 3CB Hellfire mapping | **REVIEWED / NEEDS EXPERIMENTATION** | no compatible installed pylon row for A/B |
 | VLS target handshake | **REVIEWED / CHARACTERIZED** | four fresh physical A/B pairs prove the combined knowledge step is required; individual calls remain unisolated |
-| Transport hidden-pad landing | **REVIEWED / NEEDS EXPERIMENTATION** | landing works; exact mechanism necessity unproven |
+| Transport hidden-pad landing | **KEEP + CHARACTERIZE ENGINE REQUIREMENT; ACCEPTED / COVERED** | three independent server-local airborne A/B proofs: exact hidden-pad treatment settles within 25 m; matched no-pad control remains airborne beyond 104 m at 90 seconds; scope is one class/corridor/approach |
 | Developer laser harness | **REVIEWED / DEFERRED** | unreachable preInit diagnostic; destructive owner-routed run and unbounded client-supplied result store lack a product boundary |
 | APS anti-drone | **REVIEWED / DEFERRED** | threat/side/operator policy is undecided; resource authority and destructive cleanup require refinement before coverage |
 | CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
@@ -766,7 +766,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Bounded Field contact attachment is accepted for one server-owned crate/truck topology, while broader classes/localities remain open. The next recommended unblocked candidate is the Vigil transport hidden-pad landing-mechanism A/B; Fabricator mass isolation remains an open defect after several rejected alternatives. Explicit nearby supply loading remains accepted. The Vigil helicopter stabilizer is closed as deferred;
+Vigil hidden-pad landing is accepted and permanently characterized for one server-local airborne class, clear corridor, `doMove` + `LAND` sequence, and bounded deadline; broader classes, terrain, approach commands and localities remain open. The next recommended unblocked investigation is Fabricator staging/mass isolation, which remains an open defect after several rejected alternatives. Explicit nearby supply loading and bounded Field contact attachment remain accepted. The Vigil helicopter stabilizer is closed as deferred;
 do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product

@@ -1,6 +1,6 @@
 # Vigil helicopter transport / reinsertion review
 
-Review outcome: **REFINE BEFORE PERMANENT COVERAGE**.
+Review outcome: **KEEP + CHARACTERIZE ENGINE REQUIREMENT; ACCEPTED / COVERED**.
 
 ## Behavioral contract
 
@@ -36,24 +36,18 @@ same task handler.
 5. **Product behavior.** Eligibility, Vigil selection and request construction,
    LZ policy, waiting/home states, RTB, task serialization and UI status are
    Vigil responsibilities.
-6. **Proven unusual requirements.** None. Hidden pads plus `land "LAND"` worked
-   in calibration but have not passed a controlled A/B proving necessity.
+6. **Proven unusual requirements.** One narrow requirement is proven. For a server-local airborne `B_Heli_Light_01_F` on the tested clear Stratis corridor, a `doMove` approach followed by `land "LAND"` settled within 25 m only when one exact `Land_HelipadEmpty_F` existed at the destination. The matched no-pad arm reached the 120 m arrival radius but remained airborne beyond 104 m through the 90-second landing deadline.
 7. **Accidental/fragile findings.** Vehicle config side was CIV even with a
    WEST crew; `ignore_en` was dropped by positional arguments; fallback pads
    used ASL z=0; landing passed after one touching/ready tick; repeated task
    assignment replaced active work; mission/end waits were unbounded; and a
    random repeated zero-radius waypoint call had no demonstrated purpose.
-8. **Native alternatives.** MOVE waypoints and `land` are already native. A
-   `doMove`/waypoint-only/no-pad alternative needs a controlled comparison
-   before replacing the successful path. No characterization test is added.
+8. **Native alternatives.** The permanent A/B uses native `doMove` and `land` in both arms and changes only exact destination-pad presence. The no-pad alternative failed the declared settled-landing contract in three independent final runs, so the hidden pad remains justified for this bounded sequence. `landAt`, other landing modes, waypoint-only approaches and broader terrain remain untested alternatives.
 9. **Stable contract.** The user-facing round trip, physical progress, valid
    settled landings, availability while waiting, correct home, duplicate
    rejection, bounded failure, locality and cleanup.
-10. **Free implementation details.** Exact waypoints, task-map keys, polling
-    cadence, coordinates, helicopter class, LZ-search algorithm, radio calls,
-    flight altitude and landing-command sequence may change with adapters.
-11. **Characterization.** None yet. Pad/land sequencing is explicitly marked
-    NEEDS EXPERIMENTATION rather than fossilized.
+10. **Free implementation details.** Product waypoints, task-map keys, polling cadence, LZ search, radio calls and UI state remain free. The characterization freezes only the exact class/corridor/start/locality/`doMove` + `LAND`/90-second domain it proves; it does not require that all future transport implementations use that sequence.
+11. **Characterization.** Accepted as `vigil-transport-pad-ab`. It retains the exact no-pad negative control, hidden-pad treatment, causal dimensions, continuous three-second settling oracle, spatial/deadline bounds, client completion, cleanup, and Evidence Contract proposition. Calibration failures caused by immobile ground-start fixtures were rejected, not used as engine evidence.
 12. **Promoted Tribunal mechanics.** Product-neutral aircraft snapshots,
     bounded trajectory collection, movement/approach/altitude evidence,
     landing/settling facts, crew/locality evidence and timeout detection.
@@ -107,6 +101,32 @@ contact, `unitReady`, near-zero speed and zero damage. The server-local
 aircraft/pilot/group were owner 2, while client-a observed the replicated
 non-local aircraft. Cleanup removed the aircraft and left its manager disabled.
 
+## Hidden-pad characterization closeout
+
+`vigil-transport-pad-ab` is deliberately separate from the longer product
+round-trip. Both server-owned aircraft begin airborne at `[2000,5200,50]`, use
+the same class, crew setup, `doMove [2350,5200,0]`, `land "LAND"`, clear
+terrain, weather, sampling and deadlines. The control verifies there is no
+destination pad within 100 m; the treatment creates exactly one
+`Land_HelipadEmpty_F`.
+
+Final independent runs `20260824T165323Z-538afe85`,
+`20260824T165824Z-11607833`, and corrected immutable-package run
+`20260824T170322Z-9b970179` each passed 5/0 feature assertions on the server
+and 1/0 on client-a (9/0 and 5/0 including smoke). Across the final runs,
+no-pad controls traveled about 245–246 m, reached 104.1–105.0 m from the
+destination, and remained airborne at the 90-second deadline. Hidden-pad
+treatments traveled about 353–355 m, reached minimum sampled distances of
+roughly 0.2–1.9 m, settled within 2.7–23.9 m, and held ground contact,
+`unitReady`, sub-2 m/s speed, damage below 0.5, and continuous three-second
+stability. Every aircraft, crew group and destination pad was deleted;
+client-a received the replicated bounded-completion token.
+
+The final Evidence Contract publishes three arms, one causal relationship and
+one demonstrated proposition. Package `20260824T170322Z-9b970179` ingested
+twice with stable scoped counts (5 packages, 5 runs, 59 assertions, 25
+observations, 6 proofs and 9 judgments), and the Sacred Texts audit accepted.
+
 ## Controls and deferred work
 
 The first permanent negative control is duplicate dispatch while active. The
@@ -115,6 +135,4 @@ Unsafe/unreachable terrain, destruction during flight, cancellation, RTB before
 arrival and client-b observation are meaningful follow-ups, but do not belong
 in the stable clear-corridor MVP.
 
-Rotary-wing CAS is next. It may reuse Tribunal trajectory/locality/stall/RTB
-evidence, but must receive its own review of target selection, attack evidence,
-ammunition and hostile/friendly controls before implementation or coverage.
+Rotary-wing CAS is already covered for its accepted contract. The next recommended unblocked investigation is Fabricator staging/mass isolation; do not broaden this landing characterization to other classes, terrain, approach commands or locality without a fresh controlled comparison.
