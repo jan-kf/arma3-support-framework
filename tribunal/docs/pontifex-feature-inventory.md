@@ -461,10 +461,11 @@ primary outcome **REFINE BEFORE PERMANENT COVERAGE**; refinement is complete and
 the feature is now **COVERED** by `fieldutils-fabricator`. Orders are
 server-authoritative and atomic, the catalogue is an unlimited template source,
 and the local virtual-inventory toggle is restored. Active owner cancellation
-terminates the transaction worker before rollback and retirement. The delivery
-mass cap remains an open defect after land retesting; bounded land
-placement is now covered for a land recipient and exact server-owned delivery.
-See the review for excluded terrain cases and failed mass hypotheses.
+terminates the transaction worker before rollback and retirement. The exact pre-publication clone is now proven visible, unattached,
+server-local,
+and capped at mass 200; client-a then starts ACE carry on that exact identity.
+Bounded land placement remains covered for a land recipient and exact
+server-owned delivery. See the review for excluded terrain cases.
 
 * **Mission-maker Eden registration** is **REFINED; ACCEPTED / COVERED** for
   authentic typed dispatch, native Sync links, retained server-local logics,
@@ -750,10 +751,10 @@ their independently loaded identifiers so future manifest drift fails closed.
 | CBR module/Zeus activation | **REFINED; ACCEPTED / COVERED** | fresh typed Eden + authentic assigned-curator proof; reverse/repeated/client-B cases bounded |
 | Iron Dome client-owned artillery | **REVIEWED / DEFERRED** | current server handler deliberately rejects non-server-local shells; no owner-routing product policy is chosen |
 | Iron Dome threat policy/audio | **REVIEWED / DEFERRED** | friendly/outgoing versus protected-impact-area filtering is undecided; audio is unproven under `-noSound` |
-| Fabricator delivery mass cap | **REVIEWED / OPEN DEFECT** | land removed the confound: exact server/client clone remained `1e-12` while source was 500; creation mode, higher wait threshold, source fallback and clear-land staging did not fix it |
+| Fabricator delivery mass cap and carry boundary | **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** | immediately before real publication the exact clone is mass 200, visible, unattached and server-local; client-a then begins ACE carry on the same net ID, explaining the later `1e-12` observation |
 | Fabricator bounded land placement | **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** | exact delivery and announced target are land for a land recipient, with a positive known-water control; broader terrain remains unproven |
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
-| Fabricator staging choreography | **REVIEWED / NEEDS EXPERIMENTATION** | current surface staging, hide/unhide and settle cadence have no retained controlled alternative; clear-land staging did not repair mass |
+| Fabricator staging choreography | **NO CHARACTERIZATION REQUIRED; OUTCOME-COVERED** | controlled calibrations rejected hiding/relocation as the mass cause; permanent coverage freezes the authentic pre-publication and post-carry outcomes, not staging depth or cadence |
 | Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles and one authenticated client | exact authority/rope identity, matched physical A/B, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; player-owned/migration/client-N remain deferred |
 | Field contact handling | **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for one server-owned crate/truck topology | exact matched physical contact, treatment-only attachment, carrier-state deltas, client-a replication and controlled no-leak teardown; broader classes/localities/lifecycle remain open |
 | Field nearby supply loading | **REFINED; ACCEPTED / COVERED** for server-owned, one-client topology | exact ACE child, authenticated authority, command + membership receipt, negatives, replication and cleanup |
@@ -766,7 +767,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Vigil hidden-pad landing is accepted and permanently characterized for one server-local airborne class, clear corridor, `doMove` + `LAND` sequence, and bounded deadline; broader classes, terrain, approach commands and localities remain open. The next recommended unblocked investigation is Fabricator staging/mass isolation, which remains an open defect after several rejected alternatives. Explicit nearby supply loading and bounded Field contact attachment remain accepted. The Vigil helicopter stabilizer is closed as deferred;
+Fabricator mass/carry is now accepted and permanently covered for the exact pre-publication server state and intended post-publication ACE carry on one authenticated client. Staging visibility/relocation was rejected as the cause and its private choreography remains unfrozen. The next recommended unblocked investigation is Fabricator broader-terrain placement characterization for gradient and obstruction behavior; pond, coastline, water-recipient, client-B and JIP remain bounded. Explicit nearby supply loading and bounded Field contact attachment remain accepted. The Vigil helicopter stabilizer is closed as deferred;
 do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product

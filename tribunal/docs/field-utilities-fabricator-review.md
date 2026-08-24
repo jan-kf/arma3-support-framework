@@ -178,8 +178,7 @@ free detail.
 
 ### 11. Which mechanisms genuinely deserve characterization?
 
-None yet. No controlled A/B was retained for the staging depths or the settle
-tick, so nothing is eligible.
+No staging mechanism is frozen. The accepted continuation below shows the prior mass finding sampled the clone after intended ACE carry had attached it to the player; the authentic outcome is now covered at the pre-publication and post-carry boundaries, while staging positions and cadence remain free to change.
 
 ### 12. Which mechanics should be promoted into Tribunal?
 
@@ -199,7 +198,7 @@ and fixed (below) — that is Live Mode tooling, not Tribunal.
 | Local virtual-inventory toggle | `REFINE BEFORE PERMANENT COVERAGE` |
 | Order authority and validation | `DEFER` — product decision |
 | Storage depletion / order limits | `DEFER` — product decision |
-| Staging-position mechanism | `NEEDS EXPERIMENTATION` |
+| Staging-position mechanism | `NO CHARACTERIZATION REQUIRED; OUTCOME-COVERED` |
 | Airdrop handoff | out of scope, already covered |
 
 The primary outcome is `REFINE BEFORE PERMANENT COVERAGE` because the capability
@@ -443,19 +442,18 @@ remained 2.82 m from the announced target after physics settling. This is
 Gradient, pond detection, obstruction clearance, coastline fallback and a water
 recipient remain experimentation boundaries, not implied suitability promises.
 
+## Accepted continuation — mass and staging isolation
+
+The next-best unblocked candidate was the apparent delivery mass defect and its suspected staging choreography. The Opus reconnaissance supplied hypotheses only. Canonical `getMass`, `setMass`, `hideObjectGlobal`, and `isObjectHidden` dossiers, source inspection, rejected controlled alternatives, and fresh authentic runs established the result.
+
+The earlier oracle sampled too late. A successful single order publishes the exact clone and the ordering client immediately calls ACE `startCarry` on that net ID. In final runs `20260824T184743Z-361320ec` and `20260824T185113Z-a5792be7`, a server-side observer wrapped the real publication boundary without replacing product behavior. Immediately before publication the exact server-owned `Box_NATO_Ammo_F` was visible, unattached, and mass 200. Client-a then resolved that same clone, began ACE carry, and observed it attached to the exact player with `getMass = 1e-12`. Cargo, land placement, authority, atomic controls, retirement, and cleanup all continued to pass.
+
+The supposed defect is therefore closed as a boundary error, not repaired product code. Raw visible and hidden relocation calibrations retained mass 500; speculative spawn-mode, threshold, fallback, safe-stage, settle, and contact changes were rejected and removed. Staging choreography remains an implementation detail rather than an engine requirement: permanent coverage asserts the authentic pre-publication mass cap and exact post-publication carry identity, not a staging depth or cadence. No Pontifex product source changed.
+
+The two final runs each passed 28 server and 11 client feature assertions with zero failures; including smoke, 32 server and 15 client assertions passed.
+
 ## Unresolved
 
-* **Delivery mass cap.** Preserved as one named rule and asserted by nothing.
-  Land removed the prior confound but did not fix it: runs
-  `20260824T141149Z-e94699db`, `20260824T141708Z-cb060664`,
-  `20260824T142213Z-2664619a`, `20260824T142659Z-23dd851a`, and
-  `20260824T143212Z-c4291fda` all observed the exact server-owned and remotely
-  replicated clone at `getMass = 1e-12` while its source reported 500. A matched
-  `createVehicle` `NONE`/`CAN_COLLIDE` land comparison was stable at
-  `[[500,500],[500,500],[500,500]]`, disproving creation mode as the cause. A
-  `> 0.001` wait, source-mass fallback, and clear-land staging each failed and
-  were reverted rather than fossilized. The mass mechanism remains an open
-  defect requiring a more isolated cargo/hide/physics experiment.
 * **Broader terrain suitability**, per the section above; bounded land
   placement is covered.
 * **Client-b and JIP.** One authenticated client is the proof boundary.
@@ -474,8 +472,8 @@ recipient remain experimentation boundaries, not implied suitability promises.
 The accepted milestone covers one authenticated client, server-authoritative
 atomic fabrication, unlimited catalogue semantics, exact cargo, packed delivery,
 the shared Vigil authorization boundary, adversarial request receipts,
-active-cancellation and watchdog rollback, result retirement, and complete
-scenario isolation, and bounded land placement. The mass cap, broader terrain
+active-cancellation and watchdog rollback, result retirement, and complete scenario isolation, bounded land placement, exact pre-publication mass 200,
+and exact client carry attachment. Broader terrain
 suitability, actual client-b/JIP behavior, ACE-internal action visibility,
 runtime-created editor synchronization, and Live-snippet supervision remain the
 explicit follow-ups listed above; none is implied by the accepted PASS.

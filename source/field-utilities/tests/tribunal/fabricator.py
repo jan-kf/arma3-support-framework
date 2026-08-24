@@ -11,6 +11,7 @@ CLIENT_EXPECTED = frozenset({
     "fabricator.client.orderAccepted",
     "fabricator.client.noLocalCreation",
     "fabricator.client.deliveryReplicated",
+    "fabricator.client.carryStarted",
     "fabricator.client.rejectionSurfaced",
 })
 
@@ -185,6 +186,11 @@ private _deliveryOk = !isNull _clone
     && {(getItemCargo _clone) isEqualTo [["FirstAidKit"], [5]]};
 ["fabricator.client.deliveryReplicated", _deliveryOk, format ["dist=%1|weapons=%2|items=%3", _clone distance player, getWeaponCargo _clone, getItemCargo _clone]] call _assert;
 
+private _carryDeadline = diag_tickTime + 5;
+waitUntil {uiSleep 0.05; (attachedTo _clone) isEqualTo player || {diag_tickTime > _carryDeadline}};
+private _carryOk = (attachedTo _clone) isEqualTo player;
+["fabricator.client.carryStarted", _carryOk, format ["clone=%1|player=%2|attached=%3|mass=%4", netId _clone, netId player, netId (attachedTo _clone), getMass _clone]] call _assert;
+
 ["multi", _station, [[_lightId, 2]], 90] call TRIBUNAL_FAB_fnc_order;
 
 private _unpackableReport = ["unpackable", _station, [[_oversizeId, 1], [_lightId, 1]], 90] call TRIBUNAL_FAB_fnc_order;
@@ -288,6 +294,7 @@ TRIBUNAL_SCENARIO = Scenario(
     server_expected=frozenset({
         "fabricator.fixture",
         "fabricator.authority.serverOwned",
+        "fabricator.delivery.massIsolation",
         "fabricator.fidelity.cargo",
         "fabricator.delivery.landPlacement",
         "fabricator.catalogue.notConsumed",
@@ -474,6 +481,21 @@ TRIBUNAL_FAB_fnc_runPhase = {
     [_before, _after, _report, ((missionNamespace getVariable ["TRIBUNAL_FAB_DONE", ""]) isEqualTo _phase), _auditAfter - _auditBefore, _vigilAuditAfter - _vigilAuditBefore]
 };
 
+// Capture the exact server state at the publication boundary. Post-result state
+// is intentionally different because the client starts ACE carry immediately.
+TRIBUNAL_FAB_ORIGINAL_PUBLISH = YFU_fnc_fabricatorPublishResult;
+YFU_fnc_fabricatorPublishResult = {
+    params ["_capability", "_txId", "_ok", "_mode", ["_objectId", ""], ["_containerIds", []], ["_positions", []]];
+    if (_ok && {_mode isEqualTo "single"}) then {
+        private _ready = objectFromNetId _objectId;
+        missionNamespace setVariable ["TRIBUNAL_FAB_MASS_READY", [
+            _txId, _objectId, getMass _ready, netId (attachedTo _ready),
+            isObjectHidden _ready, local _ready, getPosATL _ready
+        ], true];
+    };
+    _this call TRIBUNAL_FAB_ORIGINAL_PUBLISH
+};
+
 // Phase 1: a single local order.
 private _single = ["single", 90] call TRIBUNAL_FAB_fnc_runPhase;
 private _singleReport = _single # 2;
@@ -490,7 +512,14 @@ private _clientOwnerSeen = _singleReport param [3, -1];
 private _serverTxGuess = [owner _scenarioPlayer, _singleReport param [0, ""]] call YFU_fnc_fabricatorTxId;
 private _serverKnownTx = keys (call YFU_fnc_fabricatorTransactions);
 private _serverResult = missionNamespace getVariable [[_serverTxGuess] call YFU_fnc_fabricatorResultKey, []];
-["fabricator.authority.serverOwned", _authorityOk, format ["result=%1|clone=%2|localOnServer=%3|owner=%4|type=%5|dist=%6|playerOwner=%7|clientOwner=%8|txGuess=%9|serverResult=%10|knownTx=%11", _singleResult, netId _clone, local _clone, owner _clone, typeOf _clone, _clone distance _scenarioPlayer, owner _scenarioPlayer, _clientOwnerSeen, _serverTxGuess, _serverResult, _serverKnownTx]] call _assert;
+["fabricator.authority.serverOwned", _authorityOk, format ["result=%1|clone=%2|localOnServer=%3|owner=%4|type=%5|dist=%6|playerOwner=%7|clientOwner=%8|txGuess=%9|serverResult=%10|knownTx=%11|attached=%12|mass=%13", _singleResult, netId _clone, local _clone, owner _clone, typeOf _clone, _clone distance _scenarioPlayer, owner _scenarioPlayer, _clientOwnerSeen, _serverTxGuess, _serverResult, _serverKnownTx, netId (attachedTo _clone), getMass _clone]] call _assert;
+
+private _massReady = missionNamespace getVariable ["TRIBUNAL_FAB_MASS_READY", []];
+private _massIsolationOk = (_massReady param [1, ""]) isEqualTo netId _clone
+    && {(_massReady param [2, 0]) >= 199} && {(_massReady param [2, 0]) <= 201}
+    && {(_massReady param [3, ""]) isEqualTo ""}
+    && {!(_massReady param [4, true])} && {_massReady param [5, false]};
+["fabricator.delivery.massIsolation", _massIsolationOk, format ["ready=%1|postPublish=[%2,%3,%4]|player=%5", _massReady, netId (attachedTo _clone), getMass _clone, getPosATL _clone, netId _scenarioPlayer]] call _assert;
 
 private _cloneCargo = [getWeaponCargo _clone, getMagazineCargo _clone, getItemCargo _clone, getBackpackCargo _clone];
 ["fabricator.fidelity.cargo", _cloneCargo isEqualTo _heavySourceCargo, format ["clone=%1|source=%2", _cloneCargo, _heavySourceCargo]] call _assert;
@@ -836,6 +865,9 @@ private _cleanupOk = (_finalCensus # 0) isEqualTo []
     && {_resultKeysGone}
     && {typeName (_registryCleanup getOrDefault ["tribunal-strike", objNull]) isNotEqualTo "HASHMAP"};
 ["fabricator.cleanup", _cleanupOk, format ["census=%1|stationGone=%2|logicsCleared=%3|txRemaining=%4|resultKeysGone=%5|registryKeys=%6", _finalCensus, isNull _station, isNil "YOSHI_FABRICATOR", keys (call YFU_fnc_fabricatorTransactions), _resultKeysGone, keys _registryCleanup]] call _assert;
+YFU_fnc_fabricatorPublishResult = TRIBUNAL_FAB_ORIGINAL_PUBLISH;
+TRIBUNAL_FAB_ORIGINAL_PUBLISH = nil;
+missionNamespace setVariable ["TRIBUNAL_FAB_MASS_READY", nil, true];
 missionNamespace setVariable ["YFU_fabricatorAudit", nil, false];
 missionNamespace setVariable ["YSF_FW_REGISTRY_AUDIT", nil, false];
 missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
@@ -855,9 +887,9 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
     },
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. For a recipient on the proven land fixture, a single delivery and its announced target remain on land. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
+        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. For a recipient on the proven land fixture, a single delivery and its announced target remain on land. Immediately before publication, a heavy single clone is visible, unattached, server-local and capped at mass 200; the ordering client then starts ACE carry on that exact clone. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
         outcome="REFINE BEFORE PERMANENT COVERAGE",
-        rationale="Baseline fabrication ran entirely on the ordering client with no server validation, and reported success for orders it had only partly filled while orphaning the remainder under the map. Coverage is permanent only after orders became server-authoritative, owner-bound and atomic, with runtime adversarial controls for worker bypass, duplicate request, unauthorized airdrop, malformed orders and foreign discard.",
+        rationale="Baseline fabrication ran entirely on the ordering client with no server validation, and reported success for orders it had only partly filled while orphaning the remainder under the map. Coverage is permanent only after orders became server-authoritative, owner-bound and atomic, with runtime adversarial controls for worker bypass, duplicate request, unauthorized airdrop, malformed orders and foreign discard. The former mass defect was a late oracle: permanent coverage now observes the exact clone immediately before real publication and again after the intended ACE carry transition.",
         dependencies=(
             "ACE 3.21 interaction registration",
             "Arma editor module logic synchronization",
@@ -865,8 +897,9 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
         ),
         evidence_types=frozenset({
             "module-registration", "server-authority", "transaction-identity", "adversarial-control", "exact-netid",
-            "cargo-inventory", "mission-wide-census", "replication", "cleanup",
+            "cargo-inventory", "pre-publication-mass", "ace-carry-identity",
+            "mission-wide-census", "replication", "cleanup",
         }),
-        locality_requirements="Client-a owns the terminal, the queue and the request, and declares its own unit by net id rather than relying on allPlayers ordering; the dedicated server exclusively validates orders and creates, packs, places, finalizes and discards every fabricated object. One authenticated client is the proof boundary: the foreign-discard control uses a server-owned transaction, so the client-b case remains unproven.",
+        locality_requirements="Client-a owns the terminal, the queue and the request, and declares its own unit by net id rather than relying on allPlayers ordering; the dedicated server exclusively validates orders and creates, packs, places, finalizes and discards every fabricated object. The server snapshots the exact clone at the real pre-publication boundary; client-a proves the real post-publication ACE carry attachment on the same net id. One authenticated client is the proof boundary: the foreign-discard control uses a server-owned transaction, so the client-b case remains unproven.",
     ),
 )

@@ -297,12 +297,15 @@ local virtual-inventory toggle - and the feature is now covered by
 defects that only a user-visible assertion could catch: a delivery could be
 placed kilometres from the player, because the placement helper trusted
 `BIS_fnc_findSafePos`, which answers a failed search with a random map position;
-and orders were assembled inside terrain. One clause resisted proof entirely. A
-fabricated crate reports `getMass = 1e-12` and never gains a real mass on a
-dedicated server, so the intended cap never fires; an intermediate assertion
-passed on that value because `1e-12 > 0` and `1e-12 <= 200` were both true, which
-was a false PASS and was removed rather than kept. The scenario now asserts
-nothing about mass and the gap is recorded as open.
+and orders were assembled inside terrain. The apparent remaining mass clause was
+instead a late-oracle error. The successful
+single-result path publishes the exact clone and immediately starts ACE carry on
+the ordering client. The permanent scenario now snapshots that clone immediately
+before the real publication boundary: it is visible, unattached, server-local,
+and capped at mass 200. Client-a then proves that the same net ID is attached to
+the exact player by the intended carry transition, where `getMass = 1e-12` is an
+ACE carry observation rather than failed fabrication. No product change was
+needed.
 
 A further audit round rebuilt the authority boundary: one order endpoint and an
 owner-bound discard endpoint, identity from `remoteExecutedOwner`, internal
