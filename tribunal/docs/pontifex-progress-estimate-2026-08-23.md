@@ -13,22 +13,21 @@ Vigil 36, Field Utilities 20, and cross-mod composition 13. This convenient
 total is a consequence of the selected inventory surfaces, not a target fitted
 to the result.
 
-## Current estimate after Vigil shared-debug ownership closeout
+## Current estimate after Vigil governor-lifecycle closeout
 
 | Measure | Before | After | Reasonable after range | Confidence |
 | --- | ---: | ---: | ---: | --- |
-| Feature-review program | ~95% | ~96% | 92–99% | medium |
-| Permanent automated coverage | ~76% | ~77% | 72–81% | medium |
+| Feature-review program | ~96% | ~97% | 93–99% | medium |
+| Permanent automated coverage | ~77% | ~79% | 74–83% | medium |
 
-The shared production debug wrapper moved from duplicate, initialization-order-
-sensitive ownership to one owner in `fn_utils.sqf`. A pre-change cold run proved
-the final runtime identity was already correct; the refinement removes the
-latent harness fallback rather than changing the accepted route. Exact disabled
-and enabled tokens from both AAE and the shared wrapper entered the server RPT
-path while client-a independently received the CORDIS route under false/true
-`YSF_showDebugMessages`. Final runs `20260825T221344Z-3814387b` and
-`20260825T221507Z-12376258` each passed 3 server and 3 client assertions with
-zero failures and complete restoration.
+The server-owned Vigil governor lifecycle moved from divergent terminal paths to
+one generation-aware finalizer. Normal completion, early completion, failure,
+accepted cancellation, and vehicle loss now finalize exactly once; active
+replacement is rejected; and a finalizer-installed successor is preserved.
+Final runs `20260825T224551Z-057295d6` and
+`20260825T224723Z-f0515a23` each passed 9 server and 1 client feature assertions
+with zero failures and complete restoration. Client-authored handler maps remain
+outside coverage and behind a mandatory authority rewrite.
 
 ## Current family estimate
 
@@ -36,10 +35,10 @@ zero failures and complete restoration.
 | --- | ---: | ---: | ---: | --- |
 | CORDIS | 10 | ~90% | ~84% | sound/radio presentation, debug observation, ownership migration, client-N/JIP |
 | Advanced Systems | 21 | ~86% | ~67% | APS anti-drone policy/authority, CBR concurrency policy, Iron Dome client-owned threats and audio |
-| Vigil | 36 | ~96% | ~77% | task governor rewrite, recon/homepage decisions, radio/chat/curator feedback policy, other landing classes/terrain, any future stabilizer rewrite |
+| Vigil | 36 | ~98% | ~83% | governor declarative authority rewrite, recon/homepage decisions, radio/chat/curator feedback policy, other landing classes/terrain, any future stabilizer rewrite |
 | Field Utilities | 20 | ~99% | ~81% | FPV authority/effects, broader contact topology, airdrop feedback, extreme/water Fabricator terrain, towing locality breadth |
 | Cross-mod composition | 13 | ~89% | ~80% | true client-B/JIP, ownership migration, remaining partial module reversals, broader replicated-state lifecycle |
-| **Overall** | **100** | **~96%** | **~77%** | weighted combination above |
+| **Overall** | **100** | **~97%** | **~79%** | weighted combination above |
 
 ## Sensitivity and next block
 
@@ -50,10 +49,12 @@ permanent-coverage number is lower-confidence for presentation/audio and
 multi-client behavior because the autonomous client uses `-noSound` and only
 one independently authenticated identity exists.
 
-Vigil production debug is accepted for unconditional server logging, sole
-utilities ownership, and the registered false/true client gate on one
-authenticated client. Visible pixels, client-N/JIP, client-originated calls and
-volume remain excluded; the laser harness remains deferred. The next
-highest-value surface is the reviewed Vigil task-governor rewrite, whose
-authority and lifecycle defects require product refinement and full consumer
-regression rather than a narrow observation-only scenario.
+The server-owned governor terminal lifecycle is accepted for one dedicated
+server and harmless server-local tasks. Client request authentication,
+declarative schemas, forged code-bearing payloads, cancellation eligibility,
+retry/invalid-result policy, terminal-history retention, headless/client-owned
+vehicles, client-N and JIP remain excluded. The next highest-value surface is
+the remaining governor authority rewrite. A separate CAS combat-effect oracle
+twice observed correlated fire and a target-local damage event with zero net
+damage; that consumer investigation does not reduce the accepted lifecycle
+scope and is not silently counted as a passing regression.

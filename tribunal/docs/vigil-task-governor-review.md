@@ -2,10 +2,10 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: REVIEWED / REWRITE BEFORE PERMANENT COVERAGE.** Existing
-artillery, transport, and CAS scenarios retain their accepted physical consumer
-outcomes; they do not establish the governor's authority boundary or abnormal
-lifecycle contract.
+**Classification: SPLIT.** The server-owned abnormal lifecycle is **REFINED;
+ACCEPTED / COVERED**. The client request/handler authority boundary remains
+**REVIEWED / REWRITE BEFORE PERMANENT COVERAGE**. Existing artillery, transport,
+and CAS scenarios retain their accepted physical consumer outcomes.
 
 ## Scope
 
@@ -146,3 +146,55 @@ handler result string, or consumer success cannot independently prove this
 contract. Cleanup must be observed before scenario teardown, and an absent forged
 sentinel counts only after an exact rejection receipt proves the stimulus reached
 the boundary.
+
+## Accepted continuation — server-owned terminal lifecycle
+
+The first unblocked slice was the server-owned terminal state machine. The Opus
+reconnaissance supplied only possible inspection points; canonical source and a
+predeclared cold baseline established the defects. Run
+`20260825T223715Z-d822d2ff` completed with normal order and cleanup controls but
+failed 6/9 product assertions: early completion skipped its finalizer; failure
+finalized but remained enabled; cancellation never entered FINALLY; vehicle loss
+was pre-disabled; active assignment overwrote the original generation; and the
+early-complete parent never installed its successor.
+
+Pontifex now routes normal FINALLY, early `complete`, handler failure, accepted
+server cancellation, and vehicle loss through one exact-once finalizer. A task
+records `finalizing`/`finalized` privately; active replacement is rejected unless
+the exact current generation is inside its finalizer. Retirement disables only
+the finishing record, so CAS-style finalizer installation of a successor creates
+a new enabled record that the predecessor cannot disable. Terminal cause is
+preserved as `complete`, `failed`, or `cancelled`.
+
+Permanent scenario `vigil-governor-lifecycle` stops the scheduler temporarily,
+isolates the manager, constructs only harmless server-local handlers, and drives
+bounded exact ticks. It records callback order, repeated wait, finalizer count,
+owned-pad deletion, terminal cause, manager enablement, rejected-sentinel
+nonexecution, predecessor/successor id and generation, a client completion
+receipt, and full restoration. Cold runs `20260825T224551Z-057295d6` and
+`20260825T224723Z-f0515a23` each passed 9/0 server and 1/0 client feature
+assertions with complete cleanup.
+
+The fresh combined artillery/transport/CAS regression
+`20260825T224845Z-b0838bdc` passed every artillery and transport assertion and
+all governor-relevant CAS boundaries, including accepted dispatch, duplicate
+rejection, finalizer-installed RTB successor, home, no-target/no-ammo, and
+cleanup. It failed only `vigil.cas.attack.effect`: correlated fire and a
+target-local damage event were observed, but net damage remained zero. An
+isolated unchanged CAS repeat `20260825T230059Z-fa050097` reproduced only that
+same physical-effect failure while again passing the entire governor lifecycle.
+Neither failed run is accepted evidence for CAS combat effect, and no speculative
+fixture or governor change was made for it.
+
+This continuation does not accept client-authored handler maps. Declarative
+request schemas, requester/asset authentication, forged-payload rejection,
+cancellation eligibility, retry/invalid-return policy, terminal-history
+retention, headless/client-owned vehicles, client-N, and JIP remain behind the
+mandatory authority rewrite.
+
+The accepted Evidence Contract was ingested twice with unchanged second-pass
+counts, and the Sacred Texts audit passed. The final ledger has 21 packages, 22
+runs and 474 artifacts. Reviewed distillation advanced to 20 findings and 8
+intentionally project-specific results while retaining 7 generic lemmas and 1
+generic conjecture. Both lifecycle propositions are `PROJECT-SPECIFIC ONLY`, so
+this continuation adds zero generic Sacred Texts notes.

@@ -458,6 +458,17 @@ ownership. Permanent coverage therefore joins a static sole-owner assertion
 with exact runtime routing through the registered production setting. It does
 not exercise, accept, or increase coverage for the deferred developer surface.
 
+The Vigil governor lifecycle adds a generation-retirement rule. A terminal
+state, disabled record, or cleaned consumer vehicle alone cannot prove that the
+declared finalizer ran, ran once, or retired the intended generation. Permanent
+proof must join exact callback order, terminal cause, finalizer count, owned-
+resource cleanup, record enablement, and id/generation identity. A finalizer may
+legitimately install successor work; retirement therefore applies to its exact
+record rather than whatever task occupies the vehicle key after the callback.
+Active duplicate and permitted successor stimuli form separate controls. This
+server-owned proof does not launder client-authored executable payloads into an
+accepted authority contract.
+
 ## Preliminary review of next feature families
 
 | Priority | Family | Preliminary outcome | Review focus before coverage |

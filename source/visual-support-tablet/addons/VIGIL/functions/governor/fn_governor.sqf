@@ -79,6 +79,8 @@ YSF_taskNew = {
   _t set ["retryTimeout",_retryTimeout];
   _t set ["lastLocStat",""];
   _t set ["currentLocStat",""];
+  _t set ["finalizing",false];
+  _t set ["finalized",false];
   _t
 };
 
@@ -92,6 +94,13 @@ YSF_taskGet = {
 
 YSF_taskAssign = {
   params ["_veh","_task"];
+  if (!isServer || {isNull _veh} || {typeName _task isNotEqualTo "HASHMAP"}) exitWith {false};
+
+  private _existing = (call YSF__mgr) getOrDefault [str _veh, objNull];
+  private _existingEnabled = typeName _existing isEqualTo "HASHMAP" && {_existing getOrDefault ["enabled", false]};
+  private _existingTask = if (_existingEnabled) then {_existing getOrDefault ["task", objNull]} else {objNull};
+  private _existingFinalizing = typeName _existingTask isEqualTo "HASHMAP" && {_existingTask getOrDefault ["finalizing", false]};
+  if (_existingEnabled && {!_existingFinalizing}) exitWith {false};
 
   format ["[YSF_Governor] Assigning task %1 to vehicle %2", (_task get "id"), _veh] call YSF_fnc_debugMsg;
   private _rec = createHashMap;
@@ -126,10 +135,11 @@ YSF_taskAssignRemote = {
 YSF_taskCancel = {
   params ["_veh"];
   private _rec  = (call YSF__mgr) getOrDefault [str _veh, objNull];
-  if (isNil "_rec") exitWith {};
-  private _task = _rec get "task";
-  if (isNil "_task") exitWith {};
-  _task set ["state","cancelled"];
+  if (typeName _rec isNotEqualTo "HASHMAP" || {!(_rec getOrDefault ["enabled", false])}) exitWith {false};
+  private _task = _rec getOrDefault ["task", objNull];
+  if (typeName _task isNotEqualTo "HASHMAP" || {(_task getOrDefault ["state", ""]) isNotEqualTo "running"}) exitWith {false};
+  [_task,"cancelled"] call YSF__terminate;
+  true
 };
 
 /* ---------- Stage/State internals ---------- */
@@ -182,34 +192,56 @@ YSF__terminate = {
   _task set ["tries",0];
 };
 
+YSF__finalize = {
+  params ["_task", "_rec"];
+  if (_task getOrDefault ["finalized", false]) exitWith {false};
+
+  if ((_task getOrDefault ["state", "running"]) isEqualTo "running") then {
+    _task set ["state", "complete"];
+  };
+  _task set ["finalizing",true];
+  private _result = [_task] call YSF_runStage;
+  _task set ["finalizing",false];
+  _task set ["finalized",true];
+  _task set ["stage",YSF_STAGE_DONE];
+  _task set ["status",_task getOrDefault ["state", "complete"]];
+
+  private _currentTask = _rec getOrDefault ["task", objNull];
+  private _sameGeneration = typeName _currentTask isEqualTo "HASHMAP"
+    && {(_currentTask get "id") isEqualTo (_task get "id")}
+    && {(_currentTask get "gen") isEqualTo (_task get "gen")};
+  if (_sameGeneration) then {_rec set ["enabled",false];};
+  true
+};
+
 /* ---------- The core tick (called by governor) ---------- */
 YSF_taskTick = {
   params ["_veh"];
 
   private _rec  = (call YSF__mgr) getOrDefault [str _veh, objNull];
-  if (isNil "_rec") exitWith {};
-  if !(_rec get "enabled") exitWith {};
+  if (typeName _rec isNotEqualTo "HASHMAP") exitWith {false};
+  if !(_rec getOrDefault ["enabled", false]) exitWith {false};
 
-  private _task = _rec get "task";
-  if (isNil "_task") exitWith {};
+  private _task = _rec getOrDefault ["task", objNull];
+  if (typeName _task isNotEqualTo "HASHMAP") exitWith {false};
 
-  if !(alive _veh) exitWith {
+  if (!(alive _veh) && {(_task getOrDefault ["state", "running"]) isEqualTo "running"}) then {
     [_task,"failed"] call YSF__terminate;
+  };
+
+  if ((_task getOrDefault ["stage", YSF_STAGE_DONE]) isEqualTo YSF_STAGE_FINALLY) exitWith {
+    [_task, _rec] call YSF__finalize
+  };
+
+  if ((_task getOrDefault ["state", "running"]) isNotEqualTo "running") exitWith {
+    [_task, _task getOrDefault ["state", "failed"]] call YSF__terminate;
+    [_task, _rec] call YSF__finalize
   };
 
   private _sig = [_veh] call YSF_sigVeh;
   _task set ["currentLocStat",_sig];
   if ((_task get "lastLocStat") isEqualTo "") then {
     _task set ["lastLocStat",_sig];
-  };
-
-  private _state = _task get "state";
-  if (_state != "running") exitWith {
-    if ((_task get "stage") == YSF_STAGE_FINALLY) then {
-      private _r = [_task] call YSF_runStage;  
-
-      _task set ["stage", YSF_STAGE_DONE];
-    };
   };
 
   private _stale = ((_task get "lastLocStat") isEqualTo (_task get "currentLocStat"));
@@ -238,17 +270,11 @@ YSF_taskTick = {
       [_task,"cancelled"] call YSF__terminate;
     };
     case YSF_R_COMPLETE: {
-      _task set ["stage", YSF_STAGE_DONE];
+      [_task,"complete"] call YSF__terminate;
     };
     default {
       // implied YSF_R_WAIT
     };
-  };
-
-  if ((_task get "stage") > YSF_STAGE_FINALLY) then {
-    _task set ["status","complete"];
-    _task set ["state","complete"];
-    _rec  set ["enabled",false];
   };
 
   if !((_task get "currentLocStat") isEqualTo (_task get "lastLocStat")) then {
@@ -267,11 +293,15 @@ YSF_governorHandle = {
     private _rec = _y;
     if (!isNil "_rec") then {
       private _veh = _rec get "veh";
-      if ((!isNull _veh) && (_rec get "enabled")) then {
-        if (!(alive _veh)) then {
-          _rec set ["enabled", false];
+      if (_rec getOrDefault ["enabled", false]) then {
+        private _now = call YSF_now;
+        if (isNull _veh) then {
+          private _task = _rec getOrDefault ["task", objNull];
+          if (typeName _task isEqualTo "HASHMAP") then {
+            [_task,"failed"] call YSF__terminate;
+            [_task,_rec] call YSF__finalize;
+          };
         } else {
-          private _now = call YSF_now;
           if ((_now - (_rec get "lastTick")) >= (_rec get "tickInterval")) then {
             _rec set ["lastTick", _now];
             [_veh] call YSF_taskTick;
