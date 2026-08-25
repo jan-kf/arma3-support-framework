@@ -56,6 +56,12 @@ other variables are held fixed.
 * [`pontifex-inventory-source-audit-2026-08-23.md`](pontifex-inventory-source-audit-2026-08-23.md)
   — inventory-versus-source audit: entries that are missing, stale, or
   inconsistent with the tree.
+* [`pontifex-source-archaeology-2026-08-24.md`](pontifex-source-archaeology-2026-08-24.md)
+  — source archaeology over the whole tree: dead and unreachable functionality,
+  duplicate implementations, stale flags, unused configuration, and code whose
+  apparent intent differs from accepted documentation. Its section 10 records
+  leads that turned out **not** to be defects and corrects two claims in the
+  2026-08-23 document; read it before acting on that one.
 
 ## Provenance
 
