@@ -189,9 +189,30 @@ private _deliveryOk = !isNull _clone
 private _carryDeadline = diag_tickTime + 5;
 waitUntil {uiSleep 0.05; (attachedTo _clone) isEqualTo player || {diag_tickTime > _carryDeadline}};
 private _carryOk = (attachedTo _clone) isEqualTo player;
-["fabricator.client.carryStarted", _carryOk, format ["clone=%1|player=%2|attached=%3|mass=%4", netId _clone, netId player, netId (attachedTo _clone), getMass _clone]] call _assert;
+["fabricator.client.carryStarted", _carryOk, format ["clone=%1|player=%2|attached=%3|mass=%4|commonOwner=%5|isCarrying=%6|canCarry=%7|dist=%8|stance=%9", netId _clone, netId player, netId (attachedTo _clone), getMass _clone, netId (_clone getVariable ["ace_common_owner", objNull]), player getVariable ["ace_dragging_isCarrying", false], _clone getVariable ["ace_dragging_canCarry", false], player distance _clone, stance player]] call _assert;
 
 ["multi", _station, [[_lightId, 2]], 90] call TRIBUNAL_FAB_fnc_order;
+
+TRIBUNAL_FAB_fnc_terrainOrder = {
+    params ["_phase", "_center"];
+    private _setupDeadline = diag_tickTime + 240;
+    waitUntil {
+        uiSleep 0.1;
+        ((missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", []]) param [0, ""]) isEqualTo _phase
+            || {diag_tickTime > _setupDeadline}
+    };
+    player setPosATL _center;
+    private _placedDeadline = diag_tickTime + 20;
+    waitUntil {uiSleep 0.1; (player distance2D _center) < 2 || {diag_tickTime > _placedDeadline}};
+    missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_READY", _phase, true];
+    [_phase, _station, [[_lightId, 2]], 90] call TRIBUNAL_FAB_fnc_order
+};
+
+{_x call TRIBUNAL_FAB_fnc_terrainOrder;} forEach [
+    ["terrainFlat", [1500, 5000, 0]],
+    ["terrainGradient", [2100, 2500, 0]],
+    ["terrainBlocked", [1600, 5000, 0]]
+];
 
 private _unpackableReport = ["unpackable", _station, [[_oversizeId, 1], [_lightId, 1]], 90] call TRIBUNAL_FAB_fnc_order;
 private _unpackableResult = _unpackableReport param [1, []];
@@ -280,7 +301,7 @@ missionNamespace setVariable ["TRIBUNAL_FAB_DONE", "activeDiscard", true];
     [["tribunal-retire", _stationId, [[_heavyId, "invalid"]], false]],
     "tribunal-retire", 30] call TRIBUNAL_FAB_fnc_rawSend;
 
-private _serverDeadline = diag_tickTime + 60;
+private _serverDeadline = diag_tickTime + 180;
 waitUntil {
     uiSleep 0.1;
     !isNil {missionNamespace getVariable "TRIBUNAL_FAB_SERVER_DONE"} || {diag_tickTime > _serverDeadline}
@@ -299,6 +320,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "fabricator.delivery.landPlacement",
         "fabricator.catalogue.notConsumed",
         "fabricator.delivery.packed",
+        "fabricator.delivery.terrainMatrix",
         "fabricator.control.unpackableAtomic",
         "fabricator.control.unregistered",
         "fabricator.control.outOfRange",
@@ -571,6 +593,103 @@ private _packedOk = (_multi # 3)
     && {(_containers findIf {(_x distance _scenarioPlayer) > 25}) < 0};
 ["fabricator.delivery.packed", _packedOk, format ["result=%1|containers=%2|attached=%3|allLocal=%4", _multiResult, count _containers, _attachedCount, (_containers findIf {isNull _x || {!(local _x)}}) < 0]] call _assert;
 
+// Three authentic packed orders hold class, quantity, authority, terminal entry,
+// placement helper, settling window and observation constant. Only terrain and
+// the declared barrier ring differ. A two-metre seating bound allows one pallet
+// footprint of initial PhysX adjustment; continuous rest and final speed remain
+// independent requirements.
+private _terrainBarriers = [];
+private _terrainRows = [];
+{
+    _x params ["_label", "_center", "_blocked"];
+    private _armBarriers = [];
+    if (_blocked) then {
+        {
+            private _radius = _x;
+            for "_bearing" from 0 to 337.5 step 22.5 do {
+                private _position = _center vectorAdd [_radius * sin _bearing, _radius * cos _bearing, 0];
+                private _barrier = createVehicle ["Land_CncBarrier_F", _position, [], 0, "CAN_COLLIDE"];
+                _barrier setPosATL _position;
+                _barrier setDir _bearing;
+                _armBarriers pushBack _barrier;
+            };
+        } forEach [3, 5, 7, 9];
+        _terrainBarriers append _armBarriers;
+    };
+
+    _station setPosATL (_center vectorAdd [0, 1, 0]);
+    _station setVectorUp (surfaceNormal (getPosATL _station));
+    missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", [_label, _center], true];
+    private _readyDeadline = diag_tickTime + 60;
+    waitUntil {
+        uiSleep 0.1;
+        (missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_READY", ""]) isEqualTo _label
+            || {diag_tickTime > _readyDeadline}
+    };
+
+    private _arm = [_label, 120] call TRIBUNAL_FAB_fnc_runPhase;
+    private _result = _arm # 2 param [1, []];
+    private _armContainers = (_result param [4, []]) apply {objectFromNetId _x};
+    private _container = _armContainers param [0, objNull];
+    private _drop = (_result param [5, []]) param [0, []];
+    private _start = getPosATL _container;
+    private _previous = _start;
+    private _stableSince = -1;
+    private _maxSpeed = 0;
+    private _settleDeadline = diag_tickTime + 8;
+    waitUntil {
+        uiSleep 0.1;
+        private _position = getPosATL _container;
+        private _speed = vectorMagnitude (velocity _container);
+        _maxSpeed = _maxSpeed max _speed;
+        if (!isNull _container && {_speed <= 0.1} && {(_position distance _previous) <= 0.05}) then {
+            if (_stableSince < 0) then {_stableSince = diag_tickTime;};
+        } else {
+            _stableSince = -1;
+        };
+        _previous = _position;
+        (_stableSince >= 0 && {(diag_tickTime - _stableSince) >= 2}) || {diag_tickTime > _settleDeadline}
+    };
+    private _final = getPosATL _container;
+    private _nearestBarrier = -1;
+    if !(_armBarriers isEqualTo []) then {
+        _nearestBarrier = selectMin (_armBarriers apply {_x distance2D _drop});
+    };
+    private _row = [
+        _label, (_arm # 3) && {(_result param [1, false])} && {(_result param [2, ""]) isEqualTo "multi"},
+        acos (((surfaceNormal _center) # 2) max -1 min 1),
+        acos (((surfaceNormal _drop) # 2) max -1 min 1),
+        _center distance2D _drop, surfaceIsWater _drop, count _armBarriers, _nearestBarrier,
+        netId _container, local _container, count (attachedObjects _container),
+        _stableSince >= 0 && {(diag_tickTime - _stableSince) >= 2},
+        _drop distance2D _final, _maxSpeed, vectorMagnitude (velocity _container), _drop, _final
+    ];
+    _terrainRows pushBack _row;
+    _containers append _armContainers;
+} forEach [
+    ["terrainFlat", [1500, 5000, 0], false],
+    ["terrainGradient", [2100, 2500, 0], false],
+    ["terrainBlocked", [1600, 5000, 0], true]
+];
+
+private _flatTerrain = _terrainRows param [0, []];
+private _gradientTerrain = _terrainRows param [1, []];
+private _blockedTerrain = _terrainRows param [2, []];
+private _terrainCommonOk = (count _terrainRows) isEqualTo 3
+    && {(_terrainRows findIf {
+        !(_x param [1, false]) || {_x param [5, true]} || {!(_x param [9, false])}
+        || {(_x param [10, 0]) isNotEqualTo 2} || {!(_x param [11, false])}
+        || {(_x param [12, 99]) > 2} || {(_x param [14, 99]) > 0.1}
+        || {(_x param [4, 99]) > 15}
+    }) < 0};
+private _terrainMatrixOk = _terrainCommonOk
+    && {(_flatTerrain param [2, 99]) <= 1} && {(_flatTerrain param [3, 99]) <= 10}
+    && {(_gradientTerrain param [2, 0]) >= 10} && {(_gradientTerrain param [2, 99]) <= 20}
+    && {(_gradientTerrain param [3, 0]) >= 10} && {(_gradientTerrain param [3, 99]) <= 20}
+    && {(_blockedTerrain param [2, 99]) <= 1} && {(_blockedTerrain param [6, 0]) isEqualTo 64}
+    && {(_blockedTerrain param [7, 99]) >= 0} && {(_blockedTerrain param [7, 99]) <= 1.6};
+["fabricator.delivery.terrainMatrix", _terrainMatrixOk, format ["rows=%1", _terrainRows]] call _assert;
+
 // Phase 3: an order containing something no container can hold. Atomic means the
 // whole order is refused and nothing at all survives, anywhere on the map.
 private _unpackable = ["unpackable", 120] call TRIBUNAL_FAB_fnc_runPhase;
@@ -823,7 +942,7 @@ private _packed = [];
 } forEach _containers;
 {
     if (!isNull _x) then {deleteVehicle _x;};
-} forEach (_packed + _containers + [_station, _stationFar, _heavy, _light, _oversize, _unregistered, _rogueAir, _ineligibleAir, _busyAir, _victim]);
+} forEach (_packed + _containers + _terrainBarriers + [_station, _stationFar, _heavy, _light, _oversize, _unregistered, _rogueAir, _ineligibleAir, _busyAir, _victim]);
 {
     private _leftover = objectFromNetId _x;
     if (!isNull _leftover) then {deleteVehicle _leftover;};
@@ -837,6 +956,8 @@ missionNamespace setVariable ["YOSHI_VIRTUAL_STORAGE", nil, true];
 missionNamespace setVariable ["YOSHI_FABRICATOR", nil, true];
 missionNamespace setVariable ["TRIBUNAL_FAB_FIXTURE", nil, true];
 missionNamespace setVariable ["TRIBUNAL_FAB_GO", nil, true];
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", nil, true];
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_READY", nil, true];
 
 // Explicitly retire every retained handshake and prove both maps and result
 // variables are gone. The production TTL remains 120 seconds; teardown need not
@@ -887,9 +1008,9 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
     },
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. For a recipient on the proven land fixture, a single delivery and its announced target remain on land. Immediately before publication, a heavy single clone is visible, unattached, server-local and capped at mass 200; the ordering client then starts ACE carry on that exact clone. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
+        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. For the proven flat, moderate-gradient and dense-obstruction land fixtures, an authentic packed order produces one server-local container with both exact objects attached; its announced target remains within 15 m of the recipient and the container settles within 2 m of that target, continuously at rest for two seconds. Immediately before publication, a heavy single clone is visible, unattached, server-local and capped at mass 200; the ordering client then starts ACE carry on that exact clone. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
         outcome="REFINE BEFORE PERMANENT COVERAGE",
-        rationale="Baseline fabrication ran entirely on the ordering client with no server validation, and reported success for orders it had only partly filled while orphaning the remainder under the map. Coverage is permanent only after orders became server-authoritative, owner-bound and atomic, with runtime adversarial controls for worker bypass, duplicate request, unauthorized airdrop, malformed orders and foreign discard. The former mass defect was a late oracle: permanent coverage now observes the exact clone immediately before real publication and again after the intended ACE carry transition.",
+        rationale="Baseline fabrication ran entirely on the ordering client with no server validation, and reported success for orders it had only partly filled while orphaning the remainder under the map. Coverage is permanent only after orders became server-authoritative, owner-bound and atomic, with runtime adversarial controls for worker bypass, duplicate request, unauthorized airdrop, malformed orders and foreign discard. A late-oracle mass defect was corrected at the real publication boundary; permanent coverage observes the exact clone before publication and after the intended ACE carry transition. The terrain continuation uses authentic packed orders and independent physical settling evidence rather than treating a safe-position return or object creation as successful placement.",
         dependencies=(
             "ACE 3.21 interaction registration",
             "Arma editor module logic synchronization",
@@ -897,9 +1018,10 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
         ),
         evidence_types=frozenset({
             "module-registration", "server-authority", "transaction-identity", "adversarial-control", "exact-netid",
-            "cargo-inventory", "pre-publication-mass", "ace-carry-identity",
+            "cargo-inventory", "pre-publication-mass", "mass-replication", "ace-carry-identity",
+            "terrain-gradient", "obstruction-ring", "physical-settling",
             "mission-wide-census", "replication", "cleanup",
         }),
-        locality_requirements="Client-a owns the terminal, the queue and the request, and declares its own unit by net id rather than relying on allPlayers ordering; the dedicated server exclusively validates orders and creates, packs, places, finalizes and discards every fabricated object. The server snapshots the exact clone at the real pre-publication boundary; client-a proves the real post-publication ACE carry attachment on the same net id. One authenticated client is the proof boundary: the foreign-discard control uses a server-owned transaction, so the client-b case remains unproven.",
+        locality_requirements="Client-a owns the terminal, queue and request, declares its own unit by net id, and moves that real player to each terrain fixture only after a server signal. The dedicated server owns the station, obstruction fixtures, and every created, packed, placed, finalized and discarded object. It snapshots the exact clone at the real pre-publication boundary; client-a proves the real post-publication ACE carry attachment on the same net id. One authenticated client is the proof boundary: the foreign-discard control uses a server-owned transaction, so the client-b case remains unproven.",
     ),
 )

@@ -952,7 +952,23 @@ YFU_assetsSubmitOrder = {
                     if (isNull _single) then {
                         _success = false;
                     } else {
-                        [_caller, _single] call ace_dragging_fnc_startCarry;
+                        // The server publishes only after applying ACE's global mass event,
+                        // but this client still waits for the exact replicated cap
+                        // before asking ACE to claim and carry the clone.
+                        private _massDeadline = diag_tickTime + 5;
+                        waitUntil {
+                            uiSleep 0.05;
+                            private _mass = getMass _single;
+                            (_mass > 0 && {_mass <= 200}) || {diag_tickTime > _massDeadline}
+                        };
+                        private _carryDeadline = diag_tickTime + 6;
+                        waitUntil {
+                            if !(_caller getVariable ["ace_dragging_isCarrying", false]) then {
+                                [_caller, _single] call ace_dragging_fnc_startCarry;
+                            };
+                            uiSleep 0.1;
+                            (attachedTo _single) isEqualTo _caller || {diag_tickTime > _carryDeadline}
+                        };
                         uiNamespace setVariable ["YFU_last_delivery_positions", _positions];
                     };
                 };

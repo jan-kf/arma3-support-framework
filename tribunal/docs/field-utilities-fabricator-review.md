@@ -448,14 +448,73 @@ The next-best unblocked candidate was the apparent delivery mass defect and its 
 
 The earlier oracle sampled too late. A successful single order publishes the exact clone and the ordering client immediately calls ACE `startCarry` on that net ID. In final runs `20260824T184743Z-361320ec` and `20260824T185113Z-a5792be7`, a server-side observer wrapped the real publication boundary without replacing product behavior. Immediately before publication the exact server-owned `Box_NATO_Ammo_F` was visible, unattached, and mass 200. Client-a then resolved that same clone, began ACE carry, and observed it attached to the exact player with `getMass = 1e-12`. Cargo, land placement, authority, atomic controls, retirement, and cleanup all continued to pass.
 
-The supposed defect is therefore closed as a boundary error, not repaired product code. Raw visible and hidden relocation calibrations retained mass 500; speculative spawn-mode, threshold, fallback, safe-stage, settle, and contact changes were rejected and removed. Staging choreography remains an implementation detail rather than an engine requirement: permanent coverage asserts the authentic pre-publication mass cap and exact post-publication carry identity, not a staging depth or cadence. No Pontifex product source changed.
+Those runs closed the original observation as a boundary error. A later unchanged
+cold repeat, however, exposed a real race: the server first observed mass 200,
+then both peers observed the newly unhidden clone restored to class mass 500 and
+ACE refused carry. Pinned ACE 3.21.0 source established that ACE itself propagates
+mass changes with `ace_common_setMass`. Pontifex now uses that event, requires one
+continuous second of stable capped mass before publishing a single delivery, and
+the client boundedly waits for the exact replicated cap and exact attachment.
+Raw visible and hidden relocation calibrations still retained mass 500;
+speculative spawn-mode, threshold, fallback, safe-stage, settle, and contact
+changes were rejected and removed. Staging choreography remains an implementation
+detail rather than an engine requirement.
 
 The two final runs each passed 28 server and 11 client feature assertions with zero failures; including smoke, 32 server and 15 client assertions passed.
 
+## Accepted continuation — bounded gradient and obstruction placement
+
+The next canonical priority was broader-terrain placement. Opus reconnaissance
+was used only to propose questions; it supplied no accepted fact. Canonical
+Sacred Texts dossiers for `surfaceNormal`, `setVectorUp`, `setPosATL`, and
+`lineIntersectsSurfaces`, plus source inspection and controlled Live Mode probes,
+bounded the experiment. No indexed `BIS_fnc_findSafePos` dossier was available,
+so its return was treated as a candidate position rather than proof of suitability.
+
+The first proposed severe-slope fixture was rejected. Around a 63.3-degree
+recipient position, returned drops measured roughly 28.8–29.7 degrees and the
+same packed container ranged from 0.41 m to 9.22 m of physical travel before
+resting. Those diagnostic runs are evidence that severe gradients remain open,
+not an accepted promise. A deterministic moderate neighborhood was then scanned:
+the recipient was on 15.7-degree ground and every sampled 4–9 m ring point was
+12.7–15.9 degrees. The obstruction control placed 64 concrete barriers in four
+concentric rings on independently verified flat land.
+
+Permanent coverage drives three real terminal submissions through the authentic
+server worker: flat land, the moderate-gradient neighborhood, and the dense
+obstruction ring. Each result must be successful and non-water, remain within
+15 m of the recipient, contain both exact attached objects in one server-local
+container, settle within 2 m of its announced target, and remain continuously
+at or below 0.1 m/s with no more than 0.05 m positional change for two seconds.
+The flat arm additionally bounds both slopes; the gradient arm requires both
+recipient and drop to be 10–20 degrees; the obstructed arm requires all 64
+barriers and an announced target no farther than 1.6 m from its nearest barrier.
+Together with the separate target-to-final seating bound, this proves the helper
+can seat the delivery inside a densely obstructed neighborhood; it does not
+promise collision-free clearance for arbitrary shapes.
+
+Independent cold runs `20260825T193508Z-ca6c7798` and
+`20260825T194047Z-d3318e29` each passed **29 server + 11 client feature
+assertions** with zero failures. Gradient containers travelled 0.062 m in both
+runs before stable rest. Obstructed containers travelled 0.175 m and 0.001 m;
+their nearest barriers were 1.018 m and 0.874 m away. Both runs also proved the
+corrected exact-clone ACE carry handoff and complete cleanup.
+
+The accepted second package was ingested twice through the supported Sacred
+Texts interface. Counts changed once from 16 packages / 17 runs / 354 artifacts
+to 17 / 18 / 398 and were unchanged by the repeat; the full knowledge audit
+passed. Reviewed distillation remained at 15 findings, 7 generic lemmas and one
+generic conjecture. This continuation adds **no generic Sacred Texts finding**:
+the terrain matrix is a Pontifex placement outcome, while the observed
+ACE/PhysX mass sequence is not a controlled product-neutral locality A/B.
+Post-ingest `setMass` and `surfaceNormal` dossiers therefore retained only
+their canonical upstream documentation.
+
 ## Unresolved
 
-* **Broader terrain suitability**, per the section above; bounded land
-  placement is covered.
+* **Broader terrain suitability beyond the accepted matrix.** Severe gradients
+  above 20 degrees, ponds, coastline fallback, water recipients, arbitrary
+  obstacle shapes/densities, and collision-free clearance remain open.
 * **Client-b and JIP.** One authenticated client is the proof boundary.
 * **ACE-side action presence.** ACE 3.21 stores object actions where neither an
   object variable nor the class-keyed `ace_interact_menu_ActNamespace` exposes
@@ -472,8 +531,10 @@ The two final runs each passed 28 server and 11 client feature assertions with z
 The accepted milestone covers one authenticated client, server-authoritative
 atomic fabrication, unlimited catalogue semantics, exact cargo, packed delivery,
 the shared Vigil authorization boundary, adversarial request receipts,
-active-cancellation and watchdog rollback, result retirement, and complete scenario isolation, bounded land placement, exact pre-publication mass 200,
-and exact client carry attachment. Broader terrain
-suitability, actual client-b/JIP behavior, ACE-internal action visibility,
+active-cancellation and watchdog rollback, result retirement, and complete
+scenario isolation; flat, moderate-gradient and dense-obstruction packed
+placement within the stated bounds; exact pre-publication mass 200; and exact
+client carry attachment. Severe-gradient, pond, coastline, water-recipient and
+arbitrary-obstruction suitability, actual client-b/JIP behavior, ACE-internal action visibility,
 runtime-created editor synchronization, and Live-snippet supervision remain the
 explicit follow-ups listed above; none is implied by the accepted PASS.

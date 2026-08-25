@@ -3,9 +3,15 @@
 // this has to be re-applied after a staged clone is placed: capping it while it
 // is still staged out of sight silently does nothing.
 YOSHI_capDeliveryMass = {
-    params ["_object", ["_settleTimeout", 10]];
+    params ["_object", ["_settleTimeout", 10], ["_stabilityWindow", 0]];
     if (isNull _object) exitWith {false};
     if !(_object isKindOf "ReammoBox_F") exitWith {false};
+
+    private _applyCap = {
+        params ["_target"];
+        _target setMass 200;
+        ["ace_common_setMass", [_target, 200]] call CBA_fnc_globalEvent;
+    };
 
     // A newly created object reports no mass for a while. Reading it straight
     // away returns ~0, so the cap silently never fires and the delivery keeps a
@@ -18,12 +24,34 @@ YOSHI_capDeliveryMass = {
         };
     };
 
+    private _capped = false;
     if ((getMass _object) > 200) then {
-        _object setMass 200;
-        true
-    } else {
-        false
+        [_object] call _applyCap;
+        _capped = true;
     };
+
+    // A newly unhidden PhysX object can briefly accept setMass and then restore
+    // its class mass while finishing initialization. Single-result publication
+    // requests a stability window so ACE carry never races that restoration.
+    if (canSuspend && {_stabilityWindow > 0}) then {
+        private _deadline = diag_tickTime + _settleTimeout;
+        private _stableSince = -1;
+        waitUntil {
+            uiSleep 0.1;
+            private _mass = getMass _object;
+            if (_mass > 200) then {
+                [_object] call _applyCap;
+                _capped = true;
+                _stableSince = -1;
+            } else {
+                if (_mass > 0 && {_stableSince < 0}) then {_stableSince = diag_tickTime;};
+            };
+            (_stableSince >= 0 && {(diag_tickTime - _stableSince) >= _stabilityWindow})
+                || {diag_tickTime > _deadline}
+        };
+    };
+
+    _capped
 };
 
 YOSHI_SPAWN_SAVED_ITEM_ACTION = {

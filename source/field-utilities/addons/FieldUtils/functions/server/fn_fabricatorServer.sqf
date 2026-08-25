@@ -386,7 +386,7 @@ YFU_fnc_fabricateOrderWorker = {
 		_single setVectorUp [0, 0, 1];
 		_single hideObjectGlobal false;
 		uiSleep 0.25;
-		[_single] call YOSHI_capDeliveryMass;
+		[_single, 10, 1] call YOSHI_capDeliveryMass;
 		[YFU_FABRICATOR_TOKEN, _txId, true, "single", netId _single, [], [_drop]] call YFU_fnc_fabricatorPublishResult;
 	};
 

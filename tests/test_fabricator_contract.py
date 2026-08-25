@@ -218,23 +218,30 @@ class FabricatorProductDecisionTests(unittest.TestCase):
     def test_the_delivery_mass_cap_is_preserved_as_intended_behavior(self) -> None:
         """Fabricated crates stay carryable; this is usability, not fidelity.
 
-        The rule is preserved and kept in one place, but it is NOT currently
-        provable at runtime: a fabricated crate on the dedicated server reports a
-        mass of ~1e-12 and never gains a real one, so `getMass > 200` never fires.
-        The gameplay scenario therefore asserts nothing about mass rather than
-        accepting a degenerate value as "capped". See the review.
+        The rule is preserved and kept in one place. Authentic boundary coverage
+        proves mass 200 before publication and exact ACE carry afterward. A cold
+        repeat also proved that newly unhidden PhysX state can restore class mass
+        after an initial cap, so single delivery now requires a bounded stable cap
+        before publication and waits for that replication before ACE admission.
         """
 
         clone = read(CLONE)
         self.assertIn('if ((getMass _object) > 200) then {', clone)
-        self.assertIn("_object setMass 200;", clone)
+        self.assertIn("[\"ace_common_setMass\", [_target, 200]] call CBA_fnc_globalEvent;", clone)
         # A newly created object reports no mass for a while; reading it straight
         # away makes the cap a no-op instead of a rule.
         self.assertIn("(getMass _object) > 0 || {diag_tickTime > _deadline}", clone)
         # A staged clone has no initialised mass, so the rule has to be applied
         # again once the delivery is standing where the player will find it.
         server = read(SERVER)
-        self.assertIn("[_single] call YOSHI_capDeliveryMass;", server)
+        self.assertIn("[_single, 10, 1] call YOSHI_capDeliveryMass;", server)
+        self.assertIn("_stabilityWindow", clone)
+        self.assertIn("[_object] call _applyCap;", clone)
+        assets = read(ASSETS)
+        self.assertIn("private _massDeadline = diag_tickTime + 5;", assets)
+        self.assertIn("(_mass > 0 && {_mass <= 200})", assets)
+        self.assertIn("ace_dragging_isCarrying", assets)
+        self.assertIn("(attachedTo _single) isEqualTo _caller", assets)
         self.assertIn("forEach (_clones + _containers);", server)
         # Built on the surface and hidden, never inside terrain: an object created
         # in terrain never initialises a mass and never recovers one.

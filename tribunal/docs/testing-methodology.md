@@ -304,8 +304,12 @@ the ordering client. The permanent scenario now snapshots that clone immediately
 before the real publication boundary: it is visible, unattached, server-local,
 and capped at mass 200. Client-a then proves that the same net ID is attached to
 the exact player by the intended carry transition, where `getMass = 1e-12` is an
-ACE carry observation rather than failed fabrication. No product change was
-needed.
+ACE carry observation rather than failed fabrication. A later unchanged cold
+repeat caught an asynchronous exception to that first conclusion: newly unhidden
+PhysX state restored class mass 500 after the server's initial cap, and ACE
+refused the exact object. Pinned ACE source showed its own mass changes use the
+global `ace_common_setMass` event. The product now applies that event, requires a
+bounded stable cap before publication, and waits for exact replicated attachment.
 
 A further audit round rebuilt the authority boundary: one order endpoint and an
 owner-bound discard endpoint, identity from `remoteExecutedOwner`, internal
@@ -332,9 +336,13 @@ this feature was made over the sea, which is what actually defeated a
 `surfaceIsWater` placement check that had been reported as a world-configuration
 problem. A later bounded land experiment permanently covered the exact server-owned
 single delivery and announced target as non-water for a land recipient, while a
-known sea-origin control proved the surface oracle active. It did not generalize
-to gradients, ponds, obstruction, coastlines, or water recipients. Full analysis
-is in
+known sea-origin control proved the surface oracle active. A subsequent terrain
+matrix used real terminal orders and continuous physical-rest observations,
+rather than accepting a safe-position return as success. It accepted flat land,
+a fully sampled 10–20 degree gradient neighborhood, and a dense 64-barrier ring.
+A proposed severe-slope fixture was rejected after physical travel varied up to
+9.22 m; ponds, coastline, water recipients and arbitrary collision clearance
+remain open. Full analysis is in
 [`field-utilities-fabricator-review.md`](field-utilities-fabricator-review.md).
 
 ## Generic Tribunal capability backlog
