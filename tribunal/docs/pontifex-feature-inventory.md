@@ -439,13 +439,19 @@ Full analysis: [`vigil-developer-laser-harness-review.md`](vigil-developer-laser
   Normal transport and CAS RTB no longer enroll automatically. Explicit
   experimental finalization now clears all stabilizer state. See
   [`vigil-helicopter-stabilizer-review.md`](vigil-helicopter-stabilizer-review.md).
-* **Radio/chat/debug/curator feedback** wraps CORDIS. **REVIEWED / NEEDS
-  PRODUCT DECISION; PRESENTATION EXPERIMENT DEFERRED.** Real task callers exist,
+* **Radio/chat/curator feedback** wraps CORDIS. **REVIEWED / NEEDS PRODUCT
+  DECISION; PRESENTATION EXPERIMENT DEFERRED.** Real task callers exist,
   but they default to all-live-player routing and curator empty-scope fallback;
   requester/side/curator audience is unresolved. Accepted task state, wrapper
   return, or one recipient does not prove correct delivery, and actual audio is
-  unproven under `-noSound`. The static always-log/conditional-`systemChat` control flow is covered;
-  actual client presentation remains unproven.
+  unproven under `-noSound`.
+* **CAS auto-engage debug** is **REFINED; ACCEPTED / COVERED** for the exact
+  server-log and one-client presentation-gate contract. The unregistered
+  always-true private gate was removed; exact AAE tokens now always reach the
+  server RPT path and use only registered `YSF_showDebugMessages` for false/true
+  target-local gating. Runs `20260825T211810Z-e22f0ec6` and
+  `20260825T211937Z-cc730425` each passed 3/0 server and 3/0 client feature
+  assertions. Visible pixels, client-N/JIP and rate/volume remain unproven.
 
 Full analysis: [`vigil-feedback-review.md`](vigil-feedback-review.md).
 
@@ -729,6 +735,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-transport` | helicopter outbound/LZ/wait/RTB lifecycle |
 | `vigil-transport-pad-ab` | bounded hidden-pad versus no-pad landing characterization |
 | `vigil-cas` | rotary CAS filtering, attack, timer, controls, RTB |
+| `vigil-debug-channel` | CAS auto-engage server logging, registered false/true client presentation gate, restoration |
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
 | `vigil-fixed-wing-modules` | authentic typed Eden aggregation, nearest points, assigned-curator add, authority/replication/cleanup |
@@ -757,6 +764,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | VLS target handshake | **REVIEWED / CHARACTERIZED** | four fresh physical A/B pairs prove the combined knowledge step is required; individual calls remain unisolated |
 | Transport hidden-pad landing | **KEEP + CHARACTERIZE ENGINE REQUIREMENT; ACCEPTED / COVERED** | three independent server-local airborne A/B proofs: exact hidden-pad treatment settles within 25 m; matched no-pad control remains airborne beyond 104 m at 90 seconds; scope is one class/corridor/approach |
 | Developer laser harness | **REVIEWED / DEFERRED** | unreachable preInit diagnostic; destructive owner-routed run and unbounded client-supplied result store lack a product boundary |
+| Vigil CAS auto-engage debug | **REFINED; ACCEPTED / COVERED** for one-client setting-gate topology | unique exact tokens in server RPT plus delegated client false/true receipts through registered `YSF_showDebugMessages`; pixels, client-N/JIP and rate/volume excluded |
 | APS anti-drone | **REVIEWED / DEFERRED** | threat/side/operator policy is undecided; resource authority and destructive cleanup require refinement before coverage |
 | CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
 | CBR confirmed-origin persistence | **REVIEWED / DEFERRED** | confirmed fix never expires; decay policy undecided |
@@ -781,13 +789,13 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Field Utilities' runtime ACE cargo-size mismatch is now authoritatively resolved
-and permanently covered for the exact Bridge and OPHANIM opt-ins, while ordinary
-ammo boxes retain the existing ACE-disabled policy. The next unblocked source
-audit is Vigil's CAS auto-engage debug channel: reconnaissance points to an
-always-on global, but its reachability, audience and supported setting surface
-must be established from canonical source and runtime evidence before any
-classification or change. Fabricator's severe slopes, ponds, coastline,
+Vigil's CAS auto-engage debug mismatch is now authoritatively resolved and
+permanently covered: server logging remains unconditional and client
+presentation uses the registered Vigil setting. The next unblocked source audit
+is the developer laser harness's conditional `YSF_fnc_debugMsg` fallback. The
+reconnaissance suggests possible shared-symbol shadowing, but canonical function
+registration/order and fresh runtime identity must establish whether any product
+path is affected before classification or change. Fabricator's severe slopes, ponds, coastline,
 water-recipient, client-B and JIP remain bounded. Explicit nearby supply loading
 and bounded Field contact attachment remain accepted. The Vigil helicopter stabilizer is closed as deferred;
 do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now

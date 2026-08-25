@@ -1,7 +1,10 @@
 # Vigil radio, chat, debug, and curator feedback — canonical feature review
 
-Primary outcome: **REVIEWED / NEEDS PRODUCT DECISION; PRESENTATION
-EXPERIMENT DEFERRED**.
+Primary outcome: **SPLIT**. Task radio/chat and curator feedback remain
+**REVIEWED / NEEDS PRODUCT DECISION; PRESENTATION EXPERIMENT DEFERRED**. The CAS
+auto-engage debug channel is **REFINED; ACCEPTED / COVERED** for unconditional
+server logging plus the registered Vigil debug setting as the one-client
+presentation gate.
 
 This review covers Vigil's CORDIS-backed feedback wrappers and their real task
 consumers. It does not reopen the accepted artillery, transport, CAS, or
@@ -76,10 +79,12 @@ wrapper return, a CORDIS claim, server task success, a screenshot, or receipt by
 any one client cannot prove correct delivery or audience. Disabled silence is
 meaningful only when the same valid task transition independently occurred.
 
-Debug semantics are accurately documented and statically covered by the
+Generic wrapper semantics are documented and statically covered by the
 cross-addon CBA settings contract: server logging is unconditional and the
-setting adds `systemChat`. That does not establish recipient policy or make
-arbitrary debug traffic a supported user feature.
+setting adds `systemChat`. The CAS auto-engage adapter previously bypassed that
+contract through a separate unregistered gate hardcoded true; the accepted
+continuation below supersedes this paragraph for that exact channel. It does not
+make arbitrary debug traffic a supported user feature.
 
 ## Decisions and continuation
 
@@ -95,3 +100,53 @@ chosen recipient set, repeat with the setting disabled, and restore the hook.
 Use fixed-wing only for the side-chat slice. Defer audible output and true
 multi-side isolation until sound-enabled and second-identity dependencies are
 available. Curator feedback remains part of each module's authority review.
+
+## Accepted continuation — CAS auto-engage debug channel
+
+The next-best unblocked candidate was the CAS auto-engage diagnostic adapter.
+The Opus reconnaissance was used only as a pointer. Canonical source established
+that `fn_airAutoEngage.sqf` is a pre-init function, assigns
+`YSF_AAE_DEBUG = true` on every machine, and passes that unregistered name to
+CORDIS as the target-local presentation gate. CORDIS always writes the server
+line, remotely invokes its client function on all machines, and lets that named
+variable decide whether to execute `systemChat`. Vigil's supported global CBA
+setting is instead `YSF_showDebugMessages`, default false. Thus the old adapter
+always exposed AAE traffic to client chat and could not be controlled through
+the documented setting.
+
+Pontifex now removes the private hardcoded gate and passes
+`YSF_showDebugMessages` to the existing CORDIS adapter while retaining the
+distinct `YSF_AAE` log prefix. Its no-CORDIS last fallback logs only; it no
+longer creates an ungated local `systemChat` path. Task feedback audience and
+CAS combat behavior are unchanged.
+
+Permanent scenario `vigil-debug-channel` installs a temporary delegating
+observer around the exact client-local CORDIS presentation function. The server
+invokes the exact AAE adapter with unique disabled and enabled tokens; both
+tokens appear in its RPT. Client-a independently records the same exact lines,
+the setting key, and false/true target-local values before delegating to the
+original function. The scenario proves the obsolete private variable absent,
+restores the original function and initial setting, and removes its shared
+coordination state.
+
+Unchanged cold runs `20260825T211810Z-e22f0ec6` and
+`20260825T211937Z-cc730425` each passed 3/0 server and 3/0 client feature
+assertions with complete acknowledgements and cleanup. Full existing CAS
+gameplay then passed unchanged in `20260825T212117Z-841a8c18`, excluding a
+combat-path regression. The initial static control failed solely because the
+hardcoded private assignment and lookup were present; after refinement the new
+contract and existing 13-setting contract both pass.
+
+Visible framebuffer pixels, other clients/sides, client-originated AAE calls,
+network interruption, CBA settings UI interaction, and rate/volume remain
+outside this proof. Because the result primarily joins Pontifex and CORDIS
+policy rather than isolating an undocumented Arma mechanic, generic Sacred
+Texts promotion requires separate review and is not presumed.
+
+The accepted Evidence Contract was ingested twice with unchanged second-pass
+counts, and the Sacred Texts audit passed. Reviewed distillation advanced to 17
+findings while retaining 7 generic lemmas and 1 conjecture; this finding is
+`PROJECT-SPECIFIC ONLY`, so it added zero generic notes. The final ledger has 19
+packages, 20 runs and 434 artifacts. Post-ingest `systemChat` revision 376770
+retains only upstream documentation; the new project dossier exposes the
+bounded Vigil theorem and exact Tribunal provenance.

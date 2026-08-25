@@ -439,6 +439,17 @@ remote observation and cleanup. It also keeps this ACE-only proposition in an
 isolated frozen fixture; folding it into a native/contact physics scenario made
 unrelated capacity and damage state look causal.
 
+The Vigil AAE review added a settings-contract rule: declaration/consumer parity
+must include secondary feature adapters, not only the shared wrapper. A private
+hardcoded variable passed as a shared presentation gate can satisfy the generic
+wrapper's control flow while bypassing the product's registered setting entirely.
+The permanent oracle therefore combines static absence of the private gate,
+unique server RPT tokens, and a delegating target-local observer around the real
+presentation function. Matched false/true arms record the exact registered key
+and local value before calling the original function, then restore both the
+function and initial synchronized setting. This proves routing and gating; it
+does not overclaim visible pixels or multi-client audience correctness.
+
 ## Preliminary review of next feature families
 
 | Priority | Family | Preliminary outcome | Review focus before coverage |

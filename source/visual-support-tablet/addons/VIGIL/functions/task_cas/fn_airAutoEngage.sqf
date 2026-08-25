@@ -7,7 +7,6 @@ YSF_AAE_BOMB_MIN_RELEASE_DISTANCE = 250;
 YSF_AAE_TEMP_LASER_LIFETIME = 60;
 YSF_AAE_TARGET_REENGAGE_MAX = 120;
 YSF_AAE_SPAWN_WARMUP = 10;
-YSF_AAE_DEBUG = true;
 
 if (isNil {missionNamespace getVariable "YSF_CAS_EngagementEvents"}) then {
   missionNamespace setVariable ["YSF_CAS_EngagementEvents", []];
@@ -15,10 +14,8 @@ if (isNil {missionNamespace getVariable "YSF_CAS_EngagementEvents"}) then {
 
 YSF_AAE_dbg = {
   params ["_msg"];
-  if !(missionNamespace getVariable ["YSF_AAE_DEBUG", false]) exitWith {};
-
   if !(isNil "YCD_fnc_debugMsg") exitWith {
-    [_msg, "YSF_AAE", "YSF_AAE_DEBUG"] call YCD_fnc_debugMsg;
+    [_msg, "YSF_AAE", "YSF_showDebugMessages"] call YCD_fnc_debugMsg;
   };
 
   if !(isNil "YSF_fnc_debugMsg") exitWith {
@@ -26,7 +23,6 @@ YSF_AAE_dbg = {
   };
 
   private _line = format ["[YSF_AAE] %1", _msg];
-  systemChat _line;
   diag_log _line;
 };
 

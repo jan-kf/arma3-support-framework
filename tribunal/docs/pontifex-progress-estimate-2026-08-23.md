@@ -13,21 +13,20 @@ Vigil 36, Field Utilities 20, and cross-mod composition 13. This convenient
 total is a consequence of the selected inventory surfaces, not a target fitted
 to the result.
 
-## Current estimate after selective ACE cargo closeout
+## Current estimate after Vigil CAS debug-channel closeout
 
 | Measure | Before | After | Reasonable after range | Confidence |
 | --- | ---: | ---: | ---: | --- |
-| Feature-review program | ~93% | ~94% | 90–97% | medium |
-| Permanent automated coverage | ~74% | ~75% | 70–79% | medium |
+| Feature-review program | ~94% | ~95% | 91–98% | medium |
+| Permanent automated coverage | ~75% | ~76% | 71–80% | medium |
 
-The Field Utilities ACE-size override moved from an uncovered source mismatch
-to a bounded accepted policy. Exact Bridge and OPHANIM boxes explicitly retain
-their configured ACE size 2; ordinary ammo boxes retain runtime size -1. Final
-runs `20260825T202333Z-62ab9c1b` and `20260825T202453Z-fd022bea` each passed 4
-server and 2 client feature assertions with zero failures, authentic ACE loaded
-membership/attachment, remote replication and full cleanup. Existing native and
-contact behavior also passed its unchanged regression in
-`20260825T202621Z-3b757834`.
+The CAS auto-engage debug adapter moved from an uncovered hardcoded private gate
+to Vigil's supported setting contract. Unique disabled and enabled tokens always
+entered the server RPT path while client-a independently received the exact
+CORDIS route under false/true `YSF_showDebugMessages` values. Final runs
+`20260825T211810Z-e22f0ec6` and `20260825T211937Z-cc730425` each passed 3 server
+and 3 client feature assertions with zero failures and complete restoration.
+The unchanged full CAS scenario passed in `20260825T212117Z-841a8c18`.
 
 ## Current family estimate
 
@@ -35,10 +34,10 @@ contact behavior also passed its unchanged regression in
 | --- | ---: | ---: | ---: | --- |
 | CORDIS | 10 | ~90% | ~84% | sound/radio presentation, debug observation, ownership migration, client-N/JIP |
 | Advanced Systems | 21 | ~86% | ~67% | APS anti-drone policy/authority, CBR concurrency policy, Iron Dome client-owned threats and audio |
-| Vigil | 36 | ~91% | ~71% | task governor rewrite, recon/homepage decisions, feedback policy, other landing classes/terrain, any future stabilizer rewrite |
+| Vigil | 36 | ~93% | ~74% | task governor rewrite, recon/homepage decisions, radio/chat/curator feedback policy, other landing classes/terrain, any future stabilizer rewrite |
 | Field Utilities | 20 | ~99% | ~81% | FPV authority/effects, broader contact topology, airdrop feedback, extreme/water Fabricator terrain, towing locality breadth |
 | Cross-mod composition | 13 | ~89% | ~80% | true client-B/JIP, ownership migration, remaining partial module reversals, broader replicated-state lifecycle |
-| **Overall** | **100** | **~94%** | **~75%** | weighted combination above |
+| **Overall** | **100** | **~95%** | **~76%** | weighted combination above |
 
 ## Sensitivity and next block
 
@@ -49,9 +48,9 @@ permanent-coverage number is lower-confidence for presentation/audio and
 multi-client behavior because the autonomous client uses `-noSound` and only
 one independently authenticated identity exists.
 
-Selective ACE cargo is accepted only for the exact Bridge and OPHANIM classes,
-pinned ACE 3.21, one dedicated server and one authenticated client. Other
-classes/versions, ownership migration, client-B/JIP, menus, unload and concurrent
-ACE/native requests remain explicit exclusions. The next unblocked source audit
-is Vigil's CAS auto-engage debug channel; the reconnaissance is only a lead, so
-canonical reachability, audience and runtime behavior must precede any decision.
+CAS auto-engage debug is accepted for unconditional server logging and the
+registered false/true client gate on one authenticated client. Visible pixels,
+client-N/JIP, client-originated calls and volume remain excluded. The next
+unblocked source audit is the developer laser harness's conditional shared-debug
+fallback; reconnaissance is only a lead, so canonical registration order and
+runtime function identity must precede any decision.
