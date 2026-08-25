@@ -450,6 +450,14 @@ and local value before calling the original function, then restore both the
 function and initial synchronized setting. This proves routing and gating; it
 does not overclaim visible pixels or multi-client audience correctness.
 
+The shared Vigil debug continuation adds an ownership corollary: a deferred or
+developer-only preInit unit must not conditionally own a symbol used by normal
+product callers. Observing the correct function at final runtime proves the
+current end state, but not freedom from order dependence or transient fallback
+ownership. Permanent coverage therefore joins a static sole-owner assertion
+with exact runtime routing through the registered production setting. It does
+not exercise, accept, or increase coverage for the deferred developer surface.
+
 ## Preliminary review of next feature families
 
 | Priority | Family | Preliminary outcome | Review focus before coverage |

@@ -452,6 +452,12 @@ Full analysis: [`vigil-developer-laser-harness-review.md`](vigil-developer-laser
   target-local gating. Runs `20260825T211810Z-e22f0ec6` and
   `20260825T211937Z-cc730425` each passed 3/0 server and 3/0 client feature
   assertions. Visible pixels, client-N/JIP and rate/volume remain unproven.
+* **Shared production debug wrapper** is **REFINED; ACCEPTED / COVERED** for
+  sole source ownership and the same one-client CORDIS setting route. The
+  deferred laser harness no longer conditionally defines the product-wide
+  symbol; `fn_utils.sqf` owns it and exact shared tokens prove false/true
+  `YSF_showDebugMessages` gating in runs `20260825T221344Z-3814387b` and
+  `20260825T221507Z-12376258`. The harness itself remains deferred and untested.
 
 Full analysis: [`vigil-feedback-review.md`](vigil-feedback-review.md).
 
@@ -735,7 +741,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-transport` | helicopter outbound/LZ/wait/RTB lifecycle |
 | `vigil-transport-pad-ab` | bounded hidden-pad versus no-pad landing characterization |
 | `vigil-cas` | rotary CAS filtering, attack, timer, controls, RTB |
-| `vigil-debug-channel` | CAS auto-engage server logging, registered false/true client presentation gate, restoration |
+| `vigil-debug-channel` | CAS auto-engage and shared production debug server logging, registered false/true client presentation gate, restoration |
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
 | `vigil-fixed-wing-modules` | authentic typed Eden aggregation, nearest points, assigned-curator add, authority/replication/cleanup |
@@ -789,13 +795,12 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Vigil's CAS auto-engage debug mismatch is now authoritatively resolved and
-permanently covered: server logging remains unconditional and client
-presentation uses the registered Vigil setting. The next unblocked source audit
-is the developer laser harness's conditional `YSF_fnc_debugMsg` fallback. The
-reconnaissance suggests possible shared-symbol shadowing, but canonical function
-registration/order and fresh runtime identity must establish whether any product
-path is affected before classification or change. Fabricator's severe slopes, ponds, coastline,
+Vigil's shared production debug route is now authoritatively resolved and
+permanently covered without promoting the developer laser harness: utilities
+are the sole symbol owner, server logging remains unconditional, and client
+presentation uses the registered Vigil setting. The next highest-value surface
+is the already-reviewed Vigil task-governor rewrite; it is a larger authority
+and lifecycle refinement rather than another narrow characterization. Fabricator's severe slopes, ponds, coastline,
 water-recipient, client-B and JIP remain bounded. Explicit nearby supply loading
 and bounded Field contact attachment remain accepted. The Vigil helicopter stabilizer is closed as deferred;
 do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now

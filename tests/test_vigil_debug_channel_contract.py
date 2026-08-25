@@ -20,6 +20,12 @@ class VigilDebugChannelContractTests(unittest.TestCase):
         self.settings = (
             ROOT / "source/visual-support-tablet/addons/VIGIL/functions/global/fn_initSettings.sqf"
         ).read_text()
+        self.utils = (
+            ROOT / "source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf"
+        ).read_text()
+        self.harness = (
+            ROOT / "source/visual-support-tablet/addons/VIGIL/functions/global/fn_fwLaserTest.sqf"
+        ).read_text()
         self.scenario = discover(
             [ROOT / "source/visual-support-tablet/tests/tribunal"]
         )["vigil-debug-channel"]
@@ -30,6 +36,11 @@ class VigilDebugChannelContractTests(unittest.TestCase):
         self.assertIn('["YSF_showDebugMessages", "CHECKBOX"', self.settings)
         self.assertIn('[_msg, "YSF_AAE", "YSF_showDebugMessages"] call YCD_fnc_debugMsg;', self.engage)
 
+    def test_shared_debug_wrapper_has_one_production_owner(self) -> None:
+        self.assertEqual(self.utils.count("YSF_fnc_debugMsg = {"), 1)
+        self.assertIn('[_msg, "YSF", "YSF_showDebugMessages"] call YCD_fnc_debugMsg;', self.utils)
+        self.assertNotIn("YSF_fnc_debugMsg = {", self.harness)
+
     def test_scenario_observes_exact_off_on_route_and_cleanup(self) -> None:
         combined = self.scenario.server_sqf + self.scenario.client_sqf
         for fragment in (
@@ -37,6 +48,8 @@ class VigilDebugChannelContractTests(unittest.TestCase):
             "YCD_fnc_showDebugLine",
             "TRIBUNAL_AAE_DISABLED_",
             "TRIBUNAL_AAE_ENABLED_",
+            "TRIBUNAL_SHARED_DISABLED_",
+            "TRIBUNAL_SHARED_ENABLED_",
             '"YSF_showDebugMessages"',
             "vigil.aaeDebug.clientDisabled",
             "vigil.aaeDebug.clientEnabled",

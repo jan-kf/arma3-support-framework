@@ -111,3 +111,27 @@ acceptance scenarios remain the only product evidence.
 decision required: remove it from the shipped addon, move it into Tribunal/dev
 tooling, or retain it behind an explicit private capability with bounded
 execution and storage. Do not add a permanent scenario for the current surface.
+
+## Accepted adjacent refinement — shared debug ownership
+
+The Opus reconnaissance was used only to identify a possible ownership question.
+Canonical source then established that this preInit harness conditionally
+defined the product-wide `YSF_fnc_debugMsg` symbol before the later preInit
+`fn_utils.sqf` assigned Vigil's real CORDIS-backed wrapper. A fresh pre-change
+run, `20260825T221151Z-2203c468`, proved final runtime behavior was already the
+production route: exact shared-wrapper tokens reached CORDIS under both false
+and true `YSF_showDebugMessages` values. It did not prove or exercise the laser
+harness.
+
+Pontifex removed only the harness's conditional fallback. `fn_utils.sqf` is now
+the sole source owner, so final correctness no longer depends on another preInit
+assignment replacing a developer fallback. Permanent static coverage enforces
+that sole-owner boundary, while `vigil-debug-channel` version 2 proves the shared
+wrapper's exact false/true runtime route. Post-change cold runs
+`20260825T221344Z-3814387b` and `20260825T221507Z-12376258` each passed 3/0
+server and 3/0 client assertions with cleanup.
+
+This is an accepted production-wrapper refinement, not acceptance of the
+destructive diagnostic. The harness remains **REVIEWED / DEFERRED**, and its
+entry, firing behavior, result submission, authorization, and storage remain
+outside permanent coverage.

@@ -1,4 +1,4 @@
-"""Permanent coverage for Vigil's CAS auto-engage debug-channel policy."""
+"""Permanent coverage for Vigil's production debug-channel policy."""
 
 from tribunal.runner.model import Scenario, ScenarioReview
 
@@ -18,15 +18,15 @@ CLIENT_ASSERTIONS = [
 EVIDENCE_CONTRACT = {
     "scenario": {
         "id": "vigil-debug-channel",
-        "version": 1,
-        "feature_family": "pontifex-vigil-cas-auto-engage-debug",
-        "name": "Vigil CAS auto-engage debug-channel policy",
+        "version": 2,
+        "feature_family": "pontifex-vigil-debug-routing",
+        "name": "Vigil production debug-channel policy",
         "definition": {
             "kind": "controlled dedicated-multiplayer debug-routing specification",
             "reference": "source/visual-support-tablet/tests/tribunal/vigil_debug_channel.py",
             "applicability": "Arma 3 2.22 dedicated multiplayer with CORDIS, Vigil, one authenticated client, and the globally synchronized YSF_showDebugMessages setting",
             "participants": {
-                "server": "invokes the exact CAS auto-engage debug adapter, records server RPT tokens, changes/restores the supported setting, and verifies client receipts",
+                "server": "invokes the exact CAS auto-engage adapter and shared production wrapper, records server RPT tokens, changes/restores the supported setting, and verifies client receipts",
                 "client-a": "delegates the exact CORDIS presentation function while independently recording its line, setting key, and target-local gate value",
             },
         },
@@ -42,19 +42,19 @@ EVIDENCE_CONTRACT = {
         {
             "key": "fixture",
             "role": "baseline",
-            "description": "The exact Vigil and CORDIS debug functions exist, client-a has installed a delegating target-local observer, and the obsolete private gate is absent",
+            "description": "The exact Vigil adapters, shared production wrapper, and CORDIS functions exist; client-a has installed a delegating target-local observer; and the obsolete private gate is absent",
             "assertions": [SERVER_ASSERTIONS[0]],
         },
         {
             "key": "supported-setting-disabled",
             "role": "negative_control",
-            "description": "The exact AAE token is still routed and logged while client-a receives the registered setting key with a false presentation gate",
+            "description": "Exact AAE and shared-wrapper tokens are still routed and logged while client-a receives the registered setting key with a false presentation gate",
             "assertions": [CLIENT_ASSERTIONS[0]],
         },
         {
             "key": "supported-setting-enabled",
             "role": "treatment",
-            "description": "The exact AAE token is routed through the same registered setting key with a true target-local presentation gate",
+            "description": "Exact AAE and shared-wrapper tokens are routed through the same registered setting key with a true target-local presentation gate",
             "assertions": [SERVER_ASSERTIONS[1], CLIENT_ASSERTIONS[1]],
         },
         {
@@ -87,9 +87,16 @@ EVIDENCE_CONTRACT = {
             "assertions": SERVER_ASSERTIONS + CLIENT_ASSERTIONS,
             "rationale": "Exact unique AAE tokens are preserved in the server artifact and independently received at client-a through the real CORDIS target function. Matched false/true setting arms record the exact registered key and gate value, while cleanup restores both instrumented function and setting.",
         },
+        {
+            "id": "pontifex:vigil:shared-debug-production-route",
+            "text": "Vigil's shared YSF_fnc_debugMsg production wrapper delegates to CORDIS with the registered YSF_showDebugMessages client-presentation gate in both disabled and enabled states.",
+            "intended_use": "primary_result",
+            "assertions": SERVER_ASSERTIONS + CLIENT_ASSERTIONS,
+            "rationale": "Unique shared-wrapper tokens traverse the same independently observed false/true CORDIS route as the feature-specific adapter; static contract coverage separately fixes sole source ownership in fn_utils.sqf.",
+        },
     ],
     "unresolved": [
-        "Visible systemChat pixels, multiple clients/sides, client-originated AAE calls, network interruption, CBA settings UI interaction, and diagnostic rate/volume remain outside this proof."
+        "Visible systemChat pixels, multiple clients/sides, client-originated calls, network interruption, CBA settings UI interaction, diagnostic rate/volume, and the deferred developer laser harness remain outside this proof."
     ],
 }
 
@@ -107,6 +114,7 @@ waitUntil {
 private _clientReady = (missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_READY", ""]) isEqualTo _token;
 private _fixtureOk = _clientReady
     && {!isNil "YSF_AAE_dbg"}
+    && {!isNil "YSF_fnc_debugMsg"}
     && {!isNil "YCD_fnc_debugMsg"}
     && {!isNil "YCD_fnc_showDebugLine"}
     && {isNil "YSF_AAE_DEBUG"};
@@ -121,13 +129,17 @@ waitUntil {
 };
 private _disabledToken = format ["TRIBUNAL_AAE_DISABLED_%1", _token];
 [_disabledToken] call YSF_AAE_dbg;
+private _sharedDisabledToken = format ["TRIBUNAL_SHARED_DISABLED_%1", _token];
+[_sharedDisabledToken] call YSF_fnc_debugMsg;
 private _disabledDeadline = diag_tickTime + 15;
 waitUntil {
     uiSleep 0.05;
-    (missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_DISABLED_ACK", []]) param [0, ""] isEqualTo _token
+    ((missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_DISABLED_ACK", []]) param [0, ""] isEqualTo _token
+        && {(missionNamespace getVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_DISABLED_ACK", []]) param [0, ""] isEqualTo _token})
         || {diag_tickTime > _disabledDeadline}
 };
 private _disabledAck = missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_DISABLED_ACK", []];
+private _sharedDisabledAck = missionNamespace getVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_DISABLED_ACK", []];
 
 missionNamespace setVariable ["YSF_showDebugMessages", true, true];
 private _enabledReadyDeadline = diag_tickTime + 10;
@@ -138,23 +150,35 @@ waitUntil {
 };
 private _enabledToken = format ["TRIBUNAL_AAE_ENABLED_%1", _token];
 [_enabledToken] call YSF_AAE_dbg;
+private _sharedEnabledToken = format ["TRIBUNAL_SHARED_ENABLED_%1", _token];
+[_sharedEnabledToken] call YSF_fnc_debugMsg;
 private _enabledDeadline = diag_tickTime + 15;
 waitUntil {
     uiSleep 0.05;
-    (missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_ACK", []]) param [0, ""] isEqualTo _token
+    ((missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_ACK", []]) param [0, ""] isEqualTo _token
+        && {(missionNamespace getVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_ENABLED_ACK", []]) param [0, ""] isEqualTo _token})
         || {diag_tickTime > _enabledDeadline}
 };
 private _enabledAck = missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_ACK", []];
+private _sharedEnabledAck = missionNamespace getVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_ENABLED_ACK", []];
 
 private _policyOk = (_disabledAck param [0, ""]) isEqualTo _token
     && {(_disabledAck param [1, ""]) isEqualTo format ["[YSF_AAE] %1", _disabledToken]}
     && {(_disabledAck param [2, ""]) isEqualTo "YSF_showDebugMessages"}
     && {!(_disabledAck param [3, true])}
+    && {(_sharedDisabledAck param [0, ""]) isEqualTo _token}
+    && {(_sharedDisabledAck param [1, ""]) isEqualTo format ["[YSF] %1", _sharedDisabledToken]}
+    && {(_sharedDisabledAck param [2, ""]) isEqualTo "YSF_showDebugMessages"}
+    && {!(_sharedDisabledAck param [3, true])}
     && {(_enabledAck param [0, ""]) isEqualTo _token}
     && {(_enabledAck param [1, ""]) isEqualTo format ["[YSF_AAE] %1", _enabledToken]}
     && {(_enabledAck param [2, ""]) isEqualTo "YSF_showDebugMessages"}
-    && {_enabledAck param [3, false]};
-["vigil.aaeDebug.policy", _policyOk, format ["disabled=%1|enabled=%2|tokens=%3", _disabledAck, _enabledAck, [_disabledToken, _enabledToken]]] call _assert;
+    && {_enabledAck param [3, false]}
+    && {(_sharedEnabledAck param [0, ""]) isEqualTo _token}
+    && {(_sharedEnabledAck param [1, ""]) isEqualTo format ["[YSF] %1", _sharedEnabledToken]}
+    && {(_sharedEnabledAck param [2, ""]) isEqualTo "YSF_showDebugMessages"}
+    && {_sharedEnabledAck param [3, false]};
+["vigil.aaeDebug.policy", _policyOk, format ["aaeDisabled=%1|sharedDisabled=%2|aaeEnabled=%3|sharedEnabled=%4", _disabledAck, _sharedDisabledAck, _enabledAck, _sharedEnabledAck]] call _assert;
 
 missionNamespace setVariable ["YSF_showDebugMessages", _initialSetting, true];
 missionNamespace setVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_CLEANUP", _token, true];
@@ -176,8 +200,10 @@ private _cleanupOk = _clientCleaned
     "TRIBUNAL_VIGIL_AAE_DEBUG_READY",
     "TRIBUNAL_VIGIL_AAE_DEBUG_DISABLED_READY",
     "TRIBUNAL_VIGIL_AAE_DEBUG_DISABLED_ACK",
+    "TRIBUNAL_VIGIL_SHARED_DEBUG_DISABLED_ACK",
     "TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_READY",
     "TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_ACK",
+    "TRIBUNAL_VIGIL_SHARED_DEBUG_ENABLED_ACK",
     "TRIBUNAL_VIGIL_AAE_DEBUG_CLEANUP",
     "TRIBUNAL_VIGIL_AAE_DEBUG_CLEANED"
 ];
@@ -208,6 +234,12 @@ YCD_fnc_showDebugLine = {
     if ((_line find format ["TRIBUNAL_AAE_ENABLED_%1", _scenarioToken]) >= 0) then {
         missionNamespace setVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_ACK", [_scenarioToken, _line, _settingName, _gate], true];
     };
+    if ((_line find format ["TRIBUNAL_SHARED_DISABLED_%1", _scenarioToken]) >= 0) then {
+        missionNamespace setVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_DISABLED_ACK", [_scenarioToken, _line, _settingName, _gate], true];
+    };
+    if ((_line find format ["TRIBUNAL_SHARED_ENABLED_%1", _scenarioToken]) >= 0) then {
+        missionNamespace setVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_ENABLED_ACK", [_scenarioToken, _line, _settingName, _gate], true];
+    };
     [_line, _settingName] call (localNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ORIGINAL", {}]);
 };
 missionNamespace setVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_READY", _token, true];
@@ -223,15 +255,21 @@ missionNamespace setVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_DISABLED_READY", _token,
 private _disabledDeadline = diag_tickTime + 20;
 waitUntil {
     uiSleep 0.05;
-    (missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_DISABLED_ACK", []]) param [0, ""] isEqualTo _token
+    ((missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_DISABLED_ACK", []]) param [0, ""] isEqualTo _token
+        && {(missionNamespace getVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_DISABLED_ACK", []]) param [0, ""] isEqualTo _token})
         || {diag_tickTime > _disabledDeadline}
 };
 private _disabledAck = missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_DISABLED_ACK", []];
+private _sharedDisabledAck = missionNamespace getVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_DISABLED_ACK", []];
 private _disabledOk = _setup && {_disabledSettingReady}
     && {(_disabledAck param [0, ""]) isEqualTo _token}
     && {(_disabledAck param [2, ""]) isEqualTo "YSF_showDebugMessages"}
-    && {!(_disabledAck param [3, true])};
-["vigil.aaeDebug.clientDisabled", _disabledOk, format ["setup=%1|settingReady=%2|ack=%3", _setup, _disabledSettingReady, _disabledAck]] call _assert;
+    && {!(_disabledAck param [3, true])}
+    && {(_sharedDisabledAck param [0, ""]) isEqualTo _token}
+    && {(_sharedDisabledAck param [1, ""]) isEqualTo format ["[YSF] TRIBUNAL_SHARED_DISABLED_%1", _token]}
+    && {(_sharedDisabledAck param [2, ""]) isEqualTo "YSF_showDebugMessages"}
+    && {!(_sharedDisabledAck param [3, true])};
+["vigil.aaeDebug.clientDisabled", _disabledOk, format ["setup=%1|settingReady=%2|aae=%3|shared=%4", _setup, _disabledSettingReady, _disabledAck, _sharedDisabledAck]] call _assert;
 
 private _enabledReadyDeadline = diag_tickTime + 15;
 waitUntil {
@@ -244,15 +282,21 @@ missionNamespace setVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_READY", _token, 
 private _enabledDeadline = diag_tickTime + 20;
 waitUntil {
     uiSleep 0.05;
-    (missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_ACK", []]) param [0, ""] isEqualTo _token
+    ((missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_ACK", []]) param [0, ""] isEqualTo _token
+        && {(missionNamespace getVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_ENABLED_ACK", []]) param [0, ""] isEqualTo _token})
         || {diag_tickTime > _enabledDeadline}
 };
 private _enabledAck = missionNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ENABLED_ACK", []];
+private _sharedEnabledAck = missionNamespace getVariable ["TRIBUNAL_VIGIL_SHARED_DEBUG_ENABLED_ACK", []];
 private _enabledOk = _enabledSettingReady
     && {(_enabledAck param [0, ""]) isEqualTo _token}
     && {(_enabledAck param [2, ""]) isEqualTo "YSF_showDebugMessages"}
-    && {_enabledAck param [3, false]};
-["vigil.aaeDebug.clientEnabled", _enabledOk, format ["settingReady=%1|ack=%2|rows=%3", _enabledSettingReady, _enabledAck, localNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ROWS", []]]] call _assert;
+    && {_enabledAck param [3, false]}
+    && {(_sharedEnabledAck param [0, ""]) isEqualTo _token}
+    && {(_sharedEnabledAck param [1, ""]) isEqualTo format ["[YSF] TRIBUNAL_SHARED_ENABLED_%1", _token]}
+    && {(_sharedEnabledAck param [2, ""]) isEqualTo "YSF_showDebugMessages"}
+    && {_sharedEnabledAck param [3, false]};
+["vigil.aaeDebug.clientEnabled", _enabledOk, format ["settingReady=%1|aae=%2|shared=%3|rows=%4", _enabledSettingReady, _enabledAck, _sharedEnabledAck, localNamespace getVariable ["TRIBUNAL_VIGIL_AAE_DEBUG_ROWS", []]]] call _assert;
 
 private _cleanupDeadline = diag_tickTime + 20;
 waitUntil {
@@ -280,10 +324,10 @@ TRIBUNAL_SCENARIO = Scenario(
     client_expected=frozenset(CLIENT_ASSERTIONS),
     server_sqf=SERVER_SQF,
     client_sqf=CLIENT_SQF,
-    metadata={"product": "visual-support-tablet", "feature": "cas-auto-engage-debug-channel"},
+    metadata={"product": "visual-support-tablet", "feature": "production-debug-channel"},
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="CAS auto-engage diagnostics always use CORDIS server logging and use only Vigil's registered YSF_showDebugMessages setting to gate client presentation.",
+        behavior_contract="CAS auto-engage diagnostics and Vigil's shared production wrapper always use CORDIS server logging and only the registered YSF_showDebugMessages setting to gate client presentation.",
         outcome="REFINE BEFORE PERMANENT COVERAGE",
         rationale="The former private pre-init variable was hardcoded true and bypassed Vigil's supported debug setting. Matched false/true setting arms now prove the exact registered gate at the target client while unique tokens remain in the server evidence artifact.",
         dependencies=("CORDIS debug adapter", "Vigil synchronized debug setting", "one authenticated client"),

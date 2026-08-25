@@ -1,13 +1,3 @@
-if (isNil "YSF_fnc_debugMsg") then {
-  YSF_fnc_debugMsg = {
-    params ["_msg"];
-    diag_log format ["[YSF] %1", _msg];
-    if (hasInterface) then {
-      systemChat format ["[YSF] %1", _msg];
-    };
-  };
-};
-
 YSF_fwLaserTestClassifyMagazine = {
   params ["_mag"];
 

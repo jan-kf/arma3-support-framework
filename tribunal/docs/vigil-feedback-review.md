@@ -150,3 +150,41 @@ findings while retaining 7 generic lemmas and 1 conjecture; this finding is
 packages, 20 runs and 434 artifacts. Post-ingest `systemChat` revision 376770
 retains only upstream documentation; the new project dossier exposes the
 bounded Vigil theorem and exact Tribunal provenance.
+
+## Accepted continuation — shared production debug wrapper ownership
+
+The next unblocked lead was the developer laser harness's conditional definition
+of `YSF_fnc_debugMsg`. Reconnaissance was not treated as evidence. Canonical
+configuration and source showed duplicate preInit ownership: the deferred
+harness installed a direct `diag_log`/local `systemChat` fallback when the name
+was nil, while the later production utilities function assigned the supported
+CORDIS wrapper. Repository callers use that shared name broadly; the harness
+itself has no supported entry and remains deferred.
+
+Version 2 of `vigil-debug-channel` first ran against the unchanged product.
+`20260825T221151Z-2203c468` passed 3/0 server and 3/0 client assertions and
+proved the final runtime identity was already the CORDIS-backed production
+wrapper under matched false/true `YSF_showDebugMessages` arms. The defect was
+therefore latent order-sensitive ownership, not an observed final-runtime
+presentation bypass.
+
+Pontifex removed the fallback definition from the deferred harness. Static
+coverage now requires exactly one production definition in `fn_utils.sqf`, its
+exact CORDIS/registered-setting delegation, and no harness definition. The
+expanded runtime contract invokes both the AAE adapter and shared wrapper with
+unique tokens; client-a delegates the real CORDIS presentation function and
+records exact lines, setting name, and false/true local values. Cold post-change
+runs `20260825T221344Z-3814387b` and `20260825T221507Z-12376258` each passed
+3/0 server and 3/0 client assertions with complete restoration and teardown.
+
+The stable accepted proposition is production debug routing and sole source
+ownership. Visible pixels, other clients/sides, client-originated calls,
+network interruption, settings UI, rate/volume, and every laser-harness behavior
+remain unproven. The finding is Pontifex-specific initialization hygiene, so
+reviewed Sacred Texts distillation adds no generic Arma lemma or conjecture.
+
+The accepted version-2 package was ingested twice with unchanged second-pass
+counts and a passing audit. The final Sacred Texts ledger has 20 packages, 21
+runs and 452 artifacts. Reviewed distillation advanced to 18 findings and 6
+intentionally project-specific results while retaining 7 generic lemmas and 1
+generic conjecture. The post-ingest `systemChat` dossier remains upstream-only.
