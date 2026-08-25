@@ -88,7 +88,19 @@ YFU_fnc_cargoRequestLoad = {
 YOSHI_setObjectLoadHandling = {
 	params ["_object"];
 
-	[_object, -1] call ace_cargo_fnc_setSize;
+	// Field Utilities normally replaces ACE cargo on ammo boxes with its
+	// contact/native-loading paths. Classes that explicitly opt in retain their
+	// configured ACE cargo path alongside those Field Utilities mechanisms.
+	if ((getNumber (configOf _object >> "YFU_preserveAceCargo")) isEqualTo 1) then {
+		private _configuredSize = getNumber (configOf _object >> "ace_cargo_size");
+		// Reapply through ACE's public API even when its config lookup already
+		// reports this size: the first transition initializes the global can-load
+		// state and JIP action, and the second restores the declared value.
+		[_object, -1] call ace_cargo_fnc_setSize;
+		[_object, _configuredSize max 0] call ace_cargo_fnc_setSize;
+	} else {
+		[_object, -1] call ace_cargo_fnc_setSize;
+	};
 
 	_object addEventHandler ["EpeContactStart", {
 		params ["_object1", "_object2", "_selection1", "_selection2", "_force", "_reactForce", "_worldPos"];

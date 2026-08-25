@@ -428,6 +428,17 @@ require the actor to be placed in a measured eligible state and restored after
 observation; native dynamic-child stimuli such as vehicle cargo capability must
 be boundedly settled and independently asserted before absence/presence counts.
 
+The selective ACE cargo review established a related state-initialization rule.
+A config fallback that returns the desired value does not prove that a
+framework's runtime variables, replicated state, or JIP registration were ever
+initialized. Pinned ACE 3.21's size setter exits early when requested size equals
+the fallback, so the accepted product path deliberately transitions away and
+then back through the public API. Permanent proof therefore joins config value,
+runtime getter, eligibility, authentic mutation, exact membership/attachment,
+remote observation and cleanup. It also keeps this ACE-only proposition in an
+isolated frozen fixture; folding it into a native/contact physics scenario made
+unrelated capacity and damage state look causal.
+
 ## Preliminary review of next feature families
 
 | Priority | Family | Preliminary outcome | Review focus before coverage |

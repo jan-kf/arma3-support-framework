@@ -555,6 +555,15 @@ Full analysis: [`field-utilities-bridge-builder-review.md`](field-utilities-brid
 
 ### 4.3 Logistics and object handling
 
+* **Selective ACE cargo preservation** is **REFINED; ACCEPTED / COVERED** for
+  the exact `YFU_Bridge_Box` and `YAS_OPHANIM_box` classes on pinned ACE 3.21.
+  Both explicitly opt in and retain configured size 2 and ACE load eligibility;
+  ordinary ammo boxes retain the existing runtime size -1 policy. Two unchanged
+  cold runs (`20260825T202333Z-62ab9c1b`,
+  `20260825T202453Z-fd022bea`) proved exact authentic ACE returns, membership,
+  attachment, client-a replication and cleanup. Other classes/ACE versions,
+  ownership domains, client-B/JIP, menus, unload and concurrent ACE/native work
+  remain unproven.
 * **Automatic pallet/container handling** makes pallets draggable/carryable and adds a server-installed box contact/attachment hook. **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for a server-owned `B_supplyCrate_F` physically contacting a server-owned `B_Truck_01_transport_F`, with exact treatment/control contact, treatment-only attachment, carrier-state deltas, client-a replication, and controlled no-leak teardown. Final independent runs `20260824T152814Z-a9dd0df5` and `20260824T152942Z-0e8c4083` each passed 9/0 server and 5/0 client feature assertions. Client ownership/migration, broader classes/surfaces, repeated contacts, deletion while attached, client-B, and JIP remain unproven.
 * **Nearby supply actions** expose eligible nearby carriers through ACE. **REFINED; ACCEPTED / COVERED** for server-owned objects and one authenticated client. The server authenticates the requester, revalidates exact class/state/range/capacity, rejects replay and invalid work, requires literal native success plus exact replicated membership, returns an exact private receipt, and cleans up. Fresh run `20260824T135424Z-777de3e6` passed 5/0 server and 4/0 client feature assertions.
 * **Safe-fall/fling/attach helpers** support delivery/packing. **Implemented;
@@ -724,6 +733,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
 | `vigil-fixed-wing-modules` | authentic typed Eden aggregation, nearest points, assigned-curator add, authority/replication/cleanup |
 | `fieldutils-cargo-loading` | nearby authenticated exact-pair vehicle cargo loading, rejection, replication, cleanup |
+| `fieldutils-ace-cargo-policy` | selective configured ACE cargo preservation, ordinary-box negative control, authentic load/replication/cleanup |
 | `fieldutils-fabricator` | server-authoritative atomic orders, catalogue fidelity, refusals, cleanup |
 | `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
 
@@ -761,6 +771,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles and one authenticated client | exact authority/rope identity, matched physical A/B, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; player-owned/migration/client-N remain deferred |
 | Field contact handling | **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for one server-owned crate/truck topology | exact matched physical contact, treatment-only attachment, carrier-state deltas, client-a replication and controlled no-leak teardown; broader classes/localities/lifecycle remain open |
 | Field nearby supply loading | **REFINED; ACCEPTED / COVERED** for server-owned, one-client topology | exact ACE child, authenticated authority, command + membership receipt, negatives, replication and cleanup |
+| Field selective ACE cargo | **REFINED; ACCEPTED / COVERED** for exact Bridge/OPHANIM classes on ACE 3.21 | explicit opt-in preserves size 2 and authentic loadability; ordinary ammo box remains ACE-disabled; other classes/versions/localities and unload/concurrency remain open |
 | Field ID/location markers | **REVIEWED / DEFERRED** | no product caller; global marker authority/lifetime/cleanup undefined |
 | Field airdrop direction/ETA | **REVIEWED / NEEDS PRODUCT DECISION AND EXPERIMENTATION** | direction/audience/ETA interval undefined; current fall formula omits ingress and parachute descent |
 | Helicopter sling helper | **REVIEWED / DEFERRED** | compiled orphan; destructive all-rope stow, non-atomic creation, no supported entry/authority/cleanup |
@@ -770,16 +781,15 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Fabricator mass/carry and bounded terrain placement are now accepted and
-permanently covered for the exact single-result handoff plus flat,
-moderate-gradient and dense-obstruction packed deliveries on one authenticated
-client. Staging remains unfrozen; severe slopes, ponds, coastline,
-water-recipient, client-B and JIP remain bounded. The next recommended unblocked
-investigation is the Field Utilities runtime ACE cargo-size override against its
-configured box classes: reconnaissance suggests a possible mismatch, but that
-must be established from canonical config, pinned ACE behavior and a controlled
-runtime oracle before any change. Explicit nearby supply loading and bounded
-Field contact attachment remain accepted. The Vigil helicopter stabilizer is closed as deferred;
+Field Utilities' runtime ACE cargo-size mismatch is now authoritatively resolved
+and permanently covered for the exact Bridge and OPHANIM opt-ins, while ordinary
+ammo boxes retain the existing ACE-disabled policy. The next unblocked source
+audit is Vigil's CAS auto-engage debug channel: reconnaissance points to an
+always-on global, but its reachability, audience and supported setting surface
+must be established from canonical source and runtime evidence before any
+classification or change. Fabricator's severe slopes, ponds, coastline,
+water-recipient, client-B and JIP remain bounded. Explicit nearby supply loading
+and bounded Field contact attachment remain accepted. The Vigil helicopter stabilizer is closed as deferred;
 do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now
 reviewed but deferred at the product-decision and authority/refinement boundary
 recorded in its review. Do not resume reconnaissance until the product

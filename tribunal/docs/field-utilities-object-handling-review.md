@@ -2,12 +2,12 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED (bounded split contract).** Explicit nearby supply loading remains **REFINED; ACCEPTED / COVERED** for server-owned objects and one authenticated client. Automatic physical-contact attachment is now **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** only for a server-owned `B_supplyCrate_F` contacting a server-owned `B_Truck_01_transport_F`, observed by one remote client.
+**Classification: ACCEPTED / COVERED (bounded three-part contract).** Explicit nearby supply loading remains **REFINED; ACCEPTED / COVERED** for server-owned objects and one authenticated client. Automatic physical-contact attachment remains **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** only for a server-owned `B_supplyCrate_F` contacting a server-owned `B_Truck_01_transport_F`, observed by one remote client. Selective ACE cargo preservation is now **REFINED; ACCEPTED / COVERED** for the exact `YFU_Bridge_Box` and `YAS_OPHANIM_box` classes while ordinary ammo boxes remain ACE-disabled.
 
 ## Scope
 
 In scope: `YFU_initObjectHandling`, `YOSHI_setObjectLoadHandling`,
-`YOSHI_attachToBelow`, `YFU_initLoadingActions`, and
+`YOSHI_attachToBelow`, the selective ACE cargo policy, `YFU_initLoadingActions`, and
 `YOSHI_getSuppliesAction`. Fabrication and towing are excluded.
 
 ## Canonical review questions
@@ -21,8 +21,10 @@ apparently intends boxes landing on a transport surface to attach there.
 
 ### 2. What does it actually do?
 
-Server postInit sets every existing/new `ReammoBox_F` ACE cargo size to -1
-and installs a local `EpeContactStart` handler. On contact it raycasts two
+Server postInit installs a local `EpeContactStart` handler on every existing/new
+`ReammoBox_F`. It normally sets ACE cargo size to -1, but exact classes with
+`YFU_preserveAceCargo = 1` are initialized through ACE's public size API and
+restored to their configured size. On contact it raycasts two
 metres down and attaches the box to the first non-`Static` hit, preserving a
 derived heading. Existing/new pallets are made draggable/carryable.
 
@@ -60,16 +62,17 @@ Partly. The accepted explicit-load proof characterizes server-local `setVehicleC
 ### 7. Which details are fragile or incomplete?
 
 The first downward hit may be an unintended dynamic object. Every ammo box gets
-the hook globally. Nearby scans are broad, the action result is ignored, and
+the hook globally. Unmarked ammo-box classes deliberately remain unavailable to
+ACE cargo, and other opt-ins are unproven. Nearby scans are broad, and
 eligibility can go stale between menu creation and activation. Contact
 attachment can make a cargo-action test appear successful. No detach, deletion,
 full-carrier, concurrent-client, or error lifecycle is defined.
 
 ### 8. Is a better mechanism available and proven?
 
-ACE cargo provides eligibility helpers, but that does not prove the current
-local invocation is correct. No replacement is selected before locality and
-return semantics are measured.
+Pinned ACE 3.21 source and controlled runtime evidence now prove the public
+`setSize`/`getSizeItem` path for the two exact opted-in boxes. Explicit native
+loading remains a separate Field Utilities mechanism.
 
 ### 9. What is the candidate stable contract and causal proof?
 
@@ -94,7 +97,7 @@ Contact EH locality for client-owned boxes; broader surface/class combinations; 
 
 ### 12. What should be promoted into Tribunal?
 
-Existing Tribunal mechanics are sufficient. The accepted cargo result supports one narrow generic `setVehicleCargo` lemma. The contact A/B supports bounded generic observations about a server-local `EpeContactStart` callback and remote `attachedTo` identity; eligibility and automatic-attachment policy remain project-owned.
+Existing Tribunal mechanics are sufficient. The accepted native cargo result supports one narrow generic `setVehicleCargo` lemma. The contact A/B supports bounded generic observations about a server-local `EpeContactStart` callback and remote `attachedTo` identity. The selective ACE result is a Pontifex-plus-pinned-ACE product contract and adds no generic lemma.
 
 ## Acceptance decision
 
@@ -102,7 +105,7 @@ Explicit loading preserved the existing eligible families, 10 m geometry, and co
 
 ## Disposition
 
-**Bounded split disposition.** Explicit nearby supply loading remains REFINED; ACCEPTED / COVERED for the declared topology. Automatic contact attachment is KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED for the declared server-local crate/truck topology.
+**Bounded three-part disposition.** Explicit nearby supply loading remains REFINED; ACCEPTED / COVERED for the declared topology. Automatic contact attachment is KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED for the declared server-local crate/truck topology. Selective ACE cargo preservation is REFINED; ACCEPTED / COVERED for the exact Bridge and OPHANIM boxes on ACE 3.21.
 
 ## Accepted continuation — explicit nearby supply loading
 
@@ -162,3 +165,56 @@ Final autonomous runs `20260824T152814Z-a9dd0df5` and `20260824T152942Z-0e8c4083
 The experiment also corrected an important false-PASS hazard. Raw final damage differed because the treatment truck already had `0.211829` damage at the pre-impact baseline while the control began at zero; both damage deltas were zero. A preliminary raw-final-damage comparison therefore could not support a collision-harm or retirement conclusion. A later repeat also showed that `detach` while the live handler remained in contact could immediately reattach; deterministic harness cleanup now freezes the crate and removes the handler first, while live-contact detach remains explicitly unclaimed. A trial bottom-offset refinement and a trial hook retirement were withdrawn after they failed to change that pre-existing asymmetry. No Pontifex product source change is retained.
 
 Sacred Texts warns, through a community note rather than an official guarantee, that attaching PhysX containers can destabilize vehicles. That warning was not reproduced for this exact pair and duration, but the accepted result does not generalize beyond it. `disableCollisionWith` was rejected because the official documentation says it does not disable collision between PhysX objects. `setPhysicsCollisionFlag` was rejected as too broad and lacking a verified restoration/getter contract. Existing Tribunal exact-identity, physical-stimulus, causal-pair, locality, replication, delta, and cleanup mechanics were sufficient; no generic Tribunal runtime code was added. Evidence package `20260824T152942Z-0e8c4083` was ingested twice with unchanged counts (5 packages, 5 runs, 67 assertions, 33 observations, 8 proofs, 10 judgments), and the knowledge audit passed. Reviewed distillation added two build-scoped generic Sacred Texts lemmas: server-local `EpeContactStart` exact-contact observation and server-local `attachTo` exact client replication with bounded four-second stability. Distillation advanced to 14 reviewed findings, 6 lemmas, 6 proofs, and 7 propositions.
+
+## Accepted continuation — selective ACE cargo preservation
+
+The next-best unblocked candidate was the runtime ACE cargo-size override. The
+Opus reconnaissance identified a possible contradiction but was not treated as
+evidence. Canonical config declares `ace_cargo_size = 2` and
+`ace_cargo_canLoad = 1` on both `YFU_Bridge_Box` and `YAS_OPHANIM_box`; both are
+`ReammoBox_F` descendants, so the prior server hook replaced that declaration
+with runtime size -1. Pinned ACE 3.21 source established that negative size
+disables cargo interactions, that runtime variables precede config lookup, and
+that `setSize` exits early when the requested size already equals the config
+fallback. A controlled Live transition then reproduced runtime -1/ineligible,
+size-2 restoration/eligibility, and re-disable behavior on both exact classes.
+
+Pontifex now uses an explicit `YFU_preserveAceCargo = 1` class marker on only
+the Bridge and OPHANIM boxes. The server hook transitions each opted-in object
+through ACE size -1 and then its configured size. The first transition avoids
+ACE's equal-size early exit; the second initializes ACE's globally replicated
+can-load state and JIP action at the declared value. Ordinary ammo boxes retain
+the previous size -1 policy. This is an additive ACE path, not a replacement or
+claim about native vehicle cargo.
+
+Permanent scenario `fieldutils-ace-cargo-policy` proves config/runtime parity,
+ACE eligibility, an ordinary-box negative control, literal authentic ACE load
+returns, exact loaded membership and attachment on the server, replicated size,
+eligibility, membership and attachment on client-a, server ownership, and exact
+cleanup. Unchanged sealed cold runs `20260825T202333Z-62ab9c1b` and
+`20260825T202453Z-fd022bea` each passed 4/0 server and 2/0 client feature
+assertions. Existing scenario `fieldutils-cargo-loading` then passed its full
+native/contact regression in `20260825T202621Z-3b757834`.
+
+Two calibration failures prevented broader false claims. Runs
+`20260825T201455Z-8cc6488f` and `20260825T201903Z-fca893e1` showed that a live
+native-capacity result was fixture-dependent and outside this proposition; it
+was removed rather than converted into a product assertion. They also exposed
+physics damage in active crate fixtures, so the ACE-only specification now
+freezes and damage-protects its objects while retaining authentic ACE mutation.
+An earlier config-only attempt failed because size lookup already returned 2
+and ACE's early exit did not initialize runtime can-load state; that directly
+motivated the two-step public-API transition.
+
+Other opted-in classes, other ACE versions and carriers, client-owned objects,
+ownership migration, client-B/JIP, menus, unload placement, concurrency and
+interactions between simultaneous ACE/native requests remain outside the proof.
+The evidence is product-specific; no generic Tribunal runtime facility or
+Sacred Texts lemma is warranted. The accepted package was ingested twice with
+unchanged second-pass counts; the knowledge audit passed. Reviewed distillation
+advanced to 16 findings while retaining 7 generic lemmas and 1 conjecture: this
+finding is `PROJECT-SPECIFIC ONLY`, so it added zero generic Sacred Texts notes.
+The final ledger contains 18 packages, 19 runs and 416 artifacts. Post-ingest
+`setVariable` revision 369355 and `getVariable` revision 369203 dossiers retained
+only their upstream material, while the new project dossier exposes the bounded
+Bridge/OPHANIM theorem and exact Tribunal provenance.

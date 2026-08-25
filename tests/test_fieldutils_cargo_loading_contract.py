@@ -14,11 +14,19 @@ from tribunal.discovery import discover  # noqa: E402
 
 class FieldUtilitiesCargoLoadingContractTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.scenario = discover(
+        discovered = discover(
             [ROOT / "source" / "field-utilities" / "tests" / "tribunal"]
-        )["fieldutils-cargo-loading"]
+        )
+        self.scenario = discovered["fieldutils-cargo-loading"]
+        self.policy_scenario = discovered["fieldutils-ace-cargo-policy"]
         self.product = (
             ROOT / "source/field-utilities/addons/FieldUtils/functions/global/fn_objectHandling.sqf"
+        ).read_text()
+        self.field_config = (
+            ROOT / "source/field-utilities/addons/FieldUtils/config.cpp"
+        ).read_text()
+        self.advanced_config = (
+            ROOT / "source/advanced-systems/addons/AdvSys/config.cpp"
         ).read_text()
 
     def test_registered_child_routes_to_authenticated_server_request(self) -> None:
@@ -44,6 +52,44 @@ class FieldUtilitiesCargoLoadingContractTests(unittest.TestCase):
             '"capacity"',
         ):
             self.assertIn(fragment, self.product)
+
+    def test_pontifex_boxes_explicitly_preserve_their_ace_cargo_contract(self) -> None:
+        self.assertIn('configOf _object >> "YFU_preserveAceCargo"', self.product)
+        self.assertGreaterEqual(self.product.count("ace_cargo_fnc_setSize"), 3)
+        for config, class_name in (
+            (self.field_config, "class YFU_Bridge_Box"),
+            (self.advanced_config, "class YAS_OPHANIM_box"),
+        ):
+            body = config[config.index(class_name):]
+            self.assertIn("YFU_preserveAceCargo = 1;", body[:1500])
+            self.assertIn("ace_cargo_size = 2;", body[:1500])
+
+    def test_selective_policy_scenario_uses_exact_runtime_and_load_evidence(self) -> None:
+        combined = self.policy_scenario.server_sqf + self.policy_scenario.client_sqf
+        for fragment in (
+            "YFU_Bridge_Box",
+            "YAS_OPHANIM_box",
+            "B_supplyCrate_F",
+            "ace_cargo_fnc_getSizeItem",
+            "ace_cargo_fnc_canLoadItemIn",
+            "ace_cargo_fnc_loadItem",
+            'getVariable ["ace_cargo_loaded", []]',
+            "field.aceCargo.selectivePolicy",
+            "field.aceCargo.clientLoad",
+            "field.aceCargo.cleanup",
+        ):
+            self.assertIn(fragment, combined)
+
+        declared = {
+            assertion
+            for arm in self.policy_scenario.evidence_contract["arms"]
+            for assertion in arm["assertions"]
+        }
+        expected = (
+            set(self.policy_scenario.server_expected)
+            | set(self.policy_scenario.client_expected)
+        )
+        self.assertEqual(declared, expected)
 
     def test_scenario_uses_exact_action_receipt_negatives_and_cleanup(self) -> None:
         combined = self.scenario.server_sqf + self.scenario.client_sqf

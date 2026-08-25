@@ -173,6 +173,7 @@ class CfgVehicles {
 		};
         transportAmmo=0;
 		supplyRadius=0;
+		YFU_preserveAceCargo = 1;
         ace_cargo_size = 2; 
 		ace_cargo_canLoad = 1;  // 1 to allow loading into vehicles, 0 to disallow
 		ace_dragging_canDrag = 1;  // 1 to enable dragging, 0 to disable
