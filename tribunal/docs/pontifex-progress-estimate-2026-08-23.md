@@ -13,20 +13,21 @@ Vigil 36, Field Utilities 20, and cross-mod composition 13. This convenient
 total is a consequence of the selected inventory surfaces, not a target fitted
 to the result.
 
-## Current estimate after Vigil governor-authority closeout
+## Current estimate after Vigil rotary-CAS physical-oracle closeout
 
 | Measure | Before | After | Reasonable after range | Confidence |
 | --- | ---: | ---: | ---: | --- |
 | Feature-review program | ~97% | ~97% | 94–99% | medium |
-| Permanent automated coverage | ~79% | ~81% | 76–85% | medium |
+| Permanent automated coverage | ~81% | ~82% | 77–86% | medium |
 
-The already reviewed governor authority boundary moved from client-authored
-executable task maps to authenticated declarative requests and server-built
-registered handlers. Final runs `20260826T005042Z-308c99c8` and
-`20260826T005206Z-0fb17055` each passed 9 server and 2 client feature assertions
-with zero failures and complete restoration. Because the feature review was
-already complete, review completion stays about 97%; permanent coverage rises
-about two weighted points.
+The already reviewed CAS lifecycle now has a stable physical-impact oracle:
+independently observed exact fire must correlate with hostile-local `HitPart` or
+an exact source/ammunition `HandleDamage` callback, while every equivalent
+control channel remains empty. Final run `20260826T021218Z-72eb945f` passed all
+17 server and 6 client feature assertions with zero failures and complete
+cleanup. Because the feature review and most CAS lifecycle coverage already
+existed, review completion stays about 97%; closing this last oracle gap adds
+about one weighted coverage point.
 
 ## Current family estimate
 
@@ -34,10 +35,10 @@ about two weighted points.
 | --- | ---: | ---: | ---: | --- |
 | CORDIS | 10 | ~90% | ~84% | sound/radio presentation, debug observation, ownership migration, client-N/JIP |
 | Advanced Systems | 21 | ~86% | ~67% | APS anti-drone policy/authority, CBR concurrency policy, Iron Dome client-owned threats and audio |
-| Vigil | 36 | ~99% | ~89% | recon/homepage decisions, radio/chat/curator feedback policy, CAS physical-effect oracle, other landing classes/terrain, any future stabilizer rewrite |
+| Vigil | 36 | ~99% | ~92% | recon/homepage decisions, radio/chat/curator feedback policy, other landing classes/terrain, any future stabilizer rewrite |
 | Field Utilities | 20 | ~99% | ~81% | FPV authority/effects, broader contact topology, airdrop feedback, extreme/water Fabricator terrain, towing locality breadth |
 | Cross-mod composition | 13 | ~89% | ~80% | true client-B/JIP, ownership migration, remaining partial module reversals, broader replicated-state lifecycle |
-| **Overall** | **100** | **~97%** | **~81%** | weighted combination above |
+| **Overall** | **100** | **~97%** | **~82%** | weighted combination above |
 
 ## Sensitivity and next block
 
@@ -48,10 +49,10 @@ permanent-coverage number is lower-confidence for presentation/audio and
 multi-client behavior because the autonomous client uses `-noSound` and only
 one independently authenticated identity exists.
 
-The governor lifecycle and one-client declarative authority boundary are
-accepted. Cancellation eligibility, retry/invalid-result policy, durable
-terminal history, headless/client-owned vehicles, ownership migration, client-N
-and JIP remain excluded. The next highest-value unblocked investigation is the
-separate CAS combat-effect oracle, which again observed correlated fire and a
-target-local damage event with zero net damage; it does not reduce the accepted
-governor scope and is not silently counted as a passing regression.
+The governor lifecycle, one-client declarative authority boundary, and bounded
+rotary-CAS physical-impact oracle are accepted. CAS does not claim material
+damage, penetration, kill, sensor/reveal generality, other target or aircraft
+classes, client-B/JIP, or poor-network behavior. The next highest-value
+unblocked investigation is the Fabricator pond/coastline/water-recipient
+placement boundary; it can vary water geometry while retaining the accepted
+single-delivery authority, contents, settlement, and cleanup contract.

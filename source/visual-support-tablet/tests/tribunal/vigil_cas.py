@@ -4,6 +4,86 @@ from tribunal.mission.aviation import aviation_observer_sqf
 from tribunal.mission.combat import combat_observer_sqf
 from tribunal.runner.model import Scenario, ScenarioReview
 
+EVIDENCE_CONTRACT = {
+    "scenario": {
+        "id": "vigil-cas",
+        "version": 2,
+        "feature_family": "pontifex-vigil-rotary-cas",
+        "name": "Vigil bounded rotary-wing CAS",
+        "definition": {
+            "kind": "dedicated-multiplayer product specification",
+            "reference": "source/visual-support-tablet/tests/tribunal/vigil_cas.py",
+            "applicability": "Arma 3 2.22 dedicated multiplayer with CBA, ACE and Vigil; server-local B_Heli_Attack_01_F; one authenticated WEST client; clear Stratis corridor",
+            "participants": {
+                "server": "owns aircraft, crew/group, target selection, task lifecycle, fire/impact observation, controls and cleanup",
+                "client-a": "submits the declarative CAS request and observes replicated bounded state",
+            },
+        },
+    },
+    "knowledge_subject": {
+        "key": "pontifex:vigil:rotary-cas",
+        "label": "Vigil rotary-wing close air support",
+        "kind": "product_behavior",
+        "aliases": ["Vigil CAS"],
+        "biki_context": ["biki-page:9480", "biki-page:1595", "biki-page:17424"],
+    },
+    "arms": [
+        {
+            "key": "fixture",
+            "role": "baseline",
+            "description": "One authenticated client observes a server-local armed helicopter and exact hostile/friendly/neutral/off-area target identities",
+            "assertions": ["vigil.cas.fixture", "vigil.cas.locality", "vigil.cas.client.locality", "vigil.cas.client.eligible"],
+        },
+        {
+            "key": "accepted_cas_task",
+            "role": "treatment",
+            "description": "The real client CAS request drives transit, hostile-only fire and attributable target-local impact, bounded disengagement, return and landing",
+            "assertions": ["vigil.cas.dispatch.accepted", "vigil.cas.transit", "vigil.cas.onStation", "vigil.cas.attack.fired", "vigil.cas.attack.correlated", "vigil.cas.attack.effect", "vigil.cas.timer", "vigil.cas.disengaged", "vigil.cas.rtb", "vigil.cas.home", "vigil.cas.client.dispatch", "vigil.cas.client.onStation", "vigil.cas.client.home"],
+        },
+        {
+            "key": "negative_controls",
+            "role": "negative_control",
+            "description": "Duplicate, friendly, neutral, off-area, no-target repeat, and no-ammunition stimuli reach their boundaries without fabricated or broadened attack success",
+            "assertions": ["vigil.cas.dispatch.duplicateRejected", "vigil.cas.target.controls", "vigil.cas.noTarget", "vigil.cas.noAmmo", "vigil.cas.client.noTarget"],
+        },
+        {
+            "key": "closeout",
+            "role": "treatment",
+            "description": "The task manager, combat observers, aircraft and disposable fixtures close cleanly",
+            "assertions": ["vigil.cas.cleanup"],
+        },
+    ],
+    "causal_relationships": [
+        {
+            "key": "hostile-task-v-negative-controls",
+            "relation": "CAUSAL_PAIR_WITH",
+            "source": "accepted_cas_task",
+            "target": "negative_controls",
+            "controlled_dimensions": ["same CAS aircraft", "same server authority", "same observer window", "same operating area", "target eligibility or task precondition is the varied dimension"],
+        },
+    ],
+    "propositions": [
+        {
+            "id": "pontifex:vigil:rotary-cas-bounded-lifecycle",
+            "text": "Under the tested dedicated-multiplayer conditions, Vigil accepts one authenticated rotary-CAS request, physically reaches the requested area, produces attributable fire and target-local impact against an eligible hostile ground target, stops initiating attacks after the bounded active window, returns and lands at home, and closes its task state.",
+            "intended_use": "primary_result",
+            "assertions": ["vigil.cas.dispatch.accepted", "vigil.cas.transit", "vigil.cas.onStation", "vigil.cas.attack.fired", "vigil.cas.attack.correlated", "vigil.cas.attack.effect", "vigil.cas.timer", "vigil.cas.disengaged", "vigil.cas.rtb", "vigil.cas.home", "vigil.cas.cleanup", "vigil.cas.client.dispatch", "vigil.cas.client.onStation", "vigil.cas.client.home"],
+            "rationale": "The real client request is correlated with exact aircraft and target identities, independent trajectory/fire/impact observations, bounded timing, replicated client state, physical landing and cleanup.",
+        },
+        {
+            "id": "pontifex:vigil:rotary-cas-negative-boundaries",
+            "text": "Under the tested conditions, Vigil does not broaden the accepted rotary-CAS task to friendly, neutral or off-area targets, rejects an active duplicate and an aircraft without lethal ammunition, and a no-target repeat fabricates no fire or engagement record.",
+            "intended_use": "supporting_result",
+            "assertions": ["vigil.cas.dispatch.duplicateRejected", "vigil.cas.target.controls", "vigil.cas.noTarget", "vigil.cas.noAmmo", "vigil.cas.client.noTarget"],
+            "rationale": "Each negative reaches an independently observed request, target, or repeat boundary; exact control-target ledger, HitPart, damage-callback and aggregate-damage absence prevents silent stimulus failure from passing.",
+        },
+    ],
+    "unresolved": [
+        "No material damage increase or kill is claimed for the tested MBT; impact is the exact target-local ACE_20mm_HE callback correlated to independent fire and absent from controls.",
+        "Sensor/reveal mechanics, other aircraft and target classes, guided weapons, client-B/JIP, ownership migration, poor networks and sound presentation remain outside this proof.",
+    ],
+}
+
 
 TRIBUNAL_SCENARIO = Scenario(
     identifier="vigil-cas",
@@ -68,6 +148,7 @@ waitUntil {
 private _pilot = driver _aircraft;
 private _aircraftId = netId _aircraft;
 private _hostileId = netId _hostile;
+private _hostileHitpointsBefore = getAllHitPointsDamage _hostile;
 private _friendlyId = netId _friendly;
 private _neutralId = netId _neutral;
 private _outsideId = netId _outside;
@@ -142,7 +223,30 @@ private _ledger = missionNamespace getVariable ["YSF_CAS_EngagementEvents", []];
 private _hostileFires = _fires select {(_x getOrDefault ["source", ""]) isEqualTo _aircraftId};
 private _hostileLedger = _ledger select {(_x param [1, ""]) isEqualTo _aircraftId && {(_x param [2, ""]) isEqualTo _hostileId}};
 private _hostileHits = _hits select {(_x param [1, ""]) isEqualTo _hostileId};
+private _hostileDamageEvents = _damageEvents select {
+    (_x param [1, ""]) isEqualTo _hostileId
+        && {(_x param [4, ""]) isEqualTo _aircraftId}
+        && {(_x param [5, ""]) isEqualTo "ACE_20mm_HE"}
+        && {_x param [8, false]}
+};
+private _hostileHitpointsAfter = getAllHitPointsDamage _hostile;
+private _changedHitpoints = [];
+private _hitpointNames = _hostileHitpointsAfter param [0, []];
+private _beforeDamage = _hostileHitpointsBefore param [2, []];
+private _afterDamage = _hostileHitpointsAfter param [2, []];
+for "_index" from 0 to ((count _afterDamage) - 1) do {
+    private _before = _beforeDamage param [_index, 0];
+    private _after = _afterDamage param [_index, 0];
+    if (_after > _before) then {
+        _changedHitpoints pushBack [_hitpointNames param [_index, ""], _before, _after];
+    };
+};
 private _controlHits = _hits select {(_x param [1, ""]) in [_friendlyId, _neutralId, _outsideId]};
+private _controlDamageEvents = _damageEvents select {
+    (_x param [1, ""]) in [_friendlyId, _neutralId, _outsideId]
+        && {(_x param [4, ""]) isEqualTo _aircraftId}
+        && {(_x param [5, ""]) isEqualTo "ACE_20mm_HE"}
+};
 private _controlLedger = _ledger select {(_x param [2, ""]) in [_friendlyId, _neutralId, _outsideId]};
 private _ammoAfter = [_aircraft, "ACE_gatling_20mm_Comanche"] call YSF_AAE_weaponAmmoCount;
 private _weaponOk = _hostileFires findIf {
@@ -151,10 +255,10 @@ private _weaponOk = _hostileFires findIf {
     private _simulation = toLower getText (configFile >> "CfgAmmo" >> _ammo >> "simulation");
     _weapon isEqualTo "ACE_gatling_20mm_Comanche" && {"shotbullet" in _simulation}
 } >= 0;
-["vigil.cas.target.controls", count _controlLedger isEqualTo 0 && {count _controlHits isEqualTo 0} && {damage _friendly isEqualTo 0} && {damage _neutral isEqualTo 0} && {damage _outside isEqualTo 0}, format ["hostile=%1|controlLedger=%2|controlHits=%3|damage=%4", _hostileId, _controlLedger, _controlHits, [damage _friendly, damage _neutral, damage _outside]]] call _assert;
+["vigil.cas.target.controls", count _controlLedger isEqualTo 0 && {count _controlHits isEqualTo 0} && {count _controlDamageEvents isEqualTo 0} && {damage _friendly isEqualTo 0} && {damage _neutral isEqualTo 0} && {damage _outside isEqualTo 0}, format ["hostile=%1|controlLedger=%2|controlHits=%3|controlDamageEvents=%4|damage=%5", _hostileId, _controlLedger, _controlHits, _controlDamageEvents, [damage _friendly, damage _neutral, damage _outside]]] call _assert;
 ["vigil.cas.attack.fired", count _hostileFires > 0 && {_weaponOk} && {_ammoAfter < _initialAmmo}, format ["aircraft=%1|fires=%2|ammo=%3:%4", _aircraftId, _hostileFires, _initialAmmo, _ammoAfter]] call _assert;
 ["vigil.cas.attack.correlated", count _hostileLedger > 0, format ["aircraft=%1|hostile=%2|ledger=%3", _aircraftId, _hostileId, _hostileLedger]] call _assert;
-["vigil.cas.attack.effect", count _hostileHits > 0, format ["hostile=%1|hits=%2|damageEvents=%3|damage=%4", _hostileId, _hostileHits, _damageEvents, damage _hostile]] call _assert;
+["vigil.cas.attack.effect", count _hostileHits > 0 || {count _hostileDamageEvents > 0}, format ["hostile=%1|hits=%2|exactDamageEvents=%3|damage=%4|changedHitpoints=%5", _hostileId, _hostileHits, _hostileDamageEvents, damage _hostile, _changedHitpoints]] call _assert;
 
 private _returnDeadline = diag_tickTime + 60;
 waitUntil {
@@ -306,6 +410,7 @@ private _noTargetOk = (_noTargetSignal param [0, ""]) isEqualTo _token
         "ui_path": "YOSHI_taskCAS_submit",
         "representative_weapon": "ACE_gatling_20mm_Comanche / ACE_20mm_HE",
     },
+    evidence_contract=EVIDENCE_CONTRACT,
     review=ScenarioReview(
         test_type="specification",
         behavior_contract="A valid selected rotary CAS helicopter accepts one area task, physically reaches the operating region, attacks only a valid hostile ground target with a real appropriate weapon and attributable impact, remains active for the requested bounded duration, disengages, physically returns and settles at home, and can repeat the lifecycle without fabricating attacks when no target exists.",

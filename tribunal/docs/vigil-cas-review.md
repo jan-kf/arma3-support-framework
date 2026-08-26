@@ -1,6 +1,6 @@
 # Vigil rotary-wing CAS review
 
-Review outcome: **REFINE BEFORE PERMANENT COVERAGE**.
+Review outcome: **REFINED; ACCEPTED / COVERED** for the tested one-client, server-owned rotary-CAS topology.
 
 ## Behavioral contract
 
@@ -106,7 +106,7 @@ deadline prevents indefinite dispatch/on-station waits.
 | sensor/reveal dependency | NEEDS EXPERIMENTATION | used but not frozen as contract |
 | SAD combat waypoint | REWRITE BEFORE PERMANENT COVERAGE | safe LOITER plus explicit targets |
 | gun/guided weapon selection | REFINE BEFORE PERMANENT COVERAGE | ammunition and real config envelopes |
-| Fired/target evidence | REFINE BEFORE PERMANENT COVERAGE | ledger created only from matching Fired |
+| Fired/target evidence | REFINED; ACCEPTED / COVERED | exact Fired plus target-local HitPart or exact source/ammunition HandleDamage callback; controls require event absence |
 | timer authority | KEEP AS-IS AND SPEC-TEST | server time, bounded deadline |
 | duplicate/invalid work | REFINE BEFORE PERMANENT COVERAGE | reject duplicate, crew, lethal-ammo failures |
 | combat disengagement/RTB | REFINE BEFORE PERMANENT COVERAGE | proven reboot + MOVE through transport RTB |
@@ -155,8 +155,11 @@ wrong shooter, stale prior fire, a missile/cannon miss, timer-only return,
 temporary homeward travel, or control-target collateral. Each observer window
 is tokenized and records server-local ownership. The attack requires matching
 aircraft fire, an appropriate configured weapon/ammo, ammunition decrement,
-the product ledger's exact aircraft/hostile pair, and HitPart on that hostile.
-Controls require no targeting ledger, no HitPart, and zero damage. Return
+the product ledger's exact aircraft/hostile pair, and either exact hostile
+HitPart or a target-local `HandleDamage` callback naming that aircraft and
+`ACE_20mm_HE`. The callback proves attributable impact, not material damage or
+a kill. Controls require no targeting ledger, no HitPart, no matching
+source/ammunition damage callback, and zero aggregate damage. Return
 requires a sampled physical trajectory, approach, landing, settling and home
 state; cleanup requires an idle manager and deleted fixtures.
 
@@ -166,3 +169,52 @@ request and active-task rejection guard duplicate delivery. Future client-b
 coverage should prove its UI buffer remains independent while both clients
 observe the same aircraft/combat state. Poor-network profiles and fixed-wing
 weapons are deferred rather than inferred from this local private-network run.
+
+## Accepted continuation: physical-impact oracle
+
+The inventory selected this as the highest-value unblocked gap after the
+Vigil governor-authority closeout. Sacred Texts were consulted before changing
+the scenario. Canonical `fireAtTarget` says the command remotely forces a
+vehicle to fire and returns whether it fired; canonical `damage` documents
+aggregate object damage from 0 to 1, while an attributed community report warns
+that vehicle damage can remain zero and recommends hitpoint queries. Canonical
+`getAllHitPointsDamage` supplies ordered hitpoint, selection, and damage arrays.
+`HandleDamage` and `HitPart` had no standalone subject dossiers, so no
+undocumented event-handler guarantee was assumed.
+
+The pre-existing MBT scenario was instrumented without changing its pass
+predicate. Diagnostic run `20260826T015335Z-5cde2740` reached combat before the
+old 360-second harness timeout: exact aircraft fire and two target-local
+`HandleDamage` callbacks named `ACE_20mm_HE`, but `HitPart`, aggregate damage,
+and every hitpoint delta were absent. A one-variable target-class probe changed
+only `O_MBT_02_cannon_F` to `O_MRAP_02_F`; run
+`20260826T020140Z-75cfb96b` reproduced the pattern before timing out. Neither
+timed-out run is accepted evidence. The target-class hypothesis was rejected
+and the permanent scenario was restored to the MBT.
+
+The stable oracle now accepts exact hostile `HitPart` or an exact target-local
+damage callback whose target, source aircraft, and `ACE_20mm_HE` identity match
+the independently observed fire. Friendly, neutral, and off-area controls
+require absence from the ledger, `HitPart`, and that callback channel, plus zero
+aggregate damage. Hitpoint snapshots remain diagnostic. This proves
+attributable impact, not material damage, penetration, destruction, or kill.
+
+Cold autonomous run `20260826T021218Z-72eb945f` used the established 420-second
+full-lifecycle budget and completed with all 17 server and 6 client feature
+assertions passing. It observed the exact hostile callback and no `HitPart` or
+material/hitpoint damage; all control channels stayed empty, the no-target
+repeat produced no fire or ledger event, no-ammunition failed closed, both
+lifecycles returned home, and cleanup completed.
+
+Evidence Contract v1 scenario `vigil-cas@2` emitted accepted package
+`urn:tribunal:evidence-package:20260826T021218Z-72eb945f:1` with payload SHA-256
+`fa06bd98986abd084968058bbf7eb524814cda74a831efb36dd99eaf408e82ef`.
+Two identical ingestions left counts unchanged on the second pass. The audit
+accepted every check. Sacred Texts now presents the bounded lifecycle as a
+tested-build theorem and the negative boundaries as a tested-build lemma beside
+canonical BIKI and community material.
+
+Reviewed distillation classifies both propositions as project-specific. The
+callback-without-HitPart/without-damage observation is ambiguous and requires a
+dedicated handler, ammunition, penetration, and target-class matrix before any
+generic Arma or ACE proposition is warranted. No generic claim was added.

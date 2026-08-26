@@ -362,8 +362,11 @@ Utilities for fixed-wing airdrop.
   **Implemented; COVERED** by `vigil-cas`.
 * **Target/combat selection** filters hostile ground targets to area, excludes
   friendly/neutral/outside controls, selects real ammunition, and correlates
-  fire/projectile/impact plus no-target/no-ammo controls. **Implemented;
-  COVERED.** Sensor/reveal dependence is **REVIEWED / NEEDS EXPERIMENTATION**.
+  exact fire with hostile-local `HitPart` or an exact source/ammunition
+  `HandleDamage` callback; controls cover every channel plus no-target and
+  no-ammunition outcomes. **REFINED; ACCEPTED / COVERED.** This proves impact,
+  not material damage or kill. Sensor/reveal dependence is **REVIEWED / NEEDS
+  EXPERIMENTATION**.
 * **Combat RTB reset** (reboot plus fresh MOVE) is an evidence-backed engine
   characterization. **COVERED / CHARACTERIZED.**
 
@@ -774,6 +777,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | VLS target handshake | **REVIEWED / CHARACTERIZED** | four fresh physical A/B pairs prove the combined knowledge step is required; individual calls remain unisolated |
 | Transport hidden-pad landing | **KEEP + CHARACTERIZE ENGINE REQUIREMENT; ACCEPTED / COVERED** | three independent server-local airborne A/B proofs: exact hidden-pad treatment settles within 25 m; matched no-pad control remains airborne beyond 104 m at 90 seconds; scope is one class/corridor/approach |
 | Developer laser harness | **REVIEWED / DEFERRED** | unreachable preInit diagnostic; destructive owner-routed run and unbounded client-supplied result store lack a product boundary |
+| Vigil CAS physical-effect oracle | **REFINED; ACCEPTED / COVERED** | exact hostile target/source/`ACE_20mm_HE` callback is correlated with independent fire and absent from controls; no material damage or kill is claimed; a generic handler/ammunition/penetration matrix remains separate characterization |
 | Vigil CAS auto-engage debug | **REFINED; ACCEPTED / COVERED** for one-client setting-gate topology | unique exact tokens in server RPT plus delegated client false/true receipts through registered `YSF_showDebugMessages`; pixels, client-N/JIP and rate/volume excluded |
 | APS anti-drone | **REVIEWED / DEFERRED** | threat/side/operator policy is undecided; resource authority and destructive cleanup require refinement before coverage |
 | CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
@@ -799,22 +803,20 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Vigil's task governor is now refined and permanently covered for the one-client
-declarative authority boundary and server-owned lifecycle. The next highest-value
-unblocked investigation is the separately reproduced CAS physical-effect oracle:
-correlated fire and a target-local damage event currently coexist with zero net
-damage. Treat that as a consumer-oracle diagnosis, not a reason to reopen the
-accepted governor. Fabricator's severe slopes, ponds, coastline,
-water-recipient, client-B and JIP remain bounded. Explicit nearby supply loading
-and bounded Field contact attachment remain accepted. The Vigil helicopter stabilizer is closed as deferred;
-do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now
-reviewed but deferred at the product-decision and authority/refinement boundary
-recorded in its review. Do not resume reconnaissance until the product
-decisions in `vigil-fixed-wing-recon-review.md` are answered, and do not resume
-CBR marker scoping or confirmed-origin persistence until the product decisions
-in `advanced-systems-counter-battery-radar-review.md` are answered. Fabricator's
-product decisions are resolved and its accepted one-client contract is covered;
-its remaining experiments are listed in the backlog above.
+Vigil rotary CAS is now permanently covered for the bounded one-client,
+server-owned lifecycle and exact attributable-impact oracle. The next
+highest-value unblocked investigation is a bounded Fabricator pond/coastline/
+water-recipient placement characterization: the accepted land and 10--20 degree
+terrain contract must not be extrapolated across water geometry. Severe slopes
+remain a separate rejected boundary, and client-B/JIP remain blocked on another
+identity. Explicit nearby supply loading and bounded Field contact attachment
+remain accepted. The Vigil helicopter stabilizer is closed as deferred; do not
+reactivate its legacy force without a new bounded physical A/B. APS anti-drone
+is reviewed but deferred at its product-decision and authority boundary. Do not
+resume reconnaissance until the product decisions in
+`vigil-fixed-wing-recon-review.md` are answered, and do not resume CBR marker
+scoping or confirmed-origin persistence until the product decisions in
+`advanced-systems-counter-battery-radar-review.md` are answered.
 FPV/UAV refinement and its unresolved product choices are recorded in
 `field-utilities-fpv-review.md`; do not invent those policies during coverage.
 
