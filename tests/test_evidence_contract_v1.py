@@ -86,7 +86,7 @@ class EvidenceContractV1Tests(unittest.TestCase):
         result = json.loads((RUN / "results.json").read_text(encoding="utf-8"))
         names = [row["name"] for row in result["assertions"][:2]]
         semantics = {
-            "scenario": {"id": "contract-probe", "version": 1, "feature_family": "tribunal", "name": "Contract probe", "definition": {"kind": "test", "reference": "tests/test_evidence_contract_v1.py"}},
+            "scenario": {"id": "tribunal.contract-probe.semantic", "version": 1, "feature_family": "tribunal", "name": "Contract probe", "definition": {"kind": "test", "reference": "tests/test_evidence_contract_v1.py"}},
             "knowledge_subject": {"key": "tribunal:contract-probe", "label": "Contract probe", "kind": "tooling", "biki_context": []},
             "arms": [
                 {"key": "treatment", "role": "treatment", "description": "Explicit treatment", "assertions": [names[0]]},
@@ -102,6 +102,8 @@ class EvidenceContractV1Tests(unittest.TestCase):
         self.assertEqual(package["causal_relationships"][0]["relation"], "CAUSAL_PAIR_WITH")
         self.assertEqual(package["proposition_evaluations"][0]["outcome"], "demonstrated")
         self.assertEqual(package["knowledge_subject"]["key"], "tribunal:contract-probe")
+        self.assertEqual(package["scenarios"][0]["id"], "tribunal.contract-probe.semantic")
+        self.assertEqual(package["experimental_arms"][0]["scenario_id"], "tribunal.contract-probe.semantic")
 
         failed = build_execution_package(RUN, manifest, {**result, "status": "FAIL", "reason": "assertion_failure"})
         self.assertEqual(failed["experimental_arms"], [])

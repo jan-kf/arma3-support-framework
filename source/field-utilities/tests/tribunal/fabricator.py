@@ -3,6 +3,83 @@
 from tribunal.runner.model import Scenario, ScenarioReview
 
 
+EVIDENCE_CONTRACT = {
+    "scenario": {
+        "id": "pontifex.field-utilities.fabricator.transaction",
+        "version": 2,
+        "feature_family": "field-utilities/fabricator",
+        "name": "Fabricator bounded land and water placement",
+        "definition": {
+            "kind": "dedicated-multiplayer product specification",
+            "reference": "source/field-utilities/tests/tribunal/fabricator.py",
+            "legacy_experiment_key": "tribunal:fieldutils-fabricator",
+            "applicability": "Arma 3 2.22 dedicated multiplayer with CBA, ACE and Field Utilities; server-owned fabrication; one authenticated client; Stratis land, shoreline and deep-water fixtures",
+        },
+    },
+    "knowledge_subject": {
+        "key": "pontifex:field-utilities:fabricator",
+        "label": "Pontifex Fabricator",
+        "kind": "pontifex.feature",
+        "aliases": ["Fabricator"],
+        "biki_context": ["arma:createvehicle", "biki-page:2091"],
+    },
+    "arms": [
+        {
+            "key": "fixture",
+            "role": "baseline",
+            "description": "One authenticated client and exact server-owned catalogue, station, source, transaction and census identities",
+            "assertions": ["fabricator.fixture", "fabricator.authority.serverOwned"],
+        },
+        {
+            "key": "accepted_land_matrix",
+            "role": "positive_control",
+            "description": "Authentic packed orders settle on the already accepted flat, moderate-gradient and dense-obstruction land fixtures",
+            "assertions": ["fabricator.delivery.terrainMatrix"],
+        },
+        {
+            "key": "shoreline_treatment",
+            "role": "treatment",
+            "description": "An authentic packed order from a water recipient adjacent to independently identified land selects a bounded non-water target and settles there",
+            "assertions": ["fabricator.delivery.shoreline"],
+        },
+        {
+            "key": "deep_water_control",
+            "role": "negative_control",
+            "description": "The same authentic packed order with every sampled point in the bounded neighborhood over water refuses atomically instead of publishing a water delivery",
+            "assertions": ["fabricator.control.deepWaterAtomic"],
+        },
+        {
+            "key": "closeout",
+            "role": "treatment",
+            "description": "All created objects, transaction records, result keys and fixtures close cleanly",
+            "assertions": ["fabricator.cleanup"],
+        },
+    ],
+    "causal_relationships": [
+        {
+            "key": "nearby-land-v-deep-water",
+            "relation": "CAUSAL_PAIR_WITH",
+            "source": "shoreline_treatment",
+            "target": "deep_water_control",
+            "controlled_dimensions": ["same authenticated client", "same server authority", "same registered station and catalogue", "same two-object packed order", "same bounded placement helper", "nearby suitable land availability is the varied dimension"],
+        },
+    ],
+    "propositions": [
+        {
+            "id": "pontifex:fabricator:bounded-water-placement",
+            "text": "Under the tested dedicated-server and one-client conditions, an authentic packed Fabricator order from a shoreline water recipient selects bounded moderate non-water land and settles there, while the same order in a bounded all-water neighborhood is refused atomically without publishing or leaking a delivery.",
+            "intended_use": "primary_result",
+            "assertions": ["fabricator.delivery.shoreline", "fabricator.control.deepWaterAtomic", "fabricator.cleanup"],
+            "rationale": "Matched authentic order paths vary nearby suitable-land availability; exact result identities, surface sampling, physical settling, mission-wide census and cleanup distinguish success from an atomic refusal.",
+        },
+    ],
+    "unresolved": [
+        "Pond objects are detected by surfaceIsWater only when loaded and no deterministic pond fixture is present on Stratis; ponds remain unproven.",
+        "Other islands, coastline shapes, slopes above 20 degrees, land farther than 15 m, multiple delivery containers, single-item water requests, client-B/JIP and ownership migration remain outside this proof.",
+    ],
+}
+
+
 OBSERVER_IDENTITIES = ("client-a",)
 
 CLIENT_EXPECTED = frozenset({
@@ -35,6 +112,14 @@ waitUntil {
     _selfLast = _pos;
     (_selfSteady > 0 && {(diag_tickTime - _selfSteady) > 3}) || {diag_tickTime > _selfDeadline}
 };
+
+// Anchor the accepted baseline to independently known interior Stratis land;
+// the natural respawn varies along a narrow coastal strip and is not a stable
+// land fixture for a fail-closed placement contract.
+private _fixtureCenter = [4700, 2780, 0];
+player setPosATL _fixtureCenter;
+private _fixturePlacedDeadline = diag_tickTime + 20;
+waitUntil {uiSleep 0.1; player distance2D _fixtureCenter < 2 || {diag_tickTime > _fixturePlacedDeadline}};
 
 // Declare which unit this identity actually controls, rather than letting the
 // server guess from allPlayers ordering. A second client must not silently
@@ -194,13 +279,18 @@ private _carryOk = (attachedTo _clone) isEqualTo player;
 ["multi", _station, [[_lightId, 2]], 90] call TRIBUNAL_FAB_fnc_order;
 
 TRIBUNAL_FAB_fnc_terrainOrder = {
-    params ["_phase", "_center"];
+    params ["_phase"];
     private _setupDeadline = diag_tickTime + 240;
+    private _setup = [];
     waitUntil {
         uiSleep 0.1;
-        ((missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", []]) param [0, ""]) isEqualTo _phase
+        _setup = missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", []];
+        (_setup param [0, ""]) isEqualTo _phase
             || {diag_tickTime > _setupDeadline}
     };
+    private _center = _setup param [1, []];
+    player enableSimulation false;
+    player setVelocity [0, 0, 0];
     player setPosATL _center;
     private _placedDeadline = diag_tickTime + 20;
     waitUntil {uiSleep 0.1; (player distance2D _center) < 2 || {diag_tickTime > _placedDeadline}};
@@ -208,11 +298,44 @@ TRIBUNAL_FAB_fnc_terrainOrder = {
     [_phase, _station, [[_lightId, 2]], 90] call TRIBUNAL_FAB_fnc_order
 };
 
-{_x call TRIBUNAL_FAB_fnc_terrainOrder;} forEach [
-    ["terrainFlat", [1500, 5000, 0]],
-    ["terrainGradient", [2100, 2500, 0]],
-    ["terrainBlocked", [1600, 5000, 0]]
+private _shoreProbeDeadline = diag_tickTime + 240;
+private _shoreProbe = [];
+waitUntil {
+    uiSleep 0.1;
+    _shoreProbe = missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", []];
+    (_shoreProbe param [0, ""]) isEqualTo "terrainShoreProbe"
+        || {diag_tickTime > _shoreProbeDeadline}
+};
+private _shoreProbeCenter = _shoreProbe param [1, []];
+player enableSimulation false;
+player setVelocity [0, 0, 0];
+player setPosATL _shoreProbeCenter;
+private _shoreProbePlaced = diag_tickTime + 20;
+waitUntil {uiSleep 0.1; player distance2D _shoreProbeCenter < 2 || {diag_tickTime > _shoreProbePlaced}};
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_READY", "terrainShoreProbe", true];
+
+{[_x] call TRIBUNAL_FAB_fnc_terrainOrder;} forEach [
+    "terrainFlat",
+    "terrainGradient",
+    "terrainBlocked",
+    "terrainShore",
+    "terrainDeepWater"
 ];
+
+private _restoreDeadline = diag_tickTime + 240;
+private _restore = [];
+waitUntil {
+    uiSleep 0.1;
+    _restore = missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", []];
+    (_restore param [0, ""]) isEqualTo "terrainRestore"
+        || {diag_tickTime > _restoreDeadline}
+};
+private _restoreCenter = _restore param [1, []];
+player setPosATL _restoreCenter;
+private _restorePlaced = diag_tickTime + 20;
+waitUntil {uiSleep 0.1; player distance2D _restoreCenter < 2 || {diag_tickTime > _restorePlaced}};
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_READY", "terrainRestore", true];
+player enableSimulation true;
 
 private _unpackableReport = ["unpackable", _station, [[_oversizeId, 1], [_lightId, 1]], 90] call TRIBUNAL_FAB_fnc_order;
 private _unpackableResult = _unpackableReport param [1, []];
@@ -321,6 +444,8 @@ TRIBUNAL_SCENARIO = Scenario(
         "fabricator.catalogue.notConsumed",
         "fabricator.delivery.packed",
         "fabricator.delivery.terrainMatrix",
+        "fabricator.delivery.shoreline",
+        "fabricator.control.deepWaterAtomic",
         "fabricator.control.unpackableAtomic",
         "fabricator.control.unregistered",
         "fabricator.control.outOfRange",
@@ -593,11 +718,51 @@ private _packedOk = (_multi # 3)
     && {(_containers findIf {(_x distance _scenarioPlayer) > 25}) < 0};
 ["fabricator.delivery.packed", _packedOk, format ["result=%1|containers=%2|attached=%3|allLocal=%4", _multiResult, count _containers, _attachedCount, (_containers findIf {isNull _x || {!(local _x)}}) < 0]] call _assert;
 
-// Three authentic packed orders hold class, quantity, authority, terminal entry,
+// Four authentic successful packed orders hold class, quantity, authority, terminal entry,
 // placement helper, settling window and observation constant. Only terrain and
 // the declared barrier ring differ. A two-metre seating bound allows one pallet
 // footprint of initial PhysX adjustment; continuous rest and final speed remain
 // independent requirements.
+private _shoreProbe = [1465, 4888, 0];
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", ["terrainShoreProbe", _shoreProbe], true];
+private _shoreProbeDeadline = diag_tickTime + 60;
+waitUntil {
+    uiSleep 0.1;
+    (missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_READY", ""]) isEqualTo "terrainShoreProbe"
+        || {diag_tickTime > _shoreProbeDeadline}
+};
+
+// surfaceIsWater pond/object results depend on the area being loaded. Scan only
+// after client-a has loaded this coastline, and use the product fallback matrix
+// itself to select a water recipient with independently observed nearby land.
+private _shorePair = [[], []];
+private _shoreLandCount = 0;
+for "_gridX" from -10 to 10 do {
+    for "_gridY" from -10 to 10 do {
+        private _candidateCenter = _shoreProbe vectorAdd [_gridX * 5, _gridY * 5, 0];
+        if (surfaceIsWater _candidateCenter) then {
+            private _landCandidates = [];
+            {
+                private _radius = _x;
+                for "_bearing" from 0 to 345 step 15 do {
+                    _landCandidates pushBack (_candidateCenter vectorAdd [_radius * sin _bearing, _radius * cos _bearing, 0]);
+                };
+            } forEach [4, 6.5, 9];
+            private _validLand = _landCandidates select {
+                !surfaceIsWater _x
+                    && {acos (((surfaceNormal _x) # 2) max -1 min 1) <= 20}
+            };
+            if ((count _validLand) > _shoreLandCount) then {
+                _shoreLandCount = count _validLand;
+                _shorePair = [_candidateCenter, _validLand # 0];
+            };
+        };
+    };
+};
+private _shoreCenter = _shorePair param [0, []];
+private _shoreLand = _shorePair param [1, []];
+private _shoreCenterIsWater = !(_shoreCenter isEqualTo []) && {surfaceIsWater _shoreCenter};
+
 private _terrainBarriers = [];
 private _terrainRows = [];
 {
@@ -662,20 +827,23 @@ private _terrainRows = [];
         _center distance2D _drop, surfaceIsWater _drop, count _armBarriers, _nearestBarrier,
         netId _container, local _container, count (attachedObjects _container),
         _stableSince >= 0 && {(diag_tickTime - _stableSince) >= 2},
-        _drop distance2D _final, _maxSpeed, vectorMagnitude (velocity _container), _drop, _final
+        _drop distance2D _final, _maxSpeed, vectorMagnitude (velocity _container), _drop, _final,
+        surfaceIsWater _center
     ];
     _terrainRows pushBack _row;
     _containers append _armContainers;
 } forEach [
     ["terrainFlat", [1500, 5000, 0], false],
     ["terrainGradient", [2100, 2500, 0], false],
-    ["terrainBlocked", [1600, 5000, 0], true]
+    ["terrainBlocked", [1600, 5000, 0], true],
+    ["terrainShore", _shoreCenter, false]
 ];
 
 private _flatTerrain = _terrainRows param [0, []];
 private _gradientTerrain = _terrainRows param [1, []];
 private _blockedTerrain = _terrainRows param [2, []];
-private _terrainCommonOk = (count _terrainRows) isEqualTo 3
+private _shoreTerrain = _terrainRows param [3, []];
+private _terrainCommonOk = (count _terrainRows) isEqualTo 4
     && {(_terrainRows findIf {
         !(_x param [1, false]) || {_x param [5, true]} || {!(_x param [9, false])}
         || {(_x param [10, 0]) isNotEqualTo 2} || {!(_x param [11, false])}
@@ -689,6 +857,54 @@ private _terrainMatrixOk = _terrainCommonOk
     && {(_blockedTerrain param [2, 99]) <= 1} && {(_blockedTerrain param [6, 0]) isEqualTo 64}
     && {(_blockedTerrain param [7, 99]) >= 0} && {(_blockedTerrain param [7, 99]) <= 1.6};
 ["fabricator.delivery.terrainMatrix", _terrainMatrixOk, format ["rows=%1", _terrainRows]] call _assert;
+
+// A shoreline recipient varies only water adjacency: the authentic order must
+// find bounded moderate land and settle there. At deep-water origin every point
+// in a 15 m control matrix is water, so the same order must refuse atomically.
+_station setPosATL [0, 1, 0];
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", ["terrainDeepWater", [0, 0, 0]], true];
+private _deepReadyDeadline = diag_tickTime + 60;
+waitUntil {
+    uiSleep 0.1;
+    (missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_READY", ""]) isEqualTo "terrainDeepWater"
+        || {diag_tickTime > _deepReadyDeadline}
+};
+private _deep = ["terrainDeepWater", 120] call TRIBUNAL_FAB_fnc_runPhase;
+private _deepResult = (_deep # 2) param [1, []];
+private _deepSamples = [];
+{
+    private _radius = _x;
+    for "_bearing" from 0 to 345 step 15 do {
+        private _sample = [_radius * sin _bearing, _radius * cos _bearing, 0];
+        _deepSamples pushBack [_sample, surfaceIsWater _sample];
+    };
+} forEach [0, 3, 6, 9, 12, 15];
+private _shoreOk = _shoreCenterIsWater
+    && {!(_shoreLand isEqualTo [])}
+    && {_shoreCenter distance2D _shoreLand <= 9}
+    && {_shoreLandCount >= 12}
+    && {(_shoreTerrain param [1, false])}
+    && {!(_shoreTerrain param [5, true])}
+    && {(_shoreTerrain param [3, 99]) <= 20}
+    && {(_shoreTerrain param [4, 99]) <= 15};
+private _deepOk = (_deep # 3)
+    && {!(_deepResult param [1, true])}
+    && {(_deepResult param [2, ""]) isEqualTo "no-safe-drop"}
+    && {(_deep # 1) isEqualTo (_deep # 0)}
+    && {((_deepResult param [4, []]) isEqualTo [])}
+    && {((_deepResult param [5, []]) isEqualTo [])}
+    && {(_deepSamples findIf {!(_x param [1, false])}) < 0};
+["fabricator.delivery.shoreline", _shoreOk, format ["shore=%1|shoreLand=%2|landRays=%3|selectedWater=%4", _shoreTerrain, _shoreLand, _shoreLandCount, _shoreCenterIsWater]] call _assert;
+["fabricator.control.deepWaterAtomic", _deepOk, format ["result=%1|census=%2:%3|samples=%4", _deepResult, _deep # 0, _deep # 1, _deepSamples]] call _assert;
+
+_station setPosATL (_base vectorAdd [6, 0, 0]);
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", ["terrainRestore", _base], true];
+private _restoreDeadline = diag_tickTime + 60;
+waitUntil {
+    uiSleep 0.1;
+    (missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_READY", ""]) isEqualTo "terrainRestore"
+        || {diag_tickTime > _restoreDeadline}
+};
 
 // Phase 3: an order containing something no container can hold. Atomic means the
 // whole order is refused and nothing at all survives, anywhere on the map.
@@ -1006,6 +1222,7 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
         "observer_identities": ",".join(OBSERVER_IDENTITIES),
         "future_client_isolation": "client-b/JIP must observe server-owned deliveries and the published catalogue without receiving client-a queue state",
     },
+    evidence_contract=EVIDENCE_CONTRACT,
     review=ScenarioReview(
         test_type="specification",
         behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. For the proven flat, moderate-gradient and dense-obstruction land fixtures, an authentic packed order produces one server-local container with both exact objects attached; its announced target remains within 15 m of the recipient and the container settles within 2 m of that target, continuously at rest for two seconds. Immediately before publication, a heavy single clone is visible, unattached, server-local and capped at mass 200; the ordering client then starts ACE carry on that exact clone. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",

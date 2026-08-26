@@ -234,6 +234,7 @@ def build_execution_package(run_dir: Path, manifest: dict[str, Any], result: dic
         })
         for name in scenario_names
     ]
+    default_runner_scenario = scenario_names[0]
     default_scenario = scenarios[0]["id"]
     participants = [
         {"id": "server", "role": "dedicated_server", "runtime": manifest.get("arma_server", {})},
@@ -285,7 +286,7 @@ def build_execution_package(run_dir: Path, manifest: dict[str, Any], result: dic
     # of one scenario that supplied an explicit evidence contract. Failed and
     # aggregate runs retain the generic assertion record and cannot overclaim.
     if completed and result.get("status") == "PASS" and len(scenario_names) == 1:
-        semantics = evidence_contracts.get(default_scenario)
+        semantics = evidence_contracts.get(default_runner_scenario)
         if semantics:
             knowledge_subject = semantics["knowledge_subject"]
             assertion_by_name = {
@@ -376,8 +377,8 @@ def build_execution_package(run_dir: Path, manifest: dict[str, Any], result: dic
     }
     if knowledge_subject:
         package["knowledge_subject"] = knowledge_subject
-    if completed and result.get("status") == "PASS" and len(scenario_names) == 1 and evidence_contracts.get(default_scenario):
-        package["unresolved"] = evidence_contracts[default_scenario].get("unresolved", [])
+    if completed and result.get("status") == "PASS" and len(scenario_names) == 1 and evidence_contracts.get(default_runner_scenario):
+        package["unresolved"] = evidence_contracts[default_runner_scenario].get("unresolved", [])
     return package
 
 

@@ -175,12 +175,17 @@ class FabricatorAuthorityTests(unittest.TestCase):
         self.assertIn('_tx getOrDefault ["created", []]', finalize)
         self.assertIn("objectFromNetId _x", finalize)
 
-    def test_delivery_placement_is_bounded_but_not_yet_suitability_checked(self) -> None:
-        """Bounded to the recipient; terrain suitability is not claimed."""
+    def test_delivery_placement_is_bounded_and_fails_closed_over_water(self) -> None:
+        """Nearby suitable land is required before a local result is published."""
 
         assets = read(ASSETS)
+        server = read(SERVER)
         self.assertIn("(vectorMagnitude _offset) <= (_radiusMax + 5)", assets)
-        self.assertIn("It is NOT a suitability", assets)
+        self.assertIn("surfaceIsWater _candidate", assets)
+        self.assertIn("private _fallbacks = [];", assets)
+        self.assertIn("surfaceNormal _x", assets)
+        self.assertEqual(server.count('_txId, "no-safe-drop"] call YFU_fnc_fabricatorRefuse;'), 2)
+        self.assertLess(server.index("private _positions = [];"), server.index("_x setPosATL (_positions # _forEachIndex);"))
 
 
 class FabricatorProductDecisionTests(unittest.TestCase):
@@ -190,7 +195,7 @@ class FabricatorProductDecisionTests(unittest.TestCase):
         server = read(SERVER)
         # Every refusal goes through one path that finalizes before it publishes.
         for reason in ("clone-failed", "unpackable", "caller", "no-storage",
-                       "unregistered", "abandoned"):
+                       "unregistered", "abandoned", "no-safe-drop"):
             self.assertIn(f'_txId, "{reason}"] call YFU_fnc_fabricatorRefuse;', server, reason)
         # Station verdicts (no-station / out-of-range / airdrop-unauthorized)
         # travel through one variable to the same refusal path.
@@ -359,6 +364,16 @@ class FabricatorScenarioTests(unittest.TestCase):
         self.assertIn('YFU_FABRICATOR_RESULT_TTL = 3;', server)
         self.assertIn('isEqualTo "unknown"', server)
         self.assertIn("_resultKeysGone", server)
+
+    def test_water_boundary_uses_authentic_orders_and_distinct_causal_arms(self) -> None:
+        scenario = read(SCENARIO)
+        self.assertIn('"terrainShore"', scenario)
+        self.assertIn('"terrainDeepWater"', scenario)
+        self.assertIn('"fabricator.delivery.shoreline"', scenario)
+        self.assertIn('"fabricator.control.deepWaterAtomic"', scenario)
+        self.assertIn('isEqualTo "no-safe-drop"', scenario)
+        self.assertIn("_deepSamples findIf", scenario)
+        self.assertIn('"id": "pontifex:fabricator:bounded-water-placement"', scenario)
 
     def test_active_owner_discard_terminates_worker_before_rollback(self) -> None:
         server = read(SERVER)

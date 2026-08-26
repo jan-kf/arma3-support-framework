@@ -382,6 +382,9 @@ YFU_fnc_fabricateOrderWorker = {
 	if (!_isAirdrop && {_total isEqualTo 1}) exitWith {
 		private _single = _clones # 0;
 		private _drop = [getPosATL _caller, 3, 0] call YFU_assetsFindSafeDropPos;
+		if (_drop isEqualTo []) exitWith {
+			[YFU_FABRICATOR_TOKEN, _txId, "no-safe-drop"] call YFU_fnc_fabricatorRefuse;
+		};
 		_single setPosATL _drop;
 		_single setVectorUp [0, 0, 1];
 		_single hideObjectGlobal false;
@@ -416,11 +419,16 @@ YFU_fnc_fabricateOrderWorker = {
 
 	private _centre = getPosATL _caller;
 	private _positions = [];
+	for "_index" from 0 to ((count _containers) - 1) do {
+		private _drop = [_centre, 4, _index] call YFU_assetsFindSafeDropPos;
+		if !(_drop isEqualTo []) then {_positions pushBack _drop;};
+	};
+	if ((count _positions) isNotEqualTo (count _containers)) exitWith {
+		[YFU_FABRICATOR_TOKEN, _txId, "no-safe-drop"] call YFU_fnc_fabricatorRefuse;
+	};
 	{
-		private _drop = [_centre, 4, _forEachIndex] call YFU_assetsFindSafeDropPos;
-		_x setPosATL _drop;
+		_x setPosATL (_positions # _forEachIndex);
 		_x setVectorUp [0, 0, 1];
-		_positions pushBack _drop;
 	} forEach _containers;
 	{_x hideObjectGlobal false;} forEach (_clones + _containers);
 	uiSleep 0.25;

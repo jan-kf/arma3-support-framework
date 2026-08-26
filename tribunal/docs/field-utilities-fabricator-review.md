@@ -510,11 +510,19 @@ ACE/PhysX mass sequence is not a controlled product-neutral locality A/B.
 Post-ingest `setMass` and `surfaceNormal` dossiers therefore retained only
 their canonical upstream documentation.
 
+## Accepted continuation — bounded shoreline and all-water placement
+
+The next-best unblocked inventory candidate was Fabricator water-adjacent placement. Sacred Texts established that `surfaceIsWater` detects water and loaded pond objects, with Position3D Z ignored; `surfaceNormal` supplies terrain slope, while no indexed dossier existed for `BIS_fnc_findSafePos`. The product now treats the native helper result as a candidate: it must be non-water, at most 20 degrees, and inside the existing 15 m bound. A deterministic 15-degree bearing fallback scans the same bounded neighborhood. If no safe target exists, single and packed local orders return `no-safe-drop` before any object is moved, unhidden, or published; packed orders precompute every target so refusal stays atomic. Airdrop behavior is unchanged.
+
+The permanent version-2 scenario holds the authenticated client, server authority, station, catalogue, two-object packed order, helper, and census constant. At a loaded Stratis shoreline it independently selects a water recipient with 36 suitable land rays; the authentic order settled its exact server-local two-object container at `[1465,4892,0]`, four metres from the recipient, on an 18.37-degree non-water surface. At `[0,0,0]`, every sampled point through 15 m was water; the matched order returned `no-safe-drop`, published no positions or containers, and left the exact mission-wide census unchanged. Final cleanup removed every created object, transaction, result key, and fixture.
+
+Fresh run `20260826T143846Z-07b11de0` passed **31 server + 11 client assertions** with zero failures. Three immediately preceding cold diagnostics remain unaccepted: they exposed that late `surfaceIsWater` re-queries change when the coastline leaves the loaded area, exactly matching the canonical loaded-object caveat. The final fixture therefore records the water observation while the coast is loaded; it does not weaken any placement oracle.
+
+Evidence package `urn:tribunal:evidence-package:20260826T143846Z-07b11de0:1` (payload SHA-256 `29ed606c6f2855111ce0e789ca078d42e73352016952be7ed373ef02bdf968e0`) contains five arms, one causal pair, and the demonstrated `pontifex:fabricator:bounded-water-placement` proposition. It was ingested twice with no second-pass count change. Reviewed distillation classifies the result as project-specific and adds no generic Arma proposition.
+
 ## Unresolved
 
-* **Broader terrain suitability beyond the accepted matrix.** Severe gradients
-  above 20 degrees, ponds, coastline fallback, water recipients, arbitrary
-  obstacle shapes/densities, and collision-free clearance remain open.
+* **Broader terrain suitability beyond the accepted matrix.** Severe gradients above 20 degrees, ponds, land farther than 15 m, other coastline shapes/islands, multiple delivery containers, single-item water requests, arbitrary obstacle shapes/densities, and collision-free clearance remain open.
 * **Client-b and JIP.** One authenticated client is the proof boundary.
 * **ACE-side action presence.** ACE 3.21 stores object actions where neither an
   object variable nor the class-keyed `ace_interact_menu_ActNamespace` exposes
@@ -532,9 +540,7 @@ The accepted milestone covers one authenticated client, server-authoritative
 atomic fabrication, unlimited catalogue semantics, exact cargo, packed delivery,
 the shared Vigil authorization boundary, adversarial request receipts,
 active-cancellation and watchdog rollback, result retirement, and complete
-scenario isolation; flat, moderate-gradient and dense-obstruction packed
-placement within the stated bounds; exact pre-publication mass 200; and exact
-client carry attachment. Severe-gradient, pond, coastline, water-recipient and
-arbitrary-obstruction suitability, actual client-b/JIP behavior, ACE-internal action visibility,
+scenario isolation; flat, moderate-gradient, dense-obstruction and shoreline packed placement within the stated bounds; atomic all-water refusal; exact pre-publication mass 200; and exact
+client carry attachment. Severe-gradient, pond, other coastline, land-beyond-15-m, multiple-container, single-item-water and arbitrary-obstruction suitability, actual client-b/JIP behavior, ACE-internal action visibility,
 runtime-created editor synchronization, and Live-snippet supervision remain the
 explicit follow-ups listed above; none is implied by the accepted PASS.

@@ -338,18 +338,33 @@ YFU_assetsFindSafeDropPos = {
         };
     };
 
-    // The fallback ring keeps a delivery beside the player instead of wherever
-    // BIS_fnc_findSafePos lands after a failed search. It is NOT a suitability
-    // check: water, gradient, obstruction and final settling are still unverified,
-    // and a real check needs terrain the validation world does not have. Recorded
-    // as an open finding rather than approximated here.
+    if !(_candidate isEqualTo []) then {
+        private _slope = acos (((surfaceNormal _candidate) # 2) max -1 min 1);
+        if (surfaceIsWater _candidate || {_slope > 20}) then {_candidate = [];};
+    };
+
+    // A bounded deterministic search is the fallback, not an unconditional
+    // position. It may recover a nearby shoreline point, but deep water and
+    // unsuitable terrain return no position so the transaction can fail closed.
     if (_candidate isEqualTo []) then {
-        private _bearing = (_attempt * 47) % 360;
-        _candidate = [
-            (_fallbackCenter # 0) + (_radiusMin * sin _bearing),
-            (_fallbackCenter # 1) + (_radiusMin * cos _bearing),
-            _z
-        ];
+        private _fallbacks = [];
+        private _bearingStart = (_attempt * 47) % 360;
+        {
+            private _radius = _x;
+            for "_offset" from 0 to 345 step 15 do {
+                private _bearing = (_bearingStart + _offset) % 360;
+                _fallbacks pushBack [
+                    (_fallbackCenter # 0) + (_radius * sin _bearing),
+                    (_fallbackCenter # 1) + (_radius * cos _bearing),
+                    _z
+                ];
+            };
+        } forEach [_radiusMin, (_radiusMin + _radiusMax) / 2, _radiusMax];
+        private _fallbackIndex = _fallbacks findIf {
+            !surfaceIsWater _x
+                && {acos (((surfaceNormal _x) # 2) max -1 min 1) <= 20}
+        };
+        if (_fallbackIndex >= 0) then {_candidate = _fallbacks # _fallbackIndex;};
     };
 
     _candidate
