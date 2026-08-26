@@ -192,7 +192,7 @@ private _normalVeh = [0] call TRIBUNAL_GOV_vehicle;
 private _normal = ["tribunal-normal", _normalVeh, call TRIBUNAL_GOV_handlers, ["normal", "normal"], 10, 3] call YSF_taskNew;
 [_normalVeh, _normal] call YSF_taskAssign;
 [_normalVeh, _normal] call TRIBUNAL_GOV_tick;
-private _normalRec = (call YSF__mgr) getOrDefault [str _normalVeh, objNull];
+private _normalRec = (call YSF__mgr) getOrDefault [[_normalVeh] call YSF_taskKey, objNull];
 private _normalOk = (_normal getOrDefault ["tribunalRows", []]) isEqualTo ["init", "start", "start", "mission", "end", "finally"]
     && {(_normal getOrDefault ["tribunalFinalizers", 0]) isEqualTo 1}
     && {isNull (_normal getOrDefault ["tribunalResource", objNull])}
@@ -205,7 +205,7 @@ private _earlyVeh = [20] call TRIBUNAL_GOV_vehicle;
 private _early = ["tribunal-early", _earlyVeh, call TRIBUNAL_GOV_handlers, ["early", "early"], 10, 3] call YSF_taskNew;
 [_earlyVeh, _early] call YSF_taskAssign;
 [_earlyVeh, _early] call TRIBUNAL_GOV_tick;
-private _earlyRec = (call YSF__mgr) getOrDefault [str _earlyVeh, objNull];
+private _earlyRec = (call YSF__mgr) getOrDefault [[_earlyVeh] call YSF_taskKey, objNull];
 private _earlyOk = (_early getOrDefault ["tribunalRows", []]) isEqualTo ["init", "finally"]
     && {(_early getOrDefault ["tribunalFinalizers", 0]) isEqualTo 1}
     && {isNull (_early getOrDefault ["tribunalResource", objNull])}
@@ -216,7 +216,7 @@ private _failVeh = [40] call TRIBUNAL_GOV_vehicle;
 private _failed = ["tribunal-failure", _failVeh, call TRIBUNAL_GOV_handlers, ["failure", "failure"], 10, 3] call YSF_taskNew;
 [_failVeh, _failed] call YSF_taskAssign;
 [_failVeh, _failed] call TRIBUNAL_GOV_tick;
-private _failRec = (call YSF__mgr) getOrDefault [str _failVeh, objNull];
+private _failRec = (call YSF__mgr) getOrDefault [[_failVeh] call YSF_taskKey, objNull];
 private _failOk = (_failed getOrDefault ["tribunalRows", []]) isEqualTo ["init", "start", "finally"]
     && {(_failed getOrDefault ["tribunalFinalizers", 0]) isEqualTo 1}
     && {(_failed getOrDefault ["state", ""]) isEqualTo "failed"}
@@ -229,7 +229,7 @@ private _cancelled = ["tribunal-cancel", _cancelVeh, call TRIBUNAL_GOV_handlers,
 for "_i" from 1 to 3 do {[_cancelVeh] call YSF_taskTick;};
 private _cancelAccepted = ([_cancelVeh] call YSF_taskCancel) isEqualTo true;
 [_cancelVeh, _cancelled] call TRIBUNAL_GOV_tick;
-private _cancelRec = (call YSF__mgr) getOrDefault [str _cancelVeh, objNull];
+private _cancelRec = (call YSF__mgr) getOrDefault [[_cancelVeh] call YSF_taskKey, objNull];
 private _cancelOk = _cancelAccepted
     && {(_cancelled getOrDefault ["tribunalRows", []]) isEqualTo ["init", "start", "mission", "finally"]}
     && {(_cancelled getOrDefault ["tribunalFinalizers", 0]) isEqualTo 1}
@@ -244,7 +244,7 @@ for "_i" from 1 to 3 do {[_lostVeh] call YSF_taskTick;};
 _lostVeh setDamage 1;
 call YSF_governorHandle;
 [_lostVeh, _lost] call TRIBUNAL_GOV_tick;
-private _lostRec = (call YSF__mgr) getOrDefault [str _lostVeh, objNull];
+private _lostRec = (call YSF__mgr) getOrDefault [[_lostVeh] call YSF_taskKey, objNull];
 private _lostOk = (_lost getOrDefault ["tribunalRows", []]) isEqualTo ["init", "start", "mission", "finally"]
     && {(_lost getOrDefault ["tribunalFinalizers", 0]) isEqualTo 1}
     && {(_lost getOrDefault ["state", ""]) isEqualTo "failed"}
@@ -257,7 +257,7 @@ private _original = ["tribunal-original", _dupVeh, call TRIBUNAL_GOV_handlers, [
 for "_i" from 1 to 3 do {[_dupVeh] call YSF_taskTick;};
 private _duplicate = ["tribunal-sentinel", _dupVeh, call TRIBUNAL_GOV_handlers, ["duplicate", "sentinel"], 10, 3] call YSF_taskNew;
 private _duplicateResult = [_dupVeh, _duplicate] call YSF_taskAssign;
-private _dupRec = (call YSF__mgr) getOrDefault [str _dupVeh, objNull];
+private _dupRec = (call YSF__mgr) getOrDefault [[_dupVeh] call YSF_taskKey, objNull];
 private _preserved = typeName _dupRec isEqualTo "HASHMAP" && {((_dupRec get "task") get "id") isEqualTo (_original get "id")} && {((_dupRec get "task") get "gen") isEqualTo (_original get "gen")};
 private _cancelOriginal = ([_dupVeh] call YSF_taskCancel) isEqualTo true;
 [_dupVeh, _original] call TRIBUNAL_GOV_tick;
@@ -269,14 +269,14 @@ private _parent = ["tribunal-parent", _successorVeh, call TRIBUNAL_GOV_handlers,
 [_successorVeh, _parent] call YSF_taskAssign;
 [_successorVeh, _parent] call TRIBUNAL_GOV_tick;
 private _child = _parent getOrDefault ["tribunalSuccessor", objNull];
-private _successorRec = (call YSF__mgr) getOrDefault [str _successorVeh, objNull];
+private _successorRec = (call YSF__mgr) getOrDefault [[_successorVeh] call YSF_taskKey, objNull];
 private _childInstalled = typeName _child isEqualTo "HASHMAP"
     && {typeName _successorRec isEqualTo "HASHMAP"}
     && {_successorRec getOrDefault ["enabled", false]}
     && {((_successorRec get "task") get "id") isEqualTo (_child get "id")}
     && {((_successorRec get "task") get "gen") isEqualTo (_child get "gen")};
 if (typeName _child isEqualTo "HASHMAP") then {[_successorVeh, _child] call TRIBUNAL_GOV_tick;};
-private _childRec = (call YSF__mgr) getOrDefault [str _successorVeh, objNull];
+private _childRec = (call YSF__mgr) getOrDefault [[_successorVeh] call YSF_taskKey, objNull];
 private _successorOk = (_parent getOrDefault ["tribunalRows", []]) isEqualTo ["init", "finally"]
     && {(_parent getOrDefault ["tribunalFinalizers", 0]) isEqualTo 1}
     && {_childInstalled}

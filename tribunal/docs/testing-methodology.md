@@ -469,6 +469,19 @@ Active duplicate and permitted successor stimuli form separate controls. This
 server-owned proof does not launder client-authored executable payloads into an
 accepted authority contract.
 
+The Vigil governor authority continuation adds a transport-identity rule. A
+registered `CfgRemoteExec` endpoint and allowlist prove delivery filtering, not
+product authorization. Capture `remoteExecutedOwner` synchronously at the
+endpoint, pass only a machine-private capability into deferred server work, and
+resolve the exact player for that owner with a short bounded replication wait.
+Accept only when the scalar owner claim equals the transport owner and the
+resolved object is a player actually owned by it. The client sends bounded data;
+the server selects executable
+handlers. Permanent proof joins exact accept/reject receipts, server-built task
+provenance, same-side/whitelist checks, replay/busy controls, a code-bearing
+sentinel negative, stable generation identity, requester-only terminal receipts,
+bounded retention, and cleanup.
+
 ## Preliminary review of next feature families
 
 | Priority | Family | Preliminary outcome | Review focus before coverage |

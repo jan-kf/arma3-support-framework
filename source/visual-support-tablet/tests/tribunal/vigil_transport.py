@@ -146,7 +146,7 @@ private _stabilizerClean = !_stabilizerSeen && {!(_aircraft in YSF_STABILIZE_HEL
     && {isNil {_aircraft getVariable "YSF_helicopterStab_speedAlt"}};
 ["vigil.transport.stabilizer.deferred", _stabilizerClean, format ["seen=%1|registered=%2|active=%3|sample=%4", _stabilizerSeen, _aircraft in YSF_STABILIZE_HELICOPTERS, YSF_helicopterStab_helicopterDecel findIf {(_x # 0) isEqualTo _aircraft}, _aircraft getVariable ["YSF_helicopterStab_speedAlt", []]]] call _assert;
 missionNamespace setVariable ["TRIBUNAL_VIGIL_STABILIZER_SEEN", nil];
-private _manager = (call YSF__mgr) getOrDefault [str _aircraft, objNull];
+private _manager = (call YSF__mgr) getOrDefault [[_aircraft] call YSF_taskKey, objNull];
 private _managerIdle = typeName _manager isEqualTo "HASHMAP" && {!(_manager getOrDefault ["enabled", true])};
 deleteVehicleCrew _aircraft;
 deleteVehicle _aircraft;

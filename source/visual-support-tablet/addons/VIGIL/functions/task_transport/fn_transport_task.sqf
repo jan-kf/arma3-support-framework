@@ -171,8 +171,8 @@ YSF_handlers_transport = {
 
 YSF_taskTransportAssign = {
   params ["_vehicle", "_task"];
-  if (!isServer || {isNull _vehicle} || {typeName _task isNotEqualTo "HASHMAP"}) exitWith {false};
-  private _existing = (call YSF__mgr) getOrDefault [str _vehicle, objNull];
+  if (!isServer || {remoteExecutedOwner > 2} || {isNull _vehicle} || {typeName _task isNotEqualTo "HASHMAP"}) exitWith {false};
+  private _existing = (call YSF__mgr) getOrDefault [[_vehicle] call YSF_taskKey, objNull];
   if (typeName _existing isEqualTo "HASHMAP" && {_existing getOrDefault ["enabled", false]}) exitWith {
     _vehicle setVariable ["YSF_transport_lastRequest", "duplicate_rejected", true];
     false
@@ -184,7 +184,6 @@ YSF_taskTransportAssign = {
 
 YSF_taskTransportAssignRemote = {
   params ["_vehicle", "_task"];
-  if (isNull _vehicle || {typeName _task isNotEqualTo "HASHMAP"}) exitWith {false};
-  private _taskId = _task getOrDefault ["id", str diag_tickTime];
-  ["YSF_taskTransportAssign", [_vehicle, _task], format ["YSF_TRANSPORT_ASSIGN_%1_%2", netId _vehicle, _taskId], 5] call YCD_fnc_runOnServerOnce;
+  if (!isServer || {remoteExecutedOwner > 2}) exitWith {false};
+  [_vehicle, _task] call YSF_taskTransportAssign
 };

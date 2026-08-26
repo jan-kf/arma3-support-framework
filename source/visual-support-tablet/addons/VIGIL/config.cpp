@@ -54,6 +54,8 @@ class CfgFunctions {
         class Governor {
             file = "\VIGIL\functions\governor";
             class governor { preInit = 1; };
+            class taskRequestServer {};
+            class taskRequestResult {};
         };
         class Server {
             file = "\VIGIL\functions\server";

@@ -2,10 +2,11 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: SPLIT.** The server-owned abnormal lifecycle is **REFINED;
-ACCEPTED / COVERED**. The client request/handler authority boundary remains
-**REVIEWED / REWRITE BEFORE PERMANENT COVERAGE**. Existing artillery, transport,
-and CAS scenarios retain their accepted physical consumer outcomes.
+**Classification: REFINED; ACCEPTED / COVERED** for the one-client declarative
+request-authority boundary and the server-owned terminal lifecycle. Existing
+artillery, transport, and CAS scenarios retain their accepted physical consumer
+outcomes. Remote cancellation policy, durable history, client-N/JIP, ownership
+migration, and headless/client-owned vehicles remain excluded.
 
 ## Scope
 
@@ -13,6 +14,8 @@ This review covers shared task construction, assignment, stage progression,
 terminal handling, finalization, and dispatch in
 `functions/governor/fn_governor.sqf`, plus the real artillery, transport, and CAS
 submission paths. The unreachable homepage task UI remains separately deferred.
+Questions 2–8 below record the pre-refinement source findings; the accepted
+continuations record the resulting product contract and evidence.
 
 ## Canonical review questions
 
@@ -189,8 +192,8 @@ fixture or governor change was made for it.
 This continuation does not accept client-authored handler maps. Declarative
 request schemas, requester/asset authentication, forged-payload rejection,
 cancellation eligibility, retry/invalid-return policy, terminal-history
-retention, headless/client-owned vehicles, client-N, and JIP remain behind the
-mandatory authority rewrite.
+retention, headless/client-owned vehicles, client-N, and JIP remained behind the
+mandatory authority rewrite at that lifecycle-only checkpoint.
 
 The accepted Evidence Contract was ingested twice with unchanged second-pass
 counts, and the Sacred Texts audit passed. The final ledger has 21 packages, 22
@@ -198,3 +201,58 @@ runs and 474 artifacts. Reviewed distillation advanced to 20 findings and 8
 intentionally project-specific results while retaining 7 generic lemmas and 1
 generic conjecture. Both lifecycle propositions are `PROJECT-SPECIFIC ONLY`, so
 this continuation adds zero generic Sacred Texts notes.
+
+## Accepted continuation — declarative request authority
+
+The remaining mandatory slice crossed all three live rotary/artillery submission
+paths and was the highest-value unblocked item in the canonical inventory. The
+Opus reconnaissance was used only to locate likely boundaries. Direct source
+inspection and the Sacred Texts dossiers for `remoteExec` and `CfgRemoteExec`
+established the relevant constraint: transport filtering delivers a call but
+does not authenticate the product-level requester or authorize an opaque
+executable payload.
+
+Pre-change run `20260825T232521Z-22a1ad6d` was the declared discriminating
+baseline. The fixture passed, but 8/9 server feature assertions and 1/2 client
+feature assertions failed: no declarative request was audited or accepted, no
+server-built task/result existed, and the legacy client code-bearing task map
+reached the old broker instead of failing closed.
+
+Pontifex now exposes one registered data-only endpoint for artillery, transport,
+and CAS. It captures `remoteExecutedOwner` at the transport boundary, hands the
+worker a machine-private token, verifies the claimed owner against the transport
+owner, and resolves that exact player from the authoritative server set. The
+server validates task type, bounded schema, live same-side asset, optional
+whitelist membership, replay and one-active-task state; only then does it build
+registered handlers and assign the generation. Vehicle registry keys use stable
+network identity. The 120-second replay cache and 128-row server-private audit
+are bounded. Accepted, rejected, and terminal receipts carry the request ID and
+are targeted only to the requester. All legacy client task-map endpoints fail
+closed, so caller code is neither stored nor executed.
+
+Permanent scenario `vigil-governor-authority` proves all three valid declarative
+schemas; server-built provenance; forged-requester, wrong-side, malformed
+code-bearing, unsupported, replay, and busy rejection; generation preservation;
+legacy sentinel nonexecution; requester-only correlated receipts; terminal
+results; and complete restoration. Final cold runs
+`20260826T005042Z-308c99c8` and `20260826T005206Z-0fb17055` each passed 9/0 server
+and 2/0 client feature assertions.
+
+The affected regression batch `20260826T001620Z-30bd6992` completed artillery
+and governor lifecycle with all assertions passing and passed every CAS
+authority/state boundary. It reproduced only the already isolated
+`vigil.cas.attack.effect` zero-net-damage failure, then reached the batch timeout
+while transport was returning. Isolated transport run
+`20260826T002703Z-96a8f56c` passed completely. The timeout and known CAS physical
+effect failure are not accepted evidence packages and do not weaken the new
+authority propositions.
+
+Remote cancellation eligibility, queue/replace beyond reject-active, durable
+terminal history, retry/invalid-return policy, headless/client-owned vehicles,
+client-N, JIP, ownership migration, and network interruption remain excluded.
+
+The accepted authority Evidence Contract was ingested twice with identical
+second-pass counts and the Sacred Texts audit passed. Reviewed distillation now
+contains 22 findings: 10 intentionally project-specific, 7 generic lemmas, and
+1 generic conjecture. Both authority propositions are project-specific, so this
+continuation adds zero generic Sacred Texts notes.

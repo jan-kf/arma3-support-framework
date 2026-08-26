@@ -317,14 +317,16 @@ Utilities for fixed-wing airdrop.
 * Grid parse/format, map clicks/previews, nearest helipad, waypoints, hard stop/
   AI reboot, engine/landing mode, and safe/transit AI presets are **implemented;
   PARTIALLY COVERED** through artillery/flight outcomes. Helpers are replaceable.
-* The **task governor** is **SPLIT**. Its server-owned terminal lifecycle is
-  **REFINED; ACCEPTED / COVERED** by `vigil-governor-lifecycle`: normal order,
-  early completion, failure, accepted cancellation, vehicle loss, active
-  duplicate rejection, exact-once finalization, generation-aware retirement,
-  successor preservation, and cleanup. Clients still submit executable handler
-  maps for server execution, so the request authority boundary remains
-  **REVIEWED / REWRITE BEFORE PERMANENT COVERAGE**. Replace those paths with
-  validated declarative requests and server-built registered tasks. See
+* The **task governor** is **REFINED; ACCEPTED / COVERED** for its server-owned
+  terminal lifecycle and one-client declarative request authority. The
+  `vigil-governor-lifecycle` contract covers ordered/abnormal terminal paths,
+  exact-once finalization, generation-aware retirement and successor
+  preservation. `vigil-governor-authority` covers authenticated data-only
+  artillery/transport/CAS requests, server-built handlers, same-side/whitelist
+  eligibility, replay/busy rejection, forged/code-bearing rejection, correlated
+  requester-only receipts and cleanup. Remote cancellation policy, durable
+  history, ownership migration, headless/client-owned vehicles, client-N and
+  JIP remain excluded. See
   [`vigil-task-governor-review.md`](vigil-task-governor-review.md).
 
 ### 3.4 Artillery and VLS
@@ -743,6 +745,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-cas` | rotary CAS filtering, attack, timer, controls, RTB |
 | `vigil-debug-channel` | CAS auto-engage and shared production debug server logging, registered false/true client presentation gate, restoration |
 | `vigil-governor-lifecycle` | server-owned ordered stages, terminal causes, exact-once finalization, duplicate rejection, successor preservation, cleanup |
+| `vigil-governor-authority` | authenticated declarative artillery/transport/CAS requests, server-built tasks, rejection/correlation, terminal receipts, cleanup |
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
 | `vigil-fixed-wing-modules` | authentic typed Eden aggregation, nearest points, assigned-curator add, authority/replication/cleanup |
@@ -796,11 +799,12 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Vigil's server-owned task-governor lifecycle is now refined and permanently
-covered without claiming the unresolved client boundary. The next highest-value
-surface is the remaining mandatory governor authority rewrite: typed declarative
-requests, server-built handlers, authenticated assets/requesters, and exact
-forged-payload rejection. Fabricator's severe slopes, ponds, coastline,
+Vigil's task governor is now refined and permanently covered for the one-client
+declarative authority boundary and server-owned lifecycle. The next highest-value
+unblocked investigation is the separately reproduced CAS physical-effect oracle:
+correlated fire and a target-local damage event currently coexist with zero net
+damage. Treat that as a consumer-oracle diagnosis, not a reason to reopen the
+accepted governor. Fabricator's severe slopes, ponds, coastline,
 water-recipient, client-B and JIP remain bounded. Explicit nearby supply loading
 and bounded Field contact attachment remain accepted. The Vigil helicopter stabilizer is closed as deferred;
 do not reactivate its legacy force without a new bounded physical A/B. APS anti-drone is now

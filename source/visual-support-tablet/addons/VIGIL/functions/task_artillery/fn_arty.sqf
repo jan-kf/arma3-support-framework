@@ -9,11 +9,7 @@ YOSHI_taskArty_submit = {
     private _ordinance = _s get "ord";
     private _strikePositions = uiNamespace getVariable ["YOSHI_taskArty_strikePattern", []];
 
-    private _handlers = call YSF_handlers_artillery;
-
-
-    private _task = ["artillery", _vehicle, _handlers, [_strikePositions, _ordinance], 10, 3] call YSF_taskNew;
-    [_vehicle, _task] call YSF_taskAssignRemote;
+    [_vehicle, "artillery", [_strikePositions, _ordinance]] call YSF_taskRequestRemote;
 };
 
 YOSHI_drawStrikePattern = {

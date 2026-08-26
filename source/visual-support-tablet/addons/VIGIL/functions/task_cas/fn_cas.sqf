@@ -60,15 +60,13 @@ YOSHI_taskCAS_submit = {
   private _altitude = _s get "alt";
   private _time_limit = _s get "time_limit";
 
-  private _handlers = call YSF_handlers_cas;
-  private _task = ["cas", _vehicle, _handlers, [_location, _altitude, _time_limit], 10, 3] call YSF_taskNew;
-  [_vehicle, _task] call YSF_taskCASAssignRemote;
+  [_vehicle, "cas", [_location, _altitude, _time_limit]] call YSF_taskRequestRemote;
 };
 
 YSF_taskCASAssign = {
   params ["_vehicle", "_task"];
-  if (!isServer || {isNull _vehicle} || {typeName _task isNotEqualTo "HASHMAP"}) exitWith {false};
-  private _existing = (call YSF__mgr) getOrDefault [str _vehicle, objNull];
+  if (!isServer || {remoteExecutedOwner > 2} || {isNull _vehicle} || {typeName _task isNotEqualTo "HASHMAP"}) exitWith {false};
+  private _existing = (call YSF__mgr) getOrDefault [[_vehicle] call YSF_taskKey, objNull];
   if (typeName _existing isEqualTo "HASHMAP" && {_existing getOrDefault ["enabled", false]}) exitWith {
     _vehicle setVariable ["YSF_cas_lastRequest", "duplicate_rejected", true];
     false
@@ -80,12 +78,6 @@ YSF_taskCASAssign = {
 
 YSF_taskCASAssignRemote = {
   params ["_vehicle", "_task"];
-  if (isNull _vehicle || {typeName _task isNotEqualTo "HASHMAP"}) exitWith {false};
-  private _taskId = _task getOrDefault ["id", str diag_tickTime];
-  [
-    "YSF_taskCASAssign",
-    [_vehicle, _task],
-    format ["YSF_CAS_ASSIGN_%1_%2", netId _vehicle, _taskId],
-    5
-  ] call YCD_fnc_runOnServerOnce;
+  if (!isServer || {remoteExecutedOwner > 2}) exitWith {false};
+  [_vehicle, _task] call YSF_taskCASAssign
 };

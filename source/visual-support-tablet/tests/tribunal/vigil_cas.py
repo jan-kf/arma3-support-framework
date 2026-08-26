@@ -226,7 +226,7 @@ private _noAmmoOk = !([_unavailable] call YSF_CAS_hasLethalAmmo)
 ["vigil.cas.noAmmo", _noAmmoOk, format ["state=%1|active=%2|ammo=%3", _unavailable getVariable ["YSF_cas_state", ""], _unavailable getVariable ["YSF_cas_active", true], magazinesAmmoFull _unavailable]] call _assert;
 
 [_combatToken] call TRIBUNAL_fnc_combatObserverStop;
-private _manager = (call YSF__mgr) getOrDefault [str _aircraft, objNull];
+private _manager = (call YSF__mgr) getOrDefault [[_aircraft] call YSF_taskKey, objNull];
 private _managerIdle = typeName _manager isEqualTo "HASHMAP" && {!(_manager getOrDefault ["enabled", true])};
 {deleteVehicleCrew _x; deleteVehicle _x} forEach [_aircraft, _friendly, _unavailable];
 deleteVehicle _neutral;
