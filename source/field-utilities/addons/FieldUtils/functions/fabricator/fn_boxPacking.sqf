@@ -708,6 +708,22 @@ YOSHI_spawnContainersNearObjectsAndPackMulti = {
 	private _packed = [_validObjects, _keepUp, _padding, _sizeScale, _geomCache] call YOSHI_packObjectsOnPalletsSimple;
 	private _allocs = _packed select 0;
 	private _skipped = _packed select 1;
+
+	// The caller explicitly chooses whether small packed orders should be spread
+	// across multiple delivery containers. Geometry still decides whether each
+	// object fits at all; splitting an accepted bin into subsets cannot make an
+	// unpackable object acceptable.
+	if (_preferMultiple && {_maxSmallCountCap > 0}) then {
+		private _cap = (floor _maxSmallCountCap) max 1;
+		private _boundedAllocs = [];
+		{
+			_x params ["_class", "_refs", "_objectsInBin"];
+			for "_offset" from 0 to ((count _objectsInBin) - 1) step _cap do {
+				_boundedAllocs pushBack [_class, _refs, _objectsInBin select [_offset, _cap]];
+			};
+		} forEach _allocs;
+		_allocs = _boundedAllocs;
+	};
 	if ((count _skipped) > 0) then {
 		[format ["[pack] skipped too-large=%1", count _skipped]] call YFU_fnc_debugMsg;
 	};

@@ -390,6 +390,12 @@ YFU_fnc_fabricateOrderWorker = {
 		_single hideObjectGlobal false;
 		uiSleep 0.25;
 		[_single, 10, 1] call YOSHI_capDeliveryMass;
+		// Fabricator promises that a single crate is handed directly to the
+		// requester. ACE includes restored container cargo in its carry-weight
+		// calculation, so the physical mass cap alone cannot preserve that
+		// product behavior for a stocked clone. Exempt this exact single delivery
+		// from ACE weight gating; multi-container cargo keeps normal ACE policy.
+		_single setVariable ["ace_dragging_ignoreWeightCarry", true, true];
 		[YFU_FABRICATOR_TOKEN, _txId, true, "single", netId _single, [], [_drop]] call YFU_fnc_fabricatorPublishResult;
 	};
 
@@ -402,6 +408,9 @@ YFU_fnc_fabricateOrderWorker = {
 	private _pack = [_clones, [], true, true, 2.0, [0,0,0], 0, true, 4, false, {
 		params ["_created", "_txId"];
 		[YFU_FABRICATOR_TOKEN, _txId, [_created]] call YFU_fnc_fabricatorTrack;
+		// Containers are transaction staging until every bounded target exists.
+		// Do not expose an empty pallet from an order that will be refused.
+		_created hideObjectGlobal true;
 	}, _txId] call YOSHI_spawnContainersNearObjectsAndPackMulti;
 	private _packOk = _pack # 0;
 	private _containers = _pack # 1;
@@ -433,6 +442,15 @@ YFU_fnc_fabricateOrderWorker = {
 	{_x hideObjectGlobal false;} forEach (_clones + _containers);
 	uiSleep 0.25;
 	{[_x] call YOSHI_capDeliveryMass;} forEach (_clones + _containers);
+	// Revealing several physically packed pallets can wake their colliders and
+	// displace them from the targets just reserved. Re-seat the authoritative
+	// containers after mass finalization, before publishing those positions.
+	{
+		_x setPosATL (_positions # _forEachIndex);
+		_x setVectorUp [0, 0, 1];
+		_x setVelocity [0, 0, 0];
+	} forEach _containers;
+	uiSleep 0.25;
 
 	[YFU_FABRICATOR_TOKEN, _txId, true, "multi", "", _containers apply {netId _x}, _positions] call YFU_fnc_fabricatorPublishResult;
 };

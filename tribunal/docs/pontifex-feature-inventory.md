@@ -510,11 +510,12 @@ review for excluded terrain cases.
   **unreachable repository-wide**; it is recorded, not deleted, because it is
   globally named and may be a mission-maker entry point.
 * **Multi-item packing** clones objects, computes bounds/orientations, packs
-  containers/pallets, preserves inventory, and delivers locally. **Implemented;
-  REVIEWED / REFINED.** It reported success while silently dropping items too
-  large for any container and orphaning their clones under the map. The packer now
-  returns the skipped objects and succeeds only when nothing was skipped; the
-  caller deletes anything unpacked and the order is refused.
+  containers/pallets, preserves inventory, and delivers locally. **REFINED;
+  ACCEPTED / COVERED** for the tested eight-light-crate/two-pallet matrix. The
+  allocator now honours its four-object cap without accepting geometrically
+  unpackable items. Every distinct target is reserved before movement or reveal;
+  the matched later-target-unavailable control refuses all ten transaction objects
+  hidden and publishes nothing. Other class/count/container matrices remain open.
 * **Local virtual-inventory toggle** (`Fabricator_Module_EnableLocalArsenal`) gates
   the ZEN inventory action used to add stock that was never synchronized. The
   module setter now publishes it and the action condition honours it, default
@@ -536,7 +537,7 @@ review for excluded terrain cases.
   server-owned single land delivery and for authentic packed orders on flat,
   moderate-gradient (10–20 degrees), and dense 64-barrier land fixtures. Exact
   contents, bounded recipient/drop distance, physical settling, locality and
-  cleanup are observed. A shoreline water recipient with suitable moderate land inside the bounded search succeeds and settles on non-water terrain; a matched all-water neighborhood refuses with `no-safe-drop`. A 34-degree recipient similarly recovers to a 7-degree drop, while a matched 38-degree neighborhood whose 177 sampled points all exceed 36 degrees refuses atomically. Ponds, other severe terrain shapes, land beyond 15 m, arbitrary collision clearance, multiple containers, and single-item terrain-boundary requests remain **NEEDS EXPERIMENTATION**.
+  cleanup are observed. A shoreline water recipient with suitable moderate land inside the bounded search succeeds and settles on non-water terrain; a matched all-water neighborhood refuses with `no-safe-drop`. A 34-degree recipient similarly recovers to a 7-degree drop, while a matched 38-degree neighborhood whose 177 sampled points all exceed 36 degrees refuses atomically. Ponds, other severe terrain shapes, land beyond 15 m, arbitrary collision clearance, multi-container matrices beyond eight light crates split across two pallets, and single-item terrain-boundary requests remain **NEEDS EXPERIMENTATION**.
 * **Airdrop handoff** calls Vigil delivery and observes authoritative parachute
   results. **Implemented; COVERED as a cross-mod composite.** Missing API fails
   closed.
@@ -786,7 +787,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Iron Dome client-owned artillery | **REVIEWED / DEFERRED** | current server handler deliberately rejects non-server-local shells; no owner-routing product policy is chosen |
 | Iron Dome threat policy/audio | **REVIEWED / DEFERRED** | friendly/outgoing versus protected-impact-area filtering is undecided; audio is unproven under `-noSound` |
 | Fabricator delivery mass cap and carry boundary | **REFINED; ACCEPTED / COVERED** | the exact clone is stably mass 200 before publication through ACE's global mass event; client-a waits for that replicated boundary and begins ACE carry on the same net ID |
-| Fabricator bounded land/terrain placement | **REFINED; ACCEPTED / COVERED** | authentic packed orders settle on flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient-recovery fixtures; bounded all-water and all-severe neighborhoods refuse atomically; ponds, other terrain shapes, land beyond 15 m, single-item and multiple-container boundaries remain unproven |
+| Fabricator bounded land/terrain placement | **REFINED; ACCEPTED / COVERED** | authentic packed orders settle on flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient-recovery fixtures; an eight-light-crate order publishes two distinct settled pallets only when both targets exist; bounded all-water, all-severe, and later-target-unavailable controls refuse atomically; ponds, other terrain shapes, land beyond 15 m, single-item requests and other multi-container matrices remain unproven |
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
 | Fabricator staging choreography | **NO CHARACTERIZATION REQUIRED; OUTCOME-COVERED** | controlled calibrations rejected hiding/relocation as the mass cause; permanent coverage freezes the authentic pre-publication and post-carry outcomes, not staging depth or cadence |
 | Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles and one authenticated client | exact authority/rope identity, matched physical A/B, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; player-owned/migration/client-N remain deferred |
@@ -802,7 +803,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Vigil rotary CAS and Fabricator bounded shoreline, deep-water, and severe-gradient recovery/refusal are now permanently covered for their stated one-client domains. The next highest-value unblocked investigation is Fabricator multi-container placement atomicity: exercise distinct attempt offsets and prove that one unavailable target refuses every container before publication. Ponds remain blocked on a deterministic loaded fixture, and client-B/JIP remain blocked on another identity. Explicit nearby supply loading and bounded Field contact attachment
+Vigil rotary CAS and Fabricator bounded shoreline, deep-water, severe-gradient, and tested multi-container placement/refusal are now permanently covered for their stated one-client domains. The next highest-value unblocked investigation is Fabricator single-item terrain-boundary placement, reusing the accepted bounded land/water/slope oracle without assuming the packed path proves the direct-delivery branch. Ponds remain blocked on a deterministic loaded fixture, and client-B/JIP remain blocked on another identity. Explicit nearby supply loading and bounded Field contact attachment
 remain accepted. The Vigil helicopter stabilizer is closed as deferred; do not
 reactivate its legacy force without a new bounded physical A/B. APS anti-drone
 is reviewed but deferred at its product-decision and authority boundary. Do not

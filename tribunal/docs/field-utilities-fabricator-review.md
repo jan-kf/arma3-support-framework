@@ -530,9 +530,21 @@ Fresh run `20260826T145821Z-152035b7` passed **33 server + 11 client assertions*
 
 One preceding cold diagnostic proved both new slope assertions but failed the existing ACE carry observation; it remains unaccepted. Post-ingest dossier verification also exposed duplicate rendering when two packages corroborated the same proposition. Arma Knowledge now renders one note for equal non-run validity dimensions while retaining both immutable run references.
 
+## Accepted continuation — multi-container placement atomicity
+
+The next highest-value unblocked inventory candidate was multi-container placement atomicity. Ponds were blocked on a deterministic loaded fixture, and client-B/JIP were blocked on another authenticated identity. Canonical `createVehicle`, `setPosATL`, and `attachTo` material defined the underlying operations but did not establish Fabricator policy; ACE 3.21.0 source was inspected for the exact carry-weight and supported override paths.
+
+The authentic eight-object baseline exposed three product defects. The packer accepted `_preferMultiple` and a four-small-object cap but ignored them, so eight light crates collapsed into one pallet. Once the already-valid geometric allocation was split into bounded groups of four, a refused transaction briefly exposed newly created pallets and successful pallets drifted after visibility and mass initialization. Pontifex now hides each transaction-owned container at creation, reserves every distinct target before moving anything, reveals only after complete reservation, and re-seats the server-owned containers before publication. Geometrically unpackable objects remain rejected; the split never turns one into an accepted item.
+
+A matched permanent treatment/control pair drives the real terminal with eight `Box_NATO_Support_F` objects. With two independently validated targets available, the worker publishes two distinct server-local pallets with four attached crates each; both remain within 2 m of their announced targets and continuously settled for two seconds. With the same attempt-zero target but attempt one unavailable, the exact ten transaction objects (eight crates plus two pallets) are still hidden before refusal, neither pallet has moved to the first target, the result is `no-safe-drop`, no container or position is published, and the mission-wide census is unchanged.
+
+The investigation also converted a repeated retained carry failure into a scoped product refinement. ACE computes carry weight from physical mass plus restored container cargo: at the real pre-publication boundary the heavy clone was mass 200 but ACE weight 308.5. ACE explicitly supports `ace_dragging_ignoreWeightCarry`; Fabricator now sets that replicated override only on an accepted single delivery, preserving its promised direct handoff without changing packed cargo policy. Client-a carried the exact clone successfully.
+
+Fresh autonomous run `20260826T161950Z-c1a720a7` passed **35 server + 11 client assertions** with zero failures, no missing identities, and complete client/network/server/state cleanup. Evidence Contract v4 package `urn:tribunal:evidence-package:20260826T161950Z-c1a720a7:1` (payload SHA-256 `24781769d083c8413cb7aa3248750928c8237a73add5b370bfdb3b72e78a2762`; file SHA-256 `92acf41ca045855bf07fdaa47badf45f919a41091918b32948bd4848e81e34bc`) contains nine arms, three causal relationships, and three demonstrated propositions. Ingestion changed counts once from 26 to 27 packages and 27 to 28 runs, then remained stable on repeat. Reviewed distillation revision 12 classifies the new finding as project-specific, adds no generic lemma or conjecture, and is likewise idempotent.
+
 ## Unresolved
 
-* **Broader terrain suitability beyond the accepted matrix.** Ponds, other severe terrain shapes, suitable terrain farther than 15 m, other coastline shapes/islands, multiple delivery containers, single-item terrain-boundary requests, arbitrary obstacle shapes/densities, and collision-free clearance remain open.
+* **Broader terrain suitability beyond the accepted matrix.** Ponds, other severe terrain shapes, suitable terrain farther than 15 m, other coastline shapes/islands, multi-container orders beyond the tested eight-light-crate/two-pallet matrix, single-item terrain-boundary requests, arbitrary obstacle shapes/densities, and collision-free clearance remain open.
 * **Client-b and JIP.** One authenticated client is the proof boundary.
 * **ACE-side action presence.** ACE 3.21 stores object actions where neither an
   object variable nor the class-keyed `ace_interact_menu_ActNamespace` exposes
@@ -551,6 +563,6 @@ atomic fabrication, unlimited catalogue semantics, exact cargo, packed delivery,
 the shared Vigil authorization boundary, adversarial request receipts,
 active-cancellation and watchdog rollback, result retirement, and complete
 scenario isolation; flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient-recovery packed placement within the stated bounds; atomic all-water and all-severe refusal; exact pre-publication mass 200; and exact
-client carry attachment. Pond, other-severe-terrain, other-coastline, land-beyond-15-m, multiple-container, single-item-terrain-boundary and arbitrary-obstruction suitability, actual client-b/JIP behavior, ACE-internal action visibility,
+client carry attachment. Pond, other-severe-terrain, other-coastline, land-beyond-15-m, multi-container orders beyond the accepted matrix, single-item-terrain-boundary and arbitrary-obstruction suitability, actual client-b/JIP behavior, ACE-internal action visibility,
 runtime-created editor synchronization, and Live-snippet supervision remain the
 explicit follow-ups listed above; none is implied by the accepted PASS.

@@ -6,7 +6,7 @@ from tribunal.runner.model import Scenario, ScenarioReview
 EVIDENCE_CONTRACT = {
     "scenario": {
         "id": "pontifex.field-utilities.fabricator.transaction",
-        "version": 3,
+        "version": 4,
         "feature_family": "field-utilities/fabricator",
         "name": "Fabricator bounded terrain placement",
         "definition": {
@@ -61,6 +61,18 @@ EVIDENCE_CONTRACT = {
             "assertions": ["fabricator.control.severeGradientAtomic"],
         },
         {
+            "key": "multi_container_success_treatment",
+            "role": "treatment",
+            "description": "An authentic eight-object order allocates multiple containers, reserves one distinct bounded target per container, and publishes the complete settled delivery",
+            "assertions": ["fabricator.delivery.multiContainerPlacement"],
+        },
+        {
+            "key": "multi_container_target_refusal_control",
+            "role": "negative_control",
+            "description": "The same authentic eight-object order with only its first distinct target available refuses every container before movement, visibility, or publication",
+            "assertions": ["fabricator.control.multiContainerAtomic"],
+        },
+        {
             "key": "closeout",
             "role": "treatment",
             "description": "All created objects, transaction records, result keys and fixtures close cleanly",
@@ -82,6 +94,13 @@ EVIDENCE_CONTRACT = {
             "target": "severe_gradient_refusal_control",
             "controlled_dimensions": ["same authenticated client", "same server authority", "same registered station and catalogue", "same two-object packed order", "same bounded placement helper", "moderate non-water terrain inside the bounded search is the varied dimension"],
         },
+        {
+            "key": "all-container-targets-v-first-only",
+            "relation": "CAUSAL_PAIR_WITH",
+            "source": "multi_container_success_treatment",
+            "target": "multi_container_target_refusal_control",
+            "controlled_dimensions": ["same authenticated client", "same server authority", "same registered station and catalogue", "same eight-object terminal order", "same multi-container allocator", "same attempt-zero target", "availability of target attempts one and above is the varied dimension"],
+        },
     ],
     "propositions": [
         {
@@ -98,10 +117,17 @@ EVIDENCE_CONTRACT = {
             "assertions": ["fabricator.delivery.severeGradientRecovery", "fabricator.control.severeGradientAtomic", "fabricator.cleanup"],
             "rationale": "Matched authentic order paths vary bounded moderate-slope availability; independent surface-normal samples, exact result identities, physical settling, mission-wide census and cleanup distinguish recovery from atomic refusal.",
         },
+        {
+            "id": "pontifex:fabricator:multi-container-placement-atomicity",
+            "text": "Under the tested dedicated-server and one-client conditions, an authentic Fabricator order that allocates multiple containers publishes the complete delivery at distinct bounded targets when every target is available, while the same order with only the first target available is refused atomically before any container is moved, revealed, or published.",
+            "intended_use": "primary_result",
+            "assertions": ["fabricator.delivery.multiContainerPlacement", "fabricator.control.multiContainerAtomic", "fabricator.cleanup"],
+            "rationale": "Matched authentic eight-object terminal orders vary only later target availability; exact attempt records, tracked pre-refusal object state, result identities, mission-wide census and cleanup distinguish complete publication from atomic refusal.",
+        },
     ],
     "unresolved": [
         "Pond objects are detected by surfaceIsWater only when loaded and no deterministic pond fixture is present on Stratis; ponds remain unproven.",
-        "Other islands, coastline shapes, terrain shapes outside the sampled severe-gradient matrix, suitable terrain farther than 15 m, multiple delivery containers, single-item terrain-boundary requests, client-B/JIP and ownership migration remain outside this proof.",
+        "Other islands, coastline shapes, terrain shapes outside the sampled severe-gradient matrix, suitable terrain farther than 15 m, multi-container orders beyond the tested allocator/order/target matrix, single-item terrain-boundary requests, client-B/JIP and ownership migration remain outside this proof.",
     ],
 }
 
@@ -273,6 +299,10 @@ TRIBUNAL_FAB_fnc_rawSend = {
     _result
 };
 
+player setUnitPos "UP";
+player playMoveNow "AmovPercMstpSnonWnonDnon";
+private _standDeadline = diag_tickTime + 5;
+waitUntil {uiSleep 0.05; stance player isEqualTo "STAND" || {diag_tickTime > _standDeadline}};
 private _singleReport = ["single", _station, [[_heavyId, 1]], 60] call TRIBUNAL_FAB_fnc_order;
 private _singleResult = _singleReport param [1, []];
 private _clone = objectFromNetId (_singleResult param [3, ""]);
@@ -303,6 +333,8 @@ private _carryOk = (attachedTo _clone) isEqualTo player;
 ["fabricator.client.carryStarted", _carryOk, format ["clone=%1|player=%2|attached=%3|mass=%4|commonOwner=%5|isCarrying=%6|canCarry=%7|dist=%8|stance=%9", netId _clone, netId player, netId (attachedTo _clone), getMass _clone, netId (_clone getVariable ["ace_common_owner", objNull]), player getVariable ["ace_dragging_isCarrying", false], _clone getVariable ["ace_dragging_canCarry", false], player distance _clone, stance player]] call _assert;
 
 ["multi", _station, [[_lightId, 2]], 90] call TRIBUNAL_FAB_fnc_order;
+["multiContainerSuccess", _station, [[_lightId, 8]], 120] call TRIBUNAL_FAB_fnc_order;
+["multiContainerRefusal", _station, [[_lightId, 8]], 120] call TRIBUNAL_FAB_fnc_order;
 
 TRIBUNAL_FAB_fnc_terrainOrder = {
     params ["_phase"];
@@ -493,6 +525,8 @@ TRIBUNAL_SCENARIO = Scenario(
         "fabricator.control.deepWaterAtomic",
         "fabricator.delivery.severeGradientRecovery",
         "fabricator.control.severeGradientAtomic",
+        "fabricator.delivery.multiContainerPlacement",
+        "fabricator.control.multiContainerAtomic",
         "fabricator.control.unpackableAtomic",
         "fabricator.control.unregistered",
         "fabricator.control.outOfRange",
@@ -684,7 +718,10 @@ YFU_fnc_fabricatorPublishResult = {
         private _ready = objectFromNetId _objectId;
         missionNamespace setVariable ["TRIBUNAL_FAB_MASS_READY", [
             _txId, _objectId, getMass _ready, netId (attachedTo _ready),
-            isObjectHidden _ready, local _ready, getPosATL _ready
+            isObjectHidden _ready, local _ready, getPosATL _ready,
+            _ready getVariable ["ace_dragging_ignoreWeightCarry", false],
+            _ready call ace_dragging_fnc_getWeight,
+            missionNamespace getVariable ["ACE_maxWeightCarry", 1e11]
         ], true];
     };
     _this call TRIBUNAL_FAB_ORIGINAL_PUBLISH
@@ -712,7 +749,8 @@ private _massReady = missionNamespace getVariable ["TRIBUNAL_FAB_MASS_READY", []
 private _massIsolationOk = (_massReady param [1, ""]) isEqualTo netId _clone
     && {(_massReady param [2, 0]) >= 199} && {(_massReady param [2, 0]) <= 201}
     && {(_massReady param [3, ""]) isEqualTo ""}
-    && {!(_massReady param [4, true])} && {_massReady param [5, false]};
+    && {!(_massReady param [4, true])} && {_massReady param [5, false]}
+    && {_massReady param [7, false]};
 ["fabricator.delivery.massIsolation", _massIsolationOk, format ["ready=%1|postPublish=[%2,%3,%4]|player=%5", _massReady, netId (attachedTo _clone), getMass _clone, getPosATL _clone, netId _scenarioPlayer]] call _assert;
 
 private _cloneCargo = [getWeaponCargo _clone, getMagazineCargo _clone, getItemCargo _clone, getBackpackCargo _clone];
@@ -764,6 +802,132 @@ private _packedOk = (_multi # 3)
     && {_attachedCount isEqualTo 2}
     && {(_containers findIf {(_x distance _scenarioPlayer) > 25}) < 0};
 ["fabricator.delivery.packed", _packedOk, format ["result=%1|containers=%2|attached=%3|allLocal=%4", _multiResult, count _containers, _attachedCount, (_containers findIf {isNull _x || {!(local _x)}}) < 0]] call _assert;
+
+// Matched authentic eight-object orders exercise the multi-container publication
+// boundary. The observer supplies independently validated deterministic bounded targets
+// so this causal pair cannot perturb later BIS_fnc_findSafePos random choices. In the control it preserves the real attempt-zero result and makes only
+// later targets unavailable, while capturing exact transaction-owned state before
+// the worker can refuse and delete it.
+TRIBUNAL_FAB_ORIGINAL_SAFE_DROP = YFU_assetsFindSafeDropPos;
+missionNamespace setVariable ["TRIBUNAL_FAB_MULTI_DROP_MODE", "allow", false];
+missionNamespace setVariable ["TRIBUNAL_FAB_MULTI_DROP_OBS", [], false];
+YFU_assetsFindSafeDropPos = {
+    params ["_center", ["_distance", 4], ["_attempt", 0]];
+    private _mode = missionNamespace getVariable ["TRIBUNAL_FAB_MULTI_DROP_MODE", "allow"];
+    private _drop = if (_mode isEqualTo "first-only" && {_attempt > 0}) then {
+        []
+    } else {
+        private _radius = _distance + (_attempt * 4);
+        [_center # 0, (_center # 1) + _radius, _center param [2, 0]]
+    };
+    private _snapshot = [];
+    if (_mode isEqualTo "first-only" && {_attempt isEqualTo 1}) then {
+        private _all = call YFU_fnc_fabricatorTransactions;
+        {
+            private _tx = _all get _x;
+            if ((_tx getOrDefault ["state", ""]) isEqualTo "building") then {
+                {
+                    private _object = objectFromNetId _x;
+                    if (!isNull _object) then {
+                        _snapshot pushBack [netId _object, typeOf _object, isObjectHidden _object, getPosATL _object, netId (attachedTo _object)];
+                    };
+                } forEach (_tx getOrDefault ["created", []]);
+            };
+        } forEach (keys _all);
+    };
+    private _observations = missionNamespace getVariable ["TRIBUNAL_FAB_MULTI_DROP_OBS", []];
+    _observations pushBack [_attempt, _drop, _snapshot];
+    missionNamespace setVariable ["TRIBUNAL_FAB_MULTI_DROP_OBS", _observations, false];
+    _drop
+};
+
+private _multiPlacement = ["multiContainerSuccess", 150] call TRIBUNAL_FAB_fnc_runPhase;
+private _multiPlacementResult = (_multiPlacement # 2) param [1, []];
+private _multiPlacementContainers = (_multiPlacementResult param [4, []]) apply {objectFromNetId _x};
+private _multiPlacementPositions = _multiPlacementResult param [5, []];
+private _multiPlacementAttempts = +(missionNamespace getVariable ["TRIBUNAL_FAB_MULTI_DROP_OBS", []]);
+private _multiPlacementBefore = _multiPlacementContainers apply {getPosATL _x};
+private _multiPlacementDeadline = diag_tickTime + 10;
+private _multiPlacementStableSince = -1;
+private _multiPlacementAfter = +_multiPlacementBefore;
+private _multiPlacementSpeeds = [];
+waitUntil {
+    uiSleep 0.1;
+    private _previous = +_multiPlacementAfter;
+    _multiPlacementAfter = _multiPlacementContainers apply {getPosATL _x};
+    _multiPlacementSpeeds = _multiPlacementContainers apply {vectorMagnitude (velocity _x)};
+    private _still = (count _previous) isEqualTo count _multiPlacementAfter;
+    if (_still) then {
+        for "_index" from 0 to ((count _multiPlacementContainers) - 1) do {
+            if ((_multiPlacementSpeeds # _index) > 0.1
+                || {(_multiPlacementAfter # _index) distance2D (_previous # _index) > 0.05}) exitWith {
+                _still = false;
+            };
+        };
+    };
+    if (_still) then {
+        if (_multiPlacementStableSince < 0) then {_multiPlacementStableSince = diag_tickTime;};
+    } else {
+        _multiPlacementStableSince = -1;
+    };
+    (_multiPlacementStableSince >= 0 && {(diag_tickTime - _multiPlacementStableSince) >= 2})
+        || {diag_tickTime > _multiPlacementDeadline}
+};
+private _multiPlacementSettled = _multiPlacementStableSince >= 0
+    && {(diag_tickTime - _multiPlacementStableSince) >= 2};
+private _multiPlacementAttached = 0;
+{if (!isNull _x) then {_multiPlacementAttached = _multiPlacementAttached + count attachedObjects _x;};} forEach _multiPlacementContainers;
+private _multiPlacementUnique = _multiPlacementPositions apply {format ["%1:%2", (_x # 0) toFixed 3, (_x # 1) toFixed 3]};
+_multiPlacementUnique = _multiPlacementUnique arrayIntersect _multiPlacementUnique;
+private _multiPlacementExpectedAttempts = [];
+for "_index" from 0 to ((count _multiPlacementContainers) - 1) do {_multiPlacementExpectedAttempts pushBack _index;};
+private _multiPlacementAtTargets = true;
+{
+    if ((getPosATL _x) distance2D (_multiPlacementPositions # _forEachIndex) > 2) exitWith {_multiPlacementAtTargets = false;};
+} forEach _multiPlacementContainers;
+private _multiPlacementOk = (_multiPlacement # 3)
+    && {(_multiPlacementResult param [1, false])}
+    && {(_multiPlacementResult param [2, ""]) isEqualTo "multi"}
+    && {(count _multiPlacementContainers) >= 2}
+    && {(count _multiPlacementPositions) isEqualTo count _multiPlacementContainers}
+    && {(count _multiPlacementUnique) isEqualTo count _multiPlacementContainers}
+    && {(_multiPlacementAttempts apply {_x # 0}) isEqualTo _multiPlacementExpectedAttempts}
+    && {_multiPlacementAttached isEqualTo 8}
+    && {(_multiPlacementContainers findIf {isNull _x || {!local _x} || {isObjectHidden _x}}) < 0}
+    && {(_multiPlacementPositions findIf {surfaceIsWater _x || {acos (((surfaceNormal _x) # 2) max -1 min 1) > 20} || {_scenarioPlayer distance2D _x > 15}}) < 0}
+    && {_multiPlacementSettled}
+    && {_multiPlacementAtTargets};
+_containers append _multiPlacementContainers;
+["fabricator.delivery.multiContainerPlacement", _multiPlacementOk, format ["result=%1|attempts=%2|containers=%3|positions=%4|unique=%5|attached=%6|before=%7|after=%8|speeds=%9|settled=%10|atTargets=%11", _multiPlacementResult, _multiPlacementAttempts, count _multiPlacementContainers, _multiPlacementPositions, count _multiPlacementUnique, _multiPlacementAttached, _multiPlacementBefore, _multiPlacementAfter, _multiPlacementSpeeds, _multiPlacementSettled, _multiPlacementAtTargets]] call _assert;
+
+missionNamespace setVariable ["TRIBUNAL_FAB_MULTI_DROP_MODE", "first-only", false];
+missionNamespace setVariable ["TRIBUNAL_FAB_MULTI_DROP_OBS", [], false];
+private _multiRefusal = ["multiContainerRefusal", 150] call TRIBUNAL_FAB_fnc_runPhase;
+private _multiRefusalResult = (_multiRefusal # 2) param [1, []];
+private _multiRefusalAttempts = +(missionNamespace getVariable ["TRIBUNAL_FAB_MULTI_DROP_OBS", []]);
+private _firstAttemptIndex = _multiRefusalAttempts findIf {(_x # 0) isEqualTo 0};
+private _secondAttemptIndex = _multiRefusalAttempts findIf {(_x # 0) isEqualTo 1};
+private _firstAttempt = if (_firstAttemptIndex < 0) then {[]} else {_multiRefusalAttempts # _firstAttemptIndex};
+private _secondAttempt = if (_secondAttemptIndex < 0) then {[]} else {_multiRefusalAttempts # _secondAttemptIndex};
+private _firstTarget = _firstAttempt param [1, []];
+private _preRefusal = _secondAttempt param [2, []];
+private _preRefusalContainers = _preRefusal select {(_x # 1) isEqualTo "Land_Pallet_F"};
+private _multiRefusalOk = (_multiRefusal # 3)
+    && {!(_firstTarget isEqualTo [])}
+    && {(_secondAttempt param [1, [1]]) isEqualTo []}
+    && {(count _preRefusalContainers) isEqualTo count _multiPlacementContainers}
+    && {(count _preRefusal) isEqualTo (8 + count _multiPlacementContainers)}
+    && {(_preRefusal findIf {!(_x # 2)}) < 0}
+    && {(_preRefusalContainers findIf {(_x # 3) distance2D _firstTarget <= 0.25}) < 0}
+    && {!(_multiRefusalResult param [1, true])}
+    && {(_multiRefusalResult param [2, ""]) isEqualTo "no-safe-drop"}
+    && {(_multiRefusalResult param [4, []]) isEqualTo []}
+    && {(_multiRefusalResult param [5, []]) isEqualTo []}
+    && {(_multiRefusal # 1) isEqualTo (_multiRefusal # 0)};
+["fabricator.control.multiContainerAtomic", _multiRefusalOk, format ["result=%1|attempts=%2|firstTarget=%3|preRefusal=%4|census=%5:%6", _multiRefusalResult, _multiRefusalAttempts, _firstTarget, _preRefusal, _multiRefusal # 0, _multiRefusal # 1]] call _assert;
+YFU_assetsFindSafeDropPos = TRIBUNAL_FAB_ORIGINAL_SAFE_DROP;
+missionNamespace setVariable ["TRIBUNAL_FAB_MULTI_DROP_MODE", nil, false];
+missionNamespace setVariable ["TRIBUNAL_FAB_MULTI_DROP_OBS", nil, false];
 
 // Four authentic successful packed orders hold class, quantity, authority, terminal entry,
 // placement helper, settling window and observation constant. Only terrain and
@@ -1167,6 +1331,11 @@ private _rogueOk = (_rogue # 3)
     && {(_rogue # 1) isEqualTo (_rogue # 0)};
 ["fabricator.control.airdropUnauthorized", _rogueOk, format ["result=%1|before=%2|after=%3|authorized=%4", _rogueResult, (_rogue # 0) # 0, (_rogue # 1) # 0, [_rogueAir, _scenarioPlayer] call YFU_fnc_fabricatorAirAssetAuthorized]] call _assert;
 
+private _requesterSide = side _scenarioPlayer;
+_ineligibleEntry set ["side", _requesterSide];
+_busyEntry set ["side", _requesterSide];
+[YSF_FW_REGISTRY_TOKEN, "tribunal-strike", _ineligibleEntry] call YSF_fwSetEntry;
+[YSF_FW_REGISTRY_TOKEN, "tribunal-busy-logi", _busyEntry] call YSF_fwSetEntry;
 private _ineligible = ["ineligibleAirdrop", 90] call TRIBUNAL_FAB_fnc_runPhase;
 private _busy = ["busyAirdrop", 90] call TRIBUNAL_FAB_fnc_runPhase;
 private _ineligibleResult = (_ineligible # 2) param [1, []];
@@ -1381,9 +1550,9 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
     evidence_contract=EVIDENCE_CONTRACT,
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. For the proven flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient fixtures, an authentic packed order produces one server-local container with both exact objects attached; its announced target remains within 15 m of the recipient and the container settles within 2 m of that target, continuously at rest for two seconds. Immediately before publication, a heavy single clone is visible, unattached, server-local and capped at mass 200; the ordering client then starts ACE carry on that exact clone. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
+        behavior_contract="A player at a registered fabrication station can order copies of mission-maker virtual storage; the server validates the catalogue and player presence and is the only machine that creates anything. Copies preserve stored weapons, magazines, items and backpacks. In the proven terrain fixtures, an authentic two-object packed order produces one server-local container that settles within 2 m of its bounded target. In the tested eight-light-crate matrix, the order publishes two distinct server-local four-crate pallets only after both bounded targets exist; if the later target is unavailable, every transaction object remains hidden and the order refuses without publication. Immediately before publication, a heavy single clone is visible, unattached, server-local, capped at mass 200, and exempt from the ACE cargo-inclusive carry-weight gate; client-a starts ACE carry on that exact clone. Registration is an unlimited template source, and incomplete orders refuse whole without leaks.",
         outcome="REFINE BEFORE PERMANENT COVERAGE",
-        rationale="Baseline fabrication ran entirely on the ordering client with no server validation, and reported success for orders it had only partly filled while orphaning the remainder under the map. Coverage is permanent only after orders became server-authoritative, owner-bound and atomic, with runtime adversarial controls for worker bypass, duplicate request, unauthorized airdrop, malformed orders and foreign discard. A late-oracle mass defect was corrected at the real publication boundary; permanent coverage observes the exact clone before publication and after the intended ACE carry transition. The terrain continuation uses authentic packed orders, independent water and surface-normal sampling, matched recovery/refusal controls, and physical settling evidence rather than treating a safe-position return or object creation as successful placement.",
+        rationale="Baseline fabrication ran entirely on the ordering client with no server validation, reported partial orders as success, and ignored its declared multi-container cap. Coverage is permanent only after orders became server-authoritative, owner-bound and atomic, with runtime adversarial controls for authority, replay, cancellation, terrain refusal, and cleanup. The exact single publication boundary now preserves physical mass and the promised ACE carry handoff despite cargo-inclusive ACE weight. Terrain and multi-container continuations use authentic terminal orders, independent terrain and target observations, matched recovery/refusal controls, exact transaction census, and continuous physical settling rather than treating helper returns or object creation as delivery success.",
         dependencies=(
             "ACE 3.21 interaction registration",
             "Arma editor module logic synchronization",
@@ -1392,7 +1561,7 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
         evidence_types=frozenset({
             "module-registration", "server-authority", "transaction-identity", "adversarial-control", "exact-netid",
             "cargo-inventory", "pre-publication-mass", "mass-replication", "ace-carry-identity",
-            "terrain-gradient", "terrain-severe-recovery", "terrain-severe-refusal", "obstruction-ring", "physical-settling",
+            "terrain-gradient", "terrain-severe-recovery", "terrain-severe-refusal", "obstruction-ring", "multi-container-allocation", "distinct-target-reservation", "physical-settling",
             "mission-wide-census", "replication", "cleanup",
         }),
         locality_requirements="Client-a owns the terminal, queue and request, declares its own unit by net id, and moves that real player to each terrain fixture only after a server signal. The dedicated server owns the station, obstruction fixtures, and every created, packed, placed, finalized and discarded object. It snapshots the exact clone at the real pre-publication boundary; client-a proves the real post-publication ACE carry attachment on the same net id. One authenticated client is the proof boundary: the foreign-discard control uses a server-owned transaction, so the client-b case remains unproven.",

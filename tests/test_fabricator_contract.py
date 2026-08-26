@@ -379,6 +379,37 @@ class FabricatorScenarioTests(unittest.TestCase):
         self.assertIn("_deepSamples findIf", scenario)
         self.assertIn('"id": "pontifex:fabricator:bounded-water-placement"', scenario)
 
+    def test_multi_container_policy_and_atomic_control_are_retained(self) -> None:
+        packing = read(PACKING)
+        self.assertIn("if (_preferMultiple && {_maxSmallCountCap > 0})", packing)
+        self.assertIn("_objectsInBin select [_offset, _cap]", packing)
+        self.assertIn("_allocs = _boundedAllocs;", packing)
+
+        server = read(SERVER)
+        reserve_all = server.index("private _positions = [];")
+        move_first = server.index("_x setPosATL (_positions # _forEachIndex);")
+        self.assertLess(reserve_all, move_first)
+        self.assertIn("if ((count _positions) isNotEqualTo (count _containers)) exitWith", server)
+        self.assertIn("_created hideObjectGlobal true;", server)
+        self.assertGreaterEqual(server.count("_x setPosATL (_positions # _forEachIndex);"), 2)
+        self.assertIn("_x setVelocity [0, 0, 0];", server)
+        self.assertIn("_single setVariable [\"ace_dragging_ignoreWeightCarry\", true, true];", server)
+
+        scenario = read(SCENARIO)
+        self.assertIn("multiContainerSuccess", scenario)
+        self.assertIn("multiContainerRefusal", scenario)
+        self.assertIn("fabricator.delivery.multiContainerPlacement", scenario)
+        self.assertIn("fabricator.control.multiContainerAtomic", scenario)
+        self.assertIn("pontifex:fabricator:multi-container-placement-atomicity", scenario)
+        self.assertIn("(count _preRefusal) isEqualTo (8 + count _multiPlacementContainers)", scenario)
+        self.assertIn("player playMoveNow \"AmovPercMstpSnonWnonDnon\"", scenario)
+        self.assertIn("_busyEntry set [\"side\", _requesterSide]", scenario)
+        self.assertIn("_multiPlacementStableSince", scenario)
+        self.assertIn("for \"_index\" from 0 to ((count _multiPlacementContainers) - 1)", scenario)
+        self.assertNotIn("_multiPlacementSpeeds # _forEachIndex", scenario)
+        self.assertIn("(diag_tickTime - _multiPlacementStableSince) >= 2", scenario)
+        self.assertIn("_ready getVariable [\"ace_dragging_ignoreWeightCarry\", false]", scenario)
+
     def test_active_owner_discard_terminates_worker_before_rollback(self) -> None:
         server = read(SERVER)
         discard = server[server.index("YFU_fnc_fabricatorDiscardOrder = {"):]
