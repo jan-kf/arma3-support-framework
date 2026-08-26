@@ -6,14 +6,14 @@ from tribunal.runner.model import Scenario, ScenarioReview
 EVIDENCE_CONTRACT = {
     "scenario": {
         "id": "pontifex.field-utilities.fabricator.transaction",
-        "version": 2,
+        "version": 3,
         "feature_family": "field-utilities/fabricator",
-        "name": "Fabricator bounded land and water placement",
+        "name": "Fabricator bounded terrain placement",
         "definition": {
             "kind": "dedicated-multiplayer product specification",
             "reference": "source/field-utilities/tests/tribunal/fabricator.py",
             "legacy_experiment_key": "tribunal:fieldutils-fabricator",
-            "applicability": "Arma 3 2.22 dedicated multiplayer with CBA, ACE and Field Utilities; server-owned fabrication; one authenticated client; Stratis land, shoreline and deep-water fixtures",
+            "applicability": "Arma 3 2.22 dedicated multiplayer with CBA, ACE and Field Utilities; server-owned fabrication; one authenticated client; Stratis land, shoreline, deep-water and severe-gradient fixtures",
         },
     },
     "knowledge_subject": {
@@ -49,6 +49,18 @@ EVIDENCE_CONTRACT = {
             "assertions": ["fabricator.control.deepWaterAtomic"],
         },
         {
+            "key": "severe_gradient_recovery_treatment",
+            "role": "treatment",
+            "description": "An authentic packed order from a severe-gradient recipient recovers to independently sampled moderate non-water terrain inside the bounded search and settles there",
+            "assertions": ["fabricator.delivery.severeGradientRecovery"],
+        },
+        {
+            "key": "severe_gradient_refusal_control",
+            "role": "negative_control",
+            "description": "The same authentic packed order in a severe-gradient neighborhood with no sampled moderate point refuses atomically before publication",
+            "assertions": ["fabricator.control.severeGradientAtomic"],
+        },
+        {
             "key": "closeout",
             "role": "treatment",
             "description": "All created objects, transaction records, result keys and fixtures close cleanly",
@@ -63,6 +75,13 @@ EVIDENCE_CONTRACT = {
             "target": "deep_water_control",
             "controlled_dimensions": ["same authenticated client", "same server authority", "same registered station and catalogue", "same two-object packed order", "same bounded placement helper", "nearby suitable land availability is the varied dimension"],
         },
+        {
+            "key": "moderate-slope-available-v-unavailable",
+            "relation": "CAUSAL_PAIR_WITH",
+            "source": "severe_gradient_recovery_treatment",
+            "target": "severe_gradient_refusal_control",
+            "controlled_dimensions": ["same authenticated client", "same server authority", "same registered station and catalogue", "same two-object packed order", "same bounded placement helper", "moderate non-water terrain inside the bounded search is the varied dimension"],
+        },
     ],
     "propositions": [
         {
@@ -72,10 +91,17 @@ EVIDENCE_CONTRACT = {
             "assertions": ["fabricator.delivery.shoreline", "fabricator.control.deepWaterAtomic", "fabricator.cleanup"],
             "rationale": "Matched authentic order paths vary nearby suitable-land availability; exact result identities, surface sampling, physical settling, mission-wide census and cleanup distinguish success from an atomic refusal.",
         },
+        {
+            "id": "pontifex:fabricator:bounded-severe-gradient-placement",
+            "text": "Under the tested dedicated-server and one-client conditions, an authentic packed Fabricator order from a severe-gradient recipient recovers to bounded moderate non-water terrain and settles when such terrain is available, while the same order in a sampled all-severe neighborhood is refused atomically without publishing or leaking a delivery.",
+            "intended_use": "primary_result",
+            "assertions": ["fabricator.delivery.severeGradientRecovery", "fabricator.control.severeGradientAtomic", "fabricator.cleanup"],
+            "rationale": "Matched authentic order paths vary bounded moderate-slope availability; independent surface-normal samples, exact result identities, physical settling, mission-wide census and cleanup distinguish recovery from atomic refusal.",
+        },
     ],
     "unresolved": [
         "Pond objects are detected by surfaceIsWater only when loaded and no deterministic pond fixture is present on Stratis; ponds remain unproven.",
-        "Other islands, coastline shapes, slopes above 20 degrees, land farther than 15 m, multiple delivery containers, single-item water requests, client-B/JIP and ownership migration remain outside this proof.",
+        "Other islands, coastline shapes, terrain shapes outside the sampled severe-gradient matrix, suitable terrain farther than 15 m, multiple delivery containers, single-item terrain-boundary requests, client-B/JIP and ownership migration remain outside this proof.",
     ],
 }
 
@@ -322,6 +348,25 @@ missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_READY", "terrainShoreProbe",
     "terrainDeepWater"
 ];
 
+private _slopeProbeDeadline = diag_tickTime + 240;
+private _slopeProbe = [];
+waitUntil {
+    uiSleep 0.1;
+    _slopeProbe = missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", []];
+    (_slopeProbe param [0, ""]) isEqualTo "terrainSlopeProbe"
+        || {diag_tickTime > _slopeProbeDeadline}
+};
+private _slopeProbeCenter = _slopeProbe param [1, []];
+player setPosATL _slopeProbeCenter;
+private _slopeProbePlaced = diag_tickTime + 20;
+waitUntil {uiSleep 0.1; player distance2D _slopeProbeCenter < 2 || {diag_tickTime > _slopeProbePlaced}};
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_READY", "terrainSlopeProbe", true];
+
+{[_x] call TRIBUNAL_FAB_fnc_terrainOrder;} forEach [
+    "terrainSevereRecovery",
+    "terrainSevereRefusal"
+];
+
 private _restoreDeadline = diag_tickTime + 240;
 private _restore = [];
 waitUntil {
@@ -446,6 +491,8 @@ TRIBUNAL_SCENARIO = Scenario(
         "fabricator.delivery.terrainMatrix",
         "fabricator.delivery.shoreline",
         "fabricator.control.deepWaterAtomic",
+        "fabricator.delivery.severeGradientRecovery",
+        "fabricator.control.severeGradientAtomic",
         "fabricator.control.unpackableAtomic",
         "fabricator.control.unregistered",
         "fabricator.control.outOfRange",
@@ -897,6 +944,115 @@ private _deepOk = (_deep # 3)
 ["fabricator.delivery.shoreline", _shoreOk, format ["shore=%1|shoreLand=%2|landRays=%3|selectedWater=%4", _shoreTerrain, _shoreLand, _shoreLandCount, _shoreCenterIsWater]] call _assert;
 ["fabricator.control.deepWaterAtomic", _deepOk, format ["result=%1|census=%2:%3|samples=%4", _deepResult, _deep # 0, _deep # 1, _deepSamples]] call _assert;
 
+// Revisit the rejected steep face with the fail-closed product rule now in
+// place. The matched arms vary only whether a moderate non-water point exists
+// inside the bounded search; both use the authentic packed terminal order.
+private _slopeProbe = [4600, 6700, 0];
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", ["terrainSlopeProbe", _slopeProbe], true];
+private _slopeProbeDeadline = diag_tickTime + 60;
+waitUntil {
+    uiSleep 0.1;
+    (missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_READY", ""]) isEqualTo "terrainSlopeProbe"
+        || {diag_tickTime > _slopeProbeDeadline}
+};
+
+private _recoveryCenter = [4573, 6664, 0];
+private _recoverySamples = [];
+{
+    private _radius = _x;
+    for "_bearing" from 0 to 345 step 15 do {
+        private _samplePos = _recoveryCenter vectorAdd [_radius * sin _bearing, _radius * cos _bearing, 0];
+        private _sampleSlope = acos (((surfaceNormal _samplePos) # 2) max -1 min 1);
+        _recoverySamples pushBack [_samplePos, _sampleSlope, surfaceIsWater _samplePos];
+    };
+} forEach [4, 6.5, 9];
+private _recoveryModerate = _recoverySamples select {!(_x # 2) && {(_x # 1) <= 20}};
+private _recoveryScore = count _recoveryModerate;
+
+private _refusalCenter = [4603, 6727, 0];
+private _refusalSamples = [];
+for "_offsetX" from -14 to 14 step 2 do {
+    for "_offsetY" from -14 to 14 step 2 do {
+        if (sqrt ((_offsetX * _offsetX) + (_offsetY * _offsetY)) <= 15) then {
+            private _samplePos = _refusalCenter vectorAdd [_offsetX, _offsetY, 0];
+            private _sampleSlope = acos (((surfaceNormal _samplePos) # 2) max -1 min 1);
+            _refusalSamples pushBack [_samplePos, _sampleSlope, surfaceIsWater _samplePos];
+        };
+    };
+};
+private _refusalFloor = if (_refusalSamples isEqualTo []) then {-1} else {selectMin (_refusalSamples apply {_x # 1})};
+
+_station setPosATL (_recoveryCenter vectorAdd [0, 1, 0]);
+_station setVectorUp (surfaceNormal (getPosATL _station));
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", ["terrainSevereRecovery", _recoveryCenter], true];
+private _recoveryReadyDeadline = diag_tickTime + 60;
+waitUntil {
+    uiSleep 0.1;
+    (missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_READY", ""]) isEqualTo "terrainSevereRecovery"
+        || {diag_tickTime > _recoveryReadyDeadline}
+};
+private _severeRecovery = ["terrainSevereRecovery", 120] call TRIBUNAL_FAB_fnc_runPhase;
+private _recoveryResult = (_severeRecovery # 2) param [1, []];
+private _recoveryContainers = (_recoveryResult param [4, []]) apply {objectFromNetId _x};
+private _recoveryContainer = _recoveryContainers param [0, objNull];
+private _recoveryDrop = (_recoveryResult param [5, []]) param [0, []];
+private _recoveryPrevious = getPosATL _recoveryContainer;
+private _recoveryStableSince = -1;
+private _recoverySettleDeadline = diag_tickTime + 8;
+waitUntil {
+    uiSleep 0.1;
+    private _position = getPosATL _recoveryContainer;
+    private _speed = vectorMagnitude (velocity _recoveryContainer);
+    if (!isNull _recoveryContainer && {_speed <= 0.1} && {(_position distance _recoveryPrevious) <= 0.05}) then {
+        if (_recoveryStableSince < 0) then {_recoveryStableSince = diag_tickTime;};
+    } else {
+        _recoveryStableSince = -1;
+    };
+    _recoveryPrevious = _position;
+    (_recoveryStableSince >= 0 && {(diag_tickTime - _recoveryStableSince) >= 2}) || {diag_tickTime > _recoverySettleDeadline}
+};
+private _recoveryFinal = getPosATL _recoveryContainer;
+private _recoveryDropSlope = if (_recoveryDrop isEqualTo []) then {99} else {acos (((surfaceNormal _recoveryDrop) # 2) max -1 min 1)};
+private _recoveryOk = (_severeRecovery # 3)
+    && {acos (((surfaceNormal _recoveryCenter) # 2) max -1 min 1) >= 30}
+    && {_recoveryScore > 0}
+    && {(_recoveryResult param [1, false])}
+    && {(_recoveryResult param [2, ""]) isEqualTo "multi"}
+    && {!(_recoveryDrop isEqualTo [])}
+    && {!surfaceIsWater _recoveryDrop}
+    && {_recoveryDropSlope <= 20}
+    && {_recoveryCenter distance2D _recoveryDrop <= 15}
+    && {!isNull _recoveryContainer}
+    && {local _recoveryContainer}
+    && {(count attachedObjects _recoveryContainer) isEqualTo 2}
+    && {_recoveryStableSince >= 0 && {(diag_tickTime - _recoveryStableSince) >= 2}}
+    && {_recoveryDrop distance2D _recoveryFinal <= 2}
+    && {vectorMagnitude (velocity _recoveryContainer) <= 0.1};
+_containers append _recoveryContainers;
+["fabricator.delivery.severeGradientRecovery", _recoveryOk, format ["center=%1|centerSlope=%2|moderate=%3|result=%4|drop=%5|dropSlope=%6|final=%7", _recoveryCenter, acos (((surfaceNormal _recoveryCenter) # 2) max -1 min 1), count _recoveryModerate, _recoveryResult, _recoveryDrop, _recoveryDropSlope, _recoveryFinal]] call _assert;
+
+_station setPosATL (_refusalCenter vectorAdd [0, 1, 0]);
+_station setVectorUp (surfaceNormal (getPosATL _station));
+missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", ["terrainSevereRefusal", _refusalCenter], true];
+private _refusalReadyDeadline = diag_tickTime + 60;
+waitUntil {
+    uiSleep 0.1;
+    (missionNamespace getVariable ["TRIBUNAL_FAB_TERRAIN_READY", ""]) isEqualTo "terrainSevereRefusal"
+        || {diag_tickTime > _refusalReadyDeadline}
+};
+private _severeRefusal = ["terrainSevereRefusal", 120] call TRIBUNAL_FAB_fnc_runPhase;
+private _refusalResult = (_severeRefusal # 2) param [1, []];
+private _refusalOk = (_severeRefusal # 3)
+    && {acos (((surfaceNormal _refusalCenter) # 2) max -1 min 1) >= 30}
+    && {_refusalFloor > 20}
+    && {(_refusalSamples findIf {(_x # 2) || {(_x # 1) <= 20}}) < 0}
+    && {!(_refusalResult param [1, true])}
+    && {(_refusalResult param [2, ""]) isEqualTo "no-safe-drop"}
+    && {(_severeRefusal # 1) isEqualTo (_severeRefusal # 0)}
+    && {((_refusalResult param [4, []]) isEqualTo [])}
+    && {((_refusalResult param [5, []]) isEqualTo [])};
+["fabricator.control.severeGradientAtomic", _refusalOk, format ["center=%1|centerSlope=%2|floor=%3|sampleCount=%4|result=%5|census=%6:%7", _refusalCenter, acos (((surfaceNormal _refusalCenter) # 2) max -1 min 1), _refusalFloor, count _refusalSamples, _refusalResult, _severeRefusal # 0, _severeRefusal # 1]] call _assert;
+
 _station setPosATL (_base vectorAdd [6, 0, 0]);
 missionNamespace setVariable ["TRIBUNAL_FAB_TERRAIN_SETUP", ["terrainRestore", _base], true];
 private _restoreDeadline = diag_tickTime + 60;
@@ -1225,9 +1381,9 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
     evidence_contract=EVIDENCE_CONTRACT,
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. For the proven flat, moderate-gradient and dense-obstruction land fixtures, an authentic packed order produces one server-local container with both exact objects attached; its announced target remains within 15 m of the recipient and the container settles within 2 m of that target, continuously at rest for two seconds. Immediately before publication, a heavy single clone is visible, unattached, server-local and capped at mass 200; the ordering client then starts ACE carry on that exact clone. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
+        behavior_contract="A player at a registered fabrication station can order copies of the objects a mission maker registered as virtual storage; the server validates the order against that catalogue and the player's presence at the station, and is the only machine that creates anything. A copy carries the source's stored weapons, magazines, items and backpacks. For the proven flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient fixtures, an authentic packed order produces one server-local container with both exact objects attached; its announced target remains within 15 m of the recipient and the container settles within 2 m of that target, continuously at rest for two seconds. Immediately before publication, a heavy single clone is visible, unattached, server-local and capped at mass 200; the ordering client then starts ACE carry on that exact clone. Registration is a template source and is never consumed. An order that cannot be produced in full - because it names something unregistered, is placed away from its station, has no catalogue, or contains something no container can hold - is refused whole and leaves nothing behind.",
         outcome="REFINE BEFORE PERMANENT COVERAGE",
-        rationale="Baseline fabrication ran entirely on the ordering client with no server validation, and reported success for orders it had only partly filled while orphaning the remainder under the map. Coverage is permanent only after orders became server-authoritative, owner-bound and atomic, with runtime adversarial controls for worker bypass, duplicate request, unauthorized airdrop, malformed orders and foreign discard. A late-oracle mass defect was corrected at the real publication boundary; permanent coverage observes the exact clone before publication and after the intended ACE carry transition. The terrain continuation uses authentic packed orders and independent physical settling evidence rather than treating a safe-position return or object creation as successful placement.",
+        rationale="Baseline fabrication ran entirely on the ordering client with no server validation, and reported success for orders it had only partly filled while orphaning the remainder under the map. Coverage is permanent only after orders became server-authoritative, owner-bound and atomic, with runtime adversarial controls for worker bypass, duplicate request, unauthorized airdrop, malformed orders and foreign discard. A late-oracle mass defect was corrected at the real publication boundary; permanent coverage observes the exact clone before publication and after the intended ACE carry transition. The terrain continuation uses authentic packed orders, independent water and surface-normal sampling, matched recovery/refusal controls, and physical settling evidence rather than treating a safe-position return or object creation as successful placement.",
         dependencies=(
             "ACE 3.21 interaction registration",
             "Arma editor module logic synchronization",
@@ -1236,7 +1392,7 @@ missionNamespace setVariable ["TRIBUNAL_FAB_SERVER_DONE", _token, true];
         evidence_types=frozenset({
             "module-registration", "server-authority", "transaction-identity", "adversarial-control", "exact-netid",
             "cargo-inventory", "pre-publication-mass", "mass-replication", "ace-carry-identity",
-            "terrain-gradient", "obstruction-ring", "physical-settling",
+            "terrain-gradient", "terrain-severe-recovery", "terrain-severe-refusal", "obstruction-ring", "physical-settling",
             "mission-wide-census", "replication", "cleanup",
         }),
         locality_requirements="Client-a owns the terminal, queue and request, declares its own unit by net id, and moves that real player to each terrain fixture only after a server signal. The dedicated server owns the station, obstruction fixtures, and every created, packed, placed, finalized and discarded object. It snapshots the exact clone at the real pre-publication boundary; client-a proves the real post-publication ACE carry attachment on the same net id. One authenticated client is the proof boundary: the foreign-discard control uses a server-owned transaction, so the client-b case remains unproven.",

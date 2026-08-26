@@ -520,9 +520,19 @@ Fresh run `20260826T143846Z-07b11de0` passed **31 server + 11 client assertions*
 
 Evidence package `urn:tribunal:evidence-package:20260826T143846Z-07b11de0:1` (payload SHA-256 `29ed606c6f2855111ce0e789ca078d42e73352016952be7ed373ef02bdf968e0`) contains five arms, one causal pair, and the demonstrated `pontifex:fabricator:bounded-water-placement` proposition. It was ingested twice with no second-pass count change. Reviewed distillation classifies the result as project-specific and adds no generic Arma proposition.
 
+## Accepted continuation — severe-gradient recovery and refusal
+
+The next highest-value unblocked candidate was the rejected severe-slope boundary. Sacred Texts documents `surfaceNormal` as the terrain-normal oracle and ignores Position3D Z; it does not establish a suitability threshold. Pontifex therefore retains ownership of the existing 20-degree maximum and 15 m search bound. No additional product mutation was required: the preceding water-placement refinement already validates candidate slope and makes local single and packed orders fail closed with `no-safe-drop`.
+
+Reconnaissance around the previously rejected 63.3-degree face selected two fixed Stratis fixtures, but those diagnostics were not promoted. The fresh permanent scenario independently resamples both coordinates before authentic orders. At `[4573,6664,0]`, the recipient measured 34.03 degrees and 38 of 72 exact fallback-ring samples were moderate non-water terrain. The authentic two-object packed order selected `[4576.83,6657.95,0]`, a 7.39-degree surface inside the bound, preserved exact server locality/contents, and settled. At `[4603,6727,0]`, the recipient measured 38.03 degrees and all 177 points on a 2 m grid through 15 m were land at or above 36.66 degrees. The matched order returned `no-safe-drop`, published no positions or containers, and preserved the exact mission-wide census.
+
+Fresh run `20260826T145821Z-152035b7` passed **33 server + 11 client assertions** with zero failures and exact cleanup. Its Evidence Contract v3 package `urn:tribunal:evidence-package:20260826T145821Z-152035b7:1` (payload SHA-256 `0e4f77aa66df6b316522c1e1521046bcfa109a6f191578824213dac677469378`) contains seven arms, two causal pairs, and demonstrated water and severe-gradient propositions. It was ingested twice without a second-pass count change. Reviewed distillation classifies the new finding as project-specific and adds no generic `surfaceNormal` proposition.
+
+One preceding cold diagnostic proved both new slope assertions but failed the existing ACE carry observation; it remains unaccepted. Post-ingest dossier verification also exposed duplicate rendering when two packages corroborated the same proposition. Arma Knowledge now renders one note for equal non-run validity dimensions while retaining both immutable run references.
+
 ## Unresolved
 
-* **Broader terrain suitability beyond the accepted matrix.** Severe gradients above 20 degrees, ponds, land farther than 15 m, other coastline shapes/islands, multiple delivery containers, single-item water requests, arbitrary obstacle shapes/densities, and collision-free clearance remain open.
+* **Broader terrain suitability beyond the accepted matrix.** Ponds, other severe terrain shapes, suitable terrain farther than 15 m, other coastline shapes/islands, multiple delivery containers, single-item terrain-boundary requests, arbitrary obstacle shapes/densities, and collision-free clearance remain open.
 * **Client-b and JIP.** One authenticated client is the proof boundary.
 * **ACE-side action presence.** ACE 3.21 stores object actions where neither an
   object variable nor the class-keyed `ace_interact_menu_ActNamespace` exposes
@@ -540,7 +550,7 @@ The accepted milestone covers one authenticated client, server-authoritative
 atomic fabrication, unlimited catalogue semantics, exact cargo, packed delivery,
 the shared Vigil authorization boundary, adversarial request receipts,
 active-cancellation and watchdog rollback, result retirement, and complete
-scenario isolation; flat, moderate-gradient, dense-obstruction and shoreline packed placement within the stated bounds; atomic all-water refusal; exact pre-publication mass 200; and exact
-client carry attachment. Severe-gradient, pond, other coastline, land-beyond-15-m, multiple-container, single-item-water and arbitrary-obstruction suitability, actual client-b/JIP behavior, ACE-internal action visibility,
+scenario isolation; flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient-recovery packed placement within the stated bounds; atomic all-water and all-severe refusal; exact pre-publication mass 200; and exact
+client carry attachment. Pond, other-severe-terrain, other-coastline, land-beyond-15-m, multiple-container, single-item-terrain-boundary and arbitrary-obstruction suitability, actual client-b/JIP behavior, ACE-internal action visibility,
 runtime-created editor synchronization, and Live-snippet supervision remain the
 explicit follow-ups listed above; none is implied by the accepted PASS.
