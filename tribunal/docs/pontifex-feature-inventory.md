@@ -1,6 +1,6 @@
 # Pontifex feature inventory
 
-This is a repository-grounded map of the Pontifex runtime at commit `a55d2d1`.
+This is a repository-grounded map of the Pontifex runtime through product commit `7b54f51`.
 It is an inventory, not a roadmap or a promise that every source surface is
 intended to survive. It records what exists so later reviews can choose stable
 behavioral contracts before permanent Tribunal coverage is added.
@@ -13,6 +13,10 @@ establish product semantics.
 Author decisions that resolve review questions are recorded in
 [`product-decisions-2026-08-20.md`](product-decisions-2026-08-20.md) and must be
 read with the applicable feature review.
+
+The definitive remaining-work classification, fresh completion estimate, and
+program completion criterion are in
+[`pontifex-remaining-work-audit-2026-08-27.md`](pontifex-remaining-work-audit-2026-08-27.md).
 
 ## Reading the inventory
 
@@ -746,6 +750,8 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | --- | --- |
 | `cordis-routing` | trusted server/object/group routing, operation-aware TTL dedupe, exact scoped fan-out, recipient decisions, cleanup |
 | `aps-intercept` | APS hard/soft kill, controls, locality, resources, replication |
+| `advsys-aps-eden-module` | authentic synchronized Eden APS activation and causal protected outcome |
+| `advsys-aps-zeus-module` | assigned-curator APS activation, authority, causal outcome, and cleanup |
 | `vigil-ui` | real tablet open/navigation/close/reopen and UI locality |
 | `vigil-markers` | artillery preview rendering/state lifecycle and cleanup |
 | `vigil-artillery` | circle/line artillery, controls, VLS, locality/cleanup |
@@ -758,12 +764,19 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
 | `vigil-fixed-wing-modules` | authentic typed Eden aggregation, nearest points, assigned-curator add, authority/replication/cleanup |
+| `vigil-whitelist-modules` | authentic Eden whitelist aggregation and assigned-curator add/remove authority lifecycle |
+| `fieldutils-ace-composition` | cold-client Field action-root registration, inheritance, coexistence, and relevance |
+| `fieldutils-bridge-builder` | authentic ACE entry, planning, authority, physical traversal, scoped removal, and cleanup |
 | `fieldutils-cargo-loading` | nearby authenticated exact-pair vehicle cargo loading, rejection, replication, cleanup |
 | `fieldutils-ace-cargo-policy` | selective configured ACE cargo preservation, ordinary-box negative control, authentic load/replication/cleanup |
 | `fieldutils-fabricator` | server-authoritative atomic orders, catalogue fidelity, bounded land, shoreline and severe-gradient placement, atomic deep-water/all-severe refusal, cleanup |
 | `fieldutils-fabricator-ui` | real heavy/light/oversize browsing, ordered live queue controls, direct submit, exact heavy-plus-light packed manifest, invalid-grid no-request control, cleanup |
 | `fieldutils-fabricator-empty-ui` | registered empty catalogue presentation, stale-selection reset, live Add/Submit no-request controls, cleanup |
+| `fieldutils-eden-modules` | authentic Virtual Storage/Fabricator Eden aggregation, authority, replication, and retained logic |
+| `fieldutils-towing` | authenticated physical towing/stow, rope identity, loss/reuse lifecycle, replication, and cleanup |
 | `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
+| `advsys-cbr-modules` | authentic CBR Eden activation and assigned-curator toggle authority/lifecycle |
+| `advsys-iron-dome` | physical artillery interception, controls, concurrent threats, authority, replication, and cleanup |
 
 Framework `locality-probe` and `visual-framebuffer` scenarios prove Tribunal,
 not product features. Promote generic backlog mechanics only for a concrete
@@ -809,18 +822,20 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Core settings/utils files | **Scaffolded / UNKNOWN** | reserved files contain no behavior |
 | Multi-client/JIP | **REVIEWED / DEFERRED** | second independently authenticated Steam identity plus per-feature visibility/retention/audience/concurrency/disconnect policy required |
 
-## Prioritized next feature reviews
+## Prioritized remaining work
 
-Vigil rotary CAS and Fabricator bounded shoreline, deep-water, severe-gradient, tested multi-container placement/refusal, the matched single-item shoreline/all-water branch, normal and empty terminal states, and an exact heterogeneous heavy-plus-light packed manifest are now permanently covered for their stated one-client domains. Arbitrary catalogue/container permutations are lower-value breadth after the accepted single-heavy, two-light, eight-light, heavy-plus-light and heavy-plus-oversize-refusal cases. The next bounded unblocked Fabricator candidate is the mission-maker local virtual-inventory toggle: enabled replication is observed, but an exact disabled-versus-enabled action-condition proof is not accepted. Ponds remain blocked on a deterministic loaded fixture, and client-B/JIP remain blocked on another identity. Explicit nearby supply loading and bounded Field contact attachment
-remain accepted. The Vigil helicopter stabilizer is closed as deferred; do not
-reactivate its legacy force without a new bounded physical A/B. APS anti-drone
-is reviewed but deferred at its product-decision and authority boundary. Do not
-resume reconnaissance until the product decisions in
-`vigil-fixed-wing-recon-review.md` are answered, and do not resume CBR marker
-scoping or confirmed-origin persistence until the product decisions in
-`advanced-systems-counter-battery-radar-review.md` are answered.
-FPV/UAV refinement and its unresolved product choices are recorded in
-`field-utilities-fpv-review.md`; do not invent those policies during coverage.
+The ground-up audit in
+[`pontifex-remaining-work-audit-2026-08-27.md`](pontifex-remaining-work-audit-2026-08-27.md)
+is authoritative for remaining-work priority. Two durable review closeouts are
+the only MUST review work: `vigil-artillery` and `vigil-markers` have accepted
+scenario metadata and permanent proof but no canonical feature-review document.
+The next bounded gameplay coverage candidate remains the Fabricator mission-maker
+local virtual-inventory toggle: enabled replication is observed, but an exact
+disabled-versus-enabled action-condition proof is not accepted. Do not begin
+FPV, APS anti-drone, CBR concurrency, reconnaissance, feedback policy, or other
+decision-bound work by inventing product semantics. Client-B/JIP and deterministic
+pond coverage remain externally blocked; arbitrary catalogue, class, terrain,
+and presentation matrices are non-blocking long-tail.
 
 ## Evidence sources
 
