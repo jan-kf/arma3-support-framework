@@ -23,9 +23,9 @@ class FabricatorUiContractTests(unittest.TestCase):
         }
         expected = set(self.scenario.server_expected) | set(self.scenario.client_expected)
         self.assertEqual(expected, declared)
-        self.assertEqual(contract["scenario"]["version"], 1)
+        self.assertEqual(contract["scenario"]["version"], 2)
         self.assertEqual(len(contract["causal_relationships"]), 1)
-        self.assertEqual(len(contract["propositions"]), 1)
+        self.assertEqual(len(contract["propositions"]), 2)
 
     def test_real_dialog_controls_drive_both_arms(self):
         client = self.scenario.client_sqf
@@ -42,6 +42,12 @@ class FabricatorUiContractTests(unittest.TestCase):
         ):
             self.assertIn(token, client)
         self.assertIn("fabricator.ui.normalAccepted", server)
+        self.assertIn("fabricator.ui.client.mixedAccepted", client)
+        self.assertIn("fabricator.ui.mixedPacked", server)
+        self.assertIn('[[netId _heavy, 1], [netId _light, 1]]', server)
+        self.assertIn("attachedObjects _x", server)
+        self.assertIn("getWeaponCargo _mixedHeavy", server)
+        self.assertIn("getItemCargo _mixedLight", server)
         self.assertIn("fabricator.ui.invalidGridNoRequest", server)
         self.assertIn("YFU_fabricatorAudit", server)
         self.assertIn("TRIBUNAL_FAB_UI_fnc_census", server)

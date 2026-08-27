@@ -13,14 +13,14 @@ Vigil 36, Field Utilities 20, and cross-mod composition 13. This convenient
 total is a consequence of the selected inventory surfaces, not a target fitted
 to the result.
 
-## Current estimate after Fabricator empty-terminal closeout
+## Current estimate after Fabricator mixed-class packing closeout
 
 | Measure | Before | After | Reasonable after range | Confidence |
 | --- | ---: | ---: | ---: | --- |
 | Feature-review program | ~97% | ~97% | 94–99% | medium |
 | Permanent automated coverage | ~86% | ~87% | 82–91% | medium |
 
-The accepted Fabricator continuations now close normal terminal browsing, exact heavy/light/oversize catalogue presentation, ordered live quantity controls, accepted nearby submit, malformed-grid rejection, and the registered empty-catalogue/empty-submit state. The empty-state review also cleared stale selected-object state on every page initialization. Fresh bounded run `20260827T212148Z-9a38342f` passed 3 server and 1 client feature assertions with exact cleanup. Review and weighted coverage remain about 97% and 87% because this is a narrow completion inside the already counted terminal surface.
+The accepted Fabricator continuations now close normal and empty terminal states plus an exact heterogeneous packed-order boundary. Fresh v2 run `20260827T213025Z-cd53bd2a` passed 5 server and 4 client feature assertions: the live terminal submitted heavy then light, and the server published exactly one visible local clone of each class with source cargo preserved before complete cleanup. Review and weighted coverage remain about 97% and 87% because this is bounded breadth inside the already counted Fabricator subsystem.
 
 ## Current family estimate
 
@@ -42,4 +42,4 @@ permanent-coverage number is lower-confidence for presentation/audio and
 multi-client behavior because the autonomous client uses `-noSound` and only
 one independently authenticated identity exists.
 
-The governor lifecycle, one-client declarative authority boundary, rotary-CAS physical-impact oracle, and Fabricator terrain, tested multi-container, single-item, normal terminal, and empty-terminal contracts are accepted. Fabricator does not claim ponds, other islands/coastline/severe-terrain shapes, suitable terrain beyond 15 m, broader packing/catalogue matrices, styling, cosmetic hint/progress presentation, or client-B/JIP. Heavy, light and oversize browsing plus heavy/light queueing were already accepted in the normal proof; the next bounded unblocked Fabricator candidate is a broader catalogue/container packing matrix, at lower value than the completed terminal states.
+The governor lifecycle, one-client declarative authority boundary, rotary-CAS physical-impact oracle, and Fabricator terrain, tested multi-container, single-item, normal/empty terminal, and exact heavy-plus-light packed-manifest contracts are accepted. Fabricator does not claim ponds, other islands/coastline/severe-terrain shapes, suitable terrain beyond 15 m, arbitrary packing/catalogue matrices, styling, cosmetic hint/progress presentation, or client-B/JIP. The next bounded unblocked Fabricator candidate is the local virtual-inventory toggle's disabled-versus-enabled action condition; arbitrary additional class permutations are lower-value breadth.

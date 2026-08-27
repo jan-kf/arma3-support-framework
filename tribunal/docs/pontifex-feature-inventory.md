@@ -498,12 +498,13 @@ review for excluded terrain cases.
   tool. See
   [`field-utilities-eden-module-activation-review.md`](field-utilities-eden-module-activation-review.md).
 * **Fabricator UI/queue** is **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED**
-  for exact registered catalogue rows, images, selected nested cargo, ordered
-  quantity changes through the live controls, accepted nearby submission, and
-  malformed-grid rejection before request/audit/census mutation. Fresh bounded
-  run `20260827T190358Z-c39f2669` passed server 4/client 3 feature assertions.
-  Empty-catalogue presentation, broader class matrices, styling, cosmetic
-  progress timing, client-B/JIP and ownership migration remain unproven.
+  for exact heavy/light/oversize catalogue rows, images, selected nested cargo,
+  ordered quantity changes through the live controls, accepted nearby submission,
+  registered empty-catalogue/empty-submit rejection, an exact heavy-plus-light
+  packed manifest, and malformed-grid rejection before request/audit/census
+  mutation. Fresh v2 run `20260827T213025Z-cd53bd2a` passed server 5/client 4
+  feature assertions. Other class/count matrices, styling, cosmetic progress
+  timing, client-B/JIP and ownership migration remain unproven.
 * **Single-item fabrication** clones one stored object near the player on the
   server.
   **Implemented; KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for one authenticated client, exact cargo and server ownership, direct ACE carry, bounded shoreline recovery, and atomic all-water refusal. Other coastline/terrain shapes, ponds, client-B/JIP, and ownership migration remain open.
@@ -514,11 +515,13 @@ review for excluded terrain cases.
   globally named and may be a mission-maker entry point.
 * **Multi-item packing** clones objects, computes bounds/orientations, packs
   containers/pallets, preserves inventory, and delivers locally. **REFINED;
-  ACCEPTED / COVERED** for the tested eight-light-crate/two-pallet matrix. The
-  allocator now honours its four-object cap without accepting geometrically
-  unpackable items. Every distinct target is reserved before movement or reveal;
-  the matched later-target-unavailable control refuses all ten transaction objects
-  hidden and publishes nothing. Other class/count/container matrices remain open.
+  ACCEPTED / COVERED** for the tested eight-light-crate/two-pallet matrix and an
+  exact heavy-plus-light live-terminal order whose two heterogeneous attached
+  clones preserve source cargo. The allocator honours its four-object cap without
+  accepting geometrically unpackable items. Every distinct target is reserved
+  before movement or reveal; the matched later-target-unavailable control refuses
+  all ten transaction objects hidden and publishes nothing. Other class/count/
+  container matrices remain open.
 * **Local virtual-inventory toggle** (`Fabricator_Module_EnableLocalArsenal`) gates
   the ZEN inventory action used to add stock that was never synchronized. The
   module setter now publishes it and the action condition honours it, default
@@ -758,7 +761,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `fieldutils-cargo-loading` | nearby authenticated exact-pair vehicle cargo loading, rejection, replication, cleanup |
 | `fieldutils-ace-cargo-policy` | selective configured ACE cargo preservation, ordinary-box negative control, authentic load/replication/cleanup |
 | `fieldutils-fabricator` | server-authoritative atomic orders, catalogue fidelity, bounded land, shoreline and severe-gradient placement, atomic deep-water/all-severe refusal, cleanup |
-| `fieldutils-fabricator-ui` | real catalogue/inventory browsing across heavy/light/oversize rows, ordered live queue controls, accepted nearby submit, invalid-grid no-request control, cleanup |
+| `fieldutils-fabricator-ui` | real heavy/light/oversize browsing, ordered live queue controls, direct submit, exact heavy-plus-light packed manifest, invalid-grid no-request control, cleanup |
 | `fieldutils-fabricator-empty-ui` | registered empty catalogue presentation, stale-selection reset, live Add/Submit no-request controls, cleanup |
 | `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
 
@@ -808,7 +811,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Vigil rotary CAS and Fabricator bounded shoreline, deep-water, severe-gradient, tested multi-container placement/refusal, the matched single-item shoreline/all-water branch, normal terminal browsing/queue/grid rejection, and registered empty-catalogue no-request behavior are now permanently covered for their stated one-client domains. The accepted normal terminal proof already observes heavy, light and oversize rows and queues heavy/light identities, so alternate-class browsing is not a separate uncovered candidate. The next bounded unblocked Fabricator work is a broader catalogue/container packing matrix, which is lower value than the accepted terminal states and must not promise styling or cosmetic progress timing. Ponds remain blocked on a deterministic loaded fixture, and client-B/JIP remain blocked on another identity. Explicit nearby supply loading and bounded Field contact attachment
+Vigil rotary CAS and Fabricator bounded shoreline, deep-water, severe-gradient, tested multi-container placement/refusal, the matched single-item shoreline/all-water branch, normal and empty terminal states, and an exact heterogeneous heavy-plus-light packed manifest are now permanently covered for their stated one-client domains. Arbitrary catalogue/container permutations are lower-value breadth after the accepted single-heavy, two-light, eight-light, heavy-plus-light and heavy-plus-oversize-refusal cases. The next bounded unblocked Fabricator candidate is the mission-maker local virtual-inventory toggle: enabled replication is observed, but an exact disabled-versus-enabled action-condition proof is not accepted. Ponds remain blocked on a deterministic loaded fixture, and client-B/JIP remain blocked on another identity. Explicit nearby supply loading and bounded Field contact attachment
 remain accepted. The Vigil helicopter stabilizer is closed as deferred; do not
 reactivate its legacy force without a new bounded physical A/B. APS anti-drone
 is reviewed but deferred at its product-decision and authority boundary. Do not

@@ -6,9 +6,9 @@ from tribunal.runner.model import Scenario, ScenarioReview
 EVIDENCE_CONTRACT = {
     "scenario": {
         "id": "pontifex.field-utilities.fabricator.terminal",
-        "version": 1,
+        "version": 2,
         "feature_family": "field-utilities/fabricator-ui",
-        "name": "Fabricator terminal browse, queue and grid rejection",
+        "name": "Fabricator terminal browse, mixed packing and grid rejection",
         "definition": {
             "kind": "dedicated-multiplayer product specification",
             "reference": "source/field-utilities/tests/tribunal/fabricator_ui.py",
@@ -21,7 +21,7 @@ EVIDENCE_CONTRACT = {
         "label": "Pontifex Fabricator",
         "kind": "pontifex.feature",
         "aliases": ["Fabricator"],
-        "biki_context": ["biki-page:1622", "biki-page:2814"],
+        "biki_context": ["biki-page:1453", "biki-page:1622", "biki-page:2814", "biki-page:9633", "biki-page:14947"],
     },
     "arms": [
         {
@@ -35,6 +35,12 @@ EVIDENCE_CONTRACT = {
             "role": "treatment",
             "description": "The real dialog presents the exact catalogue and selected cargo, preserves ordered quantities through live controls, and submits that queue to an accepted server order",
             "assertions": ["fabricator.ui.client.browseQueue", "fabricator.ui.client.normalAccepted", "fabricator.ui.normalAccepted"],
+        },
+        {
+            "key": "mixed_class_packed_treatment",
+            "role": "treatment",
+            "description": "The real dialog submits one heavy and one light catalogue identity in order, and the server publishes exact cargo-preserving heterogeneous clones attached to its packed delivery",
+            "assertions": ["fabricator.ui.client.mixedAccepted", "fabricator.ui.mixedPacked"],
         },
         {
             "key": "invalid_grid_negative_control",
@@ -66,9 +72,16 @@ EVIDENCE_CONTRACT = {
             "assertions": ["fabricator.ui.client.browseQueue", "fabricator.ui.client.normalAccepted", "fabricator.ui.normalAccepted", "fabricator.ui.client.invalidGridRejected", "fabricator.ui.invalidGridNoRequest", "fabricator.ui.cleanup"],
             "rationale": "The observer reads live dialog rows and dynamic controls, activates the shipped button handlers, and compares accepted normal submit with malformed-grid submit using exact queue, request sentinel, overlay state, server audit and mission-wide census.",
         },
+        {
+            "id": "pontifex:fabricator:mixed-class-packed-manifest",
+            "text": "Under the tested dedicated-server and one-client conditions, the live Fabricator terminal submits one heavy and one light registered catalogue object in queue order, and the server publishes a packed delivery containing exactly one attached clone of each class with its source cargo preserved.",
+            "intended_use": "primary_result",
+            "assertions": ["fabricator.ui.client.mixedAccepted", "fabricator.ui.mixedPacked", "fabricator.ui.cleanup"],
+            "rationale": "The live controls create the heterogeneous request while server-side type, cargo, attachment, locality and cleanup observations establish the delivered manifest independently of the packer's allocation report.",
+        },
     ],
     "unresolved": [
-        "Pixel styling, cosmetic progress timing, empty catalogue presentation, broader catalogue class matrices, client-B/JIP and ownership migration remain outside this proof.",
+        "Pixel styling, cosmetic progress timing, catalogue/container matrices beyond the exact heavy-plus-light pair, client-B/JIP and ownership migration remain outside this proof.",
     ],
 }
 
@@ -76,6 +89,7 @@ EVIDENCE_CONTRACT = {
 CLIENT_EXPECTED = frozenset({
     "fabricator.ui.client.browseQueue",
     "fabricator.ui.client.normalAccepted",
+    "fabricator.ui.client.mixedAccepted",
     "fabricator.ui.client.invalidGridRejected",
 })
 
@@ -222,6 +236,60 @@ _dismiss ctrlActivate true;
 private _dismissDeadline = diag_tickTime + 5;
 waitUntil {uiSleep 0.05; (call YFU_assetsQueueEntries) isEqualTo [] || {diag_tickTime > _dismissDeadline}};
 
+
+[_station, false, mapGridPosition player] call YFU_UI_OpenFabricator;
+private _mixedUiDeadline = diag_tickTime + 10;
+waitUntil {uiSleep 0.05; (lbSize _catalog) isEqualTo 3 || {diag_tickTime > _mixedUiDeadline}};
+_catalog lbSetCurSel _heavyRow;
+_add ctrlActivate true;
+uiSleep 0.1;
+_catalog lbSetCurSel _lightRow;
+_add ctrlActivate true;
+uiSleep 0.1;
+private _mixedQueue = call YFU_assetsQueueEntries;
+private _mixedQueueOk = (_mixedQueue apply {[_x # 0, _x # 2]}) isEqualTo [[_heavyId, 1], [_lightId, 1]]
+    && {(uiNamespace getVariable ["YFU_fabricator_queue_order", []]) isEqualTo [_heavyId, _lightId]};
+uiNamespace setVariable ["YFU_last_order_request", []];
+uiNamespace setVariable ["YFU_last_order_result", []];
+uiNamespace setVariable ["YFU_submit_in_progress", false];
+uiNamespace setVariable ["YFU_submit_success", false];
+missionNamespace setVariable ["TRIBUNAL_FAB_UI_READY", "mixed", true];
+private _mixedGoDeadline = diag_tickTime + 120;
+waitUntil {
+    uiSleep 0.1;
+    (missionNamespace getVariable ["TRIBUNAL_FAB_UI_GO", ""]) isEqualTo "mixed"
+        || {diag_tickTime > _mixedGoDeadline}
+};
+_submit ctrlActivate true;
+private _mixedStartDeadline = diag_tickTime + 5;
+waitUntil {
+    uiSleep 0.05;
+    (uiNamespace getVariable ["YFU_last_order_request", []]) isNotEqualTo []
+        || {diag_tickTime > _mixedStartDeadline}
+};
+private _mixedDeadline = diag_tickTime + 90;
+waitUntil {
+    uiSleep 0.1;
+    !(uiNamespace getVariable ["YFU_submit_in_progress", false])
+        || {diag_tickTime > _mixedDeadline}
+};
+private _mixedRequest = uiNamespace getVariable ["YFU_last_order_request", []];
+private _mixedResult = uiNamespace getVariable ["YFU_last_order_result", []];
+private _mixedSuccess = uiNamespace getVariable ["YFU_submit_success", false];
+private _mixedOk = _mixedQueueOk
+    && {_mixedSuccess}
+    && {(_mixedResult param [1, false])}
+    && {(_mixedResult param [2, ""]) isEqualTo "multi"}
+    && {(_mixedRequest param [2, []]) isEqualTo [[_heavyId, 1], [_lightId, 1]]}
+    && {(count (_mixedResult param [4, []])) > 0};
+["fabricator.ui.client.mixedAccepted", _mixedOk, format ["queue=%1|request=%2|result=%3|success=%4", _mixedQueue, _mixedRequest, _mixedResult, _mixedSuccess]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_FAB_UI_REPORT", [_mixedRequest, _mixedResult, _mixedSuccess, clientOwner], true];
+missionNamespace setVariable ["TRIBUNAL_FAB_UI_DONE", "mixed", true];
+
+_dismiss ctrlActivate true;
+private _mixedDismissDeadline = diag_tickTime + 5;
+waitUntil {uiSleep 0.05; (call YFU_assetsQueueEntries) isEqualTo [] || {diag_tickTime > _mixedDismissDeadline}};
+
 [_station, true, "1234-5678"] call YFU_UI_OpenFabricator;
 uiSleep 0.1;
 _catalog lbSetCurSel _heavyRow;
@@ -267,6 +335,7 @@ TRIBUNAL_SCENARIO = Scenario(
     server_expected=frozenset({
         "fabricator.ui.fixture",
         "fabricator.ui.normalAccepted",
+        "fabricator.ui.mixedPacked",
         "fabricator.ui.invalidGridNoRequest",
         "fabricator.ui.cleanup",
     }),
@@ -309,6 +378,7 @@ TRIBUNAL_FAB_UI_fnc_census = {
     (_all apply {netId _x}) call BIS_fnc_sortAlphabetically
 };
 private _sourceCargo = [getWeaponCargo _heavy, getMagazineCargo _heavy, getItemCargo _heavy, getBackpackCargo _heavy];
+private _lightSourceCargo = [getWeaponCargo _light, getMagazineCargo _light, getItemCargo _light, getBackpackCargo _light];
 private _fixture = [_token, netId _station, netId _heavy, netId _light, netId _oversize];
 missionNamespace setVariable ["TRIBUNAL_FAB_UI_FIXTURE", _fixture, true];
 private _fixtureOk = !isNull _player
@@ -361,6 +431,38 @@ private _normalOk = (_normal # 3)
     && {[getWeaponCargo _clone, getMagazineCargo _clone, getItemCargo _clone, getBackpackCargo _clone] isEqualTo _sourceCargo};
 ["fabricator.ui.normalAccepted", _normalOk, format ["request=%1|result=%2|clone=%3|local=%4|cargo=%5|census=%6:%7|audit=%8", _normalRequest, _normalResult, netId _clone, local _clone, [getWeaponCargo _clone, getMagazineCargo _clone, getItemCargo _clone, getBackpackCargo _clone], _normal # 0, _normal # 1, _normal # 4]] call _assert;
 
+
+private _mixed = ["mixed", 120] call TRIBUNAL_FAB_UI_fnc_phase;
+private _mixedReport = _mixed # 2;
+private _mixedRequest = _mixedReport param [0, []];
+private _mixedResult = _mixedReport param [1, []];
+private _mixedContainers = (_mixedResult param [4, []]) apply {objectFromNetId _x};
+private _mixedObjects = [];
+{if (!isNull _x) then {_mixedObjects append (attachedObjects _x);};} forEach _mixedContainers;
+private _mixedHeavyIndex = _mixedObjects findIf {typeOf _x isEqualTo typeOf _heavy};
+private _mixedLightIndex = _mixedObjects findIf {typeOf _x isEqualTo typeOf _light};
+private _mixedHeavy = if (_mixedHeavyIndex < 0) then {objNull} else {_mixedObjects # _mixedHeavyIndex};
+private _mixedLight = if (_mixedLightIndex < 0) then {objNull} else {_mixedObjects # _mixedLightIndex};
+private _mixedTypes = (_mixedObjects apply {typeOf _x}) call BIS_fnc_sortAlphabetically;
+private _expectedTypes = ([typeOf _heavy, typeOf _light]) call BIS_fnc_sortAlphabetically;
+private _mixedOk = (_mixed # 3)
+    && {_mixedReport param [2, false]}
+    && {(_mixedRequest param [1, ""]) isEqualTo netId _station}
+    && {(_mixedRequest param [2, []]) isEqualTo [[netId _heavy, 1], [netId _light, 1]]}
+    && {!(_mixedRequest param [3, true])}
+    && {(_mixedResult param [1, false])}
+    && {(_mixedResult param [2, ""]) isEqualTo "multi"}
+    && {(count _mixedContainers) > 0}
+    && {(_mixedContainers findIf {isNull _x || {!local _x} || {isObjectHidden _x}}) < 0}
+    && {(count _mixedObjects) isEqualTo 2}
+    && {_mixedTypes isEqualTo _expectedTypes}
+    && {(_mixedObjects findIf {isNull _x || {!local _x} || {isObjectHidden _x}}) < 0}
+    && {!isNull _mixedHeavy}
+    && {!isNull _mixedLight}
+    && {[getWeaponCargo _mixedHeavy, getMagazineCargo _mixedHeavy, getItemCargo _mixedHeavy, getBackpackCargo _mixedHeavy] isEqualTo _sourceCargo}
+    && {[getWeaponCargo _mixedLight, getMagazineCargo _mixedLight, getItemCargo _mixedLight, getBackpackCargo _mixedLight] isEqualTo _lightSourceCargo};
+["fabricator.ui.mixedPacked", _mixedOk, format ["request=%1|result=%2|containers=%3|objects=%4|types=%5|heavyCargo=%6|lightCargo=%7|census=%8:%9|audit=%10", _mixedRequest, _mixedResult, _mixedContainers apply {netId _x}, _mixedObjects apply {netId _x}, _mixedTypes, if (isNull _mixedHeavy) then {[]} else {[getWeaponCargo _mixedHeavy, getMagazineCargo _mixedHeavy, getItemCargo _mixedHeavy, getBackpackCargo _mixedHeavy]}, if (isNull _mixedLight) then {[]} else {[getWeaponCargo _mixedLight, getMagazineCargo _mixedLight, getItemCargo _mixedLight, getBackpackCargo _mixedLight]}, _mixed # 0, _mixed # 1, _mixed # 4]] call _assert;
+
 private _invalid = ["invalid", 30] call TRIBUNAL_FAB_UI_fnc_phase;
 private _invalidReport = _invalid # 2;
 private _invalidOk = (_invalid # 3)
@@ -374,7 +476,7 @@ private _invalidOk = (_invalid # 3)
 
 private _txIds = keys (call YFU_fnc_fabricatorTransactions);
 {[YFU_FABRICATOR_TOKEN, _x, 0] call YFU_fnc_fabricatorRetire;} forEach _txIds;
-{if (!isNull _x) then {deleteVehicle _x;};} forEach [_clone, _station, _heavy, _light, _oversize];
+{if (!isNull _x) then {deleteVehicle _x;};} forEach (_mixedObjects + _mixedContainers + [_clone, _station, _heavy, _light, _oversize]);
 {deleteVehicle _x;} forEach [_storageLogic, _fabricatorLogic];
 deleteGroup _group;
 localNamespace setVariable ["YFU_MODULE_STORAGE_RECORDS", createHashMap];
@@ -407,9 +509,9 @@ missionNamespace setVariable ["TRIBUNAL_FAB_UI_SERVER_DONE", _token, true];
     evidence_contract=EVIDENCE_CONTRACT,
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A player opening a registered Fabricator sees the exact virtual-storage catalogue, can inspect exact nested cargo, and can build an ordered quantity queue through the live controls. The live submit control sends that queue to the accepted server-authoritative nearby order path. With the same queued item in airdrop mode, malformed grid text is rejected locally before request identity, queue, overlay, server audit or mission census changes.",
+        behavior_contract="A player opening a registered Fabricator sees the exact virtual-storage catalogue, can inspect exact nested cargo, and can build an ordered quantity queue through the live controls. The live submit control sends a one-item queue to direct delivery and an exact heavy-plus-light queue to a server-authoritative packed delivery whose two heterogeneous attached clones preserve source cargo. With the same one-item queue in airdrop mode, malformed grid text is rejected locally before request identity, queue, overlay, server audit or mission census changes.",
         outcome="KEEP AS-IS AND SPEC-TEST",
-        rationale="The shipped dialog is reachable from the registered Fabricator action and already implements the intended browsing, queue and grid-validation policy. The permanent scenario observes the real controls and exact backing identities, uses their shipped button handlers, pairs accepted normal submit with malformed-grid rejection, and excludes unrelated placement physics and cosmetic progress timing.",
+        rationale="The shipped dialog is reachable from the registered Fabricator action and already implements the intended browsing, queue, packing-request and grid-validation policy. The permanent scenario observes the real controls and exact backing identities, uses their shipped button handlers, proves the exact heterogeneous manifest through independent server-side attachment/type/cargo observations, pairs accepted normal submit with malformed-grid rejection, and excludes unrelated placement physics and cosmetic progress timing.",
         dependencies=(
             "Arma display and listbox controls",
             "Arma editor module logic synchronization",
@@ -417,8 +519,9 @@ missionNamespace setVariable ["TRIBUNAL_FAB_UI_SERVER_DONE", _token, true];
         ),
         evidence_types=frozenset({
             "real-dialog", "catalogue-identity", "displayed-text", "displayed-picture",
-            "nested-cargo", "dynamic-controls", "ordered-queue", "server-authority",
-            "request-identity", "negative-control", "mission-wide-census", "audit", "cleanup",
+            "nested-cargo", "dynamic-controls", "ordered-queue", "mixed-class-manifest",
+            "attached-identity", "cargo-fidelity", "server-authority", "request-identity",
+            "negative-control", "mission-wide-census", "audit", "cleanup",
         }),
         locality_requirements="Client-a owns the dialog, selection, queue and grid validation. The dedicated server owns module registration, catalogue templates and fabricated delivery. The malformed grid arm must remain entirely client-local and is checked against server audit and census. Client-B/JIP remains outside this one-client proof.",
     ),
