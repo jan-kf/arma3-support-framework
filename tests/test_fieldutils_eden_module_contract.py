@@ -27,6 +27,11 @@ class FieldUtilitiesEdenModuleContractTests(unittest.TestCase):
         self.assertNotIn("call YOSHI_setVirtualStorageLogic", self.scenario.server_sqf)
         self.assertNotIn("call YOSHI_setFabricatorLogic", self.scenario.server_sqf)
         self.assertIn("fabricator.module.authority", self.scenario.server_expected)
+        self.assertIn("fabricator.module.inventoryToggle", self.scenario.server_expected)
+        self.assertIn("fabricator.module.inventoryActionDisabled", self.scenario.client_expected)
+        self.assertIn("fabricator.module.inventoryActionEnabled", self.scenario.client_expected)
+        self.assertIn("ace_interact_menu_fnc_collectActiveActionTree", self.scenario.client_sqf)
+        self.assertIn('"zenInventoryActions"', self.scenario.client_sqf)
 
     def test_server_authority_is_private_and_remote_setters_fail_closed(self) -> None:
         setters = (self.addon / "functions/global/fn_initModuleLogicSetters.sqf").read_text(encoding="utf-8")

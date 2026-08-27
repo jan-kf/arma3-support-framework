@@ -528,8 +528,11 @@ review for excluded terrain cases.
   container matrices remain open.
 * **Local virtual-inventory toggle** (`Fabricator_Module_EnableLocalArsenal`) gates
   the ZEN inventory action used to add stock that was never synchronized. The
-  module setter now publishes it and the action condition honours it, default
-  enabled. **Implemented; REVIEWED / REFINED.**
+  module setter publishes it and the registered action condition honours it,
+  default enabled. **REFINED; ACCEPTED / COVERED** for the exact default-enabled
+  module handoff and a one-client false/true active-tree A/B at 10.32 m in fresh
+  run `20260827T223431Z-731a6c43`. Mixed per-module policy, runtime
+  reconfiguration, client-B and JIP remain excluded.
 * **Order authority** is server-authoritative through one order endpoint plus an
   owner-bound discard endpoint.
   Identity comes from `remoteExecutedOwner`; internal helpers are gated on an
@@ -772,7 +775,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `fieldutils-fabricator` | server-authoritative atomic orders, catalogue fidelity, bounded land, shoreline and severe-gradient placement, atomic deep-water/all-severe refusal, cleanup |
 | `fieldutils-fabricator-ui` | real heavy/light/oversize browsing, ordered live queue controls, direct submit, exact heavy-plus-light packed manifest, invalid-grid no-request control, cleanup |
 | `fieldutils-fabricator-empty-ui` | registered empty catalogue presentation, stale-selection reset, live Add/Submit no-request controls, cleanup |
-| `fieldutils-eden-modules` | authentic Virtual Storage/Fabricator Eden aggregation, authority, replication, and retained logic |
+| `fieldutils-eden-modules` | authentic Virtual Storage/Fabricator Eden aggregation, authority, replication, retained logic, and local-inventory action gate |
 | `fieldutils-towing` | authenticated physical towing/stow, rope identity, loss/reuse lifecycle, replication, and cleanup |
 | `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
 | `advsys-cbr-modules` | authentic CBR Eden activation and assigned-curator toggle authority/lifecycle |
@@ -829,10 +832,12 @@ The ground-up audit in
 is authoritative for remaining-work priority. Two durable review closeouts are
 the only MUST review work: `vigil-artillery` and `vigil-markers` have accepted
 scenario metadata and permanent proof but no canonical feature-review document.
-The next bounded gameplay coverage candidate remains the Fabricator mission-maker
-local virtual-inventory toggle: enabled replication is observed, but an exact
-disabled-versus-enabled action-condition proof is not accepted. Do not begin
-FPV, APS anti-drone, CBR concurrency, reconnaissance, feedback policy, or other
+The Fabricator mission-maker local virtual-inventory action gate is now accepted
+by fresh disabled/enabled proof `20260827T223431Z-731a6c43`. After the two
+Vigil documentation-only review closeouts, the next unblocked gameplay candidate
+is the shared ownership-migration/client-owned boundary, represented by one
+routing probe and only one or two consequential consumers. Do not begin FPV,
+APS anti-drone, CBR concurrency, reconnaissance, feedback policy, or other
 decision-bound work by inventing product semantics. Client-B/JIP and deterministic
 pond coverage remain externally blocked; arbitrary catalogue, class, terrain,
 and presentation matrices are non-blocking long-tail.

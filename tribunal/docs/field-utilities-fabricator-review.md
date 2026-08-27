@@ -195,7 +195,7 @@ and fixed (below) — that is Live Mode tooling, not Tribunal.
 | Asset list and queue accounting | `KEEP AS-IS AND SPEC-TEST` |
 | Single local fabrication and cargo fidelity | `KEEP AS-IS AND SPEC-TEST` |
 | Multi-item packing and local delivery | `REFINE BEFORE PERMANENT COVERAGE` |
-| Local virtual-inventory toggle | `REFINE BEFORE PERMANENT COVERAGE` |
+| Local virtual-inventory toggle | `KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED` |
 | Order authority and validation | `DEFER` — product decision |
 | Storage depletion / order limits | `DEFER` — product decision |
 | Staging-position mechanism | `NO CHARACTERIZATION REQUIRED; OUTCOME-COVERED` |
@@ -203,8 +203,9 @@ and fixed (below) — that is Live Mode tooling, not Tribunal.
 
 The primary outcome is `REFINE BEFORE PERMANENT COVERAGE` because the capability
 that gates the named review — delivering a submitted order — silently
-under-delivered and leaked objects until this review, and because the local
-virtual-inventory toggle does not do what its own tooltip promises.
+under-delivered and leaked objects until this review. The local
+virtual-inventory toggle was subsequently restored and its registered action
+condition is now accepted below.
 
 ## Refinement made
 
@@ -588,10 +589,6 @@ Fresh autonomous run `20260827T213025Z-cd53bd2a` passed **5 server + 4 client fe
 
 * **Broader terrain suitability beyond the accepted matrix.** Ponds, other severe terrain shapes, suitable terrain farther than 15 m, other coastline shapes/islands, multi-container orders beyond the tested eight-light-crate/two-pallet matrix, single-item terrain boundaries beyond the tested shoreline/all-water pair, arbitrary obstacle shapes/densities, and collision-free clearance remain open.
 * **Client-b and JIP.** One authenticated client is the proof boundary.
-* **ACE-side action presence.** ACE 3.21 stores object actions where neither an
-  object variable nor the class-keyed `ace_interact_menu_ActNamespace` exposes
-  them, so the scenario proves the module handshake reaches the client and the
-  registrar is idempotent, not that ACE holds the action.
 * **Runtime editor synchronization.** `synchronizedObjects` does not replicate to
   clients for sync created at runtime, so per-station client-side registration
   cannot be proven with a runtime-built fixture.
@@ -607,4 +604,41 @@ active-cancellation and watchdog rollback, result retirement, and complete
 scenario isolation; flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient-recovery packed placement within the stated bounds; atomic all-water and all-severe refusal; exact pre-publication mass 200; and exact
 client carry attachment. Pond, other-severe-terrain, other-coastline, land-beyond-15-m, multi-container orders beyond the accepted matrix, single-item terrain boundaries beyond the accepted shoreline/all-water pair, and arbitrary-obstruction suitability, actual client-b/JIP behavior, ACE-internal action visibility,
 runtime-created editor synchronization, and Live-snippet supervision remain the
-explicit follow-ups listed above; none is implied by the accepted PASS.
+explicit follow-ups listed above; none is implied by the accepted PASS. The
+registered nearby local virtual-inventory action condition is covered for the
+default-enabled module handoff and an exact false/true published-state A/B.
+
+
+## Accepted continuation - local virtual-inventory action gate
+
+The audit's last MUST gameplay gap was the mission-maker local virtual-inventory
+switch. The product had already been refined so authentic Fabricator module
+dispatch publishes `YOSHI_FABRICATOR_LOCAL_INVENTORY`, default true, and the
+registered `zenInventoryActions` ACE condition requires that switch plus an
+exact Fabricator station within 20 m. What remained was causal permanent proof
+of the action condition, not another catalogue or delivery matrix.
+
+The existing `fieldutils-eden-modules` scenario preserves its four authentic
+typed modules and native Sync links; static guards still forbid manual setter
+calls. After client-a observes the genuine default-enabled handoff, the server
+changes only the published switch to false and then true. Client-a holds the
+registered action, exact `B_supplyCrate_F` (`2:18`), exact station (`2:21`) and
+10.32 m distance constant. ACE's installed-version active-tree adapter returns
+no active action while false and returns the same “Open Virtual Inventory”
+action while true. Server/client acknowledgments correlate both phases, and the
+retained forgery/private-authority and cleanup assertions still pass. This does
+not claim mixed per-module policy, runtime editor reconfiguration, client-B or
+JIP.
+
+Fresh autonomous run `20260827T223431Z-731a6c43` passed **6 server + 5 client
+feature assertions** (10 + 9 including tier smoke) with zero failures and full
+cleanup. Its generated Evidence Contract v1 package is retained beside the run.
+Calibration `20260827T223241Z-dc829a2a` remains rejected: both new condition
+arms passed, but the false phase overtook the older enabled-mirror assertion.
+The accepted run adds an explicit baseline acknowledgment rather than weakening
+that assertion.
+Independent cold repeat `20260827T224324Z-e731d666` reproduced all **6 server +
+5 client feature assertions** (10 + 9 including smoke), the same false/true
+registered-action result, and complete cleanup. Startup attempt
+`20260827T223908Z-b6c159e0` is excluded because Steam never became ready and no
+feature assertion ran.

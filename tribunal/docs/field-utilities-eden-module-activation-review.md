@@ -4,7 +4,8 @@ Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
 **Classification: REFINED; ACCEPTED / COVERED** for authentic typed Eden
 dispatch, multiple-module aggregation, server-private catalogue/station
-authority, current-client mirrors, the default local-inventory value, and
+authority, current-client mirrors, the default local-inventory value, the
+registered local virtual-inventory action's disabled/enabled gate, and
 adversarial setter/mirror controls. Accepted Fabricator transaction and delivery
 coverage remains the downstream behavioral baseline. Field Utilities defines no
 Zeus activation tool.
@@ -14,6 +15,22 @@ client 7 assertions, zero failures, normal container/network/state cleanup.
 The unchanged accepted Fabricator matrix was then rerun as compatibility proof:
 `20260821T154740Z-81b7dd89` — server 26/client 10, zero failures, including the
 authoritative no-storage refusal and normal cleanup.
+
+Accepted continuation `20260827T223431Z-731a6c43` passed **10 server + 9
+client assertions** with zero failures and complete client/network/server/state
+cleanup. Authentic configured dispatch first established the default enabled
+mirror. A one-variable control then published false and true without manually
+calling a module setter. Client-a resolved the exact registered
+`zenInventoryActions` action on crate `2:18`, 10.32 m from station `2:21`: the
+active tree was empty while false and contained the same “Open Virtual
+Inventory” action while true. Calibration run
+`20260827T223241Z-dc829a2a` proved both new arms but remains rejected because the
+false phase raced the older enabled-mirror assertion; an explicit baseline
+acknowledgment corrected evidence ordering without changing product behavior.
+Independent cold repeat `20260827T224324Z-e731d666` then reproduced all 10
+server and 9 client passes, including both action-gate arms, with complete
+cleanup. Attempt `20260827T223908Z-b6c159e0` is not feature evidence: Steam did
+not become ready, no client joined, and no feature assertion executed.
 
 ## Scope and canonical review questions
 
@@ -84,8 +101,11 @@ The permanent `fieldutils-eden-modules` scenario starts with two real typed
 storage modules, two real typed Fabricator modules, and four native Sync links.
 It independently resolves the exact named catalogue/station objects, requires
 four accepted native dispatches and retained local logics, compares both private
-aggregate sets, and verifies current-client mirrors/default inventory state.
-The client then sends both forged setters and publishes rogue mirrors. Exact
+aggregate sets, and verifies current-client mirrors/default inventory state. After client-a
+acknowledges that baseline, the scenario holds the exact crate, station,
+proximity and registered ACE action constant while the published inventory
+switch changes false then true; inactive then active tree observations form the
+causal pair. The client then sends both forged setters and publishes rogue mirrors. Exact
 rejection receipts plus unchanged private identity sets prove the authority
 boundary. Cleanup removes every fixture and empties the registrations.
 
@@ -114,9 +134,10 @@ product scenario. No new generic primitive or product meaning was promoted.
 
 ## False-PASS audit
 
-A classname, manual setter, raw Logic, public mirror, dispatch receipt, or
-successful pre-registered order is insufficient alone. The accepted proof
-requires authentic typed dispatch and Sync identity, independent named-object
-sets, observed remote stimuli/rejections, server-private state after successful
-public poisoning, client replication, and bounded cleanup. It intentionally does
+A classname, manual setter, raw Logic, public mirror, dispatch receipt, action
+registration, or successful pre-registered order is insufficient alone. The
+accepted proof requires authentic typed dispatch and Sync identity, independent
+named-object sets, the same registered action under exact false/true state,
+observed remote stimuli/rejections, server-private state after successful public
+poisoning, client replication, and bounded cleanup. It intentionally does
 not claim mixed-checkbox, runtime-reconfiguration, client-N, or JIP behavior.

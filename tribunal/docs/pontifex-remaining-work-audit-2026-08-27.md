@@ -26,18 +26,27 @@ product `TRIBUNAL_SCENARIO` declarations. The two framework scenarios
   reachable behavior reviewed. “Blocks coverage” means it prevents the scoped
   completion criterion below, not literal all-combination coverage.
 
+## Post-audit closeout
+
+* **A2 closed on 2026-08-27.** The Fabricator local virtual-inventory action
+  gate is **REFINED; ACCEPTED / COVERED** by fresh run
+  `20260827T223431Z-731a6c43`: authentic default-enabled module handoff, exact
+  false/true published-state control, the same registered action, exact crate
+  and station 10.32 m apart, client-a inactive/active observations, authority
+  controls, and cleanup. Mixed per-module policy and runtime reconfiguration
+  remain B2/C1 boundaries rather than part of this closeout.
+
 ## A. MUST FINISH
 
 | ID | Mod/family; feature/surface | Classification | Current review status | Current permanent coverage | Exactly what remains unknown or unproven; why it matters | Dependencies/blockers | Effort | Value | Blocks review? | Blocks coverage? | Recommended disposition |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | A1 | Vigil; artillery request/execution and preview-marker lifecycle | **UNREVIEWED** (durable-record gap) | Two accepted `ScenarioReview` contracts exist, but unlike the other covered Vigil features there is no canonical `*-review.md` for either `vigil-artillery` or `vigil-markers` | Strong: both scenarios are permanent and accepted | The source/authority/false-PASS analysis and explicit free/deferred details are not preserved in the canonical review corpus. Runtime behavior is understood, but the review program's durable handoff is incomplete | None; documentation review only | **small** | **high** | **Yes** | No; evidence already exists | Write canonical artillery and marker reviews from source plus accepted metadata; do not rerun or reclassify them unless the review finds a real contradiction |
-| A2 | Field Utilities / Fabricator; `Fabricator_Module_EnableLocalArsenal` action condition | **REVIEWED / NEEDS COVERAGE** | Reviewed and refined; default/enabled handoff is known | Enabled replication is observed incidentally; no accepted disabled-versus-enabled causal scenario | Prove the real registered local-inventory action is absent/ineligible when disabled and present/eligible when enabled, with exact module state, client-a replication, and restoration. This is a mission-maker switch, not another catalogue matrix | Existing one-client environment and ACE action adapter; no external blocker | **small** | **high** | No | **Yes** | Next candidate: extend the appropriate Fabricator/Eden scenario with one exact A/B and fresh autonomous evidence |
 
 ## B. SHOULD FINISH
 
 These are valuable representative boundaries. They should improve confidence,
 but their absence should not prevent declaring the narrowly stated current
-program substantially complete after A1–A2.
+program substantially complete after A1.
 
 | ID | Mod/family; feature/surface | Classification | Current review status | Current permanent coverage | Exactly what remains unknown or unproven; why it matters | Dependencies/blockers | Effort | Value | Blocks review? | Blocks coverage? | Recommended disposition |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -96,24 +105,24 @@ but no permanent-coverage credit for behavior they do not promise.
 | CORDIS | 97–100% | 83–89% | Core one-client broker is complete; presentation and changing ownership remain outside the proof |
 | Advanced Systems | 91–96% | 70–78% | APS/CBR/Iron Dome cores are strong; anti-drone, CBR concurrency policy, and expanded Iron Dome threat/locality policy dominate the gap |
 | Vigil | 94–98% | 88–93% | Operational tablet/task/aviation paths are strong; two durable review records are missing, while recon/homepage/UAV-positive behavior is consciously outside scope |
-| Field Utilities | 93–97% | 80–87% | Fabricator/Bridge/logistics/towing are strong; the reachable FPV subsystem and one Fabricator switch dominate the deficit |
+| Field Utilities | 93–97% | 81–88% | Fabricator/Bridge/logistics/towing and the local-inventory gate are strong; reachable FPV dominates the deficit |
 | Cross-mod | 92–97% | 76–84% | Settings/composition/logistics are covered; migration and true multi-client/JIP are not |
-| **Overall** | **94–97%** | **82–88%** | Review gap is small; coverage gap is concentrated rather than broad |
+| **Overall** | **94–97%** | **83–89%** | Review gap is small; coverage gap is concentrated rather than broad |
 
 The useful second coverage view is the **completion-eligible stable contract
 set**: reachable, retained behavior whose product policy and fixtures exist.
-That set is approximately **90–94% covered**. The lower 82–88% portfolio number
+That set is approximately **92–95% covered**. The lower 83–89% portfolio number
 keeps decision-blocked retained features such as FPV and anti-drone visible
 rather than making them disappear from the denominator.
 
 By estimated remaining effort rather than raw row count:
 
-* **26–32% is actionable now** (A plus B).
-* **39–45% is blocked or needs a product decision**; the purely external subset
+* **24–30% is actionable now** (A plus B).
+* **40–46% is blocked or needs a product decision**; the purely external subset
   is about 8–12%.
 * **16–20% is intentionally deferred or retirement work**.
-* **11–15% is optional long-tail**.
-* Therefore **68–74% of the remaining effort is presently
+* **12–16% is optional long-tail**.
+* Therefore **70–76% of the remaining effort is presently
   blocked/decision-bound, deferred/retirement, or optional**, rather than a
   queue of ready feature iterations.
 
@@ -122,12 +131,12 @@ Tangible remaining work:
 * **Meaningful actionable feature reviews:** 2 durable closeouts
   (`vigil-artillery`, `vigil-markers`); zero wholly uncharacterized reachable
   subsystems were found.
-* **Meaningful permanent additions:** 1 MUST scenario addition (the Fabricator
-  toggle), or about **5–8** additions for MUST plus the representative SHOULD
-  boundaries. These are additions/arms, not necessarily 5–8 new scenario files.
-* **MUST effort:** about **2–3 Sol-sized sessions**: one documentation-review
-  session and one to two toggle implementation/evidence/closeout sessions.
-* **MUST + SHOULD effort:** about **9–14 Sol-sized sessions**, depending mainly
+* **Meaningful permanent additions:** 0 MUST additions, or about **4–7**
+  additions for the representative SHOULD boundaries. These are additions/arms,
+  not necessarily 4–7 new scenario files.
+* **MUST effort:** about **1 Sol-sized session** for the two documentation-only
+  review closeouts.
+* **MUST + SHOULD effort:** about **8–12 Sol-sized sessions**, depending mainly
   on physical Arma calibration and whether B1/B2 can share fixtures.
 
 The five concentrations accounting for most meaningful future work are:
@@ -163,17 +172,16 @@ retirement-bound, or optional. Literal coverage of every class, map, threshold,
 presentation pixel, helper, ownership permutation, and engine-command
 combination is neither required nor desirable.
 
-Under that criterion, completing A1 and A2 is sufficient to declare the
+Under that criterion, completing A1 is sufficient to declare the
 **current scoped program substantially complete**. B items improve maturity;
 C items expand the supported product/topology only after their prerequisites
 are resolved.
 
 ## Next candidate
 
-After the two documentation-only review closeouts, the next gameplay coverage
-candidate remains **A2, the Fabricator local virtual-inventory toggle**. It is
-the best bounded unblocked choice because the contract and implementation are
-already refined, the genuine module/action entry exists, the exact negative and
-positive observations are available through existing adapters, and it closes a
-mission-maker promise rather than adding combinatorial catalogue breadth. This
-audit does not begin that work.
+The next gameplay coverage candidate after the two documentation-only review
+closeouts is **B1, representative ownership migration/client-owned consequential
+behavior**. Start with one shared routing/migration probe and only one or two
+high-consequence consumers (towing plus APS or the governor); do not replicate
+the topology matrix across every feature. This closeout does not begin that
+work.
