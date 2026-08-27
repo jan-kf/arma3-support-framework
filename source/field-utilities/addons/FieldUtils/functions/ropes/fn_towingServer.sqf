@@ -25,6 +25,27 @@ YFU_fnc_towObjectClaims = {
 	_claims
 };
 
+YFU_fnc_towParentAck = {
+	if (!isServer) exitWith {false};
+	params ["_token", "_operationId", "_child", "_parent", "_applied"];
+	private _sender = if (remoteExecutedOwner <= 2) then {2} else {remoteExecutedOwner};
+	private _all = call YFU_fnc_towOperations;
+	private _tx = _all getOrDefault [_operationId, createHashMap];
+	private _expectedChild = _tx getOrDefault ["cargo", objNull];
+	private _expectedParent = _tx getOrDefault ["tow", objNull];
+	private _accepted = _token isEqualTo YFU_TOW_TOKEN
+		&& {_operationId isNotEqualTo ""}
+		&& {_tx getOrDefault ["claimed", false]}
+		&& {!isNull _child} && {!isNull _parent}
+		&& {_child isEqualTo _expectedChild} && {_parent isEqualTo _expectedParent}
+		&& {_sender isEqualTo owner _child}
+		&& {_sender > 2 || {local _child}};
+	if (!_accepted) exitWith {false};
+	_tx set ["parentAck", [netId _child, netId _parent, _applied, _sender]];
+	_all set [_operationId, _tx];
+	true
+};
+
 YFU_fnc_towAudit = {
 	params ["_token", "_stage", "_reason", "_owner", "_operationId", ["_detail", []]];
 	if (!isServer || {_token isNotEqualTo YFU_TOW_TOKEN}) exitWith {};
@@ -110,7 +131,7 @@ YFU_fnc_towFinalize = {
 };
 
 YFU_fnc_towCreate = {
-	params ["_token", "_tow", "_cargo"];
+	params ["_token", "_tow", "_cargo", "_operationId"];
 	if (!isServer || {_token isNotEqualTo YFU_TOW_TOKEN}) exitWith {[false, [], "authority"]};
 	private _geometry = [_tow, _cargo] call YFU_fnc_resolveTowGeometry;
 	private _towPoint = _geometry param [0, []];
@@ -126,14 +147,22 @@ YFU_fnc_towCreate = {
 		{if (!isNull _x) then {ropeDestroy _x;};} forEach _created;
 		[false, [], "rope-create"]
 	};
-	[_cargo, _tow] call YFU_fnc_setTowParent;
+	[_cargo, _tow, _operationId] call YFU_fnc_setTowParent;
 	private _deadline = diag_tickTime + 2;
+	private _relationshipReady = false;
 	waitUntil {
 		uiSleep 0.02;
-		((getTowParent _cargo) isEqualTo _tow && {_cargo in (ropeAttachedObjects _tow)})
-			|| {diag_tickTime > _deadline}
+		private _tx = (call YFU_fnc_towOperations) getOrDefault [_operationId, createHashMap];
+		private _ack = _tx getOrDefault ["parentAck", []];
+		private _parentConfirmed = if (local _cargo) then {
+			(getTowParent _cargo) isEqualTo _tow
+		} else {
+			_ack isEqualTo [netId _cargo, netId _tow, true, owner _cargo]
+		};
+		_relationshipReady = _parentConfirmed && {_cargo in (ropeAttachedObjects _tow)};
+		_relationshipReady || {diag_tickTime > _deadline}
 	};
-	if !((getTowParent _cargo) isEqualTo _tow && {_cargo in (ropeAttachedObjects _tow)}) exitWith {
+	if (!_relationshipReady) exitWith {
 		{if (!isNull _x) then {ropeDestroy _x;};} forEach _created;
 		[_cargo, objNull] call YFU_fnc_setTowParent;
 		[false, [], "relationship"]
@@ -147,6 +176,8 @@ YFU_fnc_towMonitor = {
 	[_operationId] spawn {
 		params ["_operationId"];
 		private _invalidSince = -1;
+		private _lastOwner = -1;
+		private _migrationGraceUntil = -1;
 		private _done = false;
 		while {!_done} do {
 			uiSleep 0.1;
@@ -158,12 +189,29 @@ YFU_fnc_towMonitor = {
 				private _tow = _tx getOrDefault ["tow", objNull];
 				private _cargo = _tx getOrDefault ["cargo", objNull];
 				private _featureRopes = _tx getOrDefault ["ropes", []];
+				private _parentAck = _tx getOrDefault ["parentAck", []];
+				private _currentOwner = if (isNull _cargo) then {-1} else {owner _cargo};
+				if (_currentOwner isNotEqualTo _lastOwner) then {
+					_lastOwner = _currentOwner;
+					_migrationGraceUntil = diag_tickTime + 2;
+				};
+				if (!isNull _cargo && {!isNull _tow} && {(_parentAck param [3, -1]) isNotEqualTo _currentOwner}) then {
+					[_cargo, _tow, _operationId] call YFU_fnc_setTowParent;
+					_tx = (call YFU_fnc_towOperations) getOrDefault [_operationId, createHashMap];
+					_parentAck = _tx getOrDefault ["parentAck", []];
+				};
+				private _parentValid = if (local _cargo) then {
+					(getTowParent _cargo) isEqualTo _tow
+				} else {
+					_parentAck isEqualTo [netId _cargo, netId _tow, true, owner _cargo]
+				};
 				private _valid = !isNull _tow
 					&& {!isNull _cargo}
 					&& {_featureRopes isNotEqualTo []}
 					&& {(_featureRopes findIf {isNull _x}) < 0}
 					&& {_cargo in (ropeAttachedObjects _tow)}
-					&& {(getTowParent _cargo) isEqualTo _tow};
+					&& {_parentValid};
+				if (!_valid && {diag_tickTime < _migrationGraceUntil}) then {_valid = true;};
 				if (_valid) then {
 					_invalidSince = -1;
 				} else {
@@ -269,7 +317,7 @@ YFU_fnc_towRequestServer = {
 		private _tx = _all getOrDefault [_operationId, createHashMap];
 		private _tow = _tx getOrDefault ["tow", objNull];
 		private _cargo = _tx getOrDefault ["cargo", objNull];
-		private _created = [YFU_TOW_TOKEN, _tow, _cargo] call YFU_fnc_towCreate;
+		private _created = [YFU_TOW_TOKEN, _tow, _cargo, _operationId] call YFU_fnc_towCreate;
 		if !(_created # 0) exitWith {
 			private _reason = _created # 2;
 			[YFU_TOW_TOKEN, _operationId] call YFU_fnc_towClearActive;

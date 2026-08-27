@@ -605,17 +605,24 @@ Full analysis: [`field-utilities-object-handling-review.md`](field-utilities-obj
 
 * **Tow points/rope deployment** preserve configured or geometry-derived
   points behind a server-authoritative exact-pair transaction. **REFINED;
-  ACCEPTED / COVERED** for server-local land vehicles and one authenticated
-  client. Exact feature rope handles, parent state, claims, receipts, loss
-  finalization, and reuse are retained and fail closed.
+  ACCEPTED / COVERED** for server-local land vehicles and for the representative
+  client-owned-to-server active migration topology with one authenticated
+  client. Exact feature rope handles, owner-confirmed parent state, claims,
+  receipts, migration reconciliation, loss finalization, and reuse are retained
+  and fail closed.
 * **ACE tow/stow actions** are **REFINED; ACCEPTED / COVERED**. Fresh run
   `20260823T190019Z-39badbd1` proved the exact registered child, 0 m no-tow
   cargo movement versus 28.3352 m with the same movement under treatment,
   active-conflict and invalid-request controls, preservation of unrelated rope
   `2:162`, rope-loss cleanup, reuse, locality-aware replication, and complete
-  cleanup (server 14/0; client 13/0). Player-owned vehicles, migration,
-  client-B/JIP, natural projectile cuts, deletion/disconnect, and broad fallback
-  geometry remain separate experiments.
+  cleanup (server 14/0; client 13/0). Fresh migration run
+  `20260827T231228Z-1b3e79a7`, repeated with a valid Evidence Contract package
+  as `20260827T233022Z-cc14d7dd`, then proved both exact vehicles client-owned,
+  authenticated attach with an owner-correlated parent acknowledgment, survival
+  of the same operation/ropes/relationship through transfer to server ownership,
+  exact-once stow, replication, and cleanup (server 9/0; client 8/0 total).
+  Reverse/partial migration, client-B/JIP, natural projectile cuts,
+  deletion/disconnect, and broad fallback geometry remain separate experiments.
 * **Four-point helicopter sling helper** is **REVIEWED / DEFERRED**. It is a
   compiled orphan with no supported caller; it destroys all helicopter ropes
   before non-atomic local creation and has no authority/cleanup contract.
@@ -777,6 +784,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `fieldutils-fabricator-empty-ui` | registered empty catalogue presentation, stale-selection reset, live Add/Submit no-request controls, cleanup |
 | `fieldutils-eden-modules` | authentic Virtual Storage/Fabricator Eden aggregation, authority, replication, retained logic, and local-inventory action gate |
 | `fieldutils-towing` | authenticated physical towing/stow, rope identity, loss/reuse lifecycle, replication, and cleanup |
+| `fieldutils-towing-ownership-migration` | client-owned attach, correlated owner-local parent mutation, active client-to-server migration, exact-once stow, and cleanup |
 | `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
 | `advsys-cbr-modules` | authentic CBR Eden activation and assigned-curator toggle authority/lifecycle |
 | `advsys-iron-dome` | physical artillery interception, controls, concurrent threats, authority, replication, and cleanup |
@@ -814,7 +822,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Fabricator bounded land/terrain placement | **REFINED; ACCEPTED / COVERED** | authentic packed orders settle on flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient-recovery fixtures; an eight-light-crate order publishes two distinct settled pallets only when both targets exist; bounded all-water, all-severe, and later-target-unavailable controls refuse atomically; the single-item branch publishes and hands the exact shoreline clone to ACE carry and refuses atomically in all-water; ponds, other terrain shapes, land beyond 15 m, other single-item terrain boundaries and other multi-container matrices remain unproven |
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
 | Fabricator staging choreography | **NO CHARACTERIZATION REQUIRED; OUTCOME-COVERED** | controlled calibrations rejected hiding/relocation as the mass cause; permanent coverage freezes the authentic pre-publication and post-carry outcomes, not staging depth or cadence |
-| Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles and one authenticated client | exact authority/rope identity, matched physical A/B, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; player-owned/migration/client-N remain deferred |
+| Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles plus representative client-owned-to-server active migration with one authenticated client | exact authority/rope identity, owner-correlated parent acknowledgment, matched physical A/B, migration survival, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; reverse/partial migration and client-N remain unclaimed |
 | Field contact handling | **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for one server-owned crate/truck topology | exact matched physical contact, treatment-only attachment, carrier-state deltas, client-a replication and controlled no-leak teardown; broader classes/localities/lifecycle remain open |
 | Field nearby supply loading | **REFINED; ACCEPTED / COVERED** for server-owned, one-client topology | exact ACE child, authenticated authority, command + membership receipt, negatives, replication and cleanup |
 | Field selective ACE cargo | **REFINED; ACCEPTED / COVERED** for exact Bridge/OPHANIM classes on ACE 3.21 | explicit opt-in preserves size 2 and authentic loadability; ordinary ammo box remains ACE-disabled; other classes/versions/localities and unload/concurrency remain open |
@@ -832,11 +840,14 @@ The ground-up audit in
 is authoritative for remaining-work priority. Two durable review closeouts are
 the only MUST review work: `vigil-artillery` and `vigil-markers` have accepted
 scenario metadata and permanent proof but no canonical feature-review document.
-The Fabricator mission-maker local virtual-inventory action gate is now accepted
-by fresh disabled/enabled proof `20260827T223431Z-731a6c43`. After the two
-Vigil documentation-only review closeouts, the next unblocked gameplay candidate
-is the shared ownership-migration/client-owned boundary, represented by one
-routing probe and only one or two consequential consumers. Do not begin FPV,
+The Fabricator mission-maker local virtual-inventory action gate is accepted
+by fresh disabled/enabled proof `20260827T223431Z-731a6c43`. Representative
+ownership migration is now accepted through client-owned towing and active
+client-to-server transfer `20260827T231228Z-1b3e79a7`, independently repeated
+as packaged run `20260827T233022Z-cc14d7dd`; per-feature permutations
+remain optional unless their mechanics differ. After the two Vigil
+documentation-only review closeouts, the next unblocked gameplay candidate is
+B2, shared runtime Eden/curator reversal and reconfiguration. Do not begin FPV,
 APS anti-drone, CBR concurrency, reconnaissance, feedback policy, or other
 decision-bound work by inventing product semantics. Client-B/JIP and deterministic
 pond coverage remain externally blocked; arbitrary catalogue, class, terrain,

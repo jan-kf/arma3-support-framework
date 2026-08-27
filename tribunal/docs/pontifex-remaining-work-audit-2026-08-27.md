@@ -35,6 +35,16 @@ product `TRIBUNAL_SCENARIO` declarations. The two framework scenarios
   and station 10.32 m apart, client-a inactive/active observations, authority
   controls, and cleanup. Mixed per-module policy and runtime reconfiguration
   remain B2/C1 boundaries rather than part of this closeout.
+* **B1 closed on 2026-08-27.** Representative ownership migration is
+  **REFINED; ACCEPTED / COVERED** by towing run
+  `20260827T231228Z-1b3e79a7` and independent packaged repeat
+  `20260827T233022Z-cc14d7dd`: both exact vehicles begin client-a-owned, the
+  authenticated attach uses an owner-correlated parent acknowledgment, the
+  same operation/ropes/relationship survive active transfer to server ownership,
+  and requester stow finalizes once with full cleanup. Baseline regression
+  `20260827T231436Z-dd11ab03` preserves server-local physical and rope-loss
+  behavior. Reverse/partial migration, client-B/JIP, and feature-specific
+  topology expansion remain explicit optional or separately blocked boundaries.
 
 ## A. MUST FINISH
 
@@ -50,7 +60,6 @@ program substantially complete after A1.
 
 | ID | Mod/family; feature/surface | Classification | Current review status | Current permanent coverage | Exactly what remains unknown or unproven; why it matters | Dependencies/blockers | Effort | Value | Blocks review? | Blocks coverage? | Recommended disposition |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| B1 | Cross-mod locality; ownership migration/client-owned consequential objects affecting CORDIS, APS, Vigil governor/fixed-wing, Fabricator, towing, and object handling | **PARTIALLY COVERED** | Shared boundary is repeatedly identified and the one-client/server-owned contracts are clear | Routing primitives cover a stable owner; consequential features are mostly server-owned | Whether an accepted operation remains exact-once and cleans up when the target moves between server and client-a, and whether representative client-owned vehicles/objects complete correctly. Locality is a materially different topology, not a class permutation | Actionable with client-a for migration; true cross-client isolation belongs to C1 | **medium** | **high** | No | No, if current topology remains explicit | Build one shared migration probe, then prove only 1–2 high-consequence consumers (recommended: towing and APS or governor); do not clone it across every scenario |
 | B2 | Cross-mod editor/curator lifecycle; runtime reversal, repeated placement, module deletion/reconfiguration | **PARTIALLY COVERED** | Eden initialization and one authentic curator direction are reviewed for APS, CBR, Vigil whitelist/fixed-wing, and Fabricator | Strong initial/one-direction coverage | Whether repeated/reverse operations in one display are idempotent, whether deleted/reconfigured retained Eden logic changes authoritative state, and whether state is retired. These are common lifecycle semantics, not five independent gaps | No external blocker; product policy is needed only where deletion semantics are intentionally unspecified | **medium** | **high** | No | No | Select one representative retained Eden feature and one reversible Zeus feature; record shared findings, then add feature-specific proof only if behavior differs |
 | B3 | Field Utilities / Bridge Builder; interrupted construction, builder destruction, and resource/lease finalization | **PARTIALLY COVERED** | Stable build/removal and planner lease are reviewed | Normal build, traversal, scoped removal, and client-a lease are covered | Cleanup and lease/partial-chain outcome when construction is interrupted or the box disappears; resource policy is absent. A leaked lease or orphan chain affects real repeated use | Destruction behavior is actionable; any resource-consumption promise needs a product decision | **medium** | **medium** | No | No | Cover one abnormal cleanup path; keep resource economics deferred unless the product adopts them |
 | B4 | Field Utilities / object handling; attached-object lifecycle | **PARTIALLY COVERED** | Exact server-owned crate/truck contact contract is reviewed | One matched treatment/control contact, attachment, replication, and normal teardown | Repeat contact, deletion while attached, and carrier/object cleanup can expose stale event/state leakage; broader class/surface matrices do not add the same value | None for server-owned deletion/repeat; migration is B1 | **small** | **medium** | No | No | Add one repeat-and-delete lifecycle continuation to the existing scenario; do not enumerate every crate/truck class |
@@ -105,24 +114,24 @@ but no permanent-coverage credit for behavior they do not promise.
 | CORDIS | 97–100% | 83–89% | Core one-client broker is complete; presentation and changing ownership remain outside the proof |
 | Advanced Systems | 91–96% | 70–78% | APS/CBR/Iron Dome cores are strong; anti-drone, CBR concurrency policy, and expanded Iron Dome threat/locality policy dominate the gap |
 | Vigil | 94–98% | 88–93% | Operational tablet/task/aviation paths are strong; two durable review records are missing, while recon/homepage/UAV-positive behavior is consciously outside scope |
-| Field Utilities | 93–97% | 81–88% | Fabricator/Bridge/logistics/towing and the local-inventory gate are strong; reachable FPV dominates the deficit |
-| Cross-mod | 92–97% | 76–84% | Settings/composition/logistics are covered; migration and true multi-client/JIP are not |
-| **Overall** | **94–97%** | **83–89%** | Review gap is small; coverage gap is concentrated rather than broad |
+| Field Utilities | 93–97% | 84–90% | Fabricator/Bridge/logistics and server-local plus representative migrating towing are strong; reachable FPV dominates the deficit |
+| Cross-mod | 93–98% | 81–88% | Settings/composition/logistics and representative migration are covered; true multi-client/JIP is not |
+| **Overall** | **94–97%** | **84–90%** | Review gap is small; coverage gap is concentrated rather than broad |
 
 The useful second coverage view is the **completion-eligible stable contract
 set**: reachable, retained behavior whose product policy and fixtures exist.
-That set is approximately **92–95% covered**. The lower 83–89% portfolio number
+That set is approximately **93–96% covered**. The lower 84–90% portfolio number
 keeps decision-blocked retained features such as FPV and anti-drone visible
 rather than making them disappear from the denominator.
 
 By estimated remaining effort rather than raw row count:
 
-* **24–30% is actionable now** (A plus B).
-* **40–46% is blocked or needs a product decision**; the purely external subset
+* **20–26% is actionable now** (A plus B).
+* **43–49% is blocked or needs a product decision**; the purely external subset
   is about 8–12%.
-* **16–20% is intentionally deferred or retirement work**.
-* **12–16% is optional long-tail**.
-* Therefore **70–76% of the remaining effort is presently
+* **17–21% is intentionally deferred or retirement work**.
+* **13–17% is optional long-tail**.
+* Therefore **74–80% of the remaining effort is presently
   blocked/decision-bound, deferred/retirement, or optional**, rather than a
   queue of ready feature iterations.
 
@@ -131,22 +140,21 @@ Tangible remaining work:
 * **Meaningful actionable feature reviews:** 2 durable closeouts
   (`vigil-artillery`, `vigil-markers`); zero wholly uncharacterized reachable
   subsystems were found.
-* **Meaningful permanent additions:** 0 MUST additions, or about **4–7**
-  additions for the representative SHOULD boundaries. These are additions/arms,
+* **Meaningful permanent additions:** 0 MUST additions, or about **3–6**
+  additions for the remaining representative SHOULD boundaries. These are additions/arms,
   not necessarily 4–7 new scenario files.
 * **MUST effort:** about **1 Sol-sized session** for the two documentation-only
   review closeouts.
-* **MUST + SHOULD effort:** about **8–12 Sol-sized sessions**, depending mainly
-  on physical Arma calibration and whether B1/B2 can share fixtures.
+* **MUST + SHOULD effort:** about **6–10 Sol-sized sessions**, depending mainly
+  on physical Arma calibration and whether B2 can share fixtures.
 
 The five concentrations accounting for most meaningful future work are:
 
 1. FPV/UAV product decisions, authority refinement, and physical payload proof.
 2. CBR multi-launcher policy, authenticated telemetry, and concurrency proof.
 3. Client-B/JIP provisioning plus a deliberately small representative matrix.
-4. Representative ownership migration/client-owned consequential behavior.
-5. Shared runtime module reconfiguration/reversal and abnormal lifecycle
-   cleanup (including Bridge/contact/transport continuations).
+4. Shared runtime module reconfiguration/reversal across representative Eden and curator entries.
+5. Abnormal lifecycle cleanup across Bridge/contact/transport continuations.
 
 ## Completion criterion
 
@@ -180,8 +188,7 @@ are resolved.
 ## Next candidate
 
 The next gameplay coverage candidate after the two documentation-only review
-closeouts is **B1, representative ownership migration/client-owned consequential
-behavior**. Start with one shared routing/migration probe and only one or two
-high-consequence consumers (towing plus APS or the governor); do not replicate
-the topology matrix across every feature. This closeout does not begin that
+closeouts is **B2, shared runtime Eden/curator reversal and reconfiguration**.
+Use one retained Eden feature and one reversible curator feature; do not clone
+the lifecycle matrix across every module. This closeout does not begin that
 work.

@@ -2,12 +2,14 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: `REFINED; ACCEPTED / COVERED` for one authenticated client
-and server-local land vehicles.** Fresh autonomous run
-`20260823T190019Z-39badbd1` passed 14 server and 13 client assertions with
-complete cleanup. Player-owned vehicle locality, ownership migration,
-client-B/JIP, broad fallback geometry, deletion/disconnect, and a natural
-projectile-cut rope remain explicit follow-ups.
+**Classification: `REFINED; ACCEPTED / COVERED` for one authenticated client,
+server-local land vehicles, and the representative client-owned-to-server
+active migration topology.** Baseline run `20260823T190019Z-39badbd1` passed 14
+server and 13 client assertions; packaged migration repeat
+`20260827T233022Z-cc14d7dd` passed 9 server and 8 client assertions, each with
+complete cleanup. Reverse or
+partial migration, client-B/JIP, broad fallback geometry, deletion/disconnect,
+and a natural projectile-cut rope remain explicit follow-ups.
 
 ## Scope
 
@@ -40,13 +42,15 @@ requester-only result, and retire state.
 
 ### 3. Which machines and lifecycle stages own it?
 
-The server owns authorization, mutation, rope handles, audit, active claims,
-monitoring, and finalization for the accepted server-local topology. The client
-owns ACE resolution and requests, then observes targeted receipts and replicated
-transaction/rope identities. `getTowParent` was observed as locality-specific:
-the authoritative server saw the exact parent while the non-owning client
-correctly saw none, so the client proof does not demand a false replicated
-parent.
+The server owns authorization, rope handles, audit, active claims, monitoring,
+and finalization. For a nonlocal cargo it routes `setTowParent` to the current
+object owner and accepts only a correlated acknowledgment whose sender still
+owns the exact pending cargo; after ownership changes the monitor gives a
+bounded two-second settle, re-applies the same relationship on the new owner,
+and otherwise resumes normal fail-closed loss handling. The client owns ACE
+resolution and requests, then observes targeted receipts and replicated
+transaction/rope identities. `owner` is authoritative only on the server, while
+`getTowParent` is used only on the machine local to the cargo.
 
 ### 4. Which mechanics are generic?
 
@@ -103,9 +107,11 @@ remain implementation details unless a later contract requires them.
 
 ### 11. Which follow-up characterization remains?
 
-Player-owned vehicles, ownership migration, client-B/JIP, natural projectile
-rope cutting, deletion/disconnect during an active operation, and multiple
-unconfigured vehicle geometries. These do not dilute the accepted topology.
+Reverse server-to-client migration, partial endpoint migration, owner change
+during relationship creation, physical driving during migration, client-B/JIP,
+natural projectile rope cutting, deletion/disconnect during an active operation,
+and multiple unconfigured vehicle geometries. These do not dilute the accepted
+topology.
 
 ### 12. What was promoted into Tribunal or Sacred Texts?
 
@@ -145,3 +151,31 @@ and the full knowledge audit passed.
 boundary. Retain the permanent causal scenario and focused static contract.
 Treat the separate helicopter sling helper and the locality/client-N experiments
 as independent future work.
+
+## Accepted continuation — client-owned active ownership migration
+
+Fresh autonomous run `20260827T231228Z-1b3e79a7` passed **5 server + 4 client
+feature assertions** (9 + 8 including smoke), zero failures, and complete
+client/network/server/state cleanup. Server and client independently observed
+exact tow `2:142` and cargo `2:143` owned by client-a (`4`) before the request.
+The owner-local parent acknowledgment was exactly
+`["2:143","2:142",true,4]`; attach returned exact ropes `2:148` and `2:149`.
+Both vehicles then moved to server owner `2` while the same operation, object,
+rope, parent, and active-state identities survived. The original requester stowed
+normally; exactly one activate and one `stowed` finalizer row existed, both ropes
+were destroyed, and operations, claims, active variables, parent, and fixtures
+were empty. Evidence Contract v1 is emitted with the permanent scenario.
+
+Independent packaged repeat `20260827T233022Z-cc14d7dd` passed the same **9 +
+8 total assertions** with complete cleanup. Its four-arm Evidence Contract v1
+package is `urn:tribunal:evidence-package:20260827T233022Z-cc14d7dd:1`, with
+canonical payload SHA-256
+`1287e6b235116c253b8f3de7eab12c0c8aa0eb1408230f6e40fbdc9fe768f85f`.
+
+The unchanged full towing matrix reran after the locality refinement as
+`20260827T231436Z-dd11ab03` and passed **14 server + 13 client assertions**, zero
+failures, and full cleanup, including physical treatment/control, conflict,
+scoped stow, forced rope-loss finalization, reuse, and negatives. Diagnostic
+`20260827T225537Z-b7d7eb34` is the rejected characterization that exposed the
+real nonlocal-parent verification defect; later calibration runs corrected
+client-side owner and synchronization oracles and are not acceptance evidence.

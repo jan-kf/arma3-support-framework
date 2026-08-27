@@ -68,15 +68,23 @@ YOSHI_getTowLocation = {
 };
 
 YFU_fnc_setTowParent = {
-	params ["_child", "_parent"];
+	params ["_child", "_parent", ["_operationId", ""]];
 
 	if (isNull _child) exitWith {};
 
 	if (!local _child) exitWith {
-		["YFU_fnc_setTowParent", _child, [_child, _parent]] call YCD_fnc_runOnObjectOwner;
+		["YFU_fnc_setTowParent", _child, [_child, _parent, _operationId]] call YCD_fnc_runOnObjectOwner;
 	};
 
 	_child setTowParent _parent;
+	if (_operationId isNotEqualTo "") then {
+		private _ack = [YFU_TOW_TOKEN, _operationId, _child, _parent, (getTowParent _child) isEqualTo _parent];
+		if (isServer) then {
+			_ack call YFU_fnc_towParentAck;
+		} else {
+			_ack remoteExecCall ["YFU_fnc_towParentAck", 2];
+		};
+	};
 };
 
 YFU_fnc_resolveTowGeometry = {

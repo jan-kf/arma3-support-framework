@@ -45,6 +45,8 @@ class FieldUtilitiesTowingContractTests(unittest.TestCase):
             '["ropes", _ropes]',
             "{ropeDestroy _x;};} forEach _featureRopes",
             "YFU_fnc_towMonitor",
+            "YFU_fnc_towParentAck",
+            'getOrDefault ["parentAck", []]',
             '"rope-lost"',
             '"active-conflict"',
             '"rope-conflict"',
