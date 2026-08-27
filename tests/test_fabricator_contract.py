@@ -409,6 +409,23 @@ class FabricatorScenarioTests(unittest.TestCase):
         self.assertNotIn("_multiPlacementSpeeds # _forEachIndex", scenario)
         self.assertIn("(diag_tickTime - _multiPlacementStableSince) >= 2", scenario)
         self.assertIn("_ready getVariable [\"ace_dragging_ignoreWeightCarry\", false]", scenario)
+        self.assertIn("TRIBUNAL_FAB_BASE_client-a", scenario)
+        self.assertIn("_pos distance2D _declaredBase < 2", scenario)
+        self.assertIn("private _fixture = [4700, 2780", scenario)
+
+    def test_single_item_terrain_boundary_uses_authentic_matched_orders(self) -> None:
+        scenario = read(SCENARIO)
+        self.assertIn("singleTerrainShore", scenario)
+        self.assertIn("singleTerrainDeepWater", scenario)
+        self.assertIn("fabricator.delivery.singleTerrainBoundary", scenario)
+        self.assertIn("fabricator.control.singleDeepWaterAtomic", scenario)
+        self.assertIn("pontifex:fabricator:single-item-bounded-water-placement", scenario)
+        self.assertIn("ace_dragging_fnc_dropObject_carry", scenario)
+        self.assertIn("private _entries = if (_singleItem)", scenario)
+        self.assertIn("TRIBUNAL_FAB_SINGLE_ORIGINAL_SAFE_DROP", scenario)
+        self.assertIn("(count _singleShorePreDecision) isEqualTo 1", scenario)
+        self.assertIn("(count _singleDeepPreDecision) isEqualTo 1", scenario)
+        self.assertIn("_singleDeep # 1) isEqualTo (_singleDeep # 0", scenario)
 
     def test_active_owner_discard_terminates_worker_before_rollback(self) -> None:
         server = read(SERVER)

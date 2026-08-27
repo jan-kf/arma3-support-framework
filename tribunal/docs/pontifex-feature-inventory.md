@@ -483,7 +483,7 @@ server-local,
 and capped at mass 200 through ACE's replicated mass event; client-a waits for
 that cap and starts ACE carry on that exact identity. Packed placement is also
 covered on flat land, a bounded 10–20 degree gradient neighborhood, and a dense
-64-barrier ring, including exact contents and continuous physical rest. Shoreline packed placement now finds moderate non-water land within 15 m, while a matched all-water neighborhood refuses atomically before publication. A severe-gradient recipient likewise recovers to sampled moderate terrain when available, while an independently sampled all-severe neighborhood refuses atomically. See the
+64-barrier ring, including exact contents and continuous physical rest. Shoreline packed placement now finds moderate non-water land within 15 m, while a matched all-water neighborhood refuses atomically before publication. The distinct single-item branch now proves the exact hidden clone is published on the same bounded shoreline land and handed to ACE carry, while its matched all-water order refuses without publication or leakage. A severe-gradient recipient likewise recovers to sampled moderate terrain when available, while an independently sampled all-severe neighborhood refuses atomically. See the
 review for excluded terrain cases.
 
 * **Mission-maker Eden registration** is **REFINED; ACCEPTED / COVERED** for
@@ -504,7 +504,8 @@ review for excluded terrain cases.
   work completes before it starts — so no contract may promise it tracks work.
 * **Single-item fabrication** clones one stored object near the player on the
   server.
-  **Implemented; REVIEWED / KEEP AS-IS AND SPEC-TEST.** `YOSHI_SPAWN_SAVED_ITEM_ACTION`
+  **Implemented; KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for one authenticated client, exact cargo and server ownership, direct ACE carry, bounded shoreline recovery, and atomic all-water refusal. Other coastline/terrain shapes, ponds, client-B/JIP, and ownership migration remain open.
+  `YOSHI_SPAWN_SAVED_ITEM_ACTION`
   is the live clone primitive for both delivery modes and copies weapon, magazine,
   item and backpack cargo exactly. The separate `YOSHI_addItemsToFabricator` is
   **unreachable repository-wide**; it is recorded, not deleted, because it is
@@ -537,7 +538,7 @@ review for excluded terrain cases.
   server-owned single land delivery and for authentic packed orders on flat,
   moderate-gradient (10–20 degrees), and dense 64-barrier land fixtures. Exact
   contents, bounded recipient/drop distance, physical settling, locality and
-  cleanup are observed. A shoreline water recipient with suitable moderate land inside the bounded search succeeds and settles on non-water terrain; a matched all-water neighborhood refuses with `no-safe-drop`. A 34-degree recipient similarly recovers to a 7-degree drop, while a matched 38-degree neighborhood whose 177 sampled points all exceed 36 degrees refuses atomically. Ponds, other severe terrain shapes, land beyond 15 m, arbitrary collision clearance, multi-container matrices beyond eight light crates split across two pallets, and single-item terrain-boundary requests remain **NEEDS EXPERIMENTATION**.
+  cleanup are observed. A shoreline water recipient with suitable moderate land inside the bounded search succeeds and settles on non-water terrain; a matched all-water neighborhood refuses with `no-safe-drop`. A 34-degree recipient similarly recovers to a 7-degree drop, while a matched 38-degree neighborhood whose 177 sampled points all exceed 36 degrees refuses atomically. Ponds, other severe terrain shapes, land beyond 15 m, arbitrary collision clearance, multi-container matrices beyond eight light crates split across two pallets, and single-item terrain boundaries beyond the tested shoreline/all-water pair remain **NEEDS EXPERIMENTATION**.
 * **Airdrop handoff** calls Vigil delivery and observes authoritative parachute
   results. **Implemented; COVERED as a cross-mod composite.** Missing API fails
   closed.
@@ -787,7 +788,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Iron Dome client-owned artillery | **REVIEWED / DEFERRED** | current server handler deliberately rejects non-server-local shells; no owner-routing product policy is chosen |
 | Iron Dome threat policy/audio | **REVIEWED / DEFERRED** | friendly/outgoing versus protected-impact-area filtering is undecided; audio is unproven under `-noSound` |
 | Fabricator delivery mass cap and carry boundary | **REFINED; ACCEPTED / COVERED** | the exact clone is stably mass 200 before publication through ACE's global mass event; client-a waits for that replicated boundary and begins ACE carry on the same net ID |
-| Fabricator bounded land/terrain placement | **REFINED; ACCEPTED / COVERED** | authentic packed orders settle on flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient-recovery fixtures; an eight-light-crate order publishes two distinct settled pallets only when both targets exist; bounded all-water, all-severe, and later-target-unavailable controls refuse atomically; ponds, other terrain shapes, land beyond 15 m, single-item requests and other multi-container matrices remain unproven |
+| Fabricator bounded land/terrain placement | **REFINED; ACCEPTED / COVERED** | authentic packed orders settle on flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient-recovery fixtures; an eight-light-crate order publishes two distinct settled pallets only when both targets exist; bounded all-water, all-severe, and later-target-unavailable controls refuse atomically; the single-item branch publishes and hands the exact shoreline clone to ACE carry and refuses atomically in all-water; ponds, other terrain shapes, land beyond 15 m, other single-item terrain boundaries and other multi-container matrices remain unproven |
 | Fabricator client-b discard | **NOT YET PROVEN** | one authenticated client; the foreign-discard control uses a server-owned transaction |
 | Fabricator staging choreography | **NO CHARACTERIZATION REQUIRED; OUTCOME-COVERED** | controlled calibrations rejected hiding/relocation as the mass cause; permanent coverage freezes the authentic pre-publication and post-carry outcomes, not staging depth or cadence |
 | Field towing | **REFINED; ACCEPTED / COVERED** for server-local vehicles and one authenticated client | exact authority/rope identity, matched physical A/B, scoped stow, break finalization, reuse, negative requests, replication, and cleanup; player-owned/migration/client-N remain deferred |
@@ -803,7 +804,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Vigil rotary CAS and Fabricator bounded shoreline, deep-water, severe-gradient, and tested multi-container placement/refusal are now permanently covered for their stated one-client domains. The next highest-value unblocked investigation is Fabricator single-item terrain-boundary placement, reusing the accepted bounded land/water/slope oracle without assuming the packed path proves the direct-delivery branch. Ponds remain blocked on a deterministic loaded fixture, and client-B/JIP remain blocked on another identity. Explicit nearby supply loading and bounded Field contact attachment
+Vigil rotary CAS and Fabricator bounded shoreline, deep-water, severe-gradient, tested multi-container placement/refusal, and the matched single-item shoreline/all-water branch are now permanently covered for their stated one-client domains. The next highest-value unblocked investigation is Fabricator UI/queue normal browsing and invalid-grid rejection: it is a user-facing reachable surface still only partially covered and can reuse the accepted terminal and queue fixtures without inventing product policy. Ponds remain blocked on a deterministic loaded fixture, and client-B/JIP remain blocked on another identity. Explicit nearby supply loading and bounded Field contact attachment
 remain accepted. The Vigil helicopter stabilizer is closed as deferred; do not
 reactivate its legacy force without a new bounded physical A/B. APS anti-drone
 is reviewed but deferred at its product-decision and authority boundary. Do not
