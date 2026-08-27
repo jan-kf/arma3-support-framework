@@ -497,11 +497,13 @@ review for excluded terrain cases.
   client-B, and JIP remain unproven. Field Utilities has no Zeus activation
   tool. See
   [`field-utilities-eden-module-activation-review.md`](field-utilities-eden-module-activation-review.md).
-* **Fabricator UI/queue** lists assets/images/quantities, ordered queue, grid,
-  progress, success/failure, and may reuse Vigil skins. **Implemented; PARTIALLY
-  COVERED.** Airdrop context/manifest/result is covered; normal browsing, local
-  orders, invalid grids, and styling are not. The progress bar is cosmetic — all
-  work completes before it starts — so no contract may promise it tracks work.
+* **Fabricator UI/queue** is **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED**
+  for exact registered catalogue rows, images, selected nested cargo, ordered
+  quantity changes through the live controls, accepted nearby submission, and
+  malformed-grid rejection before request/audit/census mutation. Fresh bounded
+  run `20260827T190358Z-c39f2669` passed server 4/client 3 feature assertions.
+  Empty-catalogue presentation, broader class matrices, styling, cosmetic
+  progress timing, client-B/JIP and ownership migration remain unproven.
 * **Single-item fabrication** clones one stored object near the player on the
   server.
   **Implemented; KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for one authenticated client, exact cargo and server ownership, direct ACE carry, bounded shoreline recovery, and atomic all-water refusal. Other coastline/terrain shapes, ponds, client-B/JIP, and ownership migration remain open.
@@ -756,6 +758,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `fieldutils-cargo-loading` | nearby authenticated exact-pair vehicle cargo loading, rejection, replication, cleanup |
 | `fieldutils-ace-cargo-policy` | selective configured ACE cargo preservation, ordinary-box negative control, authentic load/replication/cleanup |
 | `fieldutils-fabricator` | server-authoritative atomic orders, catalogue fidelity, bounded land, shoreline and severe-gradient placement, atomic deep-water/all-severe refusal, cleanup |
+| `fieldutils-fabricator-ui` | real catalogue/inventory browsing, ordered live queue controls, accepted nearby submit, invalid-grid no-request control, cleanup |
 | `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
 
 Framework `locality-probe` and `visual-framebuffer` scenarios prove Tribunal,
@@ -804,7 +807,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 ## Prioritized next feature reviews
 
-Vigil rotary CAS and Fabricator bounded shoreline, deep-water, severe-gradient, tested multi-container placement/refusal, and the matched single-item shoreline/all-water branch are now permanently covered for their stated one-client domains. The next highest-value unblocked investigation is Fabricator UI/queue normal browsing and invalid-grid rejection: it is a user-facing reachable surface still only partially covered and can reuse the accepted terminal and queue fixtures without inventing product policy. Ponds remain blocked on a deterministic loaded fixture, and client-B/JIP remain blocked on another identity. Explicit nearby supply loading and bounded Field contact attachment
+Vigil rotary CAS and Fabricator bounded shoreline, deep-water, severe-gradient, tested multi-container placement/refusal, the matched single-item shoreline/all-water branch, and normal Fabricator terminal browsing/queue/grid rejection are now permanently covered for their stated one-client domains. The next bounded unblocked Fabricator gap is empty-catalogue and alternate-class browsing/queue behavior; it is lower value than the accepted normal path and should not promise styling or cosmetic progress timing. Ponds remain blocked on a deterministic loaded fixture, and client-B/JIP remain blocked on another identity. Explicit nearby supply loading and bounded Field contact attachment
 remain accepted. The Vigil helicopter stabilizer is closed as deferred; do not
 reactivate its legacy force without a new bounded physical A/B. APS anti-drone
 is reviewed but deferred at its product-decision and authority boundary. Do not
