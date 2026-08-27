@@ -564,6 +564,17 @@ A first extension of the large transaction scenario reproduced the new browse/qu
 
 Fresh autonomous run `20260827T190358Z-c39f2669` passed **4 server + 3 client feature assertions** with zero failures and complete client/network/server/state cleanup. Package `urn:tribunal:evidence-package:20260827T190358Z-c39f2669:1` has four arms, one causal relationship and one demonstrated proposition; payload SHA-256 is `715ed42f38071a622bec067fd41d0f42e12b2abfa5007ddde651808918d08431` and file SHA-256 is `efb066a479e6b7314b3df4b6c7246bbd00df5786628d54b76fd8fcf8d523bbc2`. Ingestion changed counts once to 29 packages, 30 runs and 793 artifacts and was stable on repeat. Reviewed distillation revision 14 classifies the result as project-specific, adds no generic lemma or conjecture, and is idempotent; the full ledger audit passes.
 
+
+## Accepted continuation - empty catalogue and empty-submit rejection
+
+The normal terminal proof already observes heavy, light and oversize catalogue rows and queues two distinct object classes, so an additional "alternate class" scenario would duplicate accepted behavior. The next distinct unblocked boundary was a valid Fabricator station backed by a registered Virtual Storage module with zero synchronized objects. Sacred Texts documents that `lbSize` returns listbox row count, `lbData` returns a row's backing data, and full `ctrlActivate` invokes button actions and ButtonClick handlers; none defines Pontifex empty-state policy.
+
+Static review found a stale-selection lifecycle defect: page initialization reset the queue but retained `YFU_selected_fabricator_item`. A client reopening the page after a populated session could therefore carry an old selection into an empty catalogue. The page now clears that selection to `objNull` before refreshing the list. No server or packing behavior changed.
+
+The permanent `fieldutils-fabricator-empty-ui` scenario uses the real module setters, a server-owned registered station, an empty storage module, the real dialog, and live Add and Submit buttons. The client observed exactly one `<No virtual storage items found>` row with empty data and picture, zero inspect rows, a null selection, and empty queue/dynamic controls. Both actions preserved the request sentinel and hidden overlay. The server independently observed unchanged exact station census, empty audit and transaction keys, followed by complete registration cleanup.
+
+Fresh autonomous run `20260827T212148Z-9a38342f` passed **3 server + 1 client feature assertions** with zero failures. Package `urn:tribunal:evidence-package:20260827T212148Z-9a38342f:1` has three arms and one demonstrated proposition; canonical payload SHA-256 is `585f6312d724bf2ea7b1c1d1e26396abbcaa6a95bf46355c923429d41a1ecdcb` and file SHA-256 is `0b80aa47de438c8dfa1a65e3b88de380ef9fd997a3e394edea387daa66826888`. Ingestion and reviewed distillation revision 16 were each idempotent. The finding is project-specific and adds no generic lemma or conjecture; the full ledger audit passes.
+
 ## Unresolved
 
 * **Broader terrain suitability beyond the accepted matrix.** Ponds, other severe terrain shapes, suitable terrain farther than 15 m, other coastline shapes/islands, multi-container orders beyond the tested eight-light-crate/two-pallet matrix, single-item terrain boundaries beyond the tested shoreline/all-water pair, arbitrary obstacle shapes/densities, and collision-free clearance remain open.

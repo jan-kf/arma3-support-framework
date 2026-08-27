@@ -104,6 +104,7 @@ YFU_assetsInitPage = {
         uiNamespace setVariable ["YFU_fabricator_queue_map", createHashMap];
         uiNamespace setVariable ["YFU_fabricator_queue_order", []];
         uiNamespace setVariable ["YFU_fabricator_queue_dynamic", []];
+        uiNamespace setVariable ["YFU_selected_fabricator_item", objNull];
         uiNamespace setVariable ["YFU_submit_in_progress", false];
         uiNamespace setVariable ["YFU_submit_success", false];
 
