@@ -1134,20 +1134,26 @@ YFU_bridge_startBuildFromPlan = {
 	_boxObject setVariable ["YFU_bridge_last_accepted_plan", +_planRequest, true];
 	_boxObject setVariable ["YFU_bridge_building", true, true];
 	_boxObject setVariable ["YFU_bridge_operation_id", _requestId, true];
+	private _activeOperations = missionNamespace getVariable ["YFU_bridge_active_operations", createHashMap];
+	_activeOperations set [_requestId, [netId _boxObject, "build", _requestOwner, serverTime]];
+	missionNamespace setVariable ["YFU_bridge_active_operations", _activeOperations];
 	[_boxObject, _requestId, "build", "accepted", "accepted", [], _requestOwner] call YFU_bridge_publishResult;
 
 	[_boxObject, _queue, _buildDelay, _requestId, _requestOwner] spawn {
 		params ["_boxObject", "_queue", "_buildDelay", "_requestId", "_requestOwner"];
 		private _created = [];
+		private _interrupted = false;
 		{
-			if (isNull _boxObject) exitWith {};
+			if (isNull _boxObject) exitWith {_interrupted = true;};
 			_x params ["_positionASL", "_className", "_segmentDir", "_up", "_dedupeRadius"];
 			private _segment = [_positionASL, _className, _segmentDir, _up, _dedupeRadius, _boxObject, _requestId] call YFU_bridge_spawnPlacedSegment;
 			if (!isNull _segment) then {_created pushBack _segment;};
 			if (_forEachIndex < ((count _queue) - 1)) then {uiSleep _buildDelay;};
 		} forEach _queue;
 
-		if (!isNull _boxObject) then {
+		if (_interrupted || {isNull _boxObject}) then {
+			{if (!isNull _x) then {deleteVehicle _x;};} forEach _created;
+		} else {
 			private _complete = (count _created) isEqualTo (count _queue);
 			private _ids = _created apply {netId _x};
 			if (!_complete) then {{if (!isNull _x) then {deleteVehicle _x;};} forEach _created;};
@@ -1155,6 +1161,9 @@ YFU_bridge_startBuildFromPlan = {
 			_boxObject setVariable ["YFU_bridge_operation_id", "", true];
 			[_boxObject, _requestId, "build", ["failed", "complete"] select _complete, ["segment_creation_incomplete", "complete"] select _complete, _ids, _requestOwner] call YFU_bridge_publishResult;
 		};
+		private _activeOperations = missionNamespace getVariable ["YFU_bridge_active_operations", createHashMap];
+		_activeOperations deleteAt _requestId;
+		missionNamespace setVariable ["YFU_bridge_active_operations", _activeOperations];
 	};
 	true
 };

@@ -339,13 +339,22 @@ Utilities for fixed-wing airdrop.
 ### 3.4 Artillery and VLS
 
 * **Request UI/preview markers** render grid/ordnance/spread/count/direction and
-  circle/line state client-locally. **Implemented; COVERED** by `vigil-markers`
-  for updates, stale replacement, rendering, locality, and cleanup.
+  circle/line state client-locally. **Implemented; PARTIALLY COVERED.**
+  `vigil-markers` causally proves client-a circle `0 -> 1 -> 3 -> 0`, exact
+  position/rendering, stale-generation replacement, explicit zero-count
+  cleanup, and server absence. Active non-empty close cleanup still needs a
+  small proof; coordinate-marker and tab-switch lifetime need a product
+  decision. Line/range/ETA/VLS visual variants are non-blocking. See
+  [`vigil-artillery-markers-review.md`](vigil-artillery-markers-review.md).
 * **Native artillery execution** fires exact physical circle/line counts and
   rejects zero, out-of-range, and no-ammo requests. **Implemented; COVERED** by
-  `vigil-artillery` for authority, trajectories, geometry, locality, and cleanup.
+  `vigil-artillery` for authority, trajectories, geometry, server-owned
+  locality, fixture cleanup, and observer cleanup. See
+  [`vigil-artillery-review.md`](vigil-artillery-review.md).
 * **VLS execution** launches vertically, guides, and reaches the target region.
-  **Implemented; COVERED.** Its combined target-report/confirmation handshake
+  **Implemented; COVERED** for the server-local execution/flight outcome and
+  **PARTIALLY COVERED** for its product-created temporary target cleanup. Its
+  combined target-report/confirmation handshake
   is a **REVIEWED / CHARACTERIZED ENGINE REQUIREMENT**: four fresh direct-first
   physical A/B pairs prove direct fire emits an unguided missile while the
   handshake reaches the target region. See
@@ -578,8 +587,11 @@ review for excluded terrain cases.
 * **Build/removal** incrementally creates deduplicated segments with configured
   delay and removes chains. **ACCEPTED / COVERED.** Server authority, exact
   geometry/locality, pedestrian flat/ramp traversal, wide vehicle traversal,
-  box-scoped removal, bounded results and cleanup are proven;
-  interruption/destruction and resources are not.
+  box-scoped removal, bounded results, and cleanup are proven. Accepted run
+  `20260828T010359Z-31876e6c` additionally proves authenticated lease
+  consumption plus exact partial-chain and operation retirement when the
+  builder box disappears. Construction resource/refund economics remain
+  decision-bound because no product contract exists.
 * **Direct chain-extension actions** coexist with plan UI. **Implemented-looking;
   DEFERRED.** Helpers exist but action attachment is empty and no supported
   intent/authority contract was established.
@@ -766,8 +778,8 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `advsys-aps-eden-module` | authentic synchronized Eden APS activation and causal protected outcome |
 | `advsys-aps-zeus-module` | assigned-curator APS activation, authority, causal outcome, and cleanup |
 | `vigil-ui` | real tablet open/navigation/close/reopen and UI locality |
-| `vigil-markers` | artillery preview rendering/state lifecycle and cleanup |
-| `vigil-artillery` | circle/line artillery, controls, VLS, locality/cleanup |
+| `vigil-markers` | client-a circle preview rendering/replacement/explicit-zero cleanup and server absence; active close and coordinate lifetime remain bounded gaps |
+| `vigil-artillery` | circle/line artillery, controls, server-local VLS flight, firing-fixture/observer cleanup; temporary VLS target cleanup remains partial |
 | `vigil-transport` | helicopter outbound/LZ/wait/RTB lifecycle |
 | `vigil-transport-pad-ab` | bounded hidden-pad versus no-pad landing characterization |
 | `vigil-cas` | rotary CAS filtering, attack, timer, controls, RTB |
@@ -840,17 +852,19 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 The ground-up audit in
 [`pontifex-remaining-work-audit-2026-08-27.md`](pontifex-remaining-work-audit-2026-08-27.md)
-is authoritative for remaining-work priority. Two durable review closeouts are
-the only MUST review work: `vigil-artillery` and `vigil-markers` have accepted
-scenario metadata and permanent proof but no canonical feature-review document.
+is authoritative for remaining-work priority. There is no remaining MUST review
+or permanent-coverage item: `vigil-artillery` and `vigil-markers` now have
+canonical durable reviews, and the scoped completion criterion is satisfied.
 The Fabricator mission-maker local virtual-inventory action gate is accepted
 by fresh disabled/enabled proof `20260827T223431Z-731a6c43`. Representative
 ownership migration is now accepted through client-owned towing and active
 client-to-server transfer `20260827T231228Z-1b3e79a7`, independently repeated
 as packaged run `20260827T233022Z-cc14d7dd`; per-feature permutations
-remain optional unless their mechanics differ. After the two Vigil
-documentation-only review closeouts, the next unblocked gameplay candidate is
-B3, Bridge Builder interrupted construction and lease cleanup. Do not begin FPV,
+remain optional unless their mechanics differ. Bridge Builder interrupted
+construction is accepted by `20260828T010359Z-31876e6c`; the next unblocked
+gameplay candidate is B4, attached-object repeat/delete lifecycle. Narrow VLS
+target cleanup and active preview-close proof remain SHOULD items; coordinate
+and tab-switch lifetime remain decision-bound. Do not begin FPV,
 APS anti-drone, CBR concurrency, reconnaissance, feedback policy, or other
 decision-bound work by inventing product semantics. Client-B/JIP and deterministic
 pond coverage remain externally blocked; arbitrary catalogue, class, terrain,

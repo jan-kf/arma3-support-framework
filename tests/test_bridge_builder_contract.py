@@ -103,6 +103,57 @@ class BridgeBuilderContractTests(unittest.TestCase):
             self.source,
         )
 
+    def test_box_destruction_retires_partial_chain_and_operation(self) -> None:
+        build = self.source.index("YFU_bridge_startBuildFromPlan =")
+        remove = self.source.index("YFU_bridge_startRemoveFromBox =")
+        build_source = self.source[build:remove]
+        self.assertIn("YFU_bridge_active_operations", build_source)
+        self.assertIn('_activeOperations set [_requestId, [netId _boxObject, "build", _requestOwner, serverTime]]', build_source)
+        self.assertIn('if (_interrupted || {isNull _boxObject}) then {', build_source)
+        self.assertIn('deleteVehicle _x', build_source)
+        self.assertIn('_activeOperations deleteAt _requestId;', build_source)
+        self.assertLess(
+            build_source.index('setVariable ["YFU_bridge_planner_lease", [], true]'),
+            build_source.index('_activeOperations set [_requestId'),
+        )
+        self.assertLess(
+            build_source.index('deleteVehicle _x', build_source.index('if (_interrupted')),
+            build_source.index('_activeOperations deleteAt _requestId;'),
+        )
+        self.assertIn("bridge.interruption.cleanup", self.scenario.server_expected)
+        self.assertIn("bridge.interruption.request", self.scenario.client_expected)
+        self.assertIn('remoteExecCall ["YFU_bridge_openBuilderDialog", 2]', self.scenario.client_sqf)
+        self.assertIn('remoteExecCall ["YFU_bridge_startBuildFromPlan", 2]', self.scenario.client_sqf)
+        self.assertIn('count _partialIds >= 1', self.scenario.server_sqf)
+        self.assertIn('count _partialIds < 6', self.scenario.server_sqf)
+        self.assertIn('deleteVehicle _interruptBox;', self.scenario.server_sqf)
+        self.assertIn('_partialIds findIf {!isNull (objectFromNetId _x)}', self.scenario.server_sqf)
+        self.assertIn('_operationRetired', self.scenario.server_sqf)
+
+    def test_evidence_contract_covers_every_feature_assertion(self) -> None:
+        contract = self.scenario.evidence_contract
+        self.assertEqual(contract["scenario"]["id"], self.scenario.identifier)
+        self.assertEqual(
+            contract["knowledge_subject"]["key"],
+            "pontifex:field-utilities:bridge-builder",
+        )
+        covered = {
+            assertion
+            for arm in contract["arms"]
+            for assertion in arm["assertions"]
+        }
+        expected = set(self.scenario.server_expected) | set(self.scenario.client_expected)
+        self.assertEqual(covered, expected)
+        interruption = next(
+            arm for arm in contract["arms"] if arm["key"] == "interrupted-build"
+        )
+        self.assertEqual(
+            set(interruption["assertions"]),
+            {"bridge.interruption.request", "bridge.interruption.cleanup"},
+        )
+        self.assertEqual(contract["causal_relationships"][0]["relation"], "COMPARES_WITH")
+        self.assertTrue(contract["knowledge_subject"]["biki_context"])
+
     def test_auto_plan_only_accepts_terrain_or_building_support(self) -> None:
         compute = self.source.index("YFU_bridge_computePlan =")
         preview = self.source.index("YFU_bridge_beginPlanPreview =")

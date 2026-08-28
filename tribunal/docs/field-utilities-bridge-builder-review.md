@@ -163,6 +163,7 @@ Utilities scenario. Production code has no dependency on Tribunal.
 | removal scope | REFINE BEFORE PERMANENT COVERAGE | box tags and ownership filtering preserve nearby unowned control |
 | wide/ramp/pitch/auto/clipping | ACCEPTED / COVERED | immutable server-validated plan; world/source orientation; terrain/building-only endpoint filtering; 50 m cap; wide vehicle and ramp pedestrian physical proofs |
 | planner lease | PARTIALLY COVERED | exact server grant/receipt, scheduled dialog, lease-bound submission and cleanup pass; second-player named contention rejection awaits client-b |
+| interrupted construction / box destruction | REFINED; ACCEPTED / COVERED | exact accepted client-a request and consumed lease; one-to-five partial identities; builder loss deletes the exact chain and retires the server operation record in `20260828T010359Z-31876e6c` |
 | direct chain extension | DEFER | helpers exist but attachment entry is empty and intent/authority are undefined |
 | client-b/JIP/concurrency | DEFER | one-client run must not overclaim these boundaries |
 
@@ -228,3 +229,53 @@ Review the now-unblocked APS operation/control lifecycle next. Bridge
 second-player contention, interruption/destruction, client-b/JIP, and direct
 extension remain explicit follow-ups rather than being inferred from this
 one-client proof.
+
+## B3 candidate continuation — interrupted construction
+
+Source review found one concrete abnormal-lifecycle defect. The build worker
+stopped iterating when its construction box became null, but its terminal block
+also required that box to remain non-null. Segments created before destruction
+therefore remained as an orphan partial chain, while the box-local operation
+state disappeared and left no authoritative way to prove finalization.
+
+The candidate refinement registers each accepted build by exact request ID in a
+server-local active-operation map. Normal completion, incomplete creation, and
+construction-box disappearance all retire that entry. On disappearance the
+worker deletes every segment it created before retiring the operation. The
+planner lease remains consumed at accepted submission, before any segment is
+created, so deletion cannot leave a renewable lease attached to an ongoing
+operation.
+
+The expanded permanent scenario uses the same independently authenticated
+client-a transport as the normal build. It obtains an exact planner grant,
+submits a six-segment immutable plan through `YFU_bridge_startBuildFromPlan`,
+and waits for the server to observe the accepted operation, consumed lease,
+exact registry row, and between one and five operation-tagged segments. Only
+then does the server delete the exact builder box. The new assertions require
+all captured segment netIds to disappear and the exact registry key to retire
+within a bounded cleanup interval. This excludes deletion before acceptance,
+an empty-chain false pass, normal completion, unrelated cleanup, and result-only
+success.
+
+Fresh serialized run `20260828T010359Z-31876e6c` passed
+`bridge.interruption.request`, `bridge.interruption.cleanup`, the complete
+pre-existing Bridge matrix, and smoke with 15/15 client and 18/18 server
+assertions. Cleanup completed and `evidence-package.v1.json` validated against
+Evidence Contract v1. Rejected diagnostic `20260828T005936Z-68c28e96` proved
+the request, lease, partial-chain, and registry preconditions but caught a
+cleanup code block that was constructed rather than executed; it is retained
+only as calibration, not accepted evidence.
+Package `urn:tribunal:evidence-package:20260828T010359Z-31876e6c:1`
+(file SHA-256
+`2f0b500c99e80004812fbe375c6599ae651b7fb94c0d5e48e98912fd55452249`)
+was ingested twice: production counts advanced once from 32 to 33 packages and
+33 to 34 runs, then remained identical. The full knowledge audit passed.
+Reviewed distillation remained at 32 findings, 19 project-only dispositions,
+7 generic lemmas, 1 generic conjecture, and 5 needs-characterization items on
+both passes; this Bridge result added no generic Arma claim. Post-ingestion
+offline dossiers expose the two bounded Bridge theorems while `deleteVehicle`
+continues to report only its existing documented next-frame deletion behavior.
+Resource consumption and refunds still have no product contract and remain
+**NEEDS PRODUCT DECISION**. Second-player contention, client-B/JIP,
+disconnect/reconnect, interruption during removal, and direct chain extension
+remain explicitly unclaimed.

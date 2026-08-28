@@ -3,6 +3,84 @@
 from tribunal.runner.model import Scenario, ScenarioReview
 
 
+ENTRY_ASSERTIONS = [
+    "bridge.fixture", "bridge.interaction.registration", "bridge.interaction.conditions",
+    "bridge.dialog.open", "bridge.preview.plan",
+]
+CORE_BUILD_ASSERTIONS = [
+    "bridge.build.authority", "bridge.build.geometry", "bridge.build.locality",
+    "bridge.build.replication", "bridge.traversal.authoritative", "bridge.traversal.physical",
+]
+REMOVE_ASSERTIONS = [
+    "bridge.remove.scope", "bridge.result.lifecycle", "bridge.remove.replication",
+]
+INTERRUPTION_ASSERTIONS = [
+    "bridge.interruption.request", "bridge.interruption.cleanup",
+]
+ADVANCED_PLAN_ASSERTIONS = ["bridge.advanced.plan", "bridge.auto.support"]
+ADVANCED_PHYSICAL_ASSERTIONS = [
+    "bridge.wide.vehicle", "bridge.ramp.physical", "bridge.advanced.replication",
+    "bridge.ramp.traversal",
+]
+CLEANUP_ASSERTIONS = ["bridge.advanced.cleanup", "bridge.cleanup", "bridge.cleanup.client"]
+
+EVIDENCE_CONTRACT = {
+    "scenario": {
+        "id": "fieldutils-bridge-builder",
+        "version": 1,
+        "feature_family": "pontifex-field-utilities-bridge-builder",
+        "name": "Field Utilities Bridge Builder lifecycle",
+        "definition": {
+            "kind": "controlled multiplayer specification",
+            "reference": "source/field-utilities/tests/tribunal/bridge_builder.py",
+            "applicability": "Arma 3 dedicated multiplayer with one authenticated client, server-owned construction boxes, and the Apex Land_Plank_01_4m_F segment",
+            "participants": {
+                "server": "planner authority, operation registry, segment creation/removal, interruption cleanup, and physical fixture authority",
+                "client-a": "registered ACE actor, planner requester, traversal actor, and replication observer",
+            },
+        },
+    },
+    "knowledge_subject": {
+        "key": "pontifex:field-utilities:bridge-builder",
+        "label": "Field Utilities Bridge Builder lifecycle",
+        "kind": "product_behavior",
+        "aliases": ["Bridge Builder", "YFU_Bridge_Box"],
+        "biki_context": ["biki-page:11222", "biki-page:11227", "biki-page:16747", "biki-page:16751", "biki-page:32302", "biki-page:29427", "biki-page:34337"],
+    },
+    "arms": [
+        {"key": "entry-and-plan", "role": "baseline", "description": "The exact registered interaction grants one authenticated planner lease and submits a visible bounded plan", "assertions": ENTRY_ASSERTIONS},
+        {"key": "normal-build", "role": "treatment", "description": "The accepted plan creates one exact server-owned traversable chain that replicates to client-a", "assertions": CORE_BUILD_ASSERTIONS},
+        {"key": "normal-removal", "role": "treatment", "description": "Normal removal retires only the exact box-owned chain and clears the operation lifecycle", "assertions": REMOVE_ASSERTIONS},
+        {"key": "interrupted-build", "role": "treatment", "description": "Deleting the construction box after an authenticated accepted request and exact partial chain retires the consumed lease, partial identities, and server operation record", "assertions": INTERRUPTION_ASSERTIONS},
+        {"key": "advanced-plan", "role": "treatment", "description": "Wide, ramp, pitch, orientation, and terrain/building support planning remain bounded", "assertions": ADVANCED_PLAN_ASSERTIONS},
+        {"key": "advanced-physical", "role": "treatment", "description": "The wide vehicle deck and ramp chain produce exact physical outcomes and client replication", "assertions": ADVANCED_PHYSICAL_ASSERTIONS},
+        {"key": "cleanup", "role": "treatment", "description": "Every remaining exact fixture and feature identity retires on both machines", "assertions": CLEANUP_ASSERTIONS},
+    ],
+    "causal_relationships": [
+        {"key": "normal-v-destroyed-builder", "relation": "COMPARES_WITH", "source": "normal-build", "target": "interrupted-build", "controlled_dimensions": ["authenticated client", "server authority", "segment class", "planner lease protocol", "mission"]},
+    ],
+    "propositions": [
+        {
+            "id": "pontifex:field-utilities:bridge-builder-normal-lifecycle",
+            "text": "An eligible authenticated player can use the exact registered Bridge Builder path to create, traverse, and box-scope-remove a replicated server-owned bridge with bounded results and cleanup.",
+            "intended_use": "primary_result",
+            "assertions": ENTRY_ASSERTIONS + CORE_BUILD_ASSERTIONS + REMOVE_ASSERTIONS + ADVANCED_PLAN_ASSERTIONS + ADVANCED_PHYSICAL_ASSERTIONS + CLEANUP_ASSERTIONS,
+            "rationale": "Exact action, lease, request, segment, collision, result, control-object, replication, and cleanup observations exclude UI-only, result-only, client-authoritative, and unscoped-removal false passes.",
+        },
+        {
+            "id": "pontifex:field-utilities:bridge-builder-interruption-cleanup",
+            "text": "If a Bridge Builder construction box is deleted after an authenticated build has consumed its planner lease and created a partial chain, the server deletes every partial segment and retires the exact active operation record.",
+            "intended_use": "primary_result",
+            "assertions": INTERRUPTION_ASSERTIONS,
+            "rationale": "The proof waits for an exact accepted client request, consumed lease, bound server registry entry, and one-to-five operation-tagged segment identities before deleting the box, then requires every captured identity and the registry key to disappear.",
+        },
+    ],
+    "unresolved": [
+        "Second-player contention, client-B/JIP, disconnect/reconnect, interruption during removal, resource economics/refunds, and direct chain extension remain outside this one-client proof."
+    ],
+}
+
+
 TRIBUNAL_SCENARIO = Scenario(
     identifier="fieldutils-bridge-builder",
     tier="gameplay",
@@ -14,6 +92,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "bridge.traversal.authoritative",
         "bridge.remove.scope",
         "bridge.result.lifecycle",
+        "bridge.interruption.cleanup",
         "bridge.advanced.plan",
         "bridge.auto.support",
         "bridge.wide.vehicle",
@@ -29,6 +108,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "bridge.build.replication",
         "bridge.traversal.physical",
         "bridge.remove.replication",
+        "bridge.interruption.request",
         "bridge.advanced.replication",
         "bridge.ramp.traversal",
         "bridge.cleanup.client",
@@ -132,6 +212,57 @@ private _clientRemoveDeadline = diag_tickTime + 10;
 waitUntil {uiSleep 0.05; !isNil {missionNamespace getVariable "TRIBUNAL_BRIDGE_REMOVE_OBSERVED"} || {diag_tickTime > _clientRemoveDeadline}};
 private _clientRemove = missionNamespace getVariable ["TRIBUNAL_BRIDGE_REMOVE_OBSERVED", []];
 private _clientRemoveOk = (_clientRemove param [0, ""]) isEqualTo _token && {(_clientRemove param [1, false]) isEqualTo true};
+
+private _interruptBoxASL = (getPosASL _scenarioPlayer) vectorAdd [3, 0, 1.2];
+private _interruptBox = createVehicle ["YFU_Bridge_Box", ASLToAGL _interruptBoxASL, [], 0, "CAN_COLLIDE"];
+_interruptBox setPosASL _interruptBoxASL;
+_interruptBox setVectorDirAndUp [[0, 1, 0], [0, 0, 1]];
+_interruptBox enableSimulationGlobal false;
+[_interruptBox] call YFU_bridge_ensureBoxDefaults;
+private _interruptLeaseId = format ["tribunal-bridge-interrupt-lease-%1", _token];
+private _interruptRequestId = format ["tribunal-bridge-interrupt-build-%1", _token];
+missionNamespace setVariable ["YFU_bridge_perPlankBuildDelay", 0.5, true];
+missionNamespace setVariable ["TRIBUNAL_BRIDGE_INTERRUPT_FIXTURE", [_token, netId _interruptBox, _interruptLeaseId, _interruptRequestId], true];
+
+private _interruptDeadline = diag_tickTime + 20;
+private _partialSegments = [];
+private _activeEntry = [];
+private _interruptAck = [];
+waitUntil {
+    uiSleep 0.05;
+    _partialSegments = (allMissionObjects "Land_Plank_01_4m_F") select {(_x getVariable ["YFU_bridge_operation_id", ""]) isEqualTo _interruptRequestId};
+    private _activeOperations = missionNamespace getVariable ["YFU_bridge_active_operations", createHashMap];
+    _activeEntry = _activeOperations getOrDefault [_interruptRequestId, []];
+    _interruptAck = missionNamespace getVariable ["TRIBUNAL_BRIDGE_INTERRUPT_REQUEST", []];
+    ((_interruptAck param [0, ""]) isEqualTo _token && {(_interruptAck param [1, false])}
+        && {count _partialSegments >= 1} && {count _partialSegments < 6}
+        && {_activeEntry isNotEqualTo []})
+        || {diag_tickTime > _interruptDeadline}
+};
+private _partialIds = _partialSegments apply {netId _x};
+private _leaseConsumed = (_interruptBox getVariable ["YFU_bridge_planner_lease", ["stale"]]) isEqualTo [];
+private _operationBound = (_interruptBox getVariable ["YFU_bridge_operation_id", ""]) isEqualTo _interruptRequestId
+    && {(_activeEntry param [0, ""]) isEqualTo netId _interruptBox}
+    && {(_activeEntry param [1, ""]) isEqualTo "build"}
+    && {(_activeEntry param [2, -1]) isEqualTo owner _scenarioPlayer};
+deleteVehicle _interruptBox;
+private _interruptCleanupDeadline = diag_tickTime + 5;
+private _operationRetired = false;
+waitUntil {
+    uiSleep 0.05;
+    private _activeOperations = missionNamespace getVariable ["YFU_bridge_active_operations", createHashMap];
+    _operationRetired = (_activeOperations getOrDefault [_interruptRequestId, []]) isEqualTo [];
+    ((_partialIds findIf {!isNull (objectFromNetId _x)}) < 0 && {_operationRetired})
+        || {diag_tickTime > _interruptCleanupDeadline}
+};
+private _partialGone = (_partialIds findIf {!isNull (objectFromNetId _x)}) < 0;
+private _interruptionOk = (_interruptAck param [0, ""]) isEqualTo _token
+    && {(_interruptAck param [1, false])}
+    && {_leaseConsumed} && {_operationBound}
+    && {count _partialIds >= 1} && {count _partialIds < 6}
+    && {isNull _interruptBox} && {_partialGone} && {_operationRetired};
+["bridge.interruption.cleanup", _interruptionOk, format ["ack=%1|leaseConsumed=%2|operation=%3|partial=%4|boxNull=%5|partialGone=%6|operationRetired=%7", _interruptAck, _leaseConsumed, _activeEntry, _partialIds, isNull _interruptBox, _partialGone, _operationRetired]] call _assert;
+missionNamespace setVariable ["YFU_bridge_perPlankBuildDelay", 0.05, true];
 
 private _advancedBoxASL = [50, 10, 1.2];
 private _advancedBox = createVehicle ["YFU_Bridge_Box", ASLToAGL _advancedBoxASL, [], 0, "CAN_COLLIDE"];
@@ -421,6 +552,58 @@ waitUntil {
 private _removed = (_segmentIds findIf {!isNull (objectFromNetId _x)}) < 0;
 ["bridge.remove.replication", (_removeResult param [2, ""]) isEqualTo "complete" && {_removed}, format ["result=%1|removed=%2", _removeResult, _removed]] call _assert;
 missionNamespace setVariable ["TRIBUNAL_BRIDGE_REMOVE_OBSERVED", [_token, (_removeResult param [2, ""]) isEqualTo "complete" && {_removed}], true];
+
+private _interruptFixtureDeadline = diag_tickTime + 15;
+waitUntil {uiSleep 0.05; !isNil {missionNamespace getVariable "TRIBUNAL_BRIDGE_INTERRUPT_FIXTURE"} || {diag_tickTime > _interruptFixtureDeadline}};
+private _interruptFixture = missionNamespace getVariable ["TRIBUNAL_BRIDGE_INTERRUPT_FIXTURE", []];
+private _interruptBox = objectFromNetId (_interruptFixture param [1, ""]);
+private _interruptLeaseId = _interruptFixture param [2, ""];
+private _interruptRequestId = _interruptFixture param [3, ""];
+if (!isNull _interruptBox) then {
+    [_interruptBox, player, _interruptLeaseId] remoteExecCall ["YFU_bridge_openBuilderDialog", 2];
+};
+private _interruptLeaseDeadline = diag_tickTime + 10;
+private _interruptPlanner = [];
+waitUntil {
+    uiSleep 0.05;
+    _interruptPlanner = if (isNull _interruptBox) then {[]} else {_interruptBox getVariable ["YFU_bridge_planner_last_result", []]};
+    ((_interruptPlanner param [0, ""]) isEqualTo _interruptLeaseId
+        && {(_interruptPlanner param [1, ""]) in ["granted", "rejected"]}
+        && {(_interruptPlanner param [1, ""]) isEqualTo "rejected" || {!isNull (call YFU_bridge_getDialogDisplay)}})
+        || {diag_tickTime > _interruptLeaseDeadline}
+};
+private _interruptGranted = (_interruptPlanner param [0, ""]) isEqualTo _interruptLeaseId
+    && {(_interruptPlanner param [1, ""]) isEqualTo "granted"}
+    && {(_interruptPlanner param [2, ""]) isEqualTo "accepted"}
+    && {(_interruptPlanner param [3, -1]) isEqualTo clientOwner}
+    && {!isNull (call YFU_bridge_getDialogDisplay)}
+    && {(uiNamespace getVariable ["YFU_bridge_planner_lease_id", ""]) isEqualTo _interruptLeaseId};
+if (_interruptGranted) then {
+    [_interruptBox, player, _interruptRequestId, ["bridge-plan-v1", false, false, false, 2, 6, 0], _interruptLeaseId] remoteExecCall ["YFU_bridge_startBuildFromPlan", 2];
+};
+private _interruptAcceptedDeadline = diag_tickTime + 10;
+private _interruptBuildResult = [];
+waitUntil {
+    uiSleep 0.05;
+    _interruptBuildResult = if (isNull _interruptBox) then {[]} else {_interruptBox getVariable ["YFU_bridge_last_result", []]};
+    ((_interruptBuildResult param [0, ""]) isEqualTo _interruptRequestId && {(_interruptBuildResult param [2, ""]) in ["accepted", "failed"]})
+        || {diag_tickTime > _interruptAcceptedDeadline}
+};
+private _interruptRequested = _interruptGranted
+    && {(_interruptBuildResult param [0, ""]) isEqualTo _interruptRequestId}
+    && {(_interruptBuildResult param [1, ""]) isEqualTo "build"}
+    && {(_interruptBuildResult param [2, ""]) isEqualTo "accepted"}
+    && {_interruptBox getVariable ["YFU_bridge_building", false]}
+    && {(_interruptBox getVariable ["YFU_bridge_operation_id", ""]) isEqualTo _interruptRequestId};
+["bridge.interruption.request", _interruptRequested, format ["fixture=%1|planner=%2|build=%3|building=%4|operation=%5", _interruptFixture, _interruptPlanner, _interruptBuildResult, if (isNull _interruptBox) then {false} else {_interruptBox getVariable ["YFU_bridge_building", false]}, if (isNull _interruptBox) then {""} else {_interruptBox getVariable ["YFU_bridge_operation_id", ""]}]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_BRIDGE_INTERRUPT_REQUEST", [_token, _interruptRequested], true];
+if (!isNull (call YFU_bridge_getDialogDisplay)) then {
+    uiNamespace setVariable ["YFU_bridge_planner_submitting", true];
+    closeDialog 0;
+    uiNamespace setVariable ["YFU_bridge_planner_submitting", false];
+    uiNamespace setVariable ["YFU_bridge_planner_lease_id", ""];
+};
+
 private _advancedFixtureDeadline = diag_tickTime + 15;
 waitUntil {uiSleep 0.05; !isNil {missionNamespace getVariable "TRIBUNAL_BRIDGE_ADVANCED_FIXTURE"} || {diag_tickTime > _advancedFixtureDeadline}};
 private _advancedFixture = missionNamespace getVariable ["TRIBUNAL_BRIDGE_ADVANCED_FIXTURE", []];
@@ -514,4 +697,5 @@ player setDir _originalDir;
         }),
         locality_requirements="Client-a owns ACE action resolution, UI state, and requests; the dedicated server exclusively creates/removes and tags segments. This proves one-client replication only, not client-b or JIP.",
     ),
+    evidence_contract=EVIDENCE_CONTRACT,
 )
