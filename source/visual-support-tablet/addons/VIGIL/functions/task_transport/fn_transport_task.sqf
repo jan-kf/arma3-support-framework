@@ -158,7 +158,7 @@ YSF_handlers_transport = {
 
       private _pad = _t getOrDefault ["lzPad", objNull];
       if (!isNull _pad) then { 
-        if (_t get ["deletePadOnFinish", false]) then { 
+        if (_t getOrDefault ["deletePadOnFinish", false]) then {
           deleteVehicle _pad; 
         };
         _t set ["lzPad", objNull]; 

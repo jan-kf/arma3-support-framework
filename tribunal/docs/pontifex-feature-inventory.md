@@ -370,6 +370,7 @@ Utilities for fixed-wing airdrop.
   settles at the LZ. **Implemented; COVERED** by `vigil-transport`.
 * **RTB/reinsertion** returns to recorded home, settles, and cleans resources.
   **Implemented; COVERED.** Reinsertion is not a separate implementation.
+* **In-flight destruction/failure** now proves the exact stage-3 task generation, product-created destination pad, server-local aircraft, requester terminal row, governor disablement, failed state, and pad/fixture deletion. **REFINED; ACCEPTED / COVERED** by `vigil-transport` run `20260828T031206Z-24d79c61`. Cancellation policy, other phases/classes/terrain, ownership migration, client-B/JIP, and presentation remain separately decision-bound, blocked, or optional.
 * Hidden-pad plus `land "LAND"` is **KEEP + CHARACTERIZE ENGINE REQUIREMENT; ACCEPTED / COVERED** for one server-local airborne `B_Heli_Light_01_F`, clear Stratis corridor, `doMove` approach, and 90-second landing deadline. Three independent final A/B runs prove the no-pad control reaches the arrival radius but remains airborne beyond 104 m while the exact `Land_HelipadEmpty_F` treatment lands within 25 m and holds three continuous settled seconds. Other classes, terrain, approaches, landing modes, waypoint-only behavior, locality, client-B, and JIP remain unclaimed.
 
 ### 3.6 Rotary-wing CAS
@@ -865,10 +866,8 @@ remain optional unless their mechanics differ. Bridge Builder interrupted
 construction is accepted by `20260828T010359Z-31876e6c`. B4 attached-object
 repeat/delete lifecycle is accepted by `20260828T014506Z-4977d65f`; B6 exact
 VLS target retirement is accepted by corrected run
-`20260828T015701Z-5788cedb`; and B7 active preview-close cleanup is accepted by
-corrected run `20260828T015243Z-eba512d9`. The next and only remaining SHOULD
-candidate is B5, Vigil transport abnormal terminal cleanup. Coordinate and
-tab-switch lifetime remain decision-bound. Do not begin FPV,
+`20260828T015701Z-5788cedb`; B7 active preview-close cleanup is accepted by
+corrected run `20260828T015243Z-eba512d9`; and B5 exact in-flight transport destruction, failed finalization, pad deletion, requester receipt, and cleanup are accepted by `20260828T031206Z-24d79c61`. No MUST or SHOULD item remains. Coordinate and tab-switch lifetime remain decision-bound. Do not begin FPV,
 APS anti-drone, CBR concurrency, reconnaissance, feedback policy, or other
 decision-bound work by inventing product semantics. Client-B/JIP and deterministic
 pond coverage remain externally blocked; arbitrary catalogue, class, terrain,

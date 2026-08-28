@@ -127,12 +127,20 @@ one demonstrated proposition. Package `20260824T170322Z-9b970179` ingested
 twice with stable scoped counts (5 packages, 5 runs, 59 assertions, 25
 observations, 6 proofs and 9 judgments), and the Sacred Texts audit accepted.
 
+## Abnormal terminal closeout
+
+B5 extends the existing `vigil-transport` scenario without creating a second overlapping fixture contract. The client uses the real `YOSHI_taskTRN_submit` path for a second server-local `B_Heli_Light_01_F` on the same accepted clear corridor. The server retains the exact task ID, generation, aircraft, and product-created `Land_HelipadEmpty_F` after stage 3; client-a independently resolves those nonlocal identities while the aircraft is alive and airborne. Server-local `setDamage 1` then varies the terminal cause.
+
+Accepted run `20260828T031206Z-24d79c61` passed 17 server and 8 client feature assertions (21 and 12 including smoke), zero failures, and complete cleanup. The exact aircraft `2:165` was destroyed airborne after task `T3.69663e+08` generation `706935` created pad `2:185`. That same generation finalized with state/status `failed` and stage 5, disabled its manager, deleted pad `2:185` on server and client, produced exactly one requester terminal row, and retired the aircraft, crew, home pad, product pad, and coordination state. The same run preserved the full normal outbound/wait/RTB contract.
+
+The investigation exposed a product cleanup defect: the finalizer queried `deletePadOnFinish` through an invalid default-bearing `get` expression, so the exact product pad remained live after failure. The finalizer now uses `getOrDefault`, guarded statically and proven by the exact null transition. A later calibration exposed a test-only client/server teardown race after the client had already received the terminal row; a two-phase terminal/cleanup acknowledgement now preserves both receipt and null-transition evidence. Rejected calibrations remain unaccepted and were never ingested. Three runs also recorded intermittent normal-RTB low-altitude crashes on the unchanged accepted fixture; the final accepted run and three earlier calibrations completed normal RTB, and no speculative product or fixture change was made.
+
+Evidence package `urn:tribunal:evidence-package:20260828T031206Z-24d79c61:1` has file SHA-256 `d71182836849bc8408a6949a1562532e17aa4e5500d788a354e8d7a1ff3f2bd4`. Production ingestion advanced once to 37 packages and 38 runs; the identical second pass was count-stable and the audit passed. Reviewed distillation classifies both propositions as project-specific and adds no generic Arma claim; its second pass was idempotent.
+
 ## Controls and deferred work
 
 The first permanent negative control is duplicate dispatch while active. The
 review also adds fail-closed missing/dead-crew validation and bounded timeouts.
-Unsafe/unreachable terrain, destruction during flight, cancellation, RTB before
-arrival and client-b observation are meaningful follow-ups, but do not belong
-in the stable clear-corridor MVP.
+Unsafe/unreachable terrain, cancellation, destruction before pad creation or during RTB, crew-only death, retry exhaustion, RTB before arrival, ownership migration, and client-B/JIP remain explicitly decision-bound, blocked, or optional. The representative in-flight destruction terminal is now covered and no further transport work belongs in the current MUST/SHOULD campaign.
 
-Rotary-wing CAS is already covered for its accepted contract. The next recommended unblocked investigation is Fabricator staging/mass isolation; do not broaden this landing characterization to other classes, terrain, approach commands or locality without a fresh controlled comparison.
+The scoped Pontifex campaign has no remaining transport or other MUST/SHOULD candidate. Do not broaden this landing or destruction characterization to other classes, terrain, phases, approach commands, locality, or presentation without first reopening and reclassifying the applicable blocked/decision/optional boundary.

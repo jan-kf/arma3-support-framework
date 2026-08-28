@@ -4,6 +4,111 @@ from tribunal.mission.aviation import aviation_observer_sqf
 from tribunal.runner.model import Scenario, ScenarioReview
 
 
+TRANSPORT_FIXTURE = [
+    "vigil.transport.fixture",
+    "vigil.transport.locality",
+    "vigil.transport.client.locality",
+    "vigil.transport.client.eligible",
+]
+TRANSPORT_DISPATCH = [
+    "vigil.transport.dispatch.accepted",
+    "vigil.transport.dispatch.duplicateRejected",
+    "vigil.transport.dispatch.flight",
+    "vigil.transport.client.dispatch",
+]
+TRANSPORT_ARRIVAL = [
+    "vigil.transport.arrival",
+    "vigil.transport.waiting",
+    "vigil.transport.client.waiting",
+]
+TRANSPORT_RTB = [
+    "vigil.transport.rtb.accepted",
+    "vigil.transport.rtb.flight",
+    "vigil.transport.home",
+    "vigil.transport.client.rtb",
+    "vigil.transport.client.home",
+]
+TRANSPORT_NORMAL_CLOSEOUT = [
+    "vigil.transport.stabilizer.deferred",
+    "vigil.transport.cleanup",
+]
+TRANSPORT_ABNORMAL_FIXTURE = [
+    "vigil.transport.abnormal.fixture",
+]
+TRANSPORT_ABNORMAL_STIMULUS = [
+    "vigil.transport.abnormal.destruction",
+    "vigil.transport.client.abnormalDispatch",
+]
+TRANSPORT_ABNORMAL_TERMINAL = [
+    "vigil.transport.abnormal.terminal",
+    "vigil.transport.abnormal.padCleanup",
+    "vigil.transport.client.abnormalFailure",
+]
+TRANSPORT_ABNORMAL_CLOSEOUT = [
+    "vigil.transport.abnormal.cleanup",
+]
+
+EVIDENCE_CONTRACT = {
+    "scenario": {
+        "id": "vigil-transport",
+        "version": 1,
+        "feature_family": "pontifex-vigil-transport",
+        "name": "Vigil bounded helicopter transport lifecycle",
+        "definition": {
+            "kind": "controlled dedicated-multiplayer product specification",
+            "reference": "source/visual-support-tablet/tests/tribunal/vigil_transport.py",
+            "applicability": "Arma 3 dedicated multiplayer with one authenticated client, server-local B_Heli_Light_01_F fixtures, and bounded clear Stratis corridors",
+            "participants": {
+                "server": "owns aircraft, crews, task governor, physical flight, product landing pads, destruction stimulus, and cleanup",
+                "client-a": "owns the real Vigil request path and observes nonlocal task, aircraft, failure, and pad identity replication",
+            },
+        },
+    },
+    "knowledge_subject": {
+        "key": "pontifex:vigil:helicopter-transport",
+        "label": "Vigil helicopter transport lifecycle",
+        "kind": "product_behavior",
+        "aliases": ["Vigil transport", "Vigil reinsertion"],
+        "biki_context": ["biki-page:1766", "biki-page:1378", "biki-page:1601"],
+    },
+    "arms": [
+        {"key": "normal-fixture", "role": "baseline", "description": "A server-local crewed representative transport is eligible and resolves nonlocally on client-a", "assertions": TRANSPORT_FIXTURE},
+        {"key": "normal-dispatch", "role": "treatment", "description": "The real client request accepts one outbound task, rejects a duplicate, and produces attributable physical flight", "assertions": TRANSPORT_DISPATCH},
+        {"key": "normal-arrival", "role": "treatment", "description": "The exact transport settles at the LZ and remains available", "assertions": TRANSPORT_ARRIVAL},
+        {"key": "normal-rtb", "role": "treatment", "description": "The real RTB request produces a distinct task and physical return to the recorded home", "assertions": TRANSPORT_RTB},
+        {"key": "normal-closeout", "role": "treatment", "description": "The disabled stabilizer remains absent and normal fixtures and governor activity retire", "assertions": TRANSPORT_NORMAL_CLOSEOUT},
+        {"key": "abnormal-fixture", "role": "baseline", "description": "A second exact server-local transport begins alive with no destination pad and is submitted through the same client path", "assertions": TRANSPORT_ABNORMAL_FIXTURE},
+        {"key": "abnormal-destruction", "role": "treatment", "description": "After the exact task reaches its landing stage and creates its sole product pad while still airborne, server-local setDamage destroys the exact aircraft", "assertions": TRANSPORT_ABNORMAL_STIMULUS},
+        {"key": "abnormal-terminal", "role": "treatment", "description": "The same generation finalizes failed, disables its governor record, deletes its exact product-created pad, and replicates failure to client-a", "assertions": TRANSPORT_ABNORMAL_TERMINAL},
+        {"key": "abnormal-closeout", "role": "treatment", "description": "Controlled teardown removes the wreck, crew group, home pad, signals, and remaining exact fixture identities", "assertions": TRANSPORT_ABNORMAL_CLOSEOUT},
+    ],
+    "causal_relationships": [
+        {"key": "normal-v-destroyed-terminal", "relation": "CAUSAL_PAIR_WITH", "source": "normal-arrival", "target": "abnormal-destruction", "controlled_dimensions": ["aircraft class", "server locality", "authenticated client request", "clear corridor", "product task governor", "destruction is the varied dimension"]},
+        {"key": "destruction-v-finalizer", "relation": "CAUSAL_PAIR_WITH", "source": "abnormal-destruction", "target": "abnormal-terminal", "controlled_dimensions": ["exact aircraft", "exact task id and generation", "exact product-created pad", "mission"]},
+    ],
+    "propositions": [
+        {
+            "id": "pontifex:vigil:transport-bounded-round-trip",
+            "text": "Under the tested dedicated-multiplayer conditions, Vigil accepts one authenticated dispatch for an eligible server-local helicopter, rejects an active duplicate, physically reaches and settles at the LZ, waits, accepts RTB, and physically returns and settles at its recorded home with no active task or fixture resources.",
+            "intended_use": "primary_result",
+            "assertions": TRANSPORT_FIXTURE + TRANSPORT_DISPATCH + TRANSPORT_ARRIVAL + TRANSPORT_RTB + TRANSPORT_NORMAL_CLOSEOUT,
+            "rationale": "Exact request, aircraft, task, trajectory, landing, waiting, return, locality, and cleanup observations exclude state-only completion, unrelated flight, duplicate replacement, and leaked-fixture false passes.",
+        },
+        {
+            "id": "pontifex:vigil:transport-in-flight-destruction-cleanup",
+            "text": "Under the tested server-local conditions, destroying the exact active transport after its task creates a landing pad but before landing causes the same task generation to finalize failed, disables its governor record, deletes its exact product-created pad, and replicates the failed terminal state to client-a.",
+            "intended_use": "primary_result",
+            "assertions": TRANSPORT_ABNORMAL_FIXTURE + TRANSPORT_ABNORMAL_STIMULUS + TRANSPORT_ABNORMAL_TERMINAL + TRANSPORT_ABNORMAL_CLOSEOUT,
+            "rationale": "The client submits through the real request path; exact pre-destruction aircraft/task/pad identities are acknowledged while live and airborne; server-local damage is the causal stimulus; exact generation, finalization, manager disablement, pad null transition, client replication, and cleanup exclude timeout, controlled pad deletion, and unrelated-task false passes.",
+        },
+    ],
+    "unresolved": [
+        "Remote cancellation policy, destruction before pad creation, crew-only death, RTB destruction, retry exhaustion, client-owned/headless aircraft, ownership migration, client-B/JIP, and disconnect remain outside this one abnormal terminal proof.",
+        "Other helicopter classes, terrain, landing commands, destination-pad reuse, and presentation remain reviewed optional or decision-bound combinations.",
+    ],
+}
+
+
 TRIBUNAL_SCENARIO = Scenario(
     identifier="vigil-transport",
     tier="gameplay",
@@ -20,6 +125,11 @@ TRIBUNAL_SCENARIO = Scenario(
         "vigil.transport.home",
         "vigil.transport.cleanup",
         "vigil.transport.stabilizer.deferred",
+        "vigil.transport.abnormal.fixture",
+        "vigil.transport.abnormal.destruction",
+        "vigil.transport.abnormal.terminal",
+        "vigil.transport.abnormal.padCleanup",
+        "vigil.transport.abnormal.cleanup",
     }),
     client_expected=frozenset({
         "vigil.transport.client.locality",
@@ -28,6 +138,8 @@ TRIBUNAL_SCENARIO = Scenario(
         "vigil.transport.client.waiting",
         "vigil.transport.client.rtb",
         "vigil.transport.client.home",
+        "vigil.transport.client.abnormalDispatch",
+        "vigil.transport.client.abnormalFailure",
     }),
     server_sqf=aviation_observer_sqf() + r'''
 private _home = [1900, 5600, 0];
@@ -157,6 +269,139 @@ waitUntil {uiSleep 0.05; isNull _aircraft || diag_tickTime > _cleanupDeadline};
 private _cleanupOk = isNull _aircraft && {_managerIdle}
     && {(allMissionObjects "B_Heli_Light_01_F") findIf {netId _x isEqualTo _aircraftId} < 0};
 ["vigil.transport.cleanup", _cleanupOk, format ["aircraftNull=%1|managerIdle=%2|matchingAircraft=%3", isNull _aircraft, _managerIdle, (allMissionObjects "B_Heli_Light_01_F") findIf {netId _x isEqualTo _aircraftId}]] call _assert;
+
+private _abnormalHome = [1900, 5600, 0];
+private _abnormalDestination = [2350, 5600, 0];
+private _abnormalPadsBefore = allMissionObjects "Land_HelipadEmpty_F";
+private _abnormalHomePad = "Land_HelipadEmpty_F" createVehicle _abnormalHome;
+private _abnormalAircraft = "B_Heli_Light_01_F" createVehicle _abnormalHome;
+_abnormalAircraft setDir 90;
+_abnormalAircraft setFuel 1;
+_abnormalAircraft setDamage 0;
+createVehicleCrew _abnormalAircraft;
+private _abnormalSetupDeadline = diag_tickTime + 10;
+waitUntil {
+    uiSleep 0.1;
+    (!isNull driver _abnormalAircraft && {alive driver _abnormalAircraft} && {isTouchingGround _abnormalAircraft})
+        || diag_tickTime > _abnormalSetupDeadline
+};
+private _abnormalPilot = driver _abnormalAircraft;
+private _abnormalGroup = group _abnormalPilot;
+private _abnormalAircraftId = netId _abnormalAircraft;
+private _abnormalFixtureOk = !isNull _abnormalAircraft && {alive _abnormalAircraft}
+    && {!isNull _abnormalPilot} && {alive _abnormalPilot}
+    && {local _abnormalAircraft} && {local _abnormalPilot} && {local _abnormalGroup}
+    && {_abnormalAircraftId isNotEqualTo ""}
+    && {_abnormalPadsBefore findIf {_x distance2D _abnormalDestination < 100} < 0};
+["vigil.transport.abnormal.fixture", _abnormalFixtureOk, format ["aircraft=%1|pilot=%2|local=%3|home=%4|destination=%5|nearbyPadsBefore=%6", _abnormalAircraftId, netId _abnormalPilot, local _abnormalAircraft, _abnormalHome, _abnormalDestination, _abnormalPadsBefore select {_x distance2D _abnormalDestination < 100}]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_FIXTURE", [_token, _abnormalAircraftId, _abnormalHome, _abnormalDestination], true];
+
+private _abnormalTask = objNull;
+private _abnormalManager = objNull;
+private _abnormalPad = objNull;
+private _abnormalArmedDeadline = diag_tickTime + 210;
+waitUntil {
+    uiSleep 0.1;
+    _abnormalManager = (call YSF__mgr) getOrDefault [[_abnormalAircraft] call YSF_taskKey, objNull];
+    if (typeName _abnormalManager isEqualTo "HASHMAP") then {
+        _abnormalTask = _abnormalManager getOrDefault ["task", objNull];
+        if (typeName _abnormalTask isEqualTo "HASHMAP") then {
+            _abnormalPad = _abnormalTask getOrDefault ["lzPad", objNull];
+        };
+    };
+    (typeName _abnormalTask isEqualTo "HASHMAP"
+        && {(_abnormalTask getOrDefault ["stage", -1]) isEqualTo 3}
+        && {!isNull _abnormalPad})
+        || diag_tickTime > _abnormalArmedDeadline
+};
+private _abnormalTaskId = if (typeName _abnormalTask isEqualTo "HASHMAP") then {_abnormalTask getOrDefault ["id", ""]} else {""};
+private _abnormalTaskGen = if (typeName _abnormalTask isEqualTo "HASHMAP") then {_abnormalTask getOrDefault ["gen", -1]} else {-1};
+private _abnormalPadId = if (isNull _abnormalPad) then {""} else {netId _abnormalPad};
+private _abnormalAirborne = alive _abnormalAircraft && {!isTouchingGround _abnormalAircraft}
+    && {((getPosATL _abnormalAircraft) # 2) > 3};
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_ARMED", [_token, _abnormalAircraftId, _abnormalTaskId, _abnormalTaskGen, _abnormalPadId], true];
+private _abnormalAckDeadline = diag_tickTime + 30;
+waitUntil {
+    uiSleep 0.05;
+    (missionNamespace getVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_ARMED", ""]) isEqualTo _token
+        || diag_tickTime > _abnormalAckDeadline
+};
+private _abnormalPreconditions = typeName _abnormalTask isEqualTo "HASHMAP"
+    && {_abnormalTaskId isNotEqualTo ""} && {_abnormalTaskGen >= 0}
+    && {(_abnormalTask getOrDefault ["stage", -1]) isEqualTo 3}
+    && {!isNull _abnormalPad} && {_abnormalPadId isNotEqualTo ""}
+    && {!(_abnormalPad in _abnormalPadsBefore)}
+    && {_abnormalTask getOrDefault ["deletePadOnFinish", false]}
+    && {_abnormalAirborne}
+    && {(missionNamespace getVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_ARMED", ""]) isEqualTo _token};
+_abnormalAircraft setDamage 1;
+private _destroyDeadline = diag_tickTime + 10;
+waitUntil {uiSleep 0.05; !alive _abnormalAircraft || diag_tickTime > _destroyDeadline};
+private _destroyed = !alive _abnormalAircraft && {damage _abnormalAircraft >= 1};
+["vigil.transport.abnormal.destruction", _abnormalPreconditions && {_destroyed}, format ["aircraft=%1|task=%2|gen=%3|stage=%4|pad=%5|productPad=%6|airborne=%7|alt=%8|touching=%9|clientArmed=%10|alive=%11|damage=%12", _abnormalAircraftId, _abnormalTaskId, _abnormalTaskGen, if (typeName _abnormalTask isEqualTo "HASHMAP") then {_abnormalTask getOrDefault ["stage", -1]} else {-1}, _abnormalPadId, !(_abnormalPad in _abnormalPadsBefore), _abnormalAirborne, (getPosATL _abnormalAircraft) # 2, isTouchingGround _abnormalAircraft, missionNamespace getVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_ARMED", ""], alive _abnormalAircraft, damage _abnormalAircraft]] call _assert;
+
+private _abnormalTerminalDeadline = diag_tickTime + 30;
+waitUntil {
+    uiSleep 0.05;
+    (typeName _abnormalTask isEqualTo "HASHMAP"
+        && {_abnormalTask getOrDefault ["finalized", false]}
+        && {!(_abnormalManager getOrDefault ["enabled", true])})
+        || diag_tickTime > _abnormalTerminalDeadline
+};
+private _abnormalTerminalOk = typeName _abnormalTask isEqualTo "HASHMAP"
+    && {(_abnormalTask getOrDefault ["id", ""]) isEqualTo _abnormalTaskId}
+    && {(_abnormalTask getOrDefault ["gen", -1]) isEqualTo _abnormalTaskGen}
+    && {(_abnormalTask getOrDefault ["state", ""]) isEqualTo "failed"}
+    && {(_abnormalTask getOrDefault ["status", ""]) isEqualTo "failed"}
+    && {_abnormalTask getOrDefault ["finalized", false]}
+    && {(_abnormalTask getOrDefault ["stage", -1]) isEqualTo 5}
+    && {!(_abnormalManager getOrDefault ["enabled", true])}
+    && {(_abnormalAircraft getVariable ["YSF_transport_state", ""]) isEqualTo "failed"};
+["vigil.transport.abnormal.terminal", _abnormalTerminalOk, format ["aircraft=%1|task=%2|gen=%3|state=%4|status=%5|stage=%6|finalized=%7|managerEnabled=%8|vehicleState=%9", _abnormalAircraftId, _abnormalTask getOrDefault ["id", ""], _abnormalTask getOrDefault ["gen", -1], _abnormalTask getOrDefault ["state", ""], _abnormalTask getOrDefault ["status", ""], _abnormalTask getOrDefault ["stage", -1], _abnormalTask getOrDefault ["finalized", false], _abnormalManager getOrDefault ["enabled", true], _abnormalAircraft getVariable ["YSF_transport_state", ""]]] call _assert;
+private _padCleanupOk = isNull _abnormalPad
+    && {objectFromNetId _abnormalPadId isEqualTo objNull}
+    && {isNull (_abnormalTask getOrDefault ["lzPad", objNull])}
+    && {(allMissionObjects "Land_HelipadEmpty_F") findIf {netId _x isEqualTo _abnormalPadId} < 0};
+["vigil.transport.abnormal.padCleanup", _padCleanupOk, format ["pad=%1|null=%2|resolvedNull=%3|taskPadNull=%4|matching=%5", _abnormalPadId, isNull _abnormalPad, objectFromNetId _abnormalPadId isEqualTo objNull, isNull (_abnormalTask getOrDefault ["lzPad", objNull]), (allMissionObjects "Land_HelipadEmpty_F") findIf {netId _x isEqualTo _abnormalPadId}]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_FAILED", [_token, _abnormalAircraftId, _abnormalTaskId, _abnormalTaskGen, _abnormalPadId], true];
+private _abnormalClientTerminalDeadline = diag_tickTime + 30;
+waitUntil {
+    uiSleep 0.05;
+    (missionNamespace getVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_TERMINAL", ""]) isEqualTo _token
+        || diag_tickTime > _abnormalClientTerminalDeadline
+};
+
+private _abnormalCrewIds = (crew _abnormalAircraft) apply {netId _x};
+deleteVehicleCrew _abnormalAircraft;
+deleteVehicle _abnormalAircraft;
+deleteVehicle _abnormalHomePad;
+if (!isNull _abnormalGroup) then {deleteGroup _abnormalGroup;};
+private _abnormalCleanupDeadline = diag_tickTime + 10;
+waitUntil {
+    uiSleep 0.05;
+    isNull _abnormalAircraft && {isNull _abnormalHomePad}
+        && {_abnormalCrewIds findIf {!isNull objectFromNetId _x} < 0}
+        || diag_tickTime > _abnormalCleanupDeadline
+};
+private _abnormalCleanupOk = isNull _abnormalAircraft && {isNull _abnormalHomePad}
+    && {isNull _abnormalPad}
+    && {_abnormalCrewIds findIf {!isNull objectFromNetId _x} < 0}
+    && {(allMissionObjects "B_Heli_Light_01_F") findIf {netId _x isEqualTo _abnormalAircraftId} < 0};
+["vigil.transport.abnormal.cleanup", _abnormalCleanupOk, format ["aircraft=%1|null=%2|homePadNull=%3|productPadNull=%4|crewRemaining=%5|matchingAircraft=%6", _abnormalAircraftId, isNull _abnormalAircraft, isNull _abnormalHomePad, isNull _abnormalPad, _abnormalCrewIds select {!isNull objectFromNetId _x}, (allMissionObjects "B_Heli_Light_01_F") findIf {netId _x isEqualTo _abnormalAircraftId}]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLEANED", [_token, _abnormalAircraftId, _abnormalTaskId, _abnormalTaskGen, _abnormalPadId], true];
+private _abnormalClientCleanedDeadline = diag_tickTime + 30;
+waitUntil {
+    uiSleep 0.05;
+    (missionNamespace getVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_CLEANED", ""]) isEqualTo _token
+        || diag_tickTime > _abnormalClientCleanedDeadline
+};
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_FIXTURE", nil, true];
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_ARMED", nil, true];
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_FAILED", nil, true];
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLEANED", nil, true];
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_ARMED", nil, true];
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_TERMINAL", nil, true];
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_CLEANED", nil, true];
 ''',
     client_sqf=r'''
 private _fixtureDeadline = diag_tickTime + 45;
@@ -206,6 +451,77 @@ private _homeSeen = (_homeSignal param [0, ""]) isEqualTo _token
     && {(_homeSignal param [1, ""]) isEqualTo _aircraftId}
     && {(_aircraft getVariable ["YSF_transport_state", ""]) isEqualTo "home"};
 ["vigil.transport.client.home", _homeSeen, format ["signal=%1|state=%2|aircraft=%3", _homeSignal, _aircraft getVariable ["YSF_transport_state", ""], _aircraftId]] call _assert;
+
+private _abnormalFixtureDeadline = diag_tickTime + 45;
+waitUntil {uiSleep 0.1; !isNil {missionNamespace getVariable "TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_FIXTURE"} || diag_tickTime > _abnormalFixtureDeadline};
+private _abnormalFixture = missionNamespace getVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_FIXTURE", []];
+private _abnormalAircraftId = _abnormalFixture param [1, ""];
+private _abnormalAircraft = if (_abnormalAircraftId isEqualTo "") then {objNull} else {objectFromNetId _abnormalAircraftId};
+private _abnormalDestination = _abnormalFixture param [3, []];
+uiNamespace setVariable ["YSF_current_selected_asset", _abnormalAircraft];
+private _abnormalState = call YOSHI_taskTransport_GetState;
+_abnormalState set ["grid", _abnormalDestination];
+_abnormalState set ["alt", 20];
+_abnormalState set ["do_not_climb", false];
+_abnormalState set ["ignore_en", false];
+uiNamespace setVariable ["YOSHI_taskTransport_state", _abnormalState];
+call YOSHI_taskTRN_submit;
+private _abnormalArmedDeadline = diag_tickTime + 210;
+waitUntil {uiSleep 0.1; !isNil {missionNamespace getVariable "TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_ARMED"} || diag_tickTime > _abnormalArmedDeadline};
+private _abnormalArmed = missionNamespace getVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_ARMED", []];
+private _abnormalTaskId = _abnormalArmed param [2, ""];
+private _abnormalTaskGen = _abnormalArmed param [3, -1];
+private _abnormalPadId = _abnormalArmed param [4, ""];
+private _abnormalPad = if (_abnormalPadId isEqualTo "") then {objNull} else {objectFromNetId _abnormalPadId};
+private _abnormalReplicaDeadline = diag_tickTime + 15;
+waitUntil {
+    uiSleep 0.05;
+    _abnormalAircraft = objectFromNetId _abnormalAircraftId;
+    _abnormalPad = objectFromNetId _abnormalPadId;
+    (!isNull _abnormalAircraft && {!isNull _abnormalPad} && {alive _abnormalAircraft}
+        && {!isTouchingGround _abnormalAircraft} && {((getPosATL _abnormalAircraft) # 2) > 3})
+        || diag_tickTime > _abnormalReplicaDeadline
+};
+private _abnormalDispatchOk = (_abnormalArmed param [0, ""]) isEqualTo _token
+    && {(_abnormalArmed param [1, ""]) isEqualTo _abnormalAircraftId}
+    && {!isNull _abnormalAircraft} && {!local _abnormalAircraft} && {alive _abnormalAircraft}
+    && {!isTouchingGround _abnormalAircraft} && {((getPosATL _abnormalAircraft) # 2) > 3}
+    && {_abnormalTaskId isNotEqualTo ""} && {_abnormalTaskGen >= 0}
+    && {!isNull _abnormalPad};
+["vigil.transport.client.abnormalDispatch", _abnormalDispatchOk, format ["aircraft=%1|local=%2|alive=%3|touching=%4|alt=%5|task=%6|gen=%7|pad=%8|padNull=%9", _abnormalAircraftId, if (isNull _abnormalAircraft) then {false} else {local _abnormalAircraft}, if (isNull _abnormalAircraft) then {false} else {alive _abnormalAircraft}, if (isNull _abnormalAircraft) then {true} else {isTouchingGround _abnormalAircraft}, if (isNull _abnormalAircraft) then {-1} else {(getPosATL _abnormalAircraft) # 2}, _abnormalTaskId, _abnormalTaskGen, _abnormalPadId, isNull _abnormalPad]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_ARMED", _token, true];
+
+private _abnormalFailedDeadline = diag_tickTime + 45;
+private _abnormalResultRows = [];
+waitUntil {
+    uiSleep 0.05;
+    _abnormalResultRows = uiNamespace getVariable ["YSF_task_request_results", []];
+    (!isNil {missionNamespace getVariable "TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_FAILED"}
+        && {_abnormalResultRows findIf {(_x # 1) isEqualTo "terminal" && {(_x # 4) isEqualTo _abnormalTaskId} && {(_x # 5) isEqualTo "failed"}} >= 0})
+        || diag_tickTime > _abnormalFailedDeadline
+};
+private _abnormalFailed = missionNamespace getVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_FAILED", []];
+private _abnormalTerminalRows = _abnormalResultRows select {(_x # 1) isEqualTo "terminal" && {(_x # 4) isEqualTo _abnormalTaskId} && {(_x # 5) isEqualTo "failed"}};
+private _abnormalReceiptOk = (_abnormalFailed param [0, ""]) isEqualTo _token
+    && {(_abnormalFailed param [1, ""]) isEqualTo _abnormalAircraftId}
+    && {(_abnormalFailed param [2, ""]) isEqualTo _abnormalTaskId}
+    && {(_abnormalFailed param [3, -1]) isEqualTo _abnormalTaskGen}
+    && {(_abnormalFailed param [4, ""]) isEqualTo _abnormalPadId}
+    && {(count _abnormalTerminalRows) isEqualTo 1};
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_TERMINAL", _token, true];
+private _abnormalCleanedDeadline = diag_tickTime + 30;
+waitUntil {uiSleep 0.05; !isNil {missionNamespace getVariable "TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLEANED"} || diag_tickTime > _abnormalCleanedDeadline};
+private _abnormalCleaned = missionNamespace getVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLEANED", []];
+private _abnormalFailureOk = _abnormalReceiptOk
+    && {(_abnormalCleaned param [0, ""]) isEqualTo _token}
+    && {(_abnormalCleaned param [1, ""]) isEqualTo _abnormalAircraftId}
+    && {(_abnormalCleaned param [2, ""]) isEqualTo _abnormalTaskId}
+    && {(_abnormalCleaned param [3, -1]) isEqualTo _abnormalTaskGen}
+    && {(_abnormalCleaned param [4, ""]) isEqualTo _abnormalPadId}
+    && {isNull objectFromNetId _abnormalAircraftId}
+    && {isNull objectFromNetId _abnormalPadId};
+["vigil.transport.client.abnormalFailure", _abnormalFailureOk, format ["signal=%1|cleaned=%2|aircraft=%3|aircraftNull=%4|task=%5|gen=%6|terminalRows=%7|pad=%8|padNull=%9", _abnormalFailed, _abnormalCleaned, _abnormalAircraftId, isNull objectFromNetId _abnormalAircraftId, _abnormalTaskId, _abnormalTaskGen, _abnormalTerminalRows, _abnormalPadId, isNull objectFromNetId _abnormalPadId]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_VIGIL_TRANSPORT_ABNORMAL_CLIENT_CLEANED", _token, true];
 ''',
     metadata={
         "product": "visual-support-tablet",
@@ -216,11 +532,12 @@ private _homeSeen = (_homeSignal param [0, ""]) isEqualTo _token
     },
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A valid selected transport accepts one dispatch, physically flies to and settles at the selected LZ, waits, accepts RTB, physically returns and settles at its recorded home, then leaves no active task or fixture resources.",
-        outcome="REFINE BEFORE PERMANENT COVERAGE",
-        rationale="Review found missing RTB/state/timeout semantics and false-positive landing checks; the refined contract asserts the user path plus independent physical evidence without freezing private waypoint mechanics.",
+        behavior_contract="A valid selected transport accepts one dispatch, physically flies to and settles at the selected LZ, waits, accepts RTB, physically returns and settles at its recorded home, then leaves no active task or fixture resources. If the exact transport is destroyed after its task creates a landing pad but before landing, the same task generation finalizes failed, disables its governor record, deletes that exact product pad, and replicates failure.",
+        outcome="KEEP AS-IS AND SPEC-TEST",
+        rationale="The accepted normal round trip is retained. A second causal arm uses the same real client request and server-local class/corridor, acknowledges the exact active task and product pad while airborne, then varies only exact-aircraft destruction and proves terminal generation, governor, pad, replication, and fixture cleanup.",
         dependencies=("Vigil task governor", "Arma helicopter AI", "CBA", "Tribunal aviation observer"),
-        evidence_types=frozenset({"client-request", "locality", "trajectory", "ground-contact", "settling", "task-state", "cleanup"}),
+        evidence_types=frozenset({"client-request", "locality", "trajectory", "ground-contact", "settling", "exact-identity", "destruction-stimulus", "task-state", "replication", "cleanup"}),
         locality_requirements="Client-a owns Vigil UI/request state; the dedicated server owns aircraft, pilot group, waypoints, task execution, and authoritative world state.",
     ),
+    evidence_contract=EVIDENCE_CONTRACT,
 )

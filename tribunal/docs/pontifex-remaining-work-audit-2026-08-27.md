@@ -2,7 +2,7 @@
 
 This is the canonical documentation-only reconciliation of the Pontifex
 feature-review and permanent-coverage backlog, updated through the accepted
-2026-08-28 B4/B6/B7 closeouts. The original audit was
+2026-08-28 B4/B5/B6/B7 closeouts. The original audit was
 documentation-only; subsequent closeouts are recorded below with their exact
 evidence.
 
@@ -90,6 +90,7 @@ product `TRIBUNAL_SCENARIO` declarations. The two framework scenarios
   `20260828T015243Z-eba512d9` passed all 15 feature assertions and complete
   cleanup; validated evidence was ingested idempotently and the knowledge audit
   passed. The earlier metadata-rejected calibration package was never ingested.
+* **B5 closed on 2026-08-28.** `vigil-transport` now includes a causal exact-aircraft destruction arm after the same authenticated request reaches stage 3, creates its product-owned landing pad, and remains airborne. Accepted run `20260828T031206Z-24d79c61` passed all 25 feature assertions: the same generation finalized failed, disabled its governor record, deleted exact pad `2:185` on server and client, delivered one requester terminal row, and retired all fixture identities. The run also preserves the full normal round trip. Package SHA-256 is `d71182836849bc8408a6949a1562532e17aa4e5500d788a354e8d7a1ff3f2bd4`; ingestion and reviewed project-specific distillation were each idempotent, and the knowledge audit passed.
 
 ## A. MUST FINISH
 
@@ -97,13 +98,7 @@ There are **no remaining MUST items** under the scoped completion criterion.
 
 ## B. SHOULD FINISH
 
-These are valuable representative boundaries. They should improve confidence,
-but their absence should not prevent declaring the narrowly stated current
-program substantially complete.
-
-| ID | Mod/family; feature/surface | Classification | Current review status | Current permanent coverage | Exactly what remains unknown or unproven; why it matters | Dependencies/blockers | Effort | Value | Blocks review? | Blocks coverage? | Recommended disposition |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| B5 | Vigil transport; abnormal terminal cleanup | **PARTIALLY COVERED** | Clear-corridor outbound/LZ/wait/RTB contract and hidden-pad engine requirement are reviewed | Strong normal and duplicate/unavailable coverage | Destruction/failure after dispatch but before landing, including pad/task/governor cleanup. This is a distinct terminal path; other helicopter classes and terrain are only breadth | No external blocker for destruction; remote cancellation policy belongs to C7 | **medium** | **medium** | No | No | Cover one causal in-flight destruction/failure path with exact terminal cleanup; leave class/terrain matrices optional |
+There are **no remaining SHOULD items** under the scoped completion criterion. B5 is accepted and retained in `vigil-transport`; its excluded class, terrain, cancellation, ownership, client-B/JIP, and presentation combinations remain in C or E according to their existing boundaries.
 
 ## C. BLOCKED / NEEDS DECISION
 
@@ -155,47 +150,40 @@ but no permanent-coverage credit for behavior they do not promise.
 | --- | ---: | ---: | --- |
 | CORDIS | 97–100% | 83–89% | Core one-client broker is complete; presentation and changing ownership remain outside the proof |
 | Advanced Systems | 91–96% | 70–78% | APS/CBR/Iron Dome cores are strong; anti-drone, CBR concurrency policy, and expanded Iron Dome threat/locality policy dominate the gap |
-| Vigil | 98–100% | 92–97% | Every meaningful retained surface has a durable review; artillery lifecycle closeouts leave transport abnormal cleanup and decision-deferred recon/UAV/feedback |
+| Vigil | 98–100% | 95–99% | Every meaningful retained stable surface has a durable review and representative proof; remaining recon/UAV/feedback work is decision-bound or deferred |
 | Field Utilities | 94–98% | 88–94% | Fabricator/Bridge/logistics, towing, and bounded object lifecycle are strong; reachable FPV dominates the deficit |
 | Cross-mod | 94–98% | 84–90% | Settings/composition/logistics, representative migration, and representative module lifecycle are covered; true multi-client/JIP is not |
-| **Overall** | **97–100%** | **88–94%** | Scoped comprehensive review criterion is satisfied; coverage gaps are concentrated rather than broad |
+| **Overall** | **97–100%** | **89–95%** | Scoped comprehensive review and permanent-coverage criteria are satisfied; residual gaps are explicitly non-actionable in the current scope |
 
 The useful second coverage view is the **completion-eligible stable contract
 set**: reachable, retained behavior whose product policy and fixtures exist.
-That set is approximately **97–99% covered**. The lower 88–94% portfolio number
+That set is approximately **99–100% covered**. The lower 89–95% portfolio number
 keeps decision-blocked retained features such as FPV and anti-drone visible
 rather than making them disappear from the denominator.
 
 By estimated remaining effort rather than raw row count:
 
-* **5–9% is actionable now** (B5; no A item remains).
-* **54–60% is blocked or needs a product decision**; the purely external subset
-  is about 8–12%.
-* **21–25% is intentionally deferred or retirement work**.
-* **16–20% is optional long-tail**.
-* Therefore **91–95% of the remaining effort is presently
-  blocked/decision-bound, deferred/retirement, or optional**, rather than a
-  queue of ready feature iterations.
+* **0% is actionable now**; A and B are empty.
+* Approximately **58–62% is blocked or needs a product decision**; the purely external subset is about 9–13%.
+* Approximately **22–24% is intentionally deferred or retirement work**.
+* Approximately **16–18% is optional long-tail**.
+* Therefore **100% of remaining classified effort is blocked/decision-bound, deferred/retirement, or optional**, not a ready feature-iteration queue.
 
 Tangible remaining work:
 
 * **Meaningful actionable feature reviews:** **0**; zero wholly
   uncharacterized reachable subsystems remain.
-* **Meaningful permanent additions:** 0 MUST additions and **1** representative
-  SHOULD addition, expected to be an arm in the existing transport scenario.
+* **Meaningful permanent additions:** **0** in MUST and **0** in SHOULD.
 * **MUST effort:** **0 Sol-sized sessions**.
-* **MUST + SHOULD effort:** about **1–2 Sol-sized sessions**, depending on
-  physical Arma calibration in the transport abnormal lifecycle.
+* **MUST + SHOULD effort:** **0 Sol-sized sessions**.
 
-The five concentrations accounting for most meaningful future work are:
+The five concentrations accounting for most potential future work are all outside the current actionable scope:
 
 1. FPV/UAV product decisions, authority refinement, and physical payload proof.
 2. CBR multi-launcher policy, authenticated telemetry, and concurrency proof.
 3. Client-B/JIP provisioning plus a deliberately small representative matrix.
-4. The one remaining actionable abnormal lifecycle: Vigil transport destruction
-   after dispatch and its exact pad/task/governor cleanup.
-5. Presentation, marker-lifetime, cancellation/history, and resource-policy
-   decisions that must precede any further proof.
+4. Presentation, marker-lifetime, cancellation/history, and resource-policy decisions that must precede proof.
+5. APS anti-drone and expanded Iron Dome/fixed-wing policy and locality work, if those product scopes are retained.
 
 ## Completion criterion
 
@@ -221,14 +209,8 @@ retirement-bound, or optional. Literal coverage of every class, map, threshold,
 presentation pixel, helper, ownership permutation, and engine-command
 combination is neither required nor desirable.
 
-Under that criterion, the **current scoped program is substantially complete**.
-B items improve maturity; C items expand the supported product/topology only
-after their prerequisites are resolved.
+Under that criterion, the **current scoped program is substantially complete**: A and B are empty, every completion-eligible stable contract is reviewed, and no actionable permanent scenario remains. C items expand the supported product/topology only after prerequisites or decisions; D and E remain explicitly non-blocking.
 
 ## Next candidate
 
-The next and only remaining SHOULD candidate is **B5, Vigil transport abnormal
-terminal cleanup**. It is medium-sized, actionable, and tests the meaningfully
-distinct destruction/failure terminal path without inventing cancellation
-policy. Do not begin decision-bound or optional work merely to create another
-parallel slot.
+**None within the current scoped campaign.** Do not begin C, D, or E merely to continue the campaign. The next work should be selected only after a named product decision is made or an external blocker is removed; at that point this audit must be reopened and the affected item reclassified before implementation.
