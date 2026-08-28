@@ -2,10 +2,11 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: REFINED; ACCEPTED / COVERED.** Fresh autonomous proof covers
-authentic multiple-Eden-module aggregation and two opposite operations in one
-retained assigned-curator display: add an absent vehicle, then remove a distinct
-present vehicle. The accepted unwhitelisted mixed-fleet browser remains unchanged.
+**Classification: REFINED; ACCEPTED / COVERED.** Permanent proof now covers
+authentic multiple-Eden-module aggregation, exact retirement of one deleted
+source, and three operations on the same vehicle in one retained assigned-curator
+display: add, remove, then re-add. The accepted unwhitelisted mixed-fleet browser
+remains unchanged.
 
 ## Canonical review questions
 
@@ -34,7 +35,10 @@ module; and returns the result only to the placing curator.
 ### 3. Which machines and lifecycle own it?
 
 The authoritative module registry, claim ledger and membership set are
-server-private. Eden module dispatch is server-local. Curator placement and target
+server-private. Live retained Eden sources are reconciled into a base union;
+explicit curator overrides are applied separately so source retirement cannot
+erase a curator decision and reconciliation cannot resurrect a removed member.
+Eden module dispatch is server-local. Curator placement and target
 resolution originate on the assigned curator's client; `remoteExecutedOwner` is
 bound to that curator and a fresh operation ID before mutation. Published
 membership and result mirrors are observational only. Eden logics are retained
@@ -115,7 +119,7 @@ client-visible consistency are stable.
 
 ### 11. What remains unproven or requires experimentation?
 
-Runtime Eden module deletion/reconfiguration; zero-sync and duplicate-module edge
+Live Sync mutation on a retained module; zero-sync and duplicate-module edge
 policy beyond exact union; client-B/JIP isolation; curator reassignment and
 ownership migration. Those are separate lifecycle or environment surfaces, not
 qualifications on the accepted Eden aggregation and assigned-curator add/remove
@@ -162,3 +166,18 @@ The acceptance run passed server 14/0 and client 10/0. It correlated operations
 assigned curator `2:162` owned by client 4. Replay and forged-logic controls were
 rejected; the client resolved final members `2:16` and `2:19`; all assertions and
 container/network/run-state cleanup passed.
+
+## Accepted lifecycle continuation
+
+Run `20260827T235354Z-46c12195` passed **16 server + 11 client assertions**
+including smoke, with zero failures and complete cleanup. Deleting one of two
+retained Eden modules removed only its exact vehicle from the authoritative and
+client snapshots and retired its source record. Three genuine placements in the
+same assigned-curator display then targeted the same vehicle and produced exact
+`added`, `removed`, `added` transitions with three distinct operation and logic
+identities, exact private receipts, replay/forgery rejection, final replication,
+and teardown. The four-arm Evidence Contract package is
+`urn:tribunal:evidence-package:20260827T235354Z-46c12195:1`, canonical payload
+SHA-256 `321d57e09312b0c67d3bdd69b1ba992eec4499149bad544785f3ee79ee45b7ad`.
+Diagnostic run `20260827T235051Z-3e52ef33` passed every feature assertion and is
+rejected only because fixture teardown raced curator deletion.

@@ -18,6 +18,74 @@ YSF_fnc_whitelistPublish = {
 	true
 };
 
+YSF_fnc_whitelistReconcileEden = {
+	if (!isServer) exitWith {false};
+	private _records = localNamespace getVariable ["YSF_WHITELIST_EDEN_RECORDS", createHashMap];
+	private _overrides = localNamespace getVariable ["YSF_WHITELIST_OVERRIDES", createHashMap];
+	private _members = createHashMap;
+	private _removed = [];
+	private _retainedModule = objNull;
+	{
+		private _row = _records getOrDefault [_x, []];
+		private _logic = _row param [0, objNull, [objNull]];
+		if (isNull _logic || {typeOf _logic isNotEqualTo "YSF_Asset_Whitelist_Module"} || {!local _logic} || {owner _logic isNotEqualTo 2}) then {
+			_records deleteAt _x;
+			_removed pushBack _x;
+		} else {
+			if (isNull _retainedModule) then {_retainedModule = _logic;};
+			private _sync = synchronizedObjects _logic apply {vehicle _x};
+			_records set [_x, [_logic, _sync]];
+			{
+				private _id = [_x] call YSF_fnc_whitelistIdentity;
+				if (_id isNotEqualTo "" && {!isNull _x}) then {_members set [_id, _x];};
+			} forEach _sync;
+		};
+	} forEach +(keys _records);
+	{
+		private _row = _overrides getOrDefault [_x, []];
+		private _object = _row param [0, objNull, [objNull]];
+		private _enabled = _row param [1, false, [false]];
+		if (isNull _object) then {
+			_overrides deleteAt _x;
+		} else {
+			if (_enabled) then {_members set [_x, _object];} else {_members deleteAt _x;};
+		};
+	} forEach +(keys _overrides);
+	private _prior = localNamespace getVariable ["YSF_WHITELIST_MEMBERS", createHashMap];
+	private _changed = (count _prior) isNotEqualTo (count _members)
+		|| {((keys _prior) findIf {isNil {_members get _x} || {!((_prior get _x) isEqualTo (_members get _x))}}) >= 0};
+	localNamespace setVariable ["YSF_WHITELIST_EDEN_RECORDS", _records];
+	localNamespace setVariable ["YSF_WHITELIST_OVERRIDES", _overrides];
+	localNamespace setVariable ["YSF_WHITELIST_MEMBERS", _members];
+	YSF_WHITELISTED_ASSETS_MODULE = _retainedModule;
+	publicVariable "YSF_WHITELISTED_ASSETS_MODULE";
+	if (_changed || {_removed isNotEqualTo []}) then {
+		private _audit = localNamespace getVariable ["YSF_WHITELIST_RECONCILE_AUDIT", []];
+		_audit pushBack [_removed, keys _records, keys _members, diag_tickTime];
+		if ((count _audit) > 64) then {_audit deleteRange [0, (count _audit) - 64];};
+		localNamespace setVariable ["YSF_WHITELIST_RECONCILE_AUDIT", _audit];
+		call YSF_fnc_whitelistPublish;
+	};
+	true
+};
+
+YSF_fnc_whitelistEnsureMonitor = {
+	if (!isServer) exitWith {false};
+	private _handle = localNamespace getVariable ["YSF_WHITELIST_EDEN_MONITOR", scriptNull];
+	if (!scriptDone _handle) exitWith {true};
+	_handle = [] spawn {
+		private _done = false;
+		while {!_done} do {
+			uiSleep 0.25;
+			call YSF_fnc_whitelistReconcileEden;
+			_done = (count (localNamespace getVariable ["YSF_WHITELIST_EDEN_RECORDS", createHashMap])) isEqualTo 0;
+		};
+		localNamespace setVariable ["YSF_WHITELIST_EDEN_MONITOR", scriptNull];
+	};
+	localNamespace setVariable ["YSF_WHITELIST_EDEN_MONITOR", _handle];
+	true
+};
+
 YSF_fnc_whitelistRegisterEden = {
 	params ["_logic"];
 	if (!isServer) exitWith {false};
@@ -36,14 +104,8 @@ YSF_fnc_whitelistRegisterEden = {
 	private _logicId = [_logic] call YSF_fnc_whitelistIdentity;
 	_records set [_logicId, [_logic, _sync apply {vehicle _x}]];
 	localNamespace setVariable ["YSF_WHITELIST_EDEN_RECORDS", _records];
-	private _members = createHashMap;
-	{
-		{private _object = vehicle _x; private _id = [_object] call YSF_fnc_whitelistIdentity; if (_id isNotEqualTo "") then {_members set [_id, _object];};} forEach ((_y) # 1);
-	} forEach _records;
-	localNamespace setVariable ["YSF_WHITELIST_MEMBERS", _members];
-	YSF_WHITELISTED_ASSETS_MODULE = _logic;
-	publicVariable "YSF_WHITELISTED_ASSETS_MODULE";
-	call YSF_fnc_whitelistPublish
+	call YSF_fnc_whitelistReconcileEden;
+	call YSF_fnc_whitelistEnsureMonitor
 };
 
 YSF_fnc_whitelistToggleServer = {
@@ -52,10 +114,12 @@ YSF_fnc_whitelistToggleServer = {
 	private _object = vehicle _target;
 	private _id = [_object] call YSF_fnc_whitelistIdentity;
 	if (_id isEqualTo "") exitWith {[false, "invalid_target", false]};
+	call YSF_fnc_whitelistReconcileEden;
 	private _members = localNamespace getVariable ["YSF_WHITELIST_MEMBERS", createHashMap];
 	private _added = isNil {_members get _id};
-	if (_added) then {_members set [_id, _object];} else {_members deleteAt _id;};
-	localNamespace setVariable ["YSF_WHITELIST_MEMBERS", _members];
-	call YSF_fnc_whitelistPublish;
+	private _overrides = localNamespace getVariable ["YSF_WHITELIST_OVERRIDES", createHashMap];
+	_overrides set [_id, [_object, _added]];
+	localNamespace setVariable ["YSF_WHITELIST_OVERRIDES", _overrides];
+	call YSF_fnc_whitelistReconcileEden;
 	[true, "accepted", _added]
 };
