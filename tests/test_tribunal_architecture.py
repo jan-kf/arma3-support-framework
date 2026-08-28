@@ -85,11 +85,37 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertEqual(markers.metadata["map_expected_anchor"], {"x": 0.5, "y": 0.5})
         self.assertIn("vigil.marker.firstBacking", markers.client_expected)
         self.assertIn("vigil.marker.dynamicReplacement", markers.client_expected)
+        self.assertIn("vigil.marker.closeArmed", markers.client_expected)
+        self.assertIn("vigil.marker.closeCleanup", markers.client_expected)
+        self.assertTrue({
+            "vigil.marker.serverFixture",
+            "vigil.marker.serverCleanup",
+        }.issubset(markers.server_expected))
+        marker_contract_assertions = {
+            assertion
+            for arm in markers.evidence_contract["arms"]
+            for assertion in arm["assertions"]
+        }
+        self.assertEqual(
+            marker_contract_assertions,
+            set(markers.server_expected) | set(markers.client_expected),
+        )
         self.assertIn('["pattern", "circle"] call YOSHI_taskArty_Set', markers.client_sqf)
         self.assertIn('["spread", 50] call YOSHI_taskArty_Set', markers.client_sqf)
         self.assertIn('["dir", 0] call YOSHI_taskArty_Set', markers.client_sqf)
         self.assertIn('["count", _countControl] call YOSHI_setCount', markers.client_sqf)
         self.assertIn("_x in allMapMarkers", markers.client_sqf)
+        self.assertIn("call YOSHI_assetSelected", markers.client_sqf)
+        self.assertIn("getArtilleryETA [[4680, 2770, 0], _ordnance]", markers.server_sqf)
+        self.assertIn('displayAddEventHandler ["KeyDown"', markers.client_sqf)
+        self.assertIn('markerText _x) find "1st Round ETA:"', markers.client_sqf)
+        self.assertIn('uiNamespace getVariable ["YSF_map_overlay_markers", []]', markers.client_sqf)
+        self.assertIn("private _remainingAfterClose = _captured select {_x in allMapMarkers};", markers.client_sqf)
+        self.assertLess(
+            markers.client_sqf.index('displayAddEventHandler ["KeyDown"'),
+            markers.client_sqf.index("private _closeDeadline"),
+        )
+        self.assertNotIn("YSF_arty_coord_preview_var", markers.client_sqf)
         self.assertNotIn("YOSHI_taskArty_submit", markers.client_sqf)
         self.assertEqual(multiplayer.FEATURE_SCENARIOS["vigil-markers"], markers)
         runner_source = inspect.getsource(multiplayer)

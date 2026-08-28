@@ -342,9 +342,10 @@ Utilities for fixed-wing airdrop.
   circle/line state client-locally. **Implemented; PARTIALLY COVERED.**
   `vigil-markers` causally proves client-a circle `0 -> 1 -> 3 -> 0`, exact
   position/rendering, stale-generation replacement, explicit zero-count
-  cleanup, and server absence. Active non-empty close cleanup still needs a
-  small proof; coordinate-marker and tab-switch lifetime need a product
-  decision. Line/range/ETA/VLS visual variants are non-blocking. See
+  cleanup, server absence, and real Escape cleanup of exact live strike, ETA,
+  and selected-asset overlay identities. Coordinate-marker and tab-switch
+  lifetime need a product decision. Line/range/ETA/VLS visual variants are
+  non-blocking. See
   [`vigil-artillery-markers-review.md`](vigil-artillery-markers-review.md).
 * **Native artillery execution** fires exact physical circle/line counts and
   rejects zero, out-of-range, and no-ammo requests. **Implemented; COVERED** by
@@ -353,7 +354,7 @@ Utilities for fixed-wing airdrop.
   [`vigil-artillery-review.md`](vigil-artillery-review.md).
 * **VLS execution** launches vertically, guides, and reaches the target region.
   **Implemented; COVERED** for the server-local execution/flight outcome and
-  **PARTIALLY COVERED** for its product-created temporary target cleanup. Its
+  normal-success retirement of its exact product-created temporary target. Its
   combined target-report/confirmation handshake
   is a **REVIEWED / CHARACTERIZED ENGINE REQUIREMENT**: four fresh direct-first
   physical A/B pairs prove direct fire emits an unguided missile while the
@@ -861,10 +862,13 @@ ownership migration is now accepted through client-owned towing and active
 client-to-server transfer `20260827T231228Z-1b3e79a7`, independently repeated
 as packaged run `20260827T233022Z-cc14d7dd`; per-feature permutations
 remain optional unless their mechanics differ. Bridge Builder interrupted
-construction is accepted by `20260828T010359Z-31876e6c`; the next unblocked
-gameplay candidate is B4, attached-object repeat/delete lifecycle. Narrow VLS
-target cleanup and active preview-close proof remain SHOULD items; coordinate
-and tab-switch lifetime remain decision-bound. Do not begin FPV,
+construction is accepted by `20260828T010359Z-31876e6c`. B4 attached-object
+repeat/delete lifecycle is accepted by `20260828T014506Z-4977d65f`; B6 exact
+VLS target retirement is accepted by corrected run
+`20260828T015701Z-5788cedb`; and B7 active preview-close cleanup is accepted by
+corrected run `20260828T015243Z-eba512d9`. The next and only remaining SHOULD
+candidate is B5, Vigil transport abnormal terminal cleanup. Coordinate and
+tab-switch lifetime remain decision-bound. Do not begin FPV,
 APS anti-drone, CBR concurrency, reconnaissance, feedback policy, or other
 decision-bound work by inventing product semantics. Client-B/JIP and deterministic
 pond coverage remain externally blocked; arbitrary catalogue, class, terrain,

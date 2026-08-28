@@ -4,6 +4,123 @@ from tribunal.mission.artillery import artillery_observer_sqf
 from tribunal.runner.model import CharacterizedBehavior, Scenario, ScenarioReview
 
 
+ARTILLERY_FIXTURE = [
+    "vigil.artillery.platforms",
+    "vigil.artillery.grid.valid",
+    "vigil.artillery.request.locality",
+]
+ARTILLERY_CIRCLE = [
+    "vigil.artillery.circle.roundCount",
+    "vigil.artillery.circle.identity",
+    "vigil.artillery.circle.spatial",
+    "vigil.artillery.circle.completed",
+    "vigil.artillery.request.circle",
+]
+ARTILLERY_LINE = [
+    "vigil.artillery.line.roundCount",
+    "vigil.artillery.line.identity",
+    "vigil.artillery.line.spatial",
+    "vigil.artillery.line.completed",
+    "vigil.artillery.request.line",
+]
+ARTILLERY_INVALID_GRID = [
+    "vigil.artillery.grid.invalid",
+]
+ARTILLERY_EXECUTION_NEGATIVES = [
+    "vigil.artillery.control.zeroRounds",
+    "vigil.artillery.control.outOfRange",
+    "vigil.artillery.control.noAmmo",
+]
+ARTILLERY_VLS = [
+    "vigil.artillery.vls.launch",
+    "vigil.artillery.vls.vertical",
+    "vigil.artillery.vls.guidance",
+    "vigil.artillery.vls.arrival",
+    "vigil.artillery.vls.targetCleanup",
+]
+ARTILLERY_CLOSEOUT = [
+    "vigil.artillery.locality",
+    "vigil.artillery.cleanup",
+]
+
+EVIDENCE_CONTRACT = {
+    "scenario": {
+        "id": "vigil-artillery",
+        "version": 1,
+        "feature_family": "pontifex-vigil-artillery",
+        "name": "Vigil bounded native-artillery and VLS execution",
+        "definition": {
+            "kind": "controlled dedicated-multiplayer product specification",
+            "reference": "source/visual-support-tablet/tests/tribunal/vigil_artillery.py",
+            "applicability": "Arma 3 dedicated multiplayer with one authenticated client, server-local representative artillery/VLS fixtures, and the bounded Stratis target geometry",
+            "participants": {
+                "server": "owns firing assets, commanders, projectiles, physical observation, controls, temporary VLS target, and cleanup",
+                "client-a": "owns grid/pattern request state, submits circle and line requests, and observes nonlocal request topology",
+            },
+        },
+    },
+    "knowledge_subject": {
+        "key": "pontifex:vigil:artillery-execution",
+        "label": "Vigil native-artillery and VLS execution",
+        "kind": "product_behavior",
+        "aliases": ["Vigil artillery", "Vigil VLS"],
+        "biki_context": [
+            "biki-page:12156",
+            "biki-page:12174",
+            "biki-page:9480",
+            "biki-page:12192",
+            "biki-page:1601",
+        ],
+    },
+    "arms": [
+        {"key": "fixture", "role": "baseline", "description": "Representative native-artillery and VLS classes are discoverable; client-a resolves the exact nonlocal request fixture and parses the representative valid grid", "assertions": ARTILLERY_FIXTURE},
+        {"key": "native-circle", "role": "treatment", "description": "A real client-generated circle request produces exactly three attributable physical mortar rounds near its three generated positions and completes", "assertions": ARTILLERY_CIRCLE},
+        {"key": "native-line", "role": "treatment", "description": "A real client-generated line request produces exactly four attributable physical mortar rounds spanning its generated line and completes", "assertions": ARTILLERY_LINE},
+        {"key": "invalid-grid", "role": "negative_control", "description": "Representative invalid grid strings are rejected by the client parser and produce no target position", "assertions": ARTILLERY_INVALID_GRID},
+        {"key": "execution-negative-controls", "role": "negative_control", "description": "An empty queue, an out-of-range point, and absent requested ammunition cannot fabricate correlated fire", "assertions": ARTILLERY_EXECUTION_NEGATIVES},
+        {"key": "vls-success", "role": "treatment", "description": "One server-local VLS launch has exact projectile identity, climbs, guides, arrives, and deletes its sole exact product-created temporary target", "assertions": ARTILLERY_VLS},
+        {"key": "closeout", "role": "treatment", "description": "All observed physical fire executes on the asserted server locality and the firing fixtures and observer state retire", "assertions": ARTILLERY_CLOSEOUT},
+    ],
+    "causal_relationships": [
+        {
+            "key": "native-fire-v-negative-controls",
+            "relation": "CAUSAL_PAIR_WITH",
+            "source": "native-circle",
+            "target": "execution-negative-controls",
+            "controlled_dimensions": ["mortar identity", "requested magazine", "server authority", "observer", "mission"],
+        },
+        {
+            "key": "circle-v-line-geometry",
+            "relation": "COMPARES_WITH",
+            "source": "native-circle",
+            "target": "native-line",
+            "controlled_dimensions": ["requesting client", "mortar identity", "requested magazine", "server authority", "observer", "pattern is the varied dimension"],
+        },
+    ],
+    "propositions": [
+        {
+            "id": "pontifex:vigil:native-artillery-bounded-execution",
+            "text": "Under the tested dedicated-multiplayer conditions, Vigil turns valid client-generated circle and line requests into the exact requested attributable physical mortar rounds near their generated geometry with truthful completion; representative invalid grids are rejected by the parser, while empty, out-of-range, and no-ammunition execution controls fabricate no fire.",
+            "intended_use": "primary_result",
+            "assertions": ARTILLERY_FIXTURE + ARTILLERY_CIRCLE + ARTILLERY_LINE + ARTILLERY_INVALID_GRID + ARTILLERY_EXECUTION_NEGATIVES + ARTILLERY_CLOSEOUT,
+            "rationale": "Exact source, magazine, ammunition, projectile, event, requested-position, terminal-position, locality, count, completion, negative-window, and cleanup records exclude unrelated fire and internal flags as substitutes for physical execution.",
+        },
+        {
+            "id": "pontifex:vigil:vls-bounded-execution-and-target-cleanup",
+            "text": "Under the tested server-local conditions, Vigil launches one exact cruise missile, produces vertical and guided horizontal flight into the target region, and deletes the sole exact product-created temporary target after normal success.",
+            "intended_use": "primary_result",
+            "assertions": [ARTILLERY_FIXTURE[0]] + ARTILLERY_VLS + ARTILLERY_CLOSEOUT,
+            "rationale": "Exact launcher/weapon/magazine/ammunition/projectile identity and sampled trajectory/termination establish physical VLS execution; a same-class baseline difference, retained object/network identity, sole-target census, and null transition establish bounded product-owned cleanup.",
+        },
+    ],
+    "unresolved": [
+        "Client-owned/headless firing assets, ownership migration, client-N/JIP, disconnect, and poor-network behavior remain outside this server-local one-client proof.",
+        "VLS retry exhaustion, platform death, cancellation, public client/governor VLS submission, and other launcher/loadout classes remain outside this normal-success execution arm.",
+        "Requests beyond one magazine, physical multi-platform round-robin, the rendered edit-control path, mixed reachable queues, and report-only/confirm-only handshake variants remain unclaimed.",
+    ],
+}
+
+
 TRIBUNAL_SCENARIO = Scenario(
     identifier="vigil-artillery",
     tier="gameplay",
@@ -24,6 +141,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "vigil.artillery.vls.vertical",
         "vigil.artillery.vls.guidance",
         "vigil.artillery.vls.arrival",
+        "vigil.artillery.vls.targetCleanup",
         "vigil.artillery.locality",
         "vigil.artillery.cleanup",
     }),
@@ -172,6 +290,7 @@ _vls setPosASL [1000, 1000, 5];
 _vls setVelocity [0,0,0];
 uiSleep 1;
 private _vlsTarget = [3000, 2000, 0];
+private _vlsTargetsBefore = allMissionObjects "Land_HelipadEmpty_F";
 private _vlsToken = format ["%1-vls", _token];
 [_vlsToken] call TRIBUNAL_fnc_artilleryObserverStart;
 private _vlsObserved = [_vlsToken, _vls, [_vlsTarget]] call TRIBUNAL_fnc_artilleryObserveSource;
@@ -193,6 +312,18 @@ private _vlsLaunchEh = _vls addEventHandler ["Fired", {
     };
 };
 [_vls, [_vlsTarget], "magazine_Missiles_Cruise_01_x18"] spawn YSF_fireSalvo;
+private _vlsProductTarget = objNull;
+private _vlsTargetIdentityDeadline = diag_tickTime + 12;
+waitUntil {
+    uiSleep 0.05;
+    private _createdTargets = (allMissionObjects "Land_HelipadEmpty_F") select {
+        !(_x in _vlsTargetsBefore) && {_x distance2D _vlsTarget < 2}
+    };
+    if ((count _createdTargets) isEqualTo 1 && {(netId (_createdTargets # 0)) isNotEqualTo ""}) then {_vlsProductTarget = _createdTargets # 0};
+    !isNull _vlsProductTarget || diag_tickTime > _vlsTargetIdentityDeadline
+};
+private _vlsProductTargetId = if (isNull _vlsProductTarget) then {""} else {netId _vlsProductTarget};
+private _vlsProductTargetPosition = if (isNull _vlsProductTarget) then {[]} else {getPosATL _vlsProductTarget};
 private _vlsDeadline = diag_tickTime + 100;
 waitUntil {
     uiSleep 0.1;
@@ -217,10 +348,23 @@ private _vlsLaunchOk = _vlsObserved && {(count _vlsEvents) isEqualTo 1}
 private _vlsVerticalOk = (count _initial) >= 3 && {_maxAltitude > ((_initial # 2) + 50)};
 private _vlsGuidanceOk = _horizontalTravel > 800 && {({abs (((_x # 2) # 0)) > 20 || {abs (((_x # 2) # 1)) > 20}} count _vlsSamples) > 5};
 private _vlsArrivalOk = _vlsEvent getOrDefault ["terminated", false] && {_arrivalDistance < 350};
+private _vlsOwnedTargets = (allMissionObjects "Land_HelipadEmpty_F") select {
+    !(_x in _vlsTargetsBefore) && {_x distance2D _vlsTarget < 2}
+};
+private _vlsTargetIdentityOk = !isNull _vlsProductTarget
+    && {_vlsProductTargetId isNotEqualTo ""}
+    && {(typeOf _vlsProductTarget) isEqualTo "Land_HelipadEmpty_F"}
+    && {_vlsProductTargetPosition distance2D _vlsTarget < 2}
+    && {(count _vlsOwnedTargets) isEqualTo 1}
+    && {(_vlsOwnedTargets # 0) isEqualTo _vlsProductTarget};
 ["vigil.artillery.vls.launch", _vlsLaunchOk, format ["source=%1|projectile=%2|initial=%3|velocity=%4", netId _vls, _vlsEvent getOrDefault ["projectile", ""], _initial, _vlsEvent getOrDefault ["initialVelocity", []]]] call _assert;
 ["vigil.artillery.vls.vertical", _vlsVerticalOk, format ["initial=%1|maxAltitude=%2|samples=%3", _initial, _maxAltitude, count _vlsSamples]] call _assert;
 ["vigil.artillery.vls.guidance", _vlsGuidanceOk, format ["horizontalTravel=%1|samples=%2", _horizontalTravel, count _vlsSamples]] call _assert;
 ["vigil.artillery.vls.arrival", _vlsArrivalOk, format ["last=%1|target=%2|distance=%3|terminated=%4", _last, _vlsTarget, _arrivalDistance, _vlsEvent getOrDefault ["terminated", false]]] call _assert;
+private _vlsTargetCleanupDeadline = diag_tickTime + 105;
+waitUntil {uiSleep 0.1; isNull _vlsProductTarget || diag_tickTime > _vlsTargetCleanupDeadline};
+private _vlsTargetCleanupOk = _vlsTargetIdentityOk && {isNull _vlsProductTarget};
+["vigil.artillery.vls.targetCleanup", _vlsTargetCleanupOk, format ["id=%1|position=%2|ownedCount=%3|null=%4", _vlsProductTargetId, _vlsProductTargetPosition, count _vlsOwnedTargets, isNull _vlsProductTarget]] call _assert;
 private _localityOk = local _source && {local effectiveCommander _source} && {local _vls} && {local effectiveCommander _vls}
     && {({_x getOrDefault ["sourceLocal", false] && {_x getOrDefault ["projectileLocal", false]} && {(_x getOrDefault ["executionMachine", ""]) isEqualTo "server"}} count (_circleEvents + _lineEvents + _vlsEvents)) isEqualTo (count (_circleEvents + _lineEvents + _vlsEvents))};
 ["vigil.artillery.locality", _localityOk, format ["source=%1|vls=%2|events=%3", local _source, local _vls, count (_circleEvents + _lineEvents + _vlsEvents)]] call _assert;
@@ -272,7 +416,7 @@ waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_VIGIL_ARTILLER
 private _lineRequestOk = (count _linePositions) isEqualTo 4 && {(_lineState get "pattern") isEqualTo "line"} && {(_lineState get "dir") isEqualTo 90};
 ["vigil.artillery.request.line", _lineRequestOk, format ["state=%1|positions=%2", _lineState, _linePositions]] call _assert;
 if (_lineRequestOk) then {call YOSHI_taskArty_submit};
-private _completionDeadline = diag_tickTime + 180;
+private _completionDeadline = diag_tickTime + 300;
 waitUntil {
     uiSleep 0.1;
     (missionNamespace getVariable ["TRIBUNAL_VIGIL_ARTILLERY_COMPLETE", ""]) isEqualTo _token
@@ -302,4 +446,5 @@ waitUntil {
             outcome="Direct missiles climbed/traveled away from target; handshake missiles terminated in the target region. Individual necessity of report versus confirm remains unisolated.",
         ),),
     ),
+    evidence_contract=EVIDENCE_CONTRACT,
 )

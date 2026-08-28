@@ -106,11 +106,15 @@ private _controlCrate = createVehicle ["B_supplyCrate_F", _contactOrigin vectorA
 uiSleep 0.5;
 _controlCrate removeAllEventHandlers "EpeContactStart";
 {
-    _x setVariable ["TRIBUNAL_FIELD_CONTACT", [], false];
+    _x setVariable ["TRIBUNAL_FIELD_CONTACT_PHASE", "initial", false];
+    _x setVariable ["TRIBUNAL_FIELD_CONTACTS", [], false];
     _x addEventHandler ["EpeContactStart", {
         params ["_object1", "_object2", "_selection1", "_selection2", "_force", "_reactForce", "_worldPos"];
-        if ((_object1 getVariable ["TRIBUNAL_FIELD_CONTACT", []]) isEqualTo []) then {
-            _object1 setVariable ["TRIBUNAL_FIELD_CONTACT", [netId _object2, _force, _reactForce, _worldPos, local _object1, local _object2], true];
+        private _phase = _object1 getVariable ["TRIBUNAL_FIELD_CONTACT_PHASE", "initial"];
+        private _rows = _object1 getVariable ["TRIBUNAL_FIELD_CONTACTS", []];
+        if ((_rows findIf {(_x # 0) isEqualTo _phase}) < 0) then {
+            _rows pushBack [_phase, netId _object2, _force, _reactForce, _worldPos, local _object1, local _object2];
+            _object1 setVariable ["TRIBUNAL_FIELD_CONTACTS", _rows, true];
         };
     }];
 } forEach [_treatmentCrate, _controlCrate];
@@ -133,15 +137,17 @@ missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_SETUP", [_token, _contactI
 private _contactDeadline = diag_tickTime + 20;
 waitUntil {
     uiSleep 0.02;
-    !((_treatmentCrate getVariable ["TRIBUNAL_FIELD_CONTACT", []]) isEqualTo [])
-        && {!((_controlCrate getVariable ["TRIBUNAL_FIELD_CONTACT", []]) isEqualTo [])}
+    ((_treatmentCrate getVariable ["TRIBUNAL_FIELD_CONTACTS", []]) findIf {(_x # 0) isEqualTo "initial"}) >= 0
+        && {((_controlCrate getVariable ["TRIBUNAL_FIELD_CONTACTS", []]) findIf {(_x # 0) isEqualTo "initial"}) >= 0}
         || {diag_tickTime > _contactDeadline}
 };
-private _treatmentContact = _treatmentCrate getVariable ["TRIBUNAL_FIELD_CONTACT", []];
-private _controlContact = _controlCrate getVariable ["TRIBUNAL_FIELD_CONTACT", []];
+private _treatmentContacts = _treatmentCrate getVariable ["TRIBUNAL_FIELD_CONTACTS", []];
+private _controlContacts = _controlCrate getVariable ["TRIBUNAL_FIELD_CONTACTS", []];
+private _treatmentContact = (_treatmentContacts select {(_x # 0) isEqualTo "initial"}) param [0, []];
+private _controlContact = (_controlContacts select {(_x # 0) isEqualTo "initial"}) param [0, []];
 private _stimulusOk = !(_treatmentContact isEqualTo []) && {!(_controlContact isEqualTo [])}
-    && {(_treatmentContact # 0) isEqualTo netId _treatmentCarrier}
-    && {(_controlContact # 0) isEqualTo netId _controlCarrier};
+    && {(_treatmentContact # 1) isEqualTo netId _treatmentCarrier}
+    && {(_controlContact # 1) isEqualTo netId _controlCarrier};
 ["field.contact.stimulus", _stimulusOk, format ["treatment=%1|control=%2|ids=%3", _treatmentContact, _controlContact, _contactIds]] call _assert;
 
 private _attachDeadline = diag_tickTime + 5;
@@ -173,23 +179,66 @@ private _stabilityOk = (_maxSpeed # 0) <= ((_maxSpeed # 1) + 1)
 private _contactClientDeadline = diag_tickTime + 20;
 waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_FIELD_CONTACT_CLIENT_DONE", ""]) isEqualTo _token || {diag_tickTime > _contactClientDeadline}};
 private _contactClientDone = (missionNamespace getVariable ["TRIBUNAL_FIELD_CONTACT_CLIENT_DONE", ""]) isEqualTo _token;
+
+// Lifecycle continuation: separate the same live-handler crate, produce a
+// second authentic physical contact with the same truck, wait for client-a to
+// observe that exact reattachment, then delete the crate while it is attached.
+// The surviving truck and both machines must retire the deleted identity.
 _treatmentCrate enableSimulationGlobal false;
-_treatmentCrate removeAllEventHandlers "EpeContactStart";
 detach _treatmentCrate;
-_treatmentCrate setPosATL (_contactOrigin vectorAdd [0, -20, 1]);
-uiSleep 0.1;
-private _detached = isNull attachedTo _treatmentCrate;
-{deleteVehicle _x;} forEach _contactObjects;
+_treatmentCrate setVariable ["TRIBUNAL_FIELD_CONTACT_PHASE", "repeat", false];
+[_treatmentCrate, _treatmentCarrier] call _placeAbove;
+_treatmentCrate setVelocity [0,0,-0.5];
+_treatmentCrate enableSimulationGlobal true;
+private _repeatDeadline = diag_tickTime + 20;
+waitUntil {
+    uiSleep 0.02;
+    private _rows = _treatmentCrate getVariable ["TRIBUNAL_FIELD_CONTACTS", []];
+    ((_rows findIf {(_x # 0) isEqualTo "repeat" && {(_x # 1) isEqualTo netId _treatmentCarrier}}) >= 0
+        && {(attachedTo _treatmentCrate) isEqualTo _treatmentCarrier})
+        || {diag_tickTime > _repeatDeadline}
+};
+private _repeatRows = (_treatmentCrate getVariable ["TRIBUNAL_FIELD_CONTACTS", []]) select {(_x # 0) isEqualTo "repeat"};
+private _repeatOk = (count _repeatRows) isEqualTo 1
+    && {((_repeatRows # 0) # 1) isEqualTo netId _treatmentCarrier}
+    && {(attachedTo _treatmentCrate) isEqualTo _treatmentCarrier};
+["field.contact.repeatAttachment", _repeatOk, format ["rows=%1|attached=%2|carrier=%3", _repeatRows, netId (attachedTo _treatmentCrate), netId _treatmentCarrier]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_REPEAT", [_token, netId _treatmentCrate, netId _treatmentCarrier], true];
+
+private _repeatClientDeadline = diag_tickTime + 20;
+waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_FIELD_CONTACT_REPEAT_SEEN", ""]) isEqualTo _token || {diag_tickTime > _repeatClientDeadline}};
+private _repeatClientSeen = (missionNamespace getVariable ["TRIBUNAL_FIELD_CONTACT_REPEAT_SEEN", ""]) isEqualTo _token;
+private _deletedCrateId = netId _treatmentCrate;
+_treatmentCrate enableSimulationGlobal false;
+private _wasAttached = (attachedTo _treatmentCrate) isEqualTo _treatmentCarrier;
+deleteVehicle _treatmentCrate;
+private _deleteDeadline = diag_tickTime + 5;
+waitUntil {uiSleep 0.05; isNull objectFromNetId _deletedCrateId || {diag_tickTime > _deleteDeadline}};
+private _deleteOk = _repeatClientSeen && {_wasAttached}
+    && {isNull objectFromNetId _deletedCrateId}
+    && {!isNull _treatmentCarrier} && {alive _treatmentCarrier}
+    && {(attachedObjects _treatmentCarrier) isEqualTo []};
+["field.contact.deleteAttached", _deleteOk, format ["clientSeen=%1|wasAttached=%2|crate=%3|carrier=%4|alive=%5|attached=%6", _repeatClientSeen, _wasAttached, _deletedCrateId, netId _treatmentCarrier, alive _treatmentCarrier, (attachedObjects _treatmentCarrier) apply {netId _x}]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_DELETED", [_token, _deletedCrateId, netId _treatmentCarrier], true];
+
+private _deleteClientDeadline = diag_tickTime + 20;
+waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_FIELD_CONTACT_DELETE_SEEN", ""]) isEqualTo _token || {diag_tickTime > _deleteClientDeadline}};
+private _deleteClientSeen = (missionNamespace getVariable ["TRIBUNAL_FIELD_CONTACT_DELETE_SEEN", ""]) isEqualTo _token;
+{if (!isNull _x) then {deleteVehicle _x;};} forEach _contactObjects;
 private _contactCleanupDeadline = diag_tickTime + 5;
 waitUntil {uiSleep 0.05; (_contactIds findIf {!isNull objectFromNetId _x}) < 0 || {diag_tickTime > _contactCleanupDeadline}};
-private _contactCleanupOk = _contactClientDone && {_detached} && {(_contactIds findIf {!isNull objectFromNetId _x}) < 0};
-["field.contact.cleanup", _contactCleanupOk, format ["clientDone=%1|detached=%2|remaining=%3", _contactClientDone, _detached, _contactIds select {!isNull objectFromNetId _x}]] call _assert;
+private _contactCleanupOk = _contactClientDone && {_deleteClientSeen} && {(_contactIds findIf {!isNull objectFromNetId _x}) < 0};
+["field.contact.cleanup", _contactCleanupOk, format ["clientDone=%1|deleteSeen=%2|remaining=%3", _contactClientDone, _deleteClientSeen, _contactIds select {!isNull objectFromNetId _x}]] call _assert;
 
 {deleteVehicle _x;} forEach _objects;
 missionNamespace setVariable ["TRIBUNAL_FIELD_CARGO_SETUP", nil, true];
 missionNamespace setVariable ["TRIBUNAL_FIELD_CARGO_DONE", nil, true];
 missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_SETUP", nil, true];
 missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_CLIENT_DONE", nil, true];
+missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_REPEAT", nil, true];
+missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_REPEAT_SEEN", nil, true];
+missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_DELETED", nil, true];
+missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_DELETE_SEEN", nil, true];
 private _cleanupDeadline = diag_tickTime + 5;
 waitUntil {uiSleep 0.05; (_ids findIf {!isNull objectFromNetId _x}) < 0 || {diag_tickTime > _cleanupDeadline}};
 private _cleanupOk = _clientDone && {_unloaded} && {(_ids findIf {!isNull objectFromNetId _x}) < 0}
@@ -326,6 +375,37 @@ private _contactReplicaOk = !isNull _treatmentCrate && {!isNull _treatmentCarrie
     && {!local _treatmentCrate} && {!local _treatmentCarrier} && {!local _controlCrate} && {!local _controlCarrier};
 ["field.contact.clientReplica", _contactReplicaOk, format ["ids=%1|treatment=%2|control=%3|locality=%4", _contactIds, netId (attachedTo _treatmentCrate), netId (attachedTo _controlCrate), _contactObjects apply {[local _x, owner _x]}]] call _assert;
 missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_CLIENT_DONE", _token, true];
+
+private _repeatSetup = [];
+private _repeatSetupDeadline = diag_tickTime + 30;
+waitUntil {uiSleep 0.02; _repeatSetup = missionNamespace getVariable ["TRIBUNAL_FIELD_CONTACT_REPEAT", []]; (count _repeatSetup) isEqualTo 3 || {diag_tickTime > _repeatSetupDeadline}};
+private _repeatCrateId = _repeatSetup param [1, ""];
+private _repeatCarrierId = _repeatSetup param [2, ""];
+private _repeatCrate = objectFromNetId _repeatCrateId;
+private _repeatCarrier = objectFromNetId _repeatCarrierId;
+private _repeatReplicaOk = (_repeatSetup param [0, ""]) isEqualTo _token
+    && {_repeatCrate isEqualTo _treatmentCrate} && {_repeatCarrier isEqualTo _treatmentCarrier}
+    && {(attachedTo _repeatCrate) isEqualTo _repeatCarrier}
+    && {!local _repeatCrate} && {!local _repeatCarrier};
+["field.contact.clientRepeatReplica", _repeatReplicaOk, format ["setup=%1|crate=%2|carrier=%3|attached=%4|locality=%5", _repeatSetup, netId _repeatCrate, netId _repeatCarrier, netId (attachedTo _repeatCrate), [local _repeatCrate, local _repeatCarrier]]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_REPEAT_SEEN", _token, true];
+
+private _deleteSetup = [];
+private _deleteSetupDeadline = diag_tickTime + 30;
+waitUntil {uiSleep 0.02; _deleteSetup = missionNamespace getVariable ["TRIBUNAL_FIELD_CONTACT_DELETED", []]; (count _deleteSetup) isEqualTo 3 || {diag_tickTime > _deleteSetupDeadline}};
+private _deletedCrateId = _deleteSetup param [1, ""];
+private _survivingCarrierId = _deleteSetup param [2, ""];
+private _survivingCarrier = objectFromNetId _survivingCarrierId;
+private _deleteReplicaDeadline = diag_tickTime + 10;
+waitUntil {uiSleep 0.02; isNull objectFromNetId _deletedCrateId || {diag_tickTime > _deleteReplicaDeadline}};
+private _deleteReplicaOk = (_deleteSetup param [0, ""]) isEqualTo _token
+    && {_deletedCrateId isEqualTo _repeatCrateId}
+    && {isNull objectFromNetId _deletedCrateId}
+    && {_survivingCarrier isEqualTo _treatmentCarrier}
+    && {!isNull _survivingCarrier} && {alive _survivingCarrier}
+    && {(attachedObjects _survivingCarrier) isEqualTo []};
+["field.contact.clientDeleteReplica", _deleteReplicaOk, format ["setup=%1|crate=%2|carrier=%3|alive=%4|attached=%5", _deleteSetup, _deletedCrateId, netId _survivingCarrier, alive _survivingCarrier, (attachedObjects _survivingCarrier) apply {netId _x}]] call _assert;
+missionNamespace setVariable ["TRIBUNAL_FIELD_CONTACT_DELETE_SEEN", _token, true];
 '''
 
 BASELINE = ["field.cargo.fixture", "field.cargo.noCollateral"]
@@ -337,12 +417,16 @@ NEGATIVES = ["field.cargo.clientNegatives", "field.cargo.negatives"]
 CLEANUP = ["field.cargo.cleanup"]
 CONTACT_BASELINE = ["field.contact.stimulus"]
 CONTACT_TREATMENT = ["field.contact.attachment", "field.contact.carrierStable", "field.contact.clientReplica"]
+CONTACT_LIFECYCLE = [
+    "field.contact.repeatAttachment", "field.contact.clientRepeatReplica",
+    "field.contact.deleteAttached", "field.contact.clientDeleteReplica",
+]
 CONTACT_CLEANUP = ["field.contact.cleanup"]
 
 EVIDENCE_CONTRACT = {
     "scenario": {
         "id": "fieldutils-cargo-loading",
-        "version": 2,
+        "version": 3,
         "feature_family": "pontifex-field-utilities-cargo-loading",
         "name": "Field Utilities authoritative nearby supply loading",
         "definition": {
@@ -369,7 +453,8 @@ EVIDENCE_CONTRACT = {
         {"key": "cleanup", "role": "treatment", "description": "The exact loaded object unloads and every fixture identity is deleted", "assertions": CLEANUP},
         {"key": "contact-stimulus", "role": "baseline", "description": "Matched server-owned crates make exact physical contact with identical parked trucks", "assertions": CONTACT_BASELINE},
         {"key": "contact-treatment", "role": "treatment", "description": "Only the crate retaining the product handler attaches; exact identity replicates without carrier instability relative to control", "assertions": CONTACT_TREATMENT},
-        {"key": "contact-cleanup", "role": "treatment", "description": "Controlled teardown removes the contact handler, detaches the crate, and deletes every fixture identity", "assertions": CONTACT_CLEANUP},
+        {"key": "contact-lifecycle", "role": "treatment", "description": "The same live-handler crate physically contacts and attaches to the same truck again, then deletion while attached retires the crate identity while the truck survives cleanly on both machines", "assertions": CONTACT_LIFECYCLE},
+        {"key": "contact-cleanup", "role": "treatment", "description": "Deletion while attached retires the crate, then controlled teardown deletes every remaining fixture identity", "assertions": CONTACT_CLEANUP},
     ],
     "causal_relationships": [
         {"key": "accepted-v-invalid", "relation": "CAUSAL_PAIR_WITH", "source": "load", "target": "invalid", "controlled_dimensions": ["request endpoint", "requesting client", "carrier identity", "mission"]},
@@ -388,11 +473,18 @@ EVIDENCE_CONTRACT = {
             "text": "For a server-owned B_supplyCrate_F physically contacting a server-owned B_Truck_01_transport_F, the Field Utilities contact hook attaches the exact crate to the exact truck, replicates that identity to client-a, and adds no carrier instability over a matched handler-free control.",
             "intended_use": "primary_result",
             "assertions": CONTACT_BASELINE + CONTACT_TREATMENT + CONTACT_CLEANUP,
-            "rationale": "Both arms record exact contact identity and similar forces; treatment alone retains the product handler. Exact attachment, owner/locality, carrier motion/orientation/damage deltas, remote replication, controlled detach, and deletion exclude no-contact, control-attachment, final-damage, and leaked-fixture false passes.",
+            "rationale": "Both arms record exact contact identity and similar forces; treatment alone retains the product handler. Exact attachment, owner/locality, carrier motion/orientation/damage deltas, remote replication, and complete fixture deletion exclude no-contact, control-attachment, final-damage, and leaked-fixture false passes.",
+        },
+        {
+            "id": "pontifex:field-utilities:contact-lifecycle",
+            "text": "The same server-owned crate can physically contact and reattach to the same server-owned truck after controlled separation; deleting that crate while still attached retires its exact identity on server and client-a without deleting or retaining attachment state on the truck.",
+            "intended_use": "primary_result",
+            "assertions": CONTACT_BASELINE + CONTACT_TREATMENT + CONTACT_LIFECYCLE + CONTACT_CLEANUP,
+            "rationale": "Phase-keyed contact observations distinguish the second physical stimulus from repeated callbacks in the initial contact. Server/client exact reattachment precedes un-detached deletion, after which both machines resolve the crate ID to null and observe the same surviving carrier with no attached objects.",
         }
     ],
     "unresolved": [
-        "Client-owned cargo/carriers, ownership migration, client-B/JIP, full-carrier breadth, unload UX, other contact object/surface classes, repeated contacts, and deletion while still attached remain outside this proof."
+        "Client-owned cargo/carriers, ownership migration, client-B/JIP, full-carrier breadth, unload UX, other contact object/surface classes remain outside this proof."
     ],
 }
 
@@ -403,21 +495,23 @@ TRIBUNAL_SCENARIO = Scenario(
         "field.cargo.fixture", "field.cargo.authority", "field.cargo.negatives",
         "field.cargo.noCollateral", "field.cargo.cleanup",
         "field.contact.stimulus", "field.contact.attachment",
-        "field.contact.carrierStable", "field.contact.cleanup",
+        "field.contact.carrierStable", "field.contact.repeatAttachment",
+        "field.contact.deleteAttached", "field.contact.cleanup",
     }),
     client_expected=frozenset({
         "field.cargo.clientAction", "field.cargo.clientReceipt",
         "field.cargo.clientReplica", "field.cargo.clientNegatives",
-        "field.contact.clientReplica",
+        "field.contact.clientReplica", "field.contact.clientRepeatReplica",
+        "field.contact.clientDeleteReplica",
     }),
     server_sqf=SERVER_SQF,
     client_sqf=CLIENT_SQF,
     metadata={"product": "field-utilities", "feature": "nearby-supply-loading"},
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A nearby authenticated player can invoke the exact registered action to load one eligible supply into one eligible server-owned carrier. Separately, a server-owned B_supplyCrate_F physically contacting a server-owned B_Truck_01_transport_F attaches to that exact truck, replicates to client-a and remains stable relative to a matched handler-free control.",
+        behavior_contract="A nearby authenticated player can invoke the exact registered action to load one eligible supply into one eligible server-owned carrier. Separately, a server-owned B_supplyCrate_F physically contacting a server-owned B_Truck_01_transport_F attaches to that exact truck, replicates to client-a and remains stable relative to a matched handler-free control; the same pair supports repeat contact/attachment and clean crate deletion while attached.",
         outcome="KEEP AS-IS AND SPEC-TEST",
-        rationale="The authoritative explicit-load refinement remains covered. A matched physical contact A/B now isolates the existing handler: both arms contact identical trucks, treatment alone attaches, carrier state is compared from independent baselines, client-a resolves exact attachment identity, and controlled teardown proves no leaked fixtures.",
+        rationale="The authoritative explicit-load refinement remains covered. A matched physical contact A/B isolates the existing handler; a phase-keyed lifecycle continuation distinguishes a second exact physical contact, observes reattachment on both machines, and deletes the still-attached crate while proving exact identity retirement and carrier survival.",
         dependencies=("ACE 3.21 registered interaction tree", "native vehicle-in-vehicle cargo", "Arma EpeContactStart and attachTo", "one authenticated client"),
         evidence_types=frozenset({"ace-action-data", "exact-identity", "authoritative-state", "native-command-result", "physical-stimulus", "causal-pair", "replication", "negative-control", "cleanup"}),
         locality_requirements="The server owns all fixture objects, cargo mutation, contact handlers, and attachment; client-a owns action resolution and authenticated requests and observes replication. Client-owned objects, migration, and client-B/JIP are unclaimed.",

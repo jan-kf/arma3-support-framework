@@ -2,7 +2,7 @@
 
 This is the canonical documentation-only reconciliation of the Pontifex
 feature-review and permanent-coverage backlog, updated through the accepted
-2026-08-28 Bridge interruption closeout. The original audit was
+2026-08-28 B4/B6/B7 closeouts. The original audit was
 documentation-only; subsequent closeouts are recorded below with their exact
 evidence.
 
@@ -72,6 +72,24 @@ product `TRIBUNAL_SCENARIO` declarations. The two framework scenarios
   defect; it is not accepted evidence. Production ingestion was idempotent,
   the knowledge audit passed, and reviewed distillation added no generic Arma
   finding. Resource/refund policy remains C13.
+* **B4 closed on 2026-08-28.** `fieldutils-cargo-loading` Evidence Contract v1
+  scenario version 3 proves authentic repeat contact/reattachment of the same
+  server-owned crate and deletion while still attached, with exact server and
+  client-a identity retirement. Run `20260828T014506Z-4977d65f` passed all 18
+  feature assertions and complete cleanup; validated evidence was ingested
+  idempotently and the knowledge audit passed.
+* **B6 closed on 2026-08-28.** `vigil-artillery` now retains the exact
+  product-created `Land_HelipadEmpty_F` VLS target and proves its fixed-delay
+  deletion on normal success. Corrected run `20260828T015701Z-5788cedb` passed
+  all 24 feature assertions and complete cleanup; validated evidence was
+  ingested idempotently and the knowledge audit passed. The earlier
+  metadata-rejected calibration package was never ingested.
+* **B7 closed on 2026-08-28.** `vigil-markers` now re-arms a live three-strike
+  preview through the real count handler and proves authenticated Escape retires
+  the exact ellipses, ETA, and selected-asset overlay. Corrected run
+  `20260828T015243Z-eba512d9` passed all 15 feature assertions and complete
+  cleanup; validated evidence was ingested idempotently and the knowledge audit
+  passed. The earlier metadata-rejected calibration package was never ingested.
 
 ## A. MUST FINISH
 
@@ -85,10 +103,7 @@ program substantially complete.
 
 | ID | Mod/family; feature/surface | Classification | Current review status | Current permanent coverage | Exactly what remains unknown or unproven; why it matters | Dependencies/blockers | Effort | Value | Blocks review? | Blocks coverage? | Recommended disposition |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| B4 | Field Utilities / object handling; attached-object lifecycle | **PARTIALLY COVERED** | Exact server-owned crate/truck contact contract is reviewed | One matched treatment/control contact, attachment, replication, and normal teardown | Repeat contact, deletion while attached, and carrier/object cleanup can expose stale event/state leakage; broader class/surface matrices do not add the same value | None for server-owned deletion/repeat; migration is B1 | **small** | **medium** | No | No | Add one repeat-and-delete lifecycle continuation to the existing scenario; do not enumerate every crate/truck class |
 | B5 | Vigil transport; abnormal terminal cleanup | **PARTIALLY COVERED** | Clear-corridor outbound/LZ/wait/RTB contract and hidden-pad engine requirement are reviewed | Strong normal and duplicate/unavailable coverage | Destruction/failure after dispatch but before landing, including pad/task/governor cleanup. This is a distinct terminal path; other helicopter classes and terrain are only breadth | No external blocker for destruction; remote cancellation policy belongs to C7 | **medium** | **medium** | No | No | Cover one causal in-flight destruction/failure path with exact terminal cleanup; leave class/terrain matrices optional |
-| B6 | Vigil artillery; product-owned temporary VLS target cleanup | **PARTIALLY COVERED** | Canonical execution review complete; source intends fixed-delay deletion | Flight, arrival, fixtures, and Tribunal observer cleanup are covered | The scenario does not census the `Land_HelipadEmpty_F` created by Vigil or prove its deletion after success/retry/death/cancel. Leaked targets are a bounded lifecycle risk | Deterministic exact-target observation; cancellation policy itself remains C7 | **small** | **medium** | No | No | Add one exact target identity/deletion arm on normal success; expand abnormal paths only if distinct leaks appear |
-| B7 | Vigil artillery preview; active non-empty close cleanup | **REVIEWED / NEEDS COVERAGE** | Canonical marker review complete | Circle `0 -> 1 -> 3 -> 0`, rendering, stale replacement, explicit zero-count cleanup, and server absence are covered | Current close occurs only after count zero, so `onUnload` has never causally retired an active strike pattern. This is a meaningful UI-owned resource boundary | None for strike-pattern markers; coordinate/tab lifetime is C12 | **small** | **medium** | No | No | Add one active-pattern close arm proving every captured strike/ETA/overlay identity retires; do not add a style matrix |
 
 ## C. BLOCKED / NEEDS DECISION
 
@@ -105,7 +120,7 @@ program substantially complete.
 | C9 | Vigil fixed-wing; UAV reconstruction/deploy | **NEEDS PRODUCT DECISION** | Rejection boundary and recon relationship are reviewed | Direct UAV request rejection plus manned control are covered | Whether physical UAV deployment is a supported feature and what control/locality/lifecycle it promises. Current explicit unstable guard means there is no positive contract | Product direction, then controlled engine experiment | **large** | **medium** | No | No while disabled | Retain the covered fail-closed rejection unless a concrete UAV product is approved; otherwise remove dormant positive-path code |
 | C10 | Vigil fixed-wing; 3CB Hellfire mapping | **EXTERNALLY BLOCKED** | Reviewed as implemented-looking compatibility branch | No qualifying pylon comparison | Whether the mapping works with a compatible installed 3CB asset/pylon; it is compatibility, not core strike semantics | Deterministic compatible 3CB fixture/capability | **small** | **medium** | No | No | Keep explicit compatibility boundary; test only when the dependency supplies a qualifying row |
 | C11 | Field Utilities / Fabricator; pond placement | **EXTERNALLY BLOCKED** and **OPTIONAL / LOW VALUE** | Placement contract and exclusion are explicit | Shoreline/all-water/gradient/obstruction cases are strong | Whether pond water is classified and sampled safely by the bounded placement algorithm on a loaded deterministic fixture | Deterministic loaded pond fixture | **small** | **low** | No | No | Do not block completion; add one pond A/B only when a stable fixture exists |
-| C12 | Vigil artillery preview; coordinate-marker and tab-switch lifetime | **NEEDS PRODUCT DECISION** | Canonical marker review finds the reachable coordinate preview is not in `YSF_clearAllMarkers` | Strike-pattern explicit-zero cleanup only; coordinate cleanup and tab persistence are unproved | Decide whether the coordinate symbol and strike preview persist across tab switches/close/reopen. Current source can leave `YSF_arty_coord_preview` behind, so testing first would fossilize accidental behavior | Product lifetime policy, then a small cleanup refinement | **small** | **medium** | No | No | Prefer UI-owned cleanup unless persistence is intentional; decide, refine, then fold proof into B7 |
+| C12 | Vigil artillery preview; coordinate-marker and tab-switch lifetime | **NEEDS PRODUCT DECISION** | Canonical marker review finds the reachable coordinate preview is not in `YSF_clearAllMarkers` | Strike-pattern explicit-zero and active-close cleanup are covered; coordinate cleanup and tab persistence are unproved | Decide whether the coordinate symbol and strike preview persist across tab switches/close/reopen. Current source can leave `YSF_arty_coord_preview` behind, so testing first would fossilize accidental behavior | Product lifetime policy, then a small cleanup refinement | **small** | **medium** | No | No | Prefer UI-owned cleanup unless persistence is intentional; decide, refine, then fold proof into `vigil-markers` |
 | C13 | Field Utilities / Bridge Builder; construction resources and interruption refunds | **NEEDS PRODUCT DECISION** | Construction, removal, lease consumption, and interrupted cleanup are reviewed | Exact lease consumption and partial-chain cleanup are covered | No supported resource debit/refund contract exists, so an interruption refund assertion would invent economics | Product resource model | **small** | **low** | No | No | Leave absent unless a resource economy is adopted; then define atomic debit/refund semantics before testing |
 
 ## D. INTENTIONALLY DEFERRED
@@ -140,25 +155,25 @@ but no permanent-coverage credit for behavior they do not promise.
 | --- | ---: | ---: | --- |
 | CORDIS | 97–100% | 83–89% | Core one-client broker is complete; presentation and changing ownership remain outside the proof |
 | Advanced Systems | 91–96% | 70–78% | APS/CBR/Iron Dome cores are strong; anti-drone, CBR concurrency policy, and expanded Iron Dome threat/locality policy dominate the gap |
-| Vigil | 98–100% | 89–94% | Every meaningful retained surface now has a durable review; operational cores are strong, with narrow artillery cleanup gaps and decision-deferred recon/UAV/feedback |
-| Field Utilities | 94–98% | 86–92% | Fabricator/Bridge/logistics and towing are strong, including interrupted Bridge cleanup; reachable FPV dominates the deficit |
+| Vigil | 98–100% | 92–97% | Every meaningful retained surface has a durable review; artillery lifecycle closeouts leave transport abnormal cleanup and decision-deferred recon/UAV/feedback |
+| Field Utilities | 94–98% | 88–94% | Fabricator/Bridge/logistics, towing, and bounded object lifecycle are strong; reachable FPV dominates the deficit |
 | Cross-mod | 94–98% | 84–90% | Settings/composition/logistics, representative migration, and representative module lifecycle are covered; true multi-client/JIP is not |
-| **Overall** | **97–100%** | **86–92%** | Scoped comprehensive review criterion is satisfied; coverage gaps are concentrated rather than broad |
+| **Overall** | **97–100%** | **88–94%** | Scoped comprehensive review criterion is satisfied; coverage gaps are concentrated rather than broad |
 
 The useful second coverage view is the **completion-eligible stable contract
 set**: reachable, retained behavior whose product policy and fixtures exist.
-That set is approximately **95–98% covered**. The lower 86–92% portfolio number
+That set is approximately **97–99% covered**. The lower 88–94% portfolio number
 keeps decision-blocked retained features such as FPV and anti-drone visible
 rather than making them disappear from the denominator.
 
 By estimated remaining effort rather than raw row count:
 
-* **12–17% is actionable now** (the B items; no A item remains).
-* **49–55% is blocked or needs a product decision**; the purely external subset
+* **5–9% is actionable now** (B5; no A item remains).
+* **54–60% is blocked or needs a product decision**; the purely external subset
   is about 8–12%.
-* **18–22% is intentionally deferred or retirement work**.
-* **14–18% is optional long-tail**.
-* Therefore **83–88% of the remaining effort is presently
+* **21–25% is intentionally deferred or retirement work**.
+* **16–20% is optional long-tail**.
+* Therefore **91–95% of the remaining effort is presently
   blocked/decision-bound, deferred/retirement, or optional**, rather than a
   queue of ready feature iterations.
 
@@ -166,20 +181,19 @@ Tangible remaining work:
 
 * **Meaningful actionable feature reviews:** **0**; zero wholly
   uncharacterized reachable subsystems remain.
-* **Meaningful permanent additions:** 0 MUST additions, or about **3–5**
-  additions for the remaining representative SHOULD boundaries. These are
-  mostly arms in existing scenarios, not necessarily new scenario files.
+* **Meaningful permanent additions:** 0 MUST additions and **1** representative
+  SHOULD addition, expected to be an arm in the existing transport scenario.
 * **MUST effort:** **0 Sol-sized sessions**.
-* **MUST + SHOULD effort:** about **3–6 Sol-sized sessions**, depending mainly
-  on physical Arma calibration in abnormal lifecycle paths.
+* **MUST + SHOULD effort:** about **1–2 Sol-sized sessions**, depending on
+  physical Arma calibration in the transport abnormal lifecycle.
 
 The five concentrations accounting for most meaningful future work are:
 
 1. FPV/UAV product decisions, authority refinement, and physical payload proof.
 2. CBR multi-launcher policy, authenticated telemetry, and concurrency proof.
 3. Client-B/JIP provisioning plus a deliberately small representative matrix.
-4. Abnormal lifecycle cleanup across object handling, transport, VLS targets,
-   and active preview close.
+4. The one remaining actionable abnormal lifecycle: Vigil transport destruction
+   after dispatch and its exact pad/task/governor cleanup.
 5. Presentation, marker-lifetime, cancellation/history, and resource-policy
    decisions that must precede any further proof.
 
@@ -213,8 +227,8 @@ after their prerequisites are resolved.
 
 ## Next candidate
 
-The next gameplay coverage candidate is **B4, attached-object repeat/delete
-lifecycle**. It is small, independent, actionable, and can extend the existing
-contact scenario without inventing policy or requiring client-B. B5 transport
-abnormal cleanup is the next larger physical candidate; B6/B7 are worthwhile
-narrow closeouts but do not outrank B4's stale-state risk.
+The next and only remaining SHOULD candidate is **B5, Vigil transport abnormal
+terminal cleanup**. It is medium-sized, actionable, and tests the meaningfully
+distinct destruction/failure terminal path without inventing cancellation
+policy. Do not begin decision-bound or optional work merely to create another
+parallel slot.

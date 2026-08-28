@@ -3,9 +3,10 @@
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
 **Classification: KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for the
-tested client-a request to server-owned native-artillery execution and for the
-server-local VLS execution branch. **PARTIALLY COVERED** for product-owned VLS
-target cleanup. Headless/client-owned firing assets, client-N/JIP, requests
+tested client-a request to server-owned native-artillery execution, the
+server-local VLS execution branch, and exact normal-success retirement of its
+product-owned temporary target. Headless/client-owned firing assets,
+client-N/JIP, requests
 larger than one magazine, the complete rendered-input path, and VLS requests
 through the public client/governor boundary remain outside the accepted proof.
 
@@ -125,13 +126,14 @@ engine requirement.
 ### 7. Which details are accidental, legacy, fragile, or incomplete?
 
 The exact VLS class check and weapon/magazine strings are adapter anchors, not
-a general artillery taxonomy. Temporary VLS targets are deleted by an
-independent fixed 100-second thread rather than by task finalization. The
-scenario's `vigil.artillery.cleanup` assertion deletes the mortar and VLS
-fixtures and checks Tribunal observer state, but does not census those product
-targets. Consequently, the inventory's broad statement that `vigil-artillery`
-covers cleanup overstates product-owned VLS cleanup; deletion is source-intended
-but permanently unproven.
+a general artillery taxonomy. Temporary VLS targets are deleted by an independent fixed 100-second thread
+rather than by task finalization. The existing broad `vigil.artillery.cleanup`
+assertion deletes the mortar and VLS fixtures and checks Tribunal observer
+state. The accepted bounded arm separately baselines same-class objects, retains
+the exact normal-success target object and network ID, rejects an unexpected
+retry target, and waits for that object to become null. Until that arm is
+accepted live, normal-success deletion remains source-intended but permanently
+unproven; retry, platform death, and cancellation cleanup remain outside it.
 
 The permanent control calls the handler/fire helper directly for zero-round,
 out-of-range, no-ammunition, and VLS execution. Those are valid branch tests,
@@ -235,7 +237,7 @@ and target-knowledge policy must stay out of Tribunal.
 | zero/range/ammunition controls | **ACCEPTED / COVERED** at execution branches | end-to-end rejection receipts are shared-governor/combination work, not a distinct core firing contract |
 | VLS flight | **ACCEPTED / COVERED** for the server-local execution branch | public VLS request, retry exhaustion, and other launcher/loadout classes remain unproven |
 | VLS target-knowledge handshake | **REVIEWED / CHARACTERIZED** | report-only/confirm-only/order matrix is intentionally deferred until simplification is proposed |
-| VLS temporary-target cleanup | **PARTIALLY COVERED** | exact target identity and deletion after success, retry, death, and cancellation remain unproven |
+| VLS temporary-target cleanup | **ACCEPTED / COVERED** for normal success | the permanent scenario baselines same-class objects, retains the exact normal-success target reference/network ID, rejects an unexpected retry target, and proves deletion; retry, death, and cancellation remain unproven and outside this bounded closeout |
 | locality and topology | **PARTIALLY COVERED** | headless/client-owned assets, ownership migration, client-N/JIP, disconnect, and poor-network behavior remain shared blocked/long-tail boundaries |
 
 ## Completion judgment
@@ -243,11 +245,19 @@ and target-knowledge policy must stay out of Tribunal.
 The core artillery execution contract is comprehensively reviewed and has
 strong permanent causal coverage; no product or scenario change is justified
 by this closeout. Literal matrices over artillery classes, terrain, magazines,
-counts, and clients should not block program completion. The one contradiction
-requiring canonical inventory reconciliation is the unproven product VLS target
-cleanup beneath the existing broad cleanup claim. A small permanent census of
-the exact temporary target would be worthwhile if cleanup completeness is a
-program requirement; otherwise it belongs in SHOULD rather than MUST work.
+counts, and clients should not block program completion. The remaining cleanup contradiction is bounded: the broad fixture cleanup claim
+does not itself prove deletion of the product-created VLS target. Cold run
+`20260828T015701Z-5788cedb` closed that gap: all 19 server and 5 client feature
+assertions passed (32 total including smoke), and the exact target row was
+`id=2:213|position=[3000,2000,0]|ownedCount=1|null=true`. Evidence package
+`urn:tribunal:evidence-package:20260828T015701Z-5788cedb:1`
+(`sha256:0ef37936abe0ce7b878dbe8d73df34bd366fd210839a3504e02d75f4e40fe4e7`)
+validated, was ingested twice idempotently, and the knowledge audit passed.
+Behaviorally passing run `20260828T014649Z-88c344f1` used noncanonical contract
+context keys; its package was rejected before mutation, never ingested, and is
+calibration evidence only. Retry,
+platform-death, and cancellation cleanup remain reviewed combinations rather
+than reasons to expand this SHOULD item or block representative completion.
 
 Requests beyond one magazine are a bounded reviewed gap because engine reports
 indicate `doArtilleryFire` may stop at a magazine reload boundary. They should

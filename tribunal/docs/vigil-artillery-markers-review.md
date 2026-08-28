@@ -6,16 +6,20 @@ Reviewed against [`feature-review-program.md`](feature-review-program.md).
 **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for one client changing a
 valid circle request through count `0 -> 1 -> 3 -> 0`: the preview follows the
 requested world position, replaces stale markers, and clears on the explicit
-zero-count transition. Close-time removal from an active non-empty preview is
-**REVIEWED / NEEDS COVERAGE**. The separate coordinate-preview marker created
+zero-count transition. Close-time removal from an active non-empty strike
+pattern, its first-round ETA marker, and the selected-asset overlay is now
+**KEEP AS-IS AND SPEC-TEST; COVERED** through exact pre-close identity capture
+and post-close census. The separate coordinate-preview marker created
 by the same grid handler is **PARTIALLY COVERED; REFINE BEFORE COVERAGE**
 because current source does not include it in dialog cleanup. Line rendering,
-range colour, first-round ETA, VLS sizing, tab-switch behavior, client-B/JIP,
-and invalid-input presentation remain bounded gaps described below.
+range-colour and ETA-value presentation variants, VLS sizing, tab-switch
+behavior, client-B/JIP, and invalid-input presentation remain bounded gaps
+described below.
 
-This is a durable review closeout of existing source and accepted permanent
-evidence. It does not rerun Arma, reinterpret artillery execution as rendering
-proof, or alter the accepted `vigil-markers` scenario.
+This is the canonical review and Evidence Contract closeout for the revised
+permanent `vigil-markers` scenario. Fresh Arma acceptance, package provenance,
+and production knowledge ingestion are recorded below; artillery execution is
+not reinterpreted as rendering proof.
 
 ## Canonical review questions
 
@@ -108,14 +112,19 @@ Marker names based on tick time/random values, `uiNamespace` keys, IDC values,
 the fixed test coordinate, and backing-array layout are private adapters, not
 promises. Recreating an entire marker generation is replaceable.
 
-Two lifecycle gaps are substantive rather than cosmetic:
+One remaining lifecycle gap is substantive rather than cosmetic:
+`YSF_arty_coord_preview` is reachable through the same grid interaction but
+is absent from `YSF_clearAllMarkers`; source therefore permits it to survive
+tablet close.
 
-* `YSF_arty_coord_preview` is reachable through the same grid interaction but
-  is absent from `YSF_clearAllMarkers`; source therefore permits it to survive
-  tablet close.
-* The accepted scenario sets count to zero before closing. Its close assertion
-  proves that the display closes and already-empty strike/overlay stores remain
-  empty; it does not causally prove `onUnload` removes an active pattern.
+The revised permanent scenario preserves the visible `0 -> 1 -> 3 -> 0`
+sequence, then observes the authenticated Escape `KeyDown`. Immediately before
+the product `onUnload` path it re-arms through the real count handler and
+captures exact strike ellipses, the first-round ETA icon, and the product-created
+selected-asset overlay while all names are live. Its post-close assertion tests
+those exact identities against `allMapMarkers`. The product cleanup deletes
+the markers but leaves its private backing arrays populated; the scenario does
+not mistake stale arrays for still-live markers.
 
 The scenario also uses the product's real grid/count handlers after external
 navigation reaches Artillery, but directly calls private setters to calibrate
@@ -157,10 +166,14 @@ Backing state alone, unrelated pixels, a marker outside the viewport, reused
 names, three array entries without a larger rendered footprint, and server or
 another identity satisfying client-a are false-PASS paths.
 
-The close-time claim must be narrower: current evidence proves closed display
-plus empty stores only after explicit clear. An accepted active-close arm must
-start from independently rendered non-empty markers, close through the real UI,
-and prove every old strike, coordinate, ETA, and overlay marker absent.
+The active-close arm is causal: authenticated Escape triggers a display
+`KeyDown` observer that re-arms three positions through `YOSHI_setCount`,
+captures three ellipse identities, one ETA identity, and one selected-asset
+overlay identity while each is registered, returns `false`, and therefore
+permits the real dialog `onUnload`. After close, none of those exact names may
+remain in `allMapMarkers`. The coordinate-preview identity is deliberately not
+included because C12 must decide its lifetime before it can become a cleanup
+requirement.
 
 ### 10. Which implementation details must remain free to change?
 
@@ -205,22 +218,31 @@ the map-marker visual driver, projected anchor, real count path, independent
 circle/spread/direction fixture setup, stale-name checks, and inclusion in the
 gameplay plan.
 
-No Evidence Contract v1 package or autonomous run identifier for this older
-acceptance is referenced by the current repository documentation. This review
-therefore does not invent package provenance or imply production
-`arma-knowledge` ingestion. The scenario and its accepted visual artifact
-contract remain the permanent proof named by the canonical inventory.
+The revised scenario declares Evidence Contract v1 semantics for every
+server and client assertion. Its arms distinguish the server fixture, visible
+request lifecycle, explicit-zero negative control, active Escape close, and
+fixture closeout; the active-close and explicit-zero arms form the causal pair.
+A static equality guard requires the arm assertion union to match the full
+expected assertion set. Cold run `20260828T015243Z-eba512d9` passed all 4 server
+and 11 client feature assertions (23 total including smoke), with complete
+acknowledgements and cleanup. Evidence package
+`urn:tribunal:evidence-package:20260828T015243Z-eba512d9:1`
+(`sha256:95b042751c775c1cb104ee1ba4a4e415234b2ee93d07dda73f701dfe975f1b57`)
+validated, was ingested twice idempotently, and the knowledge audit passed.
+Behaviorally passing run `20260828T014302Z-82cb862c` used noncanonical contract
+context keys; its package was rejected before mutation, never ingested, and is
+calibration evidence only.
 
 ## Remaining boundaries and disposition
 
 | Boundary | Status | Recommended disposition |
 | --- | --- | --- |
 | Circle count/position `0 -> 1 -> 3 -> 0`, stale replacement | **ACCEPTED / COVERED** | Retain permanent scenario |
-| Active non-empty pattern closed through real UI | **REVIEWED / NEEDS COVERAGE** | Add a small causal close arm when the scenario is next revised |
+| Active non-empty strike/ETA/overlay identities closed through real UI | **ACCEPTED CONTRACT / COVERED BY PERMANENT ARM** | Retain the causal Escape close arm and exact post-close identity census |
 | Coordinate-preview marker cleanup | **PARTIALLY COVERED; PRODUCT DEFECT CANDIDATE** | Decide persistence, refine cleanup, then prove active close/reopen |
 | Tab switch with active artillery preview | **NEEDS PRODUCT DECISION** | Choose retain-versus-retire semantics before testing |
 | Visible line/spread/direction variants | **OPTIONAL / LOW VALUE** | One representative line image is enough if visual parity matters; do not build a matrix |
-| Range colour, first-round ETA, VLS-specific sizes | **REVIEWED / NEEDS COVERAGE** | Cover only if these cues are retained product promises; use valid/out-of-range controls |
+| Range colour, ETA-value validity/presentation, VLS-specific sizes | **PARTIALLY COVERED** | One ETA marker identity is covered; add value/range/VLS controls only if these cues are retained product promises |
 | Invalid grid/count presentation | **PARTIALLY COVERED elsewhere** | Parser rejection belongs with artillery request review; visual hint/field behavior is optional UI work |
 | Client-B isolation, simultaneous previews, JIP/reconnect | **EXTERNALLY BLOCKED / SHARED GAP** | Reuse the program-level client-B/JIP boundary; do not duplicate it here |
 | Network profiles | **INTENTIONALLY DEFERRED** | Local previews do not need replication matrices |
@@ -233,10 +255,12 @@ markers are covered for grid, ordnance, spread, count, direction, circle/line,
 rendering, locality, and cleanup. Source plus the exact permanent assertions
 support a narrower conclusion: the accepted scenario directly proves the
 circle count/position replacement slice and explicit zero-count cleanup. It
-does not render a line arm, exercise range/ETA/VLS cues, close from a non-empty
-pattern, inspect `YSF_arty_coord_preview`, or prove tab-switch cleanup.
+does not render a line arm, exercise range-colour/VLS-size cues, inspect
+`YSF_arty_coord_preview`, or prove tab-switch cleanup. It now does select a live
+artillery fixture, proves one first-round ETA marker per tested generation, and
+closes from a causally captured non-empty strike/ETA/overlay set.
 
-Accordingly, the accepted core should remain covered, while the family is
-recorded as partially covered for the meaningful lifecycle gaps above. This
-review reports the contradiction without changing the shared inventory or any
-accepted evidence classification during the documentation-only closeout.
+Accordingly, the accepted core and active-close lifecycle should remain
+covered, while the family remains partially covered only for the meaningful
+decision-bound and optional gaps above. Shared inventory and progress records
+are reconciled once from the combined accepted state, outside this candidate.

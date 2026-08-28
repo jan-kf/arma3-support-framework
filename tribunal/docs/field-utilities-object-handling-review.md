@@ -166,6 +166,46 @@ The experiment also corrected an important false-PASS hazard. Raw final damage d
 
 Sacred Texts warns, through a community note rather than an official guarantee, that attaching PhysX containers can destabilize vehicles. That warning was not reproduced for this exact pair and duration, but the accepted result does not generalize beyond it. `disableCollisionWith` was rejected because the official documentation says it does not disable collision between PhysX objects. `setPhysicsCollisionFlag` was rejected as too broad and lacking a verified restoration/getter contract. Existing Tribunal exact-identity, physical-stimulus, causal-pair, locality, replication, delta, and cleanup mechanics were sufficient; no generic Tribunal runtime code was added. Evidence package `20260824T152942Z-0e8c4083` was ingested twice with unchanged counts (5 packages, 5 runs, 67 assertions, 33 observations, 8 proofs, 10 judgments), and the knowledge audit passed. Reviewed distillation added two build-scoped generic Sacred Texts lemmas: server-local `EpeContactStart` exact-contact observation and server-local `attachTo` exact client replication with bounded four-second stability. Distillation advanced to 14 reviewed findings, 6 lemmas, 6 proofs, and 7 propositions.
 
+## Accepted continuation — repeat contact and deletion while attached
+
+B4 is one accepted bounded continuation of the existing automatic-contact
+specification. It does not broaden the supported
+class or ownership matrix. The exact same server-owned `B_supplyCrate_F` is
+frozen, separated from its server-owned `B_Truck_01_transport_F`, assigned a
+new observation phase, and dropped onto the same truck again while the product
+handler remains installed. Phase-keyed observer rows distinguish an authentic
+second `EpeContactStart` stimulus from duplicate callbacks belonging to the
+initial impact. Acceptance requires exactly one captured repeat-phase row for
+the same truck, exact server reattachment, and exact client-a replication.
+
+After client-a acknowledges that repeat attachment, the server records that the
+crate is still attached and deletes it without calling `detach` or removing the
+product handler. The server and client must both resolve the captured crate net
+ID to null while resolving the same truck alive with no remaining attached
+objects. Only then may the harness delete the other fixtures. This ordering
+makes deletion itself the lifecycle stimulus and excludes a controlled-detach
+false pass. The existing handler-free matched control, carrier delta checks,
+exact identities, locality checks, and final fixture census remain in force.
+
+Evidence Contract v1 scenario version 3 adds a distinct `contact-lifecycle` arm
+and proposition. Four new feature assertions cover server repeat attachment,
+client repeat replication, server attached deletion, and client identity
+retirement. Every permanent assertion remains declared by exactly the scenario
+contract; no generic Tribunal facility or Pontifex product-source change was
+needed. Cold run `20260828T014506Z-4977d65f` passed all 11 server and 7 client
+feature assertions (26 total including smoke), with zero failures, complete
+acknowledgements, and complete cleanup. In particular,
+`field.contact.repeatAttachment`,
+`field.contact.clientRepeatReplica`, `field.contact.deleteAttached`, and
+`field.contact.clientDeleteReplica` passed with the same captured crate and
+carrier IDs. The deletion row recorded
+`clientSeen=true|wasAttached=true|crate=2:166|carrier=2:160|alive=true|attached=[]`.
+Evidence package `urn:tribunal:evidence-package:20260828T014506Z-4977d65f:1`
+(`sha256:5412a3e2bd60586ad6da50f8c8ef7801ddd452c8afa07f2c4bde0c4fccc2e714`)
+validated, was ingested twice with an unchanged second result, and the knowledge
+audit passed. Client ownership/migration, client-B/JIP, and other crate/truck or
+surface combinations remain outside the claim.
+
 ## Accepted continuation — selective ACE cargo preservation
 
 The next-best unblocked candidate was the runtime ACE cargo-size override. The

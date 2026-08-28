@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from tribunal.mission.artillery import artillery_observer_sqf, spatial_evidence
+from tribunal.discovery import discover
 
 
 class TribunalArtilleryTests(unittest.TestCase):
@@ -41,7 +42,58 @@ class TribunalArtilleryTests(unittest.TestCase):
     def test_long_artillery_flight_completes_before_client_ack_window(self) -> None:
         scenario = (Path(__file__).parents[1] / "source/visual-support-tablet/tests/tribunal/vigil_artillery.py").read_text(encoding="utf-8")
         self.assertIn('missionNamespace setVariable ["TRIBUNAL_VIGIL_ARTILLERY_COMPLETE", _token, true]', scenario)
+        self.assertIn("private _completionDeadline = diag_tickTime + 300;", scenario)
         self.assertIn('(missionNamespace getVariable ["TRIBUNAL_VIGIL_ARTILLERY_COMPLETE", ""]) isEqualTo _token', scenario)
+
+    def test_vls_scenario_proves_exact_product_target_deletion(self) -> None:
+        scenario = (Path(__file__).parents[1] / "source/visual-support-tablet/tests/tribunal/vigil_artillery.py").read_text(encoding="utf-8")
+        self.assertIn('private _vlsTargetsBefore = allMissionObjects "Land_HelipadEmpty_F";', scenario)
+        self.assertIn('!(_x in _vlsTargetsBefore) && {_x distance2D _vlsTarget < 2}', scenario)
+        self.assertIn('&& {(count _vlsOwnedTargets) isEqualTo 1}', scenario)
+        self.assertIn('&& {(_vlsOwnedTargets # 0) isEqualTo _vlsProductTarget}', scenario)
+        self.assertIn('waitUntil {uiSleep 0.1; isNull _vlsProductTarget', scenario)
+        self.assertIn('["vigil.artillery.vls.targetCleanup", _vlsTargetCleanupOk', scenario)
+        product_source = (Path(__file__).parents[1] / "source/visual-support-tablet/addons/VIGIL/functions/task_artillery/fn_artillery_task.sqf").read_text(encoding="utf-8")
+        self.assertIn('private _target = createVehicle ["Land_HelipadEmpty_F", _position', product_source)
+        self.assertIn('[_target] spawn {params ["_t"]; sleep 100; deleteVehicle _t;};', product_source)
+
+    def test_evidence_contract_covers_every_feature_assertion_once(self) -> None:
+        root = Path(__file__).parents[1]
+        scenario = discover([
+            root / "source" / "visual-support-tablet" / "tests" / "tribunal"
+        ])["vigil-artillery"]
+        contract = scenario.evidence_contract
+        self.assertEqual(contract["scenario"]["id"], scenario.identifier)
+        self.assertEqual(contract["scenario"]["version"], 1)
+        flattened = [
+            assertion
+            for arm in contract["arms"]
+            for assertion in arm["assertions"]
+        ]
+        expected = set(scenario.server_expected) | set(scenario.client_expected)
+        self.assertEqual(set(flattened), expected)
+        self.assertEqual(len(flattened), len(set(flattened)))
+        self.assertEqual(len(flattened), 24)
+        proposition_assertions = {
+            assertion
+            for proposition in contract["propositions"]
+            for assertion in proposition["assertions"]
+        }
+        self.assertEqual(proposition_assertions, expected)
+        required = {"scenario", "knowledge_subject", "arms", "causal_relationships", "propositions"}
+        self.assertTrue(required <= set(contract))
+        arm_keys = {arm["key"] for arm in contract["arms"]}
+        self.assertEqual(len(arm_keys), len(contract["arms"]))
+        for relationship in contract["causal_relationships"]:
+            self.assertIn(relationship["source"], arm_keys)
+            self.assertIn(relationship["target"], arm_keys)
+        self.assertTrue(contract["causal_relationships"])
+        self.assertTrue(contract["knowledge_subject"]["biki_context"])
+        vls_arm = next(arm for arm in contract["arms"] if arm["key"] == "vls-success")
+        self.assertEqual(
+            vls_arm["assertions"][-1],
+            "vigil.artillery.vls.targetCleanup",
+        )
 
 
 if __name__ == "__main__":

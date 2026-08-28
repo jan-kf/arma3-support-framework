@@ -106,6 +106,39 @@ class FieldUtilitiesCargoLoadingContractTests(unittest.TestCase):
             self.assertIn(fragment, combined)
         self.assertNotIn("visual_driver", self.scenario.metadata)
 
+    def test_contact_lifecycle_repeats_physical_stimulus_and_deletes_attached_crate(self) -> None:
+        combined = self.scenario.server_sqf + self.scenario.client_sqf
+        for fragment in (
+            'setVariable ["TRIBUNAL_FIELD_CONTACT_PHASE", "repeat", false]',
+            '(_x # 0) isEqualTo "repeat"',
+            'field.contact.repeatAttachment',
+            'field.contact.clientRepeatReplica',
+            'private _wasAttached = (attachedTo _treatmentCrate) isEqualTo _treatmentCarrier',
+            'deleteVehicle _treatmentCrate',
+            'isNull objectFromNetId _deletedCrateId',
+            'attachedObjects _treatmentCarrier',
+            'field.contact.deleteAttached',
+            'field.contact.clientDeleteReplica',
+        ):
+            self.assertIn(fragment, combined)
+
+        lifecycle = next(
+            arm
+            for arm in self.scenario.evidence_contract["arms"]
+            if arm["key"] == "contact-lifecycle"
+        )
+        self.assertEqual(lifecycle["role"], "treatment")
+        self.assertEqual(
+            set(lifecycle["assertions"]),
+            {
+                "field.contact.repeatAttachment",
+                "field.contact.clientRepeatReplica",
+                "field.contact.deleteAttached",
+                "field.contact.clientDeleteReplica",
+            },
+        )
+        self.assertEqual(self.scenario.evidence_contract["scenario"]["version"], 3)
+
     def test_evidence_contract_covers_every_permanent_assertion(self) -> None:
         declared = {
             assertion
