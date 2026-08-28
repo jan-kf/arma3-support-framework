@@ -31,6 +31,8 @@ private _spawn = {
     _obj setPosATL (_origin vectorAdd _offset);
     _obj setFuel 0;
     _obj engineOn false;
+    _obj allowDamage false;
+    _obj enableSimulationGlobal false;
     _obj
 };
 private _crate = ["B_supplyCrate_F", [4, 0, 0]] call _spawn;
@@ -133,14 +135,21 @@ private _inventory = [_crate, "zenInventoryActions"] call _actionFor;
 private _logiLand = [_land, "logiActions"] call _actionFor;
 private _tow = [_land, "TowActions"] call _actionFor;
 private _stow = [_land, "YOSHI_StowRopes"] call _actionFor;
-private _fpv = [_uav, "UAV_field_task"] call _actionFor;
-private _actions = [_bridgeAction, _logiBox, _inventory, _logiLand, _tow, _stow, _fpv];
+private _fpvAbsent = ([_uav, "UAV_field_task"] call _actionFor) isEqualTo [];
+private _payloadActionDeadline = diag_tickTime + 5;
+waitUntil {uiSleep 0.05; (actionIDs _uav) isNotEqualTo [] || {diag_tickTime > _payloadActionDeadline}};
+private _payloadActions = actionIDs _uav;
+private _payloadLabels = _payloadActions apply {(_uav actionParams _x) param [0, ""]};
+private _payloadActionPresent = "Pontifex Payload Manager" in _payloadLabels;
+private _actions = [_bridgeAction, _logiBox, _inventory, _logiLand, _tow, _stow];
 private _actionIds = _actions apply {_x param [0, ""]};
 private _registryOk = !isNil "ace_interact_menu_fnc_collectActiveActionTree"
     && {(_actions findIf {_x isEqualTo []}) < 0}
+    && {_fpvAbsent}
+    && {_payloadActionPresent}
     && {_actionIds isEqualTo [
         "YFU_BoxBridgeOpenUI_Class", "logiActions", "zenInventoryActions",
-        "logiActions", "TowActions", "YOSHI_StowRopes", "UAV_field_task"
+        "logiActions", "TowActions", "YOSHI_StowRopes"
     ]};
 ["fieldAce.registry", _registryOk, format ["ids=%1|labels=%2|aceVersion=%3", _actionIds, _actions apply {_x param [1, ""]}, getText (configFile >> "CfgPatches" >> "ace_interact_menu" >> "versionStr")]] call _assert;
 
@@ -155,9 +164,9 @@ private _coexistenceOk = ({_x isEqualTo "logiActions"} count _crateIds) isEqualT
     && {({_x isEqualTo "logiActions"} count _landIds) isEqualTo 1}
     && {({_x isEqualTo "TowActions"} count _landIds) isEqualTo 1}
     && {({_x isEqualTo "YOSHI_StowRopes"} count _landIds) isEqualTo 1}
-    && {({_x isEqualTo "UAV_field_task"} count _landIds) isEqualTo 1}
     && {({_x isEqualTo "YOSHI_StowRopes"} count _uavIds) isEqualTo 1}
-    && {({_x isEqualTo "UAV_field_task"} count _uavIds) isEqualTo 1};
+    && {! ("UAV_field_task" in _landIds)}
+    && {! ("UAV_field_task" in _uavIds)};
 ["fieldAce.coexistence", _coexistenceOk, format ["crateClass=%1|crate=%2|landClass=%3|land=%4|uavClass=%5|uav=%6", _crateClass, _crateIds, _landClass, _landIds, _uavClass, _uavIds]] call _assert;
 
 private _cargo = if (isNull _carrier || {isNull _crate}) then {[false, false]} else {_carrier canVehicleCargo _crate};
@@ -171,8 +180,7 @@ private _logiActive = [_crate, _logiBox] call _collectActive;
 private _inventoryAbsent = ([_crate, _inventory] call _collectActive) isEqualTo [];
 private _towActive = [_land, _tow] call _collectActive;
 private _stowAbsent = ([_land, _stow] call _collectActive) isEqualTo [];
-private _fpvActive = [_uav, _fpv] call _collectActive;
-private _fpvAbsent = ([_land, _fpv] call _collectActive) isEqualTo [];
+private _payloadActionStillPresent = "Pontifex Payload Manager" in ((actionIDs _uav) apply {(_uav actionParams _x) param [0, ""]});
 player setPosASL _playerASL;
 private _relevanceOk = (_fixture param [2, []]) isEqualTo _cargo
     && {(_cargo param [0, false]) && {_cargo param [1, false]}}
@@ -181,31 +189,29 @@ private _relevanceOk = (_fixture param [2, []]) isEqualTo _cargo
     && {_inventoryAbsent}
     && {_towActive isNotEqualTo []}
     && {_stowAbsent}
-    && {_fpvActive isNotEqualTo []}
-    && {_fpvAbsent};
-["fieldAce.relevance", _relevanceOk, format ["cargo=%1|bridgeActive=%2|bridgeDistance=%3|logiActive=%4|inventoryAbsent=%5|towActive=%6|stowAbsent=%7|fpvActive=%8|fpvAbsent=%9|distances=%10", _cargo, _bridgeActive isNotEqualTo [], _bridgeDistance, _logiActive isNotEqualTo [], _inventoryAbsent, _towActive isNotEqualTo [], _stowAbsent, _fpvActive isNotEqualTo [], _fpvAbsent, _objects apply {player distance _x}]] call _assert;
+    && {_fpvAbsent}
+    && {_payloadActionStillPresent};
+["fieldAce.relevance", _relevanceOk, format ["cargo=%1|bridgeActive=%2|bridgeDistance=%3|logiActive=%4|inventoryAbsent=%5|towActive=%6|stowAbsent=%7|fpvAceAbsent=%8|payloadNative=%9|distances=%10", _cargo, _bridgeActive isNotEqualTo [], _bridgeDistance, _logiActive isNotEqualTo [], _inventoryAbsent, _towActive isNotEqualTo [], _stowAbsent, _fpvAbsent, _payloadActionStillPresent, _objects apply {player distance _x}]] call _assert;
 
 private _noMutation = !isNull _crate && {!isNull _carrier} && {!isNull _land} && {!isNull _uav} && {!isNull _bridge}
     && {isNull attachedTo _crate}
     && {isNull isVehicleCargo _crate}
     && {(count ropes _land) isEqualTo 0}
-    && {!(_uav getVariable ["YOSHI_UavHasIED", false])}
-    && {(_uav getVariable ["YOSHI_UavOrdinanceCount", 0]) isEqualTo 0}
-    && {(_uav getVariable ["YOSHI_UavGrenadeCount", 0]) isEqualTo 0};
-["fieldAce.noMutation", _noMutation, format ["attached=%1|cargo=%2|ropes=%3|uavState=%4", attachedTo _crate, isVehicleCargo _crate, count ropes _land, [_uav getVariable ["YOSHI_UavHasIED", false], _uav getVariable ["YOSHI_UavOrdinanceCount", 0], _uav getVariable ["YOSHI_UavGrenadeCount", 0]]]] call _assert;
+    && {(_uav getVariable ["YFU_PAYLOAD_STATE", [0, [], 0]]) isEqualTo [0, [], 0]};
+["fieldAce.noMutation", _noMutation, format ["attached=%1|cargo=%2|ropes=%3|uavState=%4", attachedTo _crate, isVehicleCargo _crate, count ropes _land, _uav getVariable ["YFU_PAYLOAD_STATE", [0, [], 0]]]] call _assert;
 missionNamespace setVariable ["TRIBUNAL_FIELD_ACE_DONE", _token, true];
 ''',
     metadata={
         "product": "field-utilities",
-        "feature": "cold-client-ace-composition",
+        "feature": "cold-client-interaction-composition",
     },
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A cold real client registers the supported Field Utilities ACE class-action roots exactly once; overlapping roots coexist, relevant roots resolve on exact representative objects, irrelevant roots remain absent, and discovery alone causes no gameplay mutation.",
+        behavior_contract="A cold real client registers the retained Field Utilities ACE roots exactly once while the small-UAV Payload Manager is present only as a native world action; relevant roots resolve, irrelevant roots remain absent, and discovery causes no gameplay mutation.",
         outcome="KEEP AS-IS AND SPEC-TEST",
-        rationale="The shared post-init composition boundary can fail while isolated feature logic remains green; the scenario uses ACE's installed-version active-tree adapter and exact object state without invoking consequential statements.",
-        dependencies=("ACE 3.21 external interaction adapter", "one independently authenticated client"),
-        evidence_types=frozenset({"ace-active-action-tree", "exact-netid", "negative-control", "locality", "cleanup"}),
+        rationale="The shared post-init composition boundary can fail while isolated feature logic remains green; the scenario proves both retained ACE coexistence and the Payload Manager's deliberate independence from ACE interaction without invoking consequential statements.",
+        dependencies=("ACE 3.21 external adapter for retained non-payload roots", "native addAction", "one independently authenticated client"),
+        evidence_types=frozenset({"ace-active-action-tree", "native-world-action", "exact-netid", "negative-control", "locality", "cleanup"}),
         locality_requirements="The dedicated server owns all fixture objects; client-a owns cold ACE registration and active-tree resolution. No effect or client-B/JIP claim is made.",
     ),
 )

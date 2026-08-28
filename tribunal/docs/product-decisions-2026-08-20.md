@@ -19,9 +19,7 @@ evidence and acceptance status.
 - Towing generally supports land vehicles. Active rope/tow relationships reject
   conflicts; rope disappearance or breakage detaches cleanly. Preserve current
   distance/motion policy absent contrary physical evidence.
-- FPV payloads are mutually exclusive. The operator is the drone controller;
-  attaching still requires the intended interaction. Preserve distinct IED
-  physical effects. Grenade payload capacity is eight.
+- Small-UAV payloads use the native Pontifex Payload Manager, not ACE interaction. Eligible `UAV_01_base_F` vehicles have eight capacity units. Real uniform, vest, and backpack items remain visibly separate and are assembled into an ordered proposal; grenades generally cost one and satchels cost eight. Apply is server-authoritative and atomic, installed entries belong to the UAV, and only occupied entries are cycled by configurable Next Payload and Deploy Payload controls while actually controlling the UAV. The compact themed HUD shows the current entry and the user’s live configured bindings. Mortars remain deferred until they have a coherent inventory representation. Broader ACE dependency removal is separate.
 
 ## Advanced Systems
 

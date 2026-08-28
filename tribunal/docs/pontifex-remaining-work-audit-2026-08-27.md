@@ -8,7 +8,7 @@ evidence.
 
 The audit reconciled all four addon configs and function trees, 41 durable
 feature/boundary reviews (43 after the two A1 closeouts), the inventory and
-reconnaissance records, and 29
+reconnaissance records, and 31
 product `TRIBUNAL_SCENARIO` declarations. The two framework scenarios
 (`locality-probe` and `visual-framebuffer`) are not product coverage.
 
@@ -91,6 +91,8 @@ product `TRIBUNAL_SCENARIO` declarations. The two framework scenarios
   cleanup; validated evidence was ingested idempotently and the knowledge audit
   passed. The earlier metadata-rejected calibration package was never ingested.
 * **B5 closed on 2026-08-28.** `vigil-transport` now includes a causal exact-aircraft destruction arm after the same authenticated request reaches stage 3, creates its product-owned landing pad, and remains airborne. Accepted run `20260828T031206Z-24d79c61` passed all 25 feature assertions: the same generation finalized failed, disabled its governor record, deleted exact pad `2:185` on server and client, delivered one requester terminal row, and retired all fixture identities. The run also preserves the full normal round trip. Package SHA-256 is `d71182836849bc8408a6949a1562532e17aa4e5500d788a354e8d7a1ff3f2bd4`; ingestion and reviewed project-specific distillation were each idempotent, and the knowledge audit passed.
+* **C3 product decision implemented on 2026-08-28.** The legacy FPV payload surface was redesigned as the native eight-unit Pontifex Payload Manager. `fieldutils-payload-manager` run `20260828T130038Z-9f4e37a1` passed all 16 feature and smoke assertions with complete cleanup, proving themed separated inventory UI, live binding resolution, authenticated atomic transfer/refusals, UAV-owned ordering, replication, and audit. Evidence Contract v1 ingestion was idempotent and the knowledge audit passed. B8 below closes the positive in-control HUD/cycle/deploy causality; mortars remain intentionally deferred.
+* **B8 closed on 2026-08-28.** `fieldutils-payload-control` run `20260828T133445Z-8924da44` passed all 19 feature and smoke assertions with complete cleanup. It proves an authentic terminal-linked `B_UAV_01_F` control session, client and server context rejection outside control, configurable Next/Deploy handling, current-binding themed HUD, occupied-only cycling, exact-once MiniGrenade and HandGrenade deployment, empty refusal, and an eight-unit SatchelCharge_Remote_Mag deployment that destroys its owning UAV. Server evidence correlates exactly five accepted and two rejected authority rows with three deployment receipts, exact effect classes/identities and same-moment UAV positions. Evidence Contract v1 ingestion was idempotent, the knowledge audit passed, and no generic Arma lemma was promoted (`PROJECT-SPECIFIC ONLY`).
 
 ## A. MUST FINISH
 
@@ -98,7 +100,7 @@ There are **no remaining MUST items** under the scoped completion criterion.
 
 ## B. SHOULD FINISH
 
-There are **no remaining SHOULD items** under the scoped completion criterion. B5 is accepted and retained in `vigil-transport`; its excluded class, terrain, cancellation, ownership, client-B/JIP, and presentation combinations remain in C or E according to their existing boundaries.
+There are **no remaining SHOULD items** under the scoped completion criterion.
 
 ## C. BLOCKED / NEEDS DECISION
 
@@ -106,7 +108,6 @@ There are **no remaining SHOULD items** under the scoped completion criterion. B
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | C1 | Program-wide multiplayer; client-B, isolation, concurrency, disconnect and JIP across CORDIS and consequential consumers | **EXTERNALLY BLOCKED** | Canonical boundary review is complete and affected features are enumerated | All accepted replication/audience claims are client-a only | A second independently authenticated player’s visibility, private-result isolation, simultaneous requests, disconnect retirement, and late-join retained state. This is the largest remaining topology gap | Second licensed Steam identity plus feature-specific retention/audience policies | **large** | **critical** | No; boundary is understood | No for the present one-client completion scope; **yes** for any future multi-client/JIP claim | Keep as one program epic; provision client-B, then select a small representative matrix (CORDIS fan-out/private receipt, one module, one stateful task, one physical ownership feature) |
 | C2 | Program-wide presentation/audio; CORDIS radio/curator GUI, Vigil task messages, APS/Iron Dome/FPV sound and effects | **NEEDS PRODUCT DECISION** + **EXTERNALLY BLOCKED** | Routing and consumer call sites are reviewed; pixels/audio are deliberately excluded | Recipient decisions and debug gates are partly covered; actual sound and several GUI/effect outcomes are not | Choose audience, overlap/rate, failure visibility, and whether sound/beam/particles are promises; then observe actual target-client output. A call or receipt is not presentation | Sound-enabled observer; client-B for true audience isolation; product policy | **large** | **medium** | No | No unless presentation becomes a supported contract | Decide presentation policy once at program level, then cover only representative consumers; do not create a sound test per call site |
-| C3 | Field Utilities / FPV-UAV modifications; small-UAV profile, IED, mortar and grenade payloads | **NEEDS PRODUCT DECISION** (reviewed/refine before coverage) | Canonical review identifies authority flaws and five explicit policy choices | No permanent gameplay scenario; ACE root composition only proves registration | Eligibility, inventory cost, payload exclusivity, attach/use authorization, finite-count enforcement, owner receipts, IED collateral causality, and physical mortar/grenade behavior. This is a reachable destructive feature and the largest retained uncovered subsystem | Product decisions, then owner-authoritative refinement before proof | **large** | **high** | No | No while explicitly decision-blocked; **yes** if retained as supported gameplay | Decide retain/redesign/remove. If retained, refine one request boundary, characterize ordnance, then add profile plus payload contracts; do not test current caller-trusting behavior as specification |
 | C4 | Advanced Systems / CBR; multi-launcher clustering, warning cadence, origin isolation and concurrent expiry | **NEEDS PRODUCT DECISION** (reviewed/refine before coverage) | Canonical concurrency review complete | Strong single-launcher scenario only | Cluster meaning, merge/split/reassignment, warning unit/window, walking barrage, independent origin expiry, overload, owner-bound telemetry, and order invariance. Current results vary with firing-machine ownership | Eight listed product/arbitration decisions plus authority refinement; cross-owner equivalence eventually touches C1 | **large** | **high** | No | No while explicitly decision-blocked | Decide semantics, bind source owner/launcher, then cover same-owner close/far and reversed order first; cross-owner arm follows C1 |
 | C5 | Advanced Systems / APS; experimental anti-drone mode | **NEEDS PRODUCT DECISION** (reviewed/deferred) | Canonical review complete | ACE preference/status is covered; drone engagement is not | Threat/side/operator policy, eligible UAVs, resource transaction authority, owner acknowledgment, cleanup, and handler scoping. Current destructive behavior is not safe to fossilize | Product decisions and refinement | **large** | **high** | No | No while experimental/deferred | Decide retain/refine/remove; if retained, establish one authoritative transaction and one causal UAV outcome before breadth |
 | C6 | Advanced Systems / Iron Dome; client-owned artillery and threat policy | **NEEDS PRODUCT DECISION** | Core server-local interceptor review complete | Strong server-local enabled/disabled/out-of-range/concurrency coverage | Whether client-owned shells are supported and how they are owner-routed; whether friendly/outgoing shells or only protected-impact threats qualify. These choices alter gameplay and authority | Product policy; client-a can characterize ownership, client-B only for broader isolation | **medium** | **high** | No | No for explicit server-local contract | Decide protected-threat and locality policy; extend coverage only if scope expands |
@@ -151,23 +152,23 @@ but no permanent-coverage credit for behavior they do not promise.
 | CORDIS | 97–100% | 83–89% | Core one-client broker is complete; presentation and changing ownership remain outside the proof |
 | Advanced Systems | 91–96% | 70–78% | APS/CBR/Iron Dome cores are strong; anti-drone, CBR concurrency policy, and expanded Iron Dome threat/locality policy dominate the gap |
 | Vigil | 98–100% | 95–99% | Every meaningful retained stable surface has a durable review and representative proof; remaining recon/UAV/feedback work is decision-bound or deferred |
-| Field Utilities | 94–98% | 88–94% | Fabricator/Bridge/logistics, towing, and bounded object lifecycle are strong; reachable FPV dominates the deficit |
+| Field Utilities | 97–99% | 96–99% | Fabricator/Bridge/logistics, towing, object lifecycle, and both Payload Manager transaction and live-control contracts have representative proof |
 | Cross-mod | 94–98% | 84–90% | Settings/composition/logistics, representative migration, and representative module lifecycle are covered; true multi-client/JIP is not |
-| **Overall** | **97–100%** | **89–95%** | Scoped comprehensive review and permanent-coverage criteria are satisfied; residual gaps are explicitly non-actionable in the current scope |
+| **Overall** | **97–100%** | **91–97%** | The scoped campaign is substantially complete; all remaining classified work is blocked, decision-bound, deferred, retirement-bound, or optional |
 
 The useful second coverage view is the **completion-eligible stable contract
 set**: reachable, retained behavior whose product policy and fixtures exist.
-That set is approximately **99–100% covered**. The lower 89–95% portfolio number
-keeps decision-blocked retained features such as FPV and anti-drone visible
+That set is approximately **99–100% covered**. The lower 91–97% portfolio number
+keeps decision-blocked retained features such as anti-drone visible
 rather than making them disappear from the denominator.
 
 By estimated remaining effort rather than raw row count:
 
-* **0% is actionable now**; A and B are empty.
-* Approximately **58–62% is blocked or needs a product decision**; the purely external subset is about 9–13%.
+* Exactly **0% is actionable now** within the current scope.
+* Approximately **58–62% is blocked or needs a product decision**; the purely external subset is about 10–14%.
 * Approximately **22–24% is intentionally deferred or retirement work**.
 * Approximately **16–18% is optional long-tail**.
-* Therefore **100% of remaining classified effort is blocked/decision-bound, deferred/retirement, or optional**, not a ready feature-iteration queue.
+* Therefore **100% of remaining classified effort is blocked/decision-bound, deferred/retirement, or optional**.
 
 Tangible remaining work:
 
@@ -177,13 +178,13 @@ Tangible remaining work:
 * **MUST effort:** **0 Sol-sized sessions**.
 * **MUST + SHOULD effort:** **0 Sol-sized sessions**.
 
-The five concentrations accounting for most potential future work are all outside the current actionable scope:
+The five concentrations accounting for most potential future work are:
 
-1. FPV/UAV product decisions, authority refinement, and physical payload proof.
-2. CBR multi-launcher policy, authenticated telemetry, and concurrency proof.
-3. Client-B/JIP provisioning plus a deliberately small representative matrix.
-4. Presentation, marker-lifetime, cancellation/history, and resource-policy decisions that must precede proof.
-5. APS anti-drone and expanded Iron Dome/fixed-wing policy and locality work, if those product scopes are retained.
+1. CBR multi-launcher policy, authenticated telemetry, and concurrency proof.
+2. Client-B/JIP provisioning plus a deliberately small representative matrix.
+3. Presentation, marker-lifetime, cancellation/history, and resource-policy decisions that must precede proof.
+4. APS anti-drone and expanded Iron Dome/fixed-wing policy and locality work, if those product scopes are retained.
+5. Retirement of unreachable legacy/orphan surfaces and optional compatibility/terrain matrices.
 
 ## Completion criterion
 
@@ -209,8 +210,8 @@ retirement-bound, or optional. Literal coverage of every class, map, threshold,
 presentation pixel, helper, ownership permutation, and engine-command
 combination is neither required nor desirable.
 
-Under that criterion, the **current scoped program is substantially complete**: A and B are empty, every completion-eligible stable contract is reviewed, and no actionable permanent scenario remains. C items expand the supported product/topology only after prerequisites or decisions; D and E remain explicitly non-blocking.
+Under that criterion, the **current scoped campaign is substantially complete**. Every completion-eligible stable contract is reviewed and no MUST or SHOULD item exists. C items expand the supported product/topology only after prerequisites or decisions; D and E remain explicitly non-blocking.
 
 ## Next candidate
 
-**None within the current scoped campaign.** Do not begin C, D, or E merely to continue the campaign. The next work should be selected only after a named product decision is made or an external blocker is removed; at that point this audit must be reopened and the affected item reclassified before implementation.
+There is no actionable next candidate within the current scope. Resume only when a C dependency or product decision changes classification; do not pull D or E forward merely to create work.

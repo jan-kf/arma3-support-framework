@@ -34,3 +34,21 @@
 	[0, 10, 1, 2],
 	1
 ] call CBA_fnc_addSetting;
+
+[
+    "Pontifex: Field Utilities",
+    "nextPayload",
+    ["Next Payload", "Cycle to the next occupied payload while controlling an eligible small UAV."],
+    {["next"] call YFU_fnc_payloadControlRequest},
+    {},
+    [0x1A, [false, false, false]]
+] call CBA_fnc_addKeybind;
+
+[
+    "Pontifex: Field Utilities",
+    "deployPayload",
+    ["Deploy Payload", "Deploy the selected payload while controlling an eligible small UAV."],
+    {["deploy"] call YFU_fnc_payloadControlRequest},
+    {},
+    [0x1B, [false, false, false]]
+] call CBA_fnc_addKeybind;

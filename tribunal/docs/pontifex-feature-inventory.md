@@ -56,7 +56,7 @@ Five top-level runtime families are present:
 | CORDIS shared runtime | Locality routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Refined, with reserved bootstrap files | **ACCEPTED / COVERED** for the one-client trusted broker; GUI/audio/debug and client-N/JIP remain deferred |
 | Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS, Counter Battery Radar, and Iron Dome strong; APS anti-drone remains uncovered |
 | Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
-| Field Utilities | Fabrication, logistics, bridges, towing, FPV modifications | `source/field-utilities/addons/FieldUtils` | Implemented, mixed maturity | **PARTIALLY COVERED** through fabrication, logistics, Bridge Builder, and accepted authoritative physical towing |
+| Field Utilities | Fabrication, logistics, bridges, towing, small-UAV payloads | `source/field-utilities/addons/FieldUtils` | Implemented, mature core | **ACCEPTED / COVERED** for the supported one-client contract, with strong fabrication, logistics, Bridge Builder, towing, object lifecycle, Payload Manager transaction, and live controller deployment proof |
 | Cross-mod composition | Contracts joining CORDIS, Vigil, Field Utilities, ACE/CBA, and editor/Zeus surfaces | calls across all addons/configs | Implemented, some optional/degraded paths | **PARTIALLY COVERED**; one composite path direct, most incidental |
 
 Tribunal/Pontifex validation is documented separately below. It is substantial
@@ -647,28 +647,16 @@ Full analysis: [`field-utilities-object-handling-review.md`](field-utilities-obj
 Full analysis: [`field-utilities-towing-review.md`](field-utilities-towing-review.md).
 Sling analysis: [`field-utilities-helicopter-sling-review.md`](field-utilities-helicopter-sling-review.md).
 
-### 4.5 FPV/UAV field modifications
+### 4.5 Small-UAV Payload Manager
 
-* **Small-UAV profile** adds owner-local engine attach/detach, drag/carry, fuel,
-  and camouflage behavior. **REVIEWED / NEEDS EXPERIMENTATION.** Owner-local
-  routing exists, but completion and owner/non-owner behavior are unproven.
-* **IED payload** attaches/detonates a charge and creates effects on UAV death.
-  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** Destructive functions do not
-  revalidate the requester at the owner; collateral causality is unproven.
-* **Mortar/grenade payloads** grant finite counts, create physical ordnance, and
-  decrement counts. **REVIEWED / REFINE BEFORE PERMANENT COVERAGE.** Direct
-  calls can release absent/depleted payloads and underflow counts; physical
-  impact, duplicate, and ownership controls are unproven.
-* **Click/shuffle feedback** is **REVIEWED / DEFERRED AS A STANDALONE FEATURE;
-  CONSUMER-OWNED PRESENTATION**. The clicks are reachable from the real FPV ACE
-  statements and shuffle is incidental to owner-local attachment, but
-  autonomous clients run with `-noSound` and no listener/audience/concurrency
-  contract exists. Payload success or a sound-command call is not audible
-  evidence. The generic vehicle-sound helpers have no product caller.
+* **Small-UAV field profile** targets `UAV_01_base_F` and retains camouflage, reduced fuel use, and optional guarded ACE drag/carry behavior. Payload operation itself is independent of ACE interaction. **REVIEWED; profile owner/locality breadth remains OPTIONAL.**
+* **Payload Manager and authoritative loadout** expose one native world action, separate uniform/vest/backpack sources, ordered proposals, eight capacity units, real inventory costs, atomic refusal/rollback, and UAV-owned installed records. Grenades cost one and satchels cost eight. **REFINED; ACCEPTED / COVERED** by `fieldutils-payload-manager`, fresh run `20260828T130038Z-9f4e37a1`.
+* **Controller controls and compact HUD** use configurable Next Payload and Deploy Payload bindings, require actual eligible-UAV control, cycle only occupied records, and render the selected payload plus current binding text through the validated Pontifex theme. **REFINED; ACCEPTED / COVERED** by `fieldutils-payload-control`, fresh run `20260828T133445Z-8924da44`.
+* **Mortar payloads** are **INTENTIONALLY DEFERRED** until a coherent inventory representation exists; their absence is not an uncovered implementation. The former free counter and zero-velocity mortar behavior are not supported contracts.
+* **Payload audio/effects presentation** is consumer-owned and covered for the exact grenade/satchel effects established by the accepted deploy scenario; broad sound/pixel matrices remain optional or program-level presentation work.
 
 Full analysis: [`field-utilities-fpv-review.md`](field-utilities-fpv-review.md).
-Audio analysis:
-[`field-utilities-fpv-audio-review.md`](field-utilities-fpv-audio-review.md).
+Audio analysis: [`field-utilities-fpv-audio-review.md`](field-utilities-fpv-audio-review.md).
 
 ### 4.6 Shared libraries
 
@@ -723,10 +711,12 @@ airdrop. General fabrication is outside the contract.
 * Field Utilities reuses Vigil display/terminal skins while keeping separate
   state. **Implemented; PARTIALLY COVERED incidentally** by logistics. Nested
   lifecycle, styling, and use without Vigil are not reviewed.
-* Field Utilities cold-client ACE class-action composition is **ACCEPTED /
-  COVERED** for Bridge, Logistics, Virtual Inventory, Towing/Stow, and FPV root
-  registration, concrete-class inheritance, coexistence, and relevance through
-  ACE's installed-version active-tree adapter. Consequential effects, the
+* Field Utilities cold-client interaction composition is **ACCEPTED /
+  COVERED** for Bridge, Logistics, Virtual Inventory, and Towing/Stow ACE roots,
+  plus the Payload Manager as a native small-UAV world action with the retired FPV
+  ACE root absent. Fresh run `20260828T131009Z-fe58f9cc` proves registration,
+  concrete-class inheritance, coexistence, relevance, native/ACE separation, and
+  no discovery mutation. Consequential effects, the
   Fabricator delayed object action, client-B, and JIP remain feature-owned or
   deferred. APS plus Field Utilities composition is **ACCEPTED / COVERED** for the current authenticated client. Fresh run `20260820T223222Z-3046910b` proved four exact singleton Field roots on installed and uninstalled same-class tanks, an unchanged Field census across authenticated APS suspension/resume, exactly Resume while suspended, and exact preserved-mode APS controls after resume. Client-B/JIP, explicit uninstall, deletion, repeated init, and ownership migration remain deferred; anti-drone gameplay is not implied. See
   [`field-utilities-ace-composition-review.md`](field-utilities-ace-composition-review.md)
@@ -792,7 +782,9 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
 | `vigil-fixed-wing-modules` | authentic typed Eden aggregation, nearest points, assigned-curator add, authority/replication/cleanup |
 | `vigil-whitelist-modules` | authentic Eden whitelist aggregation and assigned-curator add/remove authority lifecycle |
-| `fieldutils-ace-composition` | cold-client Field action-root registration, inheritance, coexistence, and relevance |
+| `fieldutils-ace-composition` | cold-client retained ACE-root composition plus native Payload Manager separation |
+| `fieldutils-payload-manager` | native themed UI, separate real inventory sources, atomic authoritative installation/refusal, UAV-owned ordering, replication, cleanup |
+| `fieldutils-payload-control` | authentic live-UAV control gate, current-binding themed HUD, occupied-only cycling, grenade/satchel deployment causality, empty refusal, cleanup |
 | `fieldutils-bridge-builder` | authentic ACE entry, planning, authority, physical traversal, scoped removal, and cleanup |
 | `fieldutils-cargo-loading` | nearby authenticated exact-pair vehicle cargo loading, rejection, replication, cleanup |
 | `fieldutils-ace-cargo-policy` | selective configured ACE cargo preservation, ordinary-box negative control, authentic load/replication/cleanup |
@@ -854,24 +846,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 The ground-up audit in
 [`pontifex-remaining-work-audit-2026-08-27.md`](pontifex-remaining-work-audit-2026-08-27.md)
-is authoritative for remaining-work priority. There is no remaining MUST review
-or permanent-coverage item: `vigil-artillery` and `vigil-markers` now have
-canonical durable reviews, and the scoped completion criterion is satisfied.
-The Fabricator mission-maker local virtual-inventory action gate is accepted
-by fresh disabled/enabled proof `20260827T223431Z-731a6c43`. Representative
-ownership migration is now accepted through client-owned towing and active
-client-to-server transfer `20260827T231228Z-1b3e79a7`, independently repeated
-as packaged run `20260827T233022Z-cc14d7dd`; per-feature permutations
-remain optional unless their mechanics differ. Bridge Builder interrupted
-construction is accepted by `20260828T010359Z-31876e6c`. B4 attached-object
-repeat/delete lifecycle is accepted by `20260828T014506Z-4977d65f`; B6 exact
-VLS target retirement is accepted by corrected run
-`20260828T015701Z-5788cedb`; B7 active preview-close cleanup is accepted by
-corrected run `20260828T015243Z-eba512d9`; and B5 exact in-flight transport destruction, failed finalization, pad deletion, requester receipt, and cleanup are accepted by `20260828T031206Z-24d79c61`. No MUST or SHOULD item remains. Coordinate and tab-switch lifetime remain decision-bound. Do not begin FPV,
-APS anti-drone, CBR concurrency, reconnaissance, feedback policy, or other
-decision-bound work by inventing product semantics. Client-B/JIP and deterministic
-pond coverage remain externally blocked; arbitrary catalogue, class, terrain,
-and presentation matrices are non-blocking long-tail.
+is authoritative for remaining-work priority. The scoped campaign has no MUST or SHOULD item and is substantially complete. The decided small-UAV redesign is accepted for the native themed manager, separated real inventory, server-authoritative atomic transfer and refusal, and UAV-owned reordering by run `20260828T130038Z-9f4e37a1`; live controller gating, current-binding themed HUD, occupied-only cycling, and causal grenade/satchel deployment are accepted by run `20260828T133445Z-8924da44`. Mortars remain intentionally deferred; client-B/JIP and deterministic pond coverage remain externally blocked; broader ACE dependency removal and arbitrary catalogue, class, terrain, and presentation matrices remain outside this bounded follow-up.
 
 ## Evidence sources
 

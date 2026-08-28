@@ -2,9 +2,10 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for normal
-cold-client registration and coexistence of the Bridge, Logistics, Virtual
-Inventory, Towing/Stow, and FPV class-action roots. Their consequential effects,
+**Classification: KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for normal cold-client registration and coexistence of the Bridge, Logistics, Virtual
+Inventory, and Towing/Stow ACE class-action roots, plus the small-UAV Payload
+Manager as a native world action with the legacy FPV ACE root absent. Their
+consequential effects,
 Fabricator's delayed per-object action, client-B, and JIP remain separate
 contracts.
 
@@ -19,7 +20,7 @@ coexist exactly once, while roots whose real conditions are false stay absent.
 ### 2. What did the implementation actually do?
 
 `YFU_Client_initPlayerLocal` registers Bridge, Logistics, Virtual Inventory,
-Towing/Stow, and FPV actions in sequence. ACE 3.21 records inheritance and, when
+and Towing/Stow ACE actions plus the native small-UAV Payload Manager entry. ACE 3.21 records inheritance and, when
 its menu is compiled for a concrete target, materializes inherited actions in
 that concrete class tree. Querying only the abstract registration namespace is
 therefore an invalid absence oracle.
@@ -27,8 +28,9 @@ therefore an invalid absence oracle.
 The cold-run matrix found the expected roots on exact Bridge box, supply crate,
 land vehicle, and UAV fixtures. A nearby native vehicle-cargo candidate made the
 dynamic Logistics root active. With no Fabricator module the Virtual Inventory
-root remained inactive; with no ropes and no driver the Stow root remained
-inactive; the FPV root was active on the UAV and inactive on the MRAP.
+root remained inactive; with no ropes and no driver the Stow root remained inactive. The Payload Manager
+was present in the UAV native action list, and the retired `UAV_field_task` ACE
+root was absent from both UAV and MRAP class trees.
 
 ### 3. Which machines and lifecycle own it?
 
@@ -83,15 +85,14 @@ by exact net IDs, then all objects are removed before success.
 ### 10. Which details must remain replaceable?
 
 Labels, icons, paths beneath the product root, ACE storage layout, initializer
-organization, and interaction rendering are free to change. Coverage does not
-freeze effects or authorization of Towing, FPV, Fabricator, or cargo loading.
+organization, and interaction rendering are free to change. Coverage does not freeze effects or authorization of Towing, Payload Manager,
+Fabricator, or cargo loading.
 
 ### 11. What remains unproven or deferred?
 
 Fabricator's delayed object action depends on the unreviewed real module/sync
 entry and is excluded. Client-B/JIP registration, repeated initializer
-idempotence, action ordering, physical cargo loading, towing, FPV effects, and
-their authority boundaries retain their existing classifications.
+idempotence, action ordering, physical cargo loading and towing retain their existing classifications. Payload Manager authority/loadout and positive controller deployment are separately accepted by `fieldutils-payload-manager` and `fieldutils-payload-control`.
 
 ### 12. What belongs in Tribunal?
 
@@ -101,16 +102,6 @@ composition remain in its scenario. No new visual adapter is warranted.
 
 ## Permanent evidence
 
-Fresh autonomous run `20260820T012801Z-0212d338` passed 2 server and 4 client
-feature assertions with zero failures, in addition to the normal smoke
-assertions. It proved five exact server-local fixtures, native cargo eligibility
-`[true,true]`, all seven expected registered action instances, exact overlap
-counts, positive Bridge/Logistics/Towing/FPV relevance, negative Virtual
-Inventory/Stow/non-UAV relevance, no cargo/rope/payload mutation, and exact
-fixture cleanup. Container, network, and run-state cleanup all succeeded.
+Fresh autonomous run `20260828T131009Z-fe58f9cc` passed 2 server and 4 client feature assertions with zero failures, plus normal smoke. It proved five exact server-local fixtures, all six retained expected ACE roots, exact overlap and relevance, the native Payload Manager action on the eligible UAV, absence of the retired FPV ACE root, no cargo/rope/payload mutation, and exact cleanup. Evidence Contract v1 ingestion was idempotent and the knowledge audit passed.
 
-Earlier failed runs are retained as discriminating evidence: one queried only
-abstract ACE namespaces; another evaluated range-sensitive roots while the
-client actor remained kilometres from server-created fixtures; a third sampled
-native cargo capability before the created carrier settled. None motivated a
-product change or a weakened assertion.
+Rejected calibration `20260828T130633Z-0f38bc21` proved the new native-action and ACE-absence assertions but exposed physical drift in the composition-only carrier fixture; it is not accepted evidence. Disabling fixture physics retained the required cargo eligibility without changing product code or weakening assertions. Older adapter/range/settle calibrations remain rejected for the reasons already recorded.

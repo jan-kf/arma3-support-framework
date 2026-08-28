@@ -111,6 +111,8 @@ class YFU_BridgeBuilder_Dialog {
     };
 };
 
+#include "ui\payload_manager.hpp"
+
 class CfgVehicles {
     class Logic;
     class Module_F: Logic {

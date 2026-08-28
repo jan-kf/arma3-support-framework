@@ -30,12 +30,14 @@ class FieldUtilitiesAceCompositionTests(unittest.TestCase):
     def test_overlap_and_negative_controls_are_permanent(self) -> None:
         for action_id in (
             "YFU_BoxBridgeOpenUI_Class", "logiActions", "zenInventoryActions",
-            "TowActions", "YOSHI_StowRopes", "UAV_field_task",
+            "TowActions", "YOSHI_StowRopes",
         ):
             self.assertIn(action_id, self.scenario.client_sqf)
         self.assertIn("_inventoryAbsent", self.scenario.client_sqf)
         self.assertIn("_stowAbsent", self.scenario.client_sqf)
         self.assertIn("_fpvAbsent", self.scenario.client_sqf)
+        self.assertIn("Pontifex Payload Manager", self.scenario.client_sqf)
+        self.assertIn("actionIDs _uav", self.scenario.client_sqf)
         self.assertIn("fieldAce.cleanup", self.scenario.server_expected)
 
 
