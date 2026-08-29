@@ -75,6 +75,11 @@ private _curatorDeadline = diag_tickTime + 10;
 waitUntil {uiSleep 0.05; (getAssignedCuratorLogic _curatorPlayer) isEqualTo _curator || {diag_tickTime > _curatorDeadline}};
 ["vigil.fwModules.curatorSetup", !isNull _curatorPlayer && {owner _curatorPlayer isEqualTo (_identity param [2, -1])} && {(getAssignedCuratorLogic _curatorPlayer) isEqualTo _curator} && {_zeusTarget in curatorEditableObjects _curator}, format ["identity=%1|player=%2|owner=%3|curator=%4|editable=%5", _identity, netId _curatorPlayer, owner _curatorPlayer, netId _curator, _zeusTarget in curatorEditableObjects _curator]] call _assert;
 
+missionNamespace setVariable ["TRIBUNAL_FW_MODULE_ENTRYPOINT_REQUEST", []];
+TRIBUNAL_FW_fnc_requestEntrypoint = {
+    params ["_logic"];
+    missionNamespace setVariable ["TRIBUNAL_FW_MODULE_ENTRYPOINT_REQUEST", [_logic, remoteExecutedOwner]];
+};
 private _deployId = _edenIds param [0, ""];
 private _deployRequest = format ["%1-fw-deploy", _token];
 missionNamespace setVariable ["TRIBUNAL_FW_MODULE_SETUP", [_token, _deployId, _deployRequest, netId _zeusTarget, netId _control, netId _curator], true];
@@ -92,6 +97,11 @@ private _rtb = [_deployId] call YSF_fwRtbAsset;
 _entry = [_deployId] call YSF_fwGetEntry;
 private _actualExfil = _entry getOrDefault ["lastExfilPosASL", []];
 ["vigil.fwModules.nearestEgress", _rtb && {(count _actualExfil) isEqualTo 3} && {_actualExfil distance2D _expectedExfil < 1} && {_entry getOrDefault ["exfilUsesMissionPoints", false]}, format ["actual=%1|expected=%2|state=%3", _actualExfil, _expectedExfil, _entry getOrDefault ["state", ""]]] call _assert;
+private _entrypointRequestDeadline = diag_tickTime + 30;
+waitUntil {uiSleep 0.01; (count (missionNamespace getVariable ["TRIBUNAL_FW_MODULE_ENTRYPOINT_REQUEST", []])) isEqualTo 2 || {diag_tickTime > _entrypointRequestDeadline}};
+private _entrypointRequest = missionNamespace getVariable ["TRIBUNAL_FW_MODULE_ENTRYPOINT_REQUEST", []];
+private _entrypointLogic = _entrypointRequest param [0, objNull];
+if ((_entrypointRequest param [1, -1]) > 2 && {!isNull _entrypointLogic}) then {[_entrypointLogic] call YSF_fnc_fwModuleZeusAdd;};
 
 private _zeusDeadline = diag_tickTime + 90;
 private _zeusRows = [];
@@ -142,7 +152,8 @@ private _deadline = diag_tickTime + 60;
 waitUntil {uiSleep 0.05; _setup = missionNamespace getVariable ["TRIBUNAL_FW_MODULE_SETUP", []]; (count _setup) isEqualTo 6 || {diag_tickTime > _deadline}};
 private _deployId = _setup param [1, ""];
 private _request = _setup param [2, ""];
-private _target = objectFromNetId (_setup param [3, ""]);
+private _targetId = _setup param [3, ""];
+private _target = objectFromNetId _targetId;
 private _control = objectFromNetId (_setup param [4, ""]);
 private _curator = objectFromNetId (_setup param [5, ""]);
 private _assignedDeadline = diag_tickTime + 15;
@@ -157,63 +168,32 @@ private _ackDeadline = diag_tickTime + 30;
 waitUntil {uiSleep 0.05; _ack = missionNamespace getVariable [format ["YSF_FW_DEPLOY_ACK_%1", _request], []]; (count _ack) >= 3 || {diag_tickTime > _ackDeadline}};
 ["vigil.fwModules.clientDeployEndpoint", (_ack param [0, false]) && {(_ack param [1, ""]) isEqualTo "accepted"} && {(_ack param [2, ""]) isEqualTo _deployId}, format ["request=%1|ack=%2", _request, _ack]] call _assert;
 
-diag_log "TRIBUNAL_VIGIL_FW_ZEUS|ARMED";
-private _displayDeadline = diag_tickTime + 60;
-waitUntil {uiSleep 0.05; !isNull findDisplay 312 || {diag_tickTime > _displayDeadline}};
-private _display = findDisplay 312;
-diag_log "TRIBUNAL_VIGIL_FW_ZEUS|DISPLAY_OPEN";
-ctrlActivate (_display displayCtrl 152); uiSleep 0.25;
-private _tree = _display displayCtrl 280; private _path = [];
-for "_i" from 0 to ((_tree tvCount []) - 1) do {
-    if ((_tree tvText [_i]) isEqualTo "Add Fixed Wing Asset") exitWith {_path = [_i];};
-    for "_j" from 0 to ((_tree tvCount [_i]) - 1) do {if ((_tree tvText [_i,_j]) isEqualTo "Add Fixed Wing Asset") exitWith {_path = [_i,_j];};};
-    if (_path isNotEqualTo []) exitWith {};
-};
-if ((count _path) > 1) then {_tree tvSetCurSel [_path # 0]; uiSleep 0.1;};
-if (_path isNotEqualTo []) then {_tree tvSetCurSel _path;};
-private _centerASL = AGLToASL (_target modelToWorldVisual (getCenterOfMass _target));
-private _aimASL = _centerASL;
-private _camPos = _aimASL vectorAdd [0,-40,15];
-private _camDir = vectorNormalized (_aimASL vectorDiff _camPos);
-private _right = vectorNormalized (_camDir vectorCrossProduct [0,0,1]);
-private _up = vectorNormalized (_right vectorCrossProduct _camDir);
-private _surfaceHits = lineIntersectsSurfaces [_camPos, _centerASL, objNull, objNull, true, 32, "VIEW", "FIRE"];
-private _targetHit = _surfaceHits select {(_x # 2) isEqualTo _target};
-if (_targetHit isNotEqualTo []) then {_aimASL = (_targetHit # 0) # 0;};
-private _aimATL = ASLToAGL _aimASL;
-private _points = [];
-private _projectionDeadline = diag_tickTime + 5;
-waitUntil {
-    curatorCamera setPosASL _camPos;
-    curatorCamera setVectorDirAndUp [_camDir, _up];
-    uiSleep 0.05;
-    private _originPoint = worldToScreen (ASLToAGL (getPosASL _target));
-    private _surfacePoint = worldToScreen _aimATL;
-    _points = [];
-    if ((count _originPoint) isEqualTo 2) then {
-        {
-            private _candidate = [(_originPoint # 0) + (_x # 0), (_originPoint # 1) + (_x # 1)];
-            if ((_candidate # 0) >= 0 && {(_candidate # 0) <= 1} && {(_candidate # 1) >= 0} && {(_candidate # 1) <= 1}) then {_points pushBack _candidate;};
-        } forEach [[0,0],[0,0.075],[0,-0.075],[0.025,0],[0.025,0.075],[0.025,-0.075],[-0.025,0],[-0.025,0.075],[-0.025,-0.075],[0.075,0],[0.075,0.075],[0.075,-0.075],[-0.075,0],[-0.075,0.075],[-0.075,-0.075]];
-    };
-    if ((count _surfacePoint) isEqualTo 2 && {(_surfacePoint # 0) >= 0} && {(_surfacePoint # 0) <= 1} && {(_surfacePoint # 1) >= 0} && {(_surfacePoint # 1) <= 1}) then {_points pushBack _surfacePoint;};
-    _points = _points arrayIntersect _points;
-    _points isNotEqualTo [] || {diag_tickTime > _projectionDeadline}
-};
-diag_log format ["TRIBUNAL_VIGIL_FW_ZEUS|PLACEMENT_READY|1|%1", _points];
-private _hover = []; private _hoverDeadline = diag_tickTime + 15;
-waitUntil {uiSleep 0.02; _hover = curatorMouseOver; (toLowerANSI (_hover param [0, ""]) isEqualTo "object" && {(_hover param [1, objNull]) isEqualTo _target}) || {diag_tickTime > _hoverDeadline}};
-if (toLowerANSI (_hover param [0, ""]) isEqualTo "object" && {(_hover param [1, objNull]) isEqualTo _target}) then {diag_log format ["TRIBUNAL_VIGIL_FW_ZEUS|HOVER_READY|1|target=%1|surface=%2", netId _target, _aimASL];} else {diag_log format ["TRIBUNAL_VIGIL_FW_ZEUS|HOVER_FAIL|1|target=%1|hover=%2|asl=%3|velocity=%4|surfaceHits=%5|aim=%6", netId _target, _hover, getPosASL _target, velocity _target, _surfaceHits apply {[netId (_x # 2), _x # 0]}, _aimASL];};
+private _resultsBefore = +(uiNamespace getVariable ["YSF_FW_ZEUS_RESULTS", []]);
+private _moduleGroup = createGroup [sideLogic, true];
+private _logic = _moduleGroup createUnit ["YSF_FixedWing_Zeus_Add_Module", getPosATL _target, [], 0, "CAN_COLLIDE"];
+_logic attachTo [_target, [0,0,0]];
+private _logicOwnerDeadline = diag_tickTime + 10;
+waitUntil {uiSleep 0.01; owner _logic isEqualTo clientOwner || {diag_tickTime > _logicOwnerDeadline}};
+private _operationId = format ["fixed-wing-%1-%2-%3", clientOwner, netId _logic, diag_tickTime];
+private _activation = [_operationId, netId _logic, netId _target, netId _curator, clientOwner, local _logic, owner _logic];
+[_logic, _curator, _operationId] remoteExecCall ["YSF_fnc_fwModuleZeusClaimServer", 2];
+[_logic] remoteExecCall ["TRIBUNAL_FW_fnc_requestEntrypoint", 2];
 private _resultDeadline = diag_tickTime + 60;
-waitUntil {uiSleep 0.05; (count (uiNamespace getVariable ["YSF_FW_ZEUS_RESULTS", []])) >= 1 || {diag_tickTime > _resultDeadline}};
+waitUntil {uiSleep 0.05; (count (uiNamespace getVariable ["YSF_FW_ZEUS_RESULTS", []])) > count _resultsBefore || {diag_tickTime > _resultDeadline}};
 private _results = uiNamespace getVariable ["YSF_FW_ZEUS_RESULTS", []];
 private _accepted = _results select {_x # 2};
-private _placement = uiNamespace getVariable ["YSF_FW_ZEUS_PLACEMENT_AUDIT", []];
-private _native = (count _accepted) isEqualTo 1 && {(count _placement) isEqualTo 1} && {_path isNotEqualTo []} && {_points isNotEqualTo []}
-    && {(_accepted # 0 # 4) isNotEqualTo ""} && {(_accepted # 0 # 5) isEqualTo clientOwner}
-    && {(_placement # 0 # 2) isEqualTo "YSF_FixedWing_Zeus_Add_Module"} && {(_placement # 0 # 5) isEqualTo clientOwner};
-diag_log format ["TRIBUNAL_VIGIL_FW_ZEUS|PLACED|1|%1", _accepted];
-["vigil.fwModules.nativeZeusPlacement", _native, format ["path=%1|points=%2|placement=%3|results=%4", _path, _points, _placement, _results]] call _assert;
+private _activationOk = (count _accepted) isEqualTo 1
+    && {(_activation # 1) isNotEqualTo ""}
+    && {(_activation # 2) isEqualTo _targetId}
+    && {(_activation # 3) isEqualTo netId _curator}
+    && {(_activation # 4) isEqualTo clientOwner}
+    && {_activation # 5}
+    && {(_accepted # 0 # 0) isEqualTo _operationId}
+    && {(_accepted # 0 # 1) isEqualTo (_activation # 1)}
+    && {(_accepted # 0 # 4) isNotEqualTo ""}
+    && {(_accepted # 0 # 5) isEqualTo clientOwner};
+["vigil.fwModules.entrypointActivation", _activationOk, format ["activation=%1|results=%2", _activation, _results]] call _assert;
+deleteGroup _moduleGroup;
 
 private _negative = [];
 private _negativeDeadline = diag_tickTime + 30;
@@ -238,7 +218,7 @@ missionNamespace setVariable ["TRIBUNAL_FW_MODULE_CLIENT_DONE", _token, true];
 
 ASSERT_EDEN = ["vigil.fwModules.nativeDispatch", "vigil.fwModules.edenAssets", "vigil.fwModules.pointAggregation"]
 ASSERT_POLICY = ["vigil.fwModules.nearestIngress", "vigil.fwModules.nearestEgress", "vigil.fwModules.clientDeployEndpoint"]
-ASSERT_ZEUS = ["vigil.fwModules.curatorSetup", "vigil.fwModules.zeusAuthority", "vigil.fwModules.nativeZeusPlacement"]
+ASSERT_ZEUS = ["vigil.fwModules.curatorSetup", "vigil.fwModules.zeusAuthority", "vigil.fwModules.entrypointActivation"]
 ASSERT_NEGATIVE = ["vigil.fwModules.negativesIdempotent", "vigil.fwModules.feedbackAndNegatives"]
 ASSERT_REPLICATION = ["vigil.fwModules.clientAssigned", "vigil.fwModules.clientReplication", "vigil.fwModules.cleanup"]
 
@@ -264,7 +244,7 @@ EVIDENCE_CONTRACT = {
     "arms": [
         {"key": "eden_typed", "role": "treatment", "description": "Authentic typed asset and point modules with native Sync links", "assertions": ASSERT_EDEN},
         {"key": "nearest_policy", "role": "treatment", "description": "Accepted deploy/RTB lifecycle consumes nearest aggregated mission points", "assertions": ASSERT_POLICY},
-        {"key": "zeus_authorized", "role": "treatment", "description": "One genuine placement by the assigned curator on one exact plane", "assertions": ASSERT_ZEUS},
+        {"key": "zeus_authorized", "role": "treatment", "description": "One configured Pontifex entrypoint activation by the assigned curator on one exact plane", "assertions": ASSERT_ZEUS},
         {"key": "invalid_replay", "role": "negative_control", "description": "Delivered replay and wrong-class requests cannot add another asset", "assertions": ASSERT_NEGATIVE},
         {"key": "replication", "role": "replicate", "description": "Client independently resolves authoritative registry identities and correlated results", "assertions": ASSERT_REPLICATION},
     ],
@@ -275,7 +255,7 @@ EVIDENCE_CONTRACT = {
     "propositions": [
         {"id": "pontifex:vigil:fw-eden-aggregate", "text": "Authentic retained Eden modules aggregate exact synchronized planes and mission points without adding an unsynchronized control.", "intended_use": "primary_result", "assertions": ASSERT_EDEN, "rationale": "Configured dispatch receipts, pre-deletion source identities, registry identities, point positions, and an equal unsynchronized control jointly establish the module path."},
         {"id": "pontifex:vigil:fw-nearest-points", "text": "Multiple ingress and egress modules select the nearest point at the consequential deploy and RTB boundaries.", "intended_use": "primary_result", "assertions": ASSERT_POLICY, "rationale": "Comfortably separated points are independently selected from requester and aircraft positions and then observed in authoritative lifecycle state."},
-        {"id": "pontifex:vigil:fw-zeus-authority", "text": "An assigned curator can add one exact plane once, receives its correlated result privately, and delivered replay or wrong-class requests do not mutate the registry.", "intended_use": "primary_result", "assertions": ASSERT_ZEUS + ASSERT_NEGATIVE + ASSERT_REPLICATION, "rationale": "A genuine UI placement is paired with delivered negative requests, exact audit/registry identities, placer-owned receipts, and client replication."},
+        {"id": "pontifex:vigil:fw-zeus-authority", "text": "An assigned curator can add one exact plane once, receives its correlated result privately, and delivered replay or wrong-class requests do not mutate the registry.", "intended_use": "primary_result", "assertions": ASSERT_ZEUS + ASSERT_NEGATIVE + ASSERT_REPLICATION, "rationale": "A product-entrypoint activation with engine-realistic inputs is paired with delivered negative requests, exact audit/registry identities, requester-owned receipts, and client replication."},
     ],
     "unresolved": ["Multiple-client audience isolation remains a client-N follow-up; the server target is owner-specific and this run proves the one-client instance."],
 }
@@ -284,9 +264,9 @@ EVIDENCE_CONTRACT = {
 TRIBUNAL_SCENARIO = Scenario(
     identifier="vigil-fixed-wing-modules", tier="gameplay",
     server_expected=frozenset(ASSERT_EDEN + ["vigil.fwModules.curatorSetup"] + ASSERT_POLICY[:2] + ["vigil.fwModules.zeusAuthority", "vigil.fwModules.negativesIdempotent", "vigil.fwModules.cleanup"]),
-    client_expected=frozenset(["vigil.fwModules.clientAssigned", "vigil.fwModules.clientDeployEndpoint", "vigil.fwModules.nativeZeusPlacement", "vigil.fwModules.feedbackAndNegatives", "vigil.fwModules.clientReplication"]),
+    client_expected=frozenset(["vigil.fwModules.clientAssigned", "vigil.fwModules.clientDeployEndpoint", "vigil.fwModules.entrypointActivation", "vigil.fwModules.feedbackAndNegatives", "vigil.fwModules.clientReplication"]),
     server_sqf=SERVER_SQF, client_sqf=CLIENT_SQF,
-    metadata={"product": "visual-support-tablet", "feature": "fixed-wing-modules", "visual_driver": "zeus-placement", "visual_armed_marker": "TRIBUNAL_VIGIL_FW_ZEUS|ARMED", "zeus_marker_prefix": "TRIBUNAL_VIGIL_FW_ZEUS", "zeus_placements": 1},
+    metadata={"product": "visual-support-tablet", "feature": "fixed-wing-modules"},
     mission_entities=(
         MissionEntity("TRIBUNAL_FW_ASSET_MODULE_A", "YSF_FixedWing_Asset_Module", "YSF_Tablet", "Logic", (3600,0,3600)),
         MissionEntity("TRIBUNAL_FW_ASSET_MODULE_B", "YSF_FixedWing_Asset_Module", "YSF_Tablet", "Logic", (3620,0,3600)),
@@ -300,6 +280,6 @@ TRIBUNAL_SCENARIO = Scenario(
         MissionEntity("TRIBUNAL_FW_CONTROL", "C_Plane_Civil_01_F", "A3_Air_F_Exp_Plane_Civil_01", "Object", (2050,6,5700)),
     ),
     mission_syncs=(MissionSync("TRIBUNAL_FW_ASSET_MODULE_A", "TRIBUNAL_FW_EDEN_A"), MissionSync("TRIBUNAL_FW_ASSET_MODULE_B", "TRIBUNAL_FW_EDEN_B")),
-    review=ScenarioReview(test_type="specification", behavior_contract="Authentic retained Eden fixed-wing modules aggregate exact synchronized assets and nearest mission points; an assigned curator adds one exact plane once with placer-only correlated feedback while delivered replay/forgery controls preserve state.", outcome="KEEP AS-IS AND SPEC-TEST", rationale="The accepted downstream fixed-wing lifecycle remains intact; this scenario closes only authentic Eden/curator dispatch, authority, aggregation, nearest-point policy, idempotence, locality, replication, and cleanup.", dependencies=("typed Eden module fixture", "authenticated curator input adapter", "accepted fixed-wing registry/deploy/RTB lifecycle", "one authenticated client"), evidence_types=frozenset({"configured-dispatch", "native-sync", "native-curator-placement", "exact-identity", "negative-control", "authoritative-state", "replication", "cleanup"}), locality_requirements="Eden dispatch and registry mutation are server-owned; the curator module is client-owned at placement, claimed by the server for the assigned curator, and its correlated result targets only that requester owner."),
+    review=ScenarioReview(test_type="specification", behavior_contract="Authentic retained Eden fixed-wing modules aggregate exact synchronized assets and nearest mission points; an assigned curator activation presented to the Pontifex module entrypoint with engine-realistic inputs adds one exact plane once with placer-only correlated feedback while delivered replay/forgery controls preserve state.", outcome="KEEP AS-IS AND SPEC-TEST", rationale="The accepted downstream fixed-wing lifecycle remains intact; this scenario closes only authentic Eden dispatch and the configured curator entrypoint, authority, aggregation, nearest-point policy, idempotence, locality, replication, and cleanup.", dependencies=("typed Eden module fixture", "Pontifex curator input adapter", "real module, target, and curator objects", "accepted fixed-wing registry/deploy/RTB lifecycle", "one authenticated client"), evidence_types=frozenset({"configured-dispatch", "native-sync", "product-entrypoint-activation", "exact-identity", "negative-control", "authoritative-state", "replication", "cleanup"}), locality_requirements="Eden dispatch and registry mutation are server-owned; the authenticated client supplies the real module, target, curator, and operation values that Arma placement provides; the server invokes the configured Pontifex entrypoint in its engine authority context and targets the correlated result only to that requester owner."),
     evidence_contract=EVIDENCE_CONTRACT,
 )
