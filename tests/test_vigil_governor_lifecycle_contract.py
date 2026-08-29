@@ -15,10 +15,10 @@ from tribunal.discovery import discover  # noqa: E402
 class VigilGovernorLifecycleContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.governor = (
-            ROOT / "source/visual-support-tablet/addons/VIGIL/functions/governor/fn_governor.sqf"
+            ROOT / "mods/visual-support-tablet/addons/VIGIL/functions/governor/fn_governor.sqf"
         ).read_text()
         self.scenario = discover(
-            [ROOT / "source/visual-support-tablet/tests/tribunal"]
+            [ROOT / "mods/visual-support-tablet/tests/tribunal"]
         )["vigil-governor-lifecycle"]
 
     def test_terminal_causes_share_finalization_path(self) -> None:

@@ -51,10 +51,10 @@ SECCOMP_PROFILE = CLIENT_SECURITY / "pontifex-steam-seccomp.json"
 APPARMOR_PROFILE = CLIENT_SECURITY / "pontifex-steam.apparmor"
 APPARMOR_NAME = "pontifex-steam"
 FEATURE_SCENARIOS = discover([
-    ROOT / "source" / "core" / "tests" / "tribunal",
-    ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
-    ROOT / "source" / "field-utilities" / "tests" / "tribunal",
-    ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
+    ROOT / "mods" / "core" / "tests" / "tribunal",
+    ROOT / "mods" / "advanced-systems" / "tests" / "tribunal",
+    ROOT / "mods" / "field-utilities" / "tests" / "tribunal",
+    ROOT / "mods" / "visual-support-tablet" / "tests" / "tribunal",
 ])
 FRAMEWORK_SCENARIOS = discover([TRIBUNAL_ROOT / "tribunal" / "scenarios"])
 ALL_SCENARIOS = {**FRAMEWORK_SCENARIOS, **FEATURE_SCENARIOS}

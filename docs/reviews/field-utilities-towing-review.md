@@ -123,7 +123,7 @@ a context-free engine theorem, so zero generic distillation is correct.
 
 ## Permanent evidence
 
-Scenario: `source/field-utilities/tests/tribunal/towing.py`.
+Scenario: `mods/field-utilities/tests/tribunal/towing.py`.
 
 Fresh run `20260823T190019Z-39badbd1`:
 

@@ -11,7 +11,7 @@ from tribunal.discovery import discover
 class FabricatorUiContractTests(unittest.TestCase):
     def setUp(self):
         self.scenario = discover([
-            ROOT / "source" / "field-utilities" / "tests" / "tribunal"
+            ROOT / "mods" / "field-utilities" / "tests" / "tribunal"
         ])["fieldutils-fabricator-ui"]
 
     def test_evidence_contract_covers_every_permanent_assertion(self):

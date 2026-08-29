@@ -40,27 +40,27 @@ class TribunalArtilleryTests(unittest.TestCase):
         self.assertIn('TRIBUNAL_ARTILLERY|%1|TERMINAL', source)
 
     def test_long_artillery_flight_completes_before_client_ack_window(self) -> None:
-        scenario = (Path(__file__).parents[1] / "source/visual-support-tablet/tests/tribunal/vigil_artillery.py").read_text(encoding="utf-8")
+        scenario = (Path(__file__).parents[1] / "mods/visual-support-tablet/tests/tribunal/vigil_artillery.py").read_text(encoding="utf-8")
         self.assertIn('missionNamespace setVariable ["TRIBUNAL_VIGIL_ARTILLERY_COMPLETE", _token, true]', scenario)
         self.assertIn("private _completionDeadline = diag_tickTime + 300;", scenario)
         self.assertIn('(missionNamespace getVariable ["TRIBUNAL_VIGIL_ARTILLERY_COMPLETE", ""]) isEqualTo _token', scenario)
 
     def test_vls_scenario_proves_exact_product_target_deletion(self) -> None:
-        scenario = (Path(__file__).parents[1] / "source/visual-support-tablet/tests/tribunal/vigil_artillery.py").read_text(encoding="utf-8")
+        scenario = (Path(__file__).parents[1] / "mods/visual-support-tablet/tests/tribunal/vigil_artillery.py").read_text(encoding="utf-8")
         self.assertIn('private _vlsTargetsBefore = allMissionObjects "Land_HelipadEmpty_F";', scenario)
         self.assertIn('!(_x in _vlsTargetsBefore) && {_x distance2D _vlsTarget < 2}', scenario)
         self.assertIn('&& {(count _vlsOwnedTargets) isEqualTo 1}', scenario)
         self.assertIn('&& {(_vlsOwnedTargets # 0) isEqualTo _vlsProductTarget}', scenario)
         self.assertIn('waitUntil {uiSleep 0.1; isNull _vlsProductTarget', scenario)
         self.assertIn('["vigil.artillery.vls.targetCleanup", _vlsTargetCleanupOk', scenario)
-        product_source = (Path(__file__).parents[1] / "source/visual-support-tablet/addons/VIGIL/functions/task_artillery/fn_artillery_task.sqf").read_text(encoding="utf-8")
+        product_source = (Path(__file__).parents[1] / "mods/visual-support-tablet/addons/VIGIL/functions/task_artillery/fn_artillery_task.sqf").read_text(encoding="utf-8")
         self.assertIn('private _target = createVehicle ["Land_HelipadEmpty_F", _position', product_source)
         self.assertIn('[_target] spawn {params ["_t"]; sleep 100; deleteVehicle _t;};', product_source)
 
     def test_evidence_contract_covers_every_feature_assertion_once(self) -> None:
         root = Path(__file__).parents[1]
         scenario = discover([
-            root / "source" / "visual-support-tablet" / "tests" / "tribunal"
+            root / "mods" / "visual-support-tablet" / "tests" / "tribunal"
         ])["vigil-artillery"]
         contract = scenario.evidence_contract
         self.assertEqual(contract["scenario"]["id"], scenario.identifier)

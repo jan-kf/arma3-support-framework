@@ -41,11 +41,11 @@ claims from that earlier pass — it should be read before acting on anything in
 
 ### Code surface
 
-* `source/visual-support-tablet/addons/VIGIL/functions/task_transport/fn_transport.sqf:80`
+* `mods/visual-support-tablet/addons/VIGIL/functions/task_transport/fn_transport.sqf:80`
   (dispatch) and `:92` (RTB)
-* `source/visual-support-tablet/addons/VIGIL/functions/task_transport/fn_transport_task.sqf:23`, `:41-43`, `:137-140`
-* `source/visual-support-tablet/addons/VIGIL/functions/global/fn_heliStabilizer.sqf`
-* `source/visual-support-tablet/addons/VIGIL/functions/task_cas/fn_cas_task.sqf:152`
+* `mods/visual-support-tablet/addons/VIGIL/functions/task_transport/fn_transport_task.sqf:23`, `:41-43`, `:137-140`
+* `mods/visual-support-tablet/addons/VIGIL/functions/global/fn_heliStabilizer.sqf`
+* `mods/visual-support-tablet/addons/VIGIL/functions/task_cas/fn_cas_task.sqf:152`
 
 ### Directly observed facts (CODE)
 
@@ -131,8 +131,8 @@ decision; no experiment needed to pose the question).
 
 ### Code surface
 
-* `source/visual-support-tablet/addons/VIGIL/functions/task_cas/fn_airAutoEngage.sqf:10`, `:16-22`, `:114`, `:153`, `:200`, `:544`, `:550`
-* `source/core/addons/CORDIS/functions/global/fn_core.sqf:468-487`
+* `mods/visual-support-tablet/addons/VIGIL/functions/task_cas/fn_airAutoEngage.sqf:10`, `:16-22`, `:114`, `:153`, `:200`, `:544`, `:550`
+* `mods/core/addons/CORDIS/functions/global/fn_core.sqf:468-487`
 
 ### Directly observed facts (CODE)
 
@@ -209,10 +209,10 @@ re-stated to account for consumers that pass their own setting name to
 
 ### Code surface
 
-* `source/field-utilities/addons/FieldUtils/functions/global/fn_objectHandling.sqf:91`
-* `source/field-utilities/addons/FieldUtils/functions/server/fn_initServer.sqf` (postInit sweep and `EntityCreated`)
-* `source/field-utilities/addons/FieldUtils/config.cpp:238` (`YFU_Bridge_Box`)
-* `source/advanced-systems/addons/AdvSys/config.cpp:176` (`YAS_OPHANIM_box`)
+* `mods/field-utilities/addons/FieldUtils/functions/global/fn_objectHandling.sqf:91`
+* `mods/field-utilities/addons/FieldUtils/functions/server/fn_initServer.sqf` (postInit sweep and `EntityCreated`)
+* `mods/field-utilities/addons/FieldUtils/config.cpp:238` (`YFU_Bridge_Box`)
+* `mods/advanced-systems/addons/AdvSys/config.cpp:176` (`YAS_OPHANIM_box`)
 
 ### Directly observed facts (CODE)
 
@@ -288,7 +288,7 @@ product decision).
 
 ### Code surface
 
-`source/core/addons/CORDIS/functions/global/fn_core.sqf` — `:124`
+`mods/core/addons/CORDIS/functions/global/fn_core.sqf` — `:124`
 (`YCD_fnc_pruneLocalOnceCache`), `:139` (`YCD_fnc_claimLocalOnceKey`), `:286`
 (`YCD_fnc_targetsFromSide`), `:39` (`YCD_fnc_runOnServer`), `:292`
 (`YCD_fnc_resolveTargets`).
@@ -316,7 +316,7 @@ then filters; `YCD_fnc_resolveTargets`' `case "SIDE"` **repeats that expression
 inline** rather than calling it.
 
 `YCD_fnc_runOnServer` has no product caller. Its only callers in the repository
-are two lines of `source/core/tests/tribunal/cordis_routing.py`.
+are two lines of `mods/core/tests/tribunal/cordis_routing.py`.
 
 ### Why it looks suspicious
 
@@ -360,8 +360,8 @@ depends on). **Difficulty: low.**
 
 ### Code surface
 
-* `source/visual-support-tablet/addons/VIGIL/functions/server/fn_initServer.sqf:21`
-* `source/visual-support-tablet/addons/VIGIL/functions/global/fn_heliStabilizer.sqf:12`, `:24-27`, `:49`
+* `mods/visual-support-tablet/addons/VIGIL/functions/server/fn_initServer.sqf:21`
+* `mods/visual-support-tablet/addons/VIGIL/functions/global/fn_heliStabilizer.sqf:12`, `:24-27`, `:49`
 
 ### Directly observed facts (CODE)
 
@@ -415,9 +415,9 @@ that was never written?
 
 ### Code surface
 
-* `source/visual-support-tablet/addons/VIGIL/functions/global/fn_fwLaserTest.sqf:1-9`
-* `source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf:13-16`
-* `source/visual-support-tablet/addons/VIGIL/config.cpp` (`class Global` preInit order)
+* `mods/visual-support-tablet/addons/VIGIL/functions/global/fn_fwLaserTest.sqf:1-9`
+* `mods/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf:13-16`
+* `mods/visual-support-tablet/addons/VIGIL/config.cpp` (`class Global` preInit order)
 
 ### Directly observed facts (CODE)
 
@@ -682,8 +682,8 @@ once per family would be far cheaper than eleven separate reviews.
 
 ## Method notes and limits
 
-"No caller" is a textual cross-reference over `source/`,
-`source/*/tests/tribunal/`, `tests/`, `tools/` and `tribunal/`, excluding each
+"No caller" is a textual cross-reference over `mods/`,
+`mods/*/tests/tribunal/`, `tests/`, `tools/` and `tribunal/`, excluding each
 symbol's own definition line. A symbol reached only through a runtime-composed
 string, a `remoteExec` target named at runtime, a config `function =` entry, or a
 mission-authored call from outside the repository would be misreported. Every

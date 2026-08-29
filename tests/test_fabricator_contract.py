@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
-ADDON = ROOT / "source" / "field-utilities" / "addons" / "FieldUtils"
+ADDON = ROOT / "mods" / "field-utilities" / "addons" / "FieldUtils"
 SERVER = ADDON / "functions" / "server" / "fn_fabricatorServer.sqf"
 ASSETS = ADDON / "functions" / "fabricator" / "fn_assets.sqf"
 PACKING = ADDON / "functions" / "fabricator" / "fn_boxPacking.sqf"
@@ -26,8 +26,8 @@ ACTIONS = ADDON / "functions" / "fabricator" / "fn_fabricationActions.sqf"
 SETTERS = ADDON / "functions" / "global" / "fn_initModuleLogicSetters.sqf"
 CLONE = ADDON / "functions" / "global" / "fn_fabricator.sqf"
 CONFIG = ADDON / "config.cpp"
-VIGIL_FW = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL" / "functions" / "task_fixedWing" / "fn_initFixedWingFunctions.sqf"
-SCENARIO = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
+VIGIL_FW = ROOT / "mods" / "visual-support-tablet" / "addons" / "VIGIL" / "functions" / "task_fixedWing" / "fn_initFixedWingFunctions.sqf"
+SCENARIO = ROOT / "mods" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
 
 
 def read(path: Path) -> str:
@@ -286,7 +286,7 @@ class FabricatorScenarioTests(unittest.TestCase):
     def test_client_replication_wait_is_bounded_and_identity_preserving(self) -> None:
         import importlib.util
 
-        path = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
+        path = ROOT / "mods" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
         spec = importlib.util.spec_from_file_location("fabricator_scenario_replication", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -300,7 +300,7 @@ class FabricatorScenarioTests(unittest.TestCase):
 
         import importlib.util
 
-        path = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
+        path = ROOT / "mods" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
         spec = importlib.util.spec_from_file_location("fabricator_scenario", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -318,7 +318,7 @@ class FabricatorScenarioTests(unittest.TestCase):
     def test_the_scenario_proves_absence_mission_wide_not_near_the_player(self) -> None:
         import importlib.util
 
-        path = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
+        path = ROOT / "mods" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
         spec = importlib.util.spec_from_file_location("fabricator_scenario", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -333,7 +333,7 @@ class FabricatorScenarioTests(unittest.TestCase):
     def test_adversarial_controls_require_server_receipt_evidence(self) -> None:
         import importlib.util
 
-        path = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
+        path = ROOT / "mods" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
         spec = importlib.util.spec_from_file_location("fabricator_scenario_receipts", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -352,7 +352,7 @@ class FabricatorScenarioTests(unittest.TestCase):
     def test_watchdog_and_retirement_are_exercised_not_only_inspected(self) -> None:
         import importlib.util
 
-        path = ROOT / "source" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
+        path = ROOT / "mods" / "field-utilities" / "tests" / "tribunal" / "fabricator.py"
         spec = importlib.util.spec_from_file_location("fabricator_scenario_lifecycle", path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

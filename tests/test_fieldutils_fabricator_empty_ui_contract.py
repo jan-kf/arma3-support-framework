@@ -11,7 +11,7 @@ from tribunal.discovery import discover
 class FabricatorEmptyUiContractTests(unittest.TestCase):
     def setUp(self):
         self.scenario = discover([
-            ROOT / "source" / "field-utilities" / "tests" / "tribunal"
+            ROOT / "mods" / "field-utilities" / "tests" / "tribunal"
         ])["fieldutils-fabricator-empty-ui"]
 
     def test_evidence_contract_covers_every_permanent_assertion(self):
@@ -51,7 +51,7 @@ class FabricatorEmptyUiContractTests(unittest.TestCase):
             self.assertIn(token, server)
 
     def test_page_initialization_clears_stale_selection(self):
-        assets = (ROOT / "source/field-utilities/addons/FieldUtils/functions/fabricator/fn_assets.sqf").read_text(encoding="utf-8")
+        assets = (ROOT / "mods/field-utilities/addons/FieldUtils/functions/fabricator/fn_assets.sqf").read_text(encoding="utf-8")
         init = assets[assets.index("YFU_assetsInitPage = {"):assets.index("YFU_assetsQueueKeyForObject = {")]
         self.assertIn('uiNamespace setVariable ["YFU_selected_fabricator_item", objNull];', init)
 

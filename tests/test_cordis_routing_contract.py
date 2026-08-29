@@ -13,7 +13,7 @@ import pontifex_multiplayer as multiplayer  # noqa: E402
 
 class CordisRoutingContractTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.core = (ROOT / "source/core/addons/CORDIS/functions/global/fn_core.sqf").read_text(encoding="utf-8")
+        self.core = (ROOT / "mods/core/addons/CORDIS/functions/global/fn_core.sqf").read_text(encoding="utf-8")
         self.scenario = multiplayer.FEATURE_SCENARIOS["cordis-routing"]
 
     def test_unknown_operations_fail_closed_before_dispatch(self) -> None:

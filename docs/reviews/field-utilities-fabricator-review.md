@@ -18,7 +18,7 @@ flight/delivery remains covered as a composite by `vigil-fixed-wing-logistics`.
 Bridge Builder, towing, FPV, and ropes are out of scope. The ZEN
 virtual-inventory action is in scope only for its registration condition.
 
-Source: `source/field-utilities/addons/FieldUtils/`, principally
+Source: `mods/field-utilities/addons/FieldUtils/`, principally
 `functions/fabricator/fn_assets.sqf`, `functions/fabricator/fn_boxPacking.sqf`,
 `functions/fabricator/fn_fabricationActions.sqf`,
 `functions/global/fn_fabricator.sqf`,

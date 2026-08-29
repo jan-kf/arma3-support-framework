@@ -68,7 +68,7 @@ run_check() {
     local component
     for component in "${COMPONENTS[@]}"; do
         echo "== check: $component =="
-        (cd "$ROOT/source/$component" && "$HEMTT" check)
+        (cd "$ROOT/mods/$component" && "$HEMTT" check)
     done
     python3 -m py_compile "$ROOT/tools/pontifex_server.py"
     python3 -m py_compile "$ROOT/tools/pontifex_multiplayer.py"
@@ -88,9 +88,9 @@ run_build() {
         mod_dir="${MOD_DIRS[$i]}"
         pbo_name="${PBO_NAMES[$i]}"
         echo "== build: $component =="
-        (cd "$ROOT/source/$component" && "$HEMTT" build)
+        (cd "$ROOT/mods/$component" && "$HEMTT" build)
         mkdir -p "$stage/$mod_dir"
-        cp -a "$ROOT/source/$component/.hemttout/build/." "$stage/$mod_dir/"
+        cp -a "$ROOT/mods/$component/.hemttout/build/." "$stage/$mod_dir/"
         built_pbo=$(find "$stage/$mod_dir/addons" -maxdepth 1 -type f -name '*.pbo' -print -quit)
         mv "$built_pbo" "$stage/$mod_dir/addons/$pbo_name.pbo"
     done

@@ -9,9 +9,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 SETTING_FILES = {
-    "advanced": ROOT / "source/advanced-systems/addons/AdvSys/functions/global/fn_initSettings.sqf",
-    "vigil": ROOT / "source/visual-support-tablet/addons/VIGIL/functions/global/fn_initSettings.sqf",
-    "field": ROOT / "source/field-utilities/addons/FieldUtils/functions/global/fn_initSettings.sqf",
+    "advanced": ROOT / "mods/advanced-systems/addons/AdvSys/functions/global/fn_initSettings.sqf",
+    "vigil": ROOT / "mods/visual-support-tablet/addons/VIGIL/functions/global/fn_initSettings.sqf",
+    "field": ROOT / "mods/field-utilities/addons/FieldUtils/functions/global/fn_initSettings.sqf",
 }
 
 # key: (file, kind, normalized default/bounds fragment, intended scope)
@@ -34,21 +34,21 @@ EXPECTED = {
 }
 
 CONSUMERS = {
-    "YAS_playRadioMessages": ("source/advanced-systems/addons/AdvSys/functions/global/fn_utils.sqf", '"YAS_playRadioMessages"'),
-    "YAS_showDebugMessages": ("source/advanced-systems/addons/AdvSys/functions/global/fn_utils.sqf", '"YAS_showDebugMessages"'),
-    "YAS_ironDomeEngagementRadius": ("source/advanced-systems/addons/AdvSys/functions/iron_dome/fn_ironDome.sqf", '["YAS_ironDomeEngagementRadius", 1000]'),
-    "YAS_apsAntiDroneEngagementRadius": ("source/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf", '["YAS_apsAntiDroneEngagementRadius", 25]'),
-    "YAS_apsAntiDroneMinimumSpeed": ("source/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf", '["YAS_apsAntiDroneMinimumSpeed", 40]'),
-    "YSF_enableTablet": ("source/visual-support-tablet/addons/VIGIL/functions/tablet/fn_ui_utils.sqf", '[\'YSF_enableTablet\', true]'),
-    "YSF_playRadioMessages": ("source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf", '"YSF_playRadioMessages"'),
-    "YSF_playSideMessages": ("source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf", '"YSF_playSideMessages"'),
-    "YSF_showDebugMessages": ("source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf", '"YSF_showDebugMessages"'),
-    "YSF_monochromeBaseColor": ("source/visual-support-tablet/addons/VIGIL/functions/global/fn_init.sqf", '"YSF_monochromeBaseColor"'),
-    "YSF_laserVizColor": ("source/visual-support-tablet/addons/VIGIL/functions/client/fn_irLaserViz.sqf", '["YSF_laserVizColor", [0,1,0,1]]'),
-    "YFU_playSideMessages": ("source/field-utilities/addons/FieldUtils/functions/global/fn_core.sqf", '"YFU_playSideMessages"'),
-    "YFU_showDebugMessages": ("source/field-utilities/addons/FieldUtils/functions/global/fn_core.sqf", '"YFU_showDebugMessages"'),
-    "YFU_monochromeBaseColor": ("source/field-utilities/addons/FieldUtils/functions/fabricator/fn_assets.sqf", '["YFU_monochromeBaseColor", [0.15, 0.95, 0.15, 1]]'),
-    "YFU_bridge_perPlankBuildDelay": ("source/field-utilities/addons/FieldUtils/functions/bridge/fn_bridgeUtils.sqf", '["YFU_bridge_perPlankBuildDelay", 1]'),
+    "YAS_playRadioMessages": ("mods/advanced-systems/addons/AdvSys/functions/global/fn_utils.sqf", '"YAS_playRadioMessages"'),
+    "YAS_showDebugMessages": ("mods/advanced-systems/addons/AdvSys/functions/global/fn_utils.sqf", '"YAS_showDebugMessages"'),
+    "YAS_ironDomeEngagementRadius": ("mods/advanced-systems/addons/AdvSys/functions/iron_dome/fn_ironDome.sqf", '["YAS_ironDomeEngagementRadius", 1000]'),
+    "YAS_apsAntiDroneEngagementRadius": ("mods/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf", '["YAS_apsAntiDroneEngagementRadius", 25]'),
+    "YAS_apsAntiDroneMinimumSpeed": ("mods/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf", '["YAS_apsAntiDroneMinimumSpeed", 40]'),
+    "YSF_enableTablet": ("mods/visual-support-tablet/addons/VIGIL/functions/tablet/fn_ui_utils.sqf", '[\'YSF_enableTablet\', true]'),
+    "YSF_playRadioMessages": ("mods/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf", '"YSF_playRadioMessages"'),
+    "YSF_playSideMessages": ("mods/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf", '"YSF_playSideMessages"'),
+    "YSF_showDebugMessages": ("mods/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf", '"YSF_showDebugMessages"'),
+    "YSF_monochromeBaseColor": ("mods/visual-support-tablet/addons/VIGIL/functions/global/fn_init.sqf", '"YSF_monochromeBaseColor"'),
+    "YSF_laserVizColor": ("mods/visual-support-tablet/addons/VIGIL/functions/client/fn_irLaserViz.sqf", '["YSF_laserVizColor", [0,1,0,1]]'),
+    "YFU_playSideMessages": ("mods/field-utilities/addons/FieldUtils/functions/global/fn_core.sqf", '"YFU_playSideMessages"'),
+    "YFU_showDebugMessages": ("mods/field-utilities/addons/FieldUtils/functions/global/fn_core.sqf", '"YFU_showDebugMessages"'),
+    "YFU_monochromeBaseColor": ("mods/field-utilities/addons/FieldUtils/functions/fabricator/fn_assets.sqf", '["YFU_monochromeBaseColor", [0.15, 0.95, 0.15, 1]]'),
+    "YFU_bridge_perPlankBuildDelay": ("mods/field-utilities/addons/FieldUtils/functions/bridge/fn_bridgeUtils.sqf", '["YFU_bridge_perPlankBuildDelay", 1]'),
 }
 
 
@@ -87,7 +87,7 @@ class CbaSettingsContractTests(unittest.TestCase):
             self.assertNotIn(path, SETTING_FILES.values())
             self.assertIn(needle, path.read_text(), key)
 
-        core = (ROOT / "source/core/addons/CORDIS/functions/global/fn_core.sqf").read_text()
+        core = (ROOT / "mods/core/addons/CORDIS/functions/global/fn_core.sqf").read_text()
         self.assertIn('missionNamespace getVariable [_settingName, true]', core)
         self.assertIn('missionNamespace getVariable [_settingName, false]', core)
 
@@ -95,7 +95,7 @@ class CbaSettingsContractTests(unittest.TestCase):
         description = "Debug messages are always written to the server log. When enabled, they are also shown in systemChat on clients."
         for owner in ("advanced", "vigil", "field"):
             self.assertIn(description, SETTING_FILES[owner].read_text())
-        core = (ROOT / "source/core/addons/CORDIS/functions/global/fn_core.sqf").read_text()
+        core = (ROOT / "mods/core/addons/CORDIS/functions/global/fn_core.sqf").read_text()
         self.assertLess(core.index("remoteExecCall [\"YCD_fnc_showDebugLine\""), core.index("diag_log _line"))
         self.assertIn("if (missionNamespace getVariable [_settingName, false]) then", core)
 

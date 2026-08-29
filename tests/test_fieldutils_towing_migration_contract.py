@@ -14,7 +14,7 @@ class FieldUtilitiesTowingMigrationContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.scenario = discover(
-            [ROOT / "source" / "field-utilities" / "tests" / "tribunal"]
+            [ROOT / "mods" / "field-utilities" / "tests" / "tribunal"]
         )["fieldutils-towing-ownership-migration"]
 
     def test_exact_migration_and_finalization_contract_is_permanent(self) -> None:

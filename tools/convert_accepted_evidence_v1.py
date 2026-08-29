@@ -32,25 +32,25 @@ SCENARIOS = {
         "pontifex.advanced-systems.aps.eden_activation",
         "APS typed Eden activation",
         "advanced-systems/aps",
-        "source/advanced-systems/tests/tribunal/aps_eden_module.py",
+        "mods/advanced-systems/tests/tribunal/aps_eden_module.py",
     ),
     "cbr-module-activation": (
         "pontifex.advanced-systems.cbr.module_activation",
         "CBR Eden and Zeus activation",
         "advanced-systems/cbr",
-        "source/advanced-systems/tests/tribunal/counter_battery_radar_modules.py",
+        "mods/advanced-systems/tests/tribunal/counter_battery_radar_modules.py",
     ),
     "fabricator-transaction": (
         "pontifex.field-utilities.fabricator.transaction",
         "Fabricator authenticated transaction",
         "field-utilities/fabricator",
-        "source/field-utilities/tests/tribunal/fabricator.py",
+        "mods/field-utilities/tests/tribunal/fabricator.py",
     ),
     "vigil-whitelist-activation": (
         "pontifex.vigil.asset-whitelist.activation",
         "Vigil whitelist Eden and Zeus activation",
         "vigil/asset-whitelist",
-        "source/visual-support-tablet/tests/tribunal/vigil_whitelist_modules.py",
+        "mods/visual-support-tablet/tests/tribunal/vigil_whitelist_modules.py",
     ),
 }
 

@@ -59,7 +59,7 @@ product `TRIBUNAL_SCENARIO` declarations. The two framework scenarios
   [`vigil-artillery-review.md`](vigil-artillery-review.md) and
   [`vigil-artillery-markers-review.md`](vigil-artillery-markers-review.md)
   now preserve all 12 review questions. The accepted artillery and marker cores
-  remain covered, but source/evidence reconciliation narrowed broad cleanup
+  remain covered, but mods/evidence reconciliation narrowed broad cleanup
   claims into B6, B7, and C12 below.
 * **B3 closed on 2026-08-28.** Bridge Builder interrupted construction is
   **REFINED; ACCEPTED / COVERED** by run
@@ -71,7 +71,7 @@ product `TRIBUNAL_SCENARIO` declarations. The two framework scenarios
   `20260828T005936Z-68c28e96` exposed and calibrated the cleanup control-flow
   defect; it is not accepted evidence. Production ingestion was idempotent,
   the knowledge audit passed, and reviewed distillation added no generic Arma
-  finding. Resource/refund policy remains C13.
+  finding. Remods/refund policy remains C13.
 * **B4 closed on 2026-08-28.** `fieldutils-cargo-loading` Evidence Contract v1
   scenario version 3 proves authentic repeat contact/reattachment of the same
   server-owned crate and deletion while still attached, with exact server and

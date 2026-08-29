@@ -6,8 +6,8 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PRODUCT = ROOT / "source/advanced-systems/addons/AdvSys/functions/iron_dome/fn_ironDome.sqf"
-SCENARIO = ROOT / "source/advanced-systems/tests/tribunal/iron_dome.py"
+PRODUCT = ROOT / "mods/advanced-systems/addons/AdvSys/functions/iron_dome/fn_ironDome.sqf"
+SCENARIO = ROOT / "mods/advanced-systems/tests/tribunal/iron_dome.py"
 
 
 def load_scenario():

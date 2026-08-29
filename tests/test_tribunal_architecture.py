@@ -29,9 +29,9 @@ class TribunalArchitectureTests(unittest.TestCase):
 
     def test_feature_scenarios_are_discovered_outside_tribunal(self) -> None:
         scenarios = discover([
-            ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
-            ROOT / "source" / "field-utilities" / "tests" / "tribunal",
-            ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
+            ROOT / "mods" / "advanced-systems" / "tests" / "tribunal",
+            ROOT / "mods" / "field-utilities" / "tests" / "tribunal",
+            ROOT / "mods" / "visual-support-tablet" / "tests" / "tribunal",
         ])
         aps = scenarios["aps-intercept"]
         self.assertIsInstance(aps, Scenario)

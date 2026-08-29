@@ -22,9 +22,9 @@ class TestingMethodologyTests(unittest.TestCase):
     def test_all_permanent_scenarios_declare_review_metadata(self) -> None:
         scenarios = discover([
             TRIBUNAL_ROOT / "tribunal" / "scenarios",
-            ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
-            ROOT / "source" / "field-utilities" / "tests" / "tribunal",
-            ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
+            ROOT / "mods" / "advanced-systems" / "tests" / "tribunal",
+            ROOT / "mods" / "field-utilities" / "tests" / "tribunal",
+            ROOT / "mods" / "visual-support-tablet" / "tests" / "tribunal",
         ])
         self.assertTrue(scenarios)
         for scenario in scenarios.values():
@@ -38,9 +38,9 @@ class TestingMethodologyTests(unittest.TestCase):
 
         scenarios = discover([
             TRIBUNAL_ROOT / "tribunal" / "scenarios",
-            ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
-            ROOT / "source" / "field-utilities" / "tests" / "tribunal",
-            ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
+            ROOT / "mods" / "advanced-systems" / "tests" / "tribunal",
+            ROOT / "mods" / "field-utilities" / "tests" / "tribunal",
+            ROOT / "mods" / "visual-support-tablet" / "tests" / "tribunal",
         ])
         for scenario in scenarios.values():
             fragments = {"server": scenario.server_sqf, "client": scenario.client_sqf}

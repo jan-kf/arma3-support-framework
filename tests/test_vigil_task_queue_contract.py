@@ -8,7 +8,7 @@ from tribunal.evidence.contract import ARM_ROLES
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VIGIL = ROOT / "source/visual-support-tablet/addons/VIGIL"
+VIGIL = ROOT / "mods/visual-support-tablet/addons/VIGIL"
 
 
 class VigilTaskQueueContractTests(unittest.TestCase):
@@ -82,7 +82,7 @@ class VigilTaskQueueContractTests(unittest.TestCase):
         self.assertNotIn('#include "ui\\pages\\page_home.hpp"', self.config)
 
     def test_permanent_scenario_contract_is_complete(self) -> None:
-        scenario = discover([ROOT / "source/visual-support-tablet/tests/tribunal"])["vigil-task-queue"]
+        scenario = discover([ROOT / "mods/visual-support-tablet/tests/tribunal"])["vigil-task-queue"]
         self.assertEqual(len(scenario.server_expected), 9)
         self.assertEqual(len(scenario.client_expected), 7)
         self.assertEqual(scenario.evidence_contract["scenario"]["version"], 2)

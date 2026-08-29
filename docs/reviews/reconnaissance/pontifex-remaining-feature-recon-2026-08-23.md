@@ -24,11 +24,11 @@ would unblock several reviews at once, which is why they are separated out.
 ### M1. `getMass` on freshly created and on remote objects
 
 * **CODE.** Three unrelated features gate on `getMass`:
-  `source/field-utilities/addons/FieldUtils/functions/global/fn_fabricator.sqf:21`
+  `mods/field-utilities/addons/FieldUtils/functions/global/fn_fabricator.sqf:21`
   (`getMass _object > 200` → `setMass 200` carryability cap),
-  `source/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf:830`
+  `mods/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf:830`
   (`getMass _x < 1000` anti-drone eligibility), and
-  `source/visual-support-tablet/addons/VIGIL/functions/global/fn_heliStabilizer.sqf:38`
+  `mods/visual-support-tablet/addons/VIGIL/functions/global/fn_heliStabilizer.sqf:38`
   (force term proportional to `getMass _helicopter`).
 * **BIKI.** `getMass` "Returns mass of a PhysX object" (rev 373891; Arma 3
   stable [1.12.0, *)). The documentation does not state what is returned for an
@@ -208,7 +208,7 @@ Inventory: **REVIEWED / NEEDS EXPERIMENTATION** (landing works; exact mechanism
 necessity unproven).
 
 * **Implementation surface.**
-  `source/visual-support-tablet/addons/VIGIL/functions/task_transport/fn_transport_task.sqf:110-131`
+  `mods/visual-support-tablet/addons/VIGIL/functions/task_transport/fn_transport_task.sqf:110-131`
   creates `"Land_HelipadEmpty_F"` at `[0,0,0]`, `setPosATL`s it to the
   destination, records `deletePadOnFinish`, then calls
   `YSF_fnc_setVehicleLandMode` with `"LAND"`. The landing predicate is
@@ -808,7 +808,7 @@ and resources are explicitly not proven.
   Neither has a caller. Twelve `YFU_bridge_*` globals have no product caller
   at all (see the audit) — and one of them, `YFU_bridge_beginPlanPreview`, is
   invoked **only** from the permanent scenario
-  (`source/field-utilities/tests/tribunal/bridge_builder.py:344`). A product
+  (`mods/field-utilities/tests/tribunal/bridge_builder.py:344`). A product
   function whose sole caller is its own test is worth naming explicitly: the
   canonical program requires a contract to be driven from its real entry point,
   and this one currently has none.

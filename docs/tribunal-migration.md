@@ -15,7 +15,7 @@
 
 Pontifex retains its mod builds, component policy, authenticated installation
 adapter, security policy, and all feature scenarios. The APS scenario contract
-is at `source/advanced-systems/tests/tribunal/aps_intercept.py`; future VIGIL,
+is at `mods/advanced-systems/tests/tribunal/aps_intercept.py`; future VIGIL,
 Field Utilities, and CORDIS scenarios belong beside their respective features.
 
 ## Compatibility migration

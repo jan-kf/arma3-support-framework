@@ -19,10 +19,10 @@ import pontifex_multiplayer as multiplayer  # noqa: E402
 class CounterBatteryRadarContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.scenario = discover([
-            ROOT / "source" / "advanced-systems" / "tests" / "tribunal"
+            ROOT / "mods" / "advanced-systems" / "tests" / "tribunal"
         ])["advsys-counter-battery-radar"]
         self.source = (
-            ROOT / "source" / "advanced-systems" / "addons" / "AdvSys"
+            ROOT / "mods" / "advanced-systems" / "addons" / "AdvSys"
             / "functions" / "cbr" / "fn_cbr.sqf"
         ).read_text(encoding="utf-8")
 

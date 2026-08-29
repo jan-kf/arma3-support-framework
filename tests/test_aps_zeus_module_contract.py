@@ -15,7 +15,7 @@ import pontifex_multiplayer as multiplayer  # noqa: E402
 class ApsZeusModuleContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.scenario = multiplayer.FEATURE_SCENARIOS["advsys-aps-zeus-module"]
-        self.addon = ROOT / "source/advanced-systems/addons/AdvSys"
+        self.addon = ROOT / "mods/advanced-systems/addons/AdvSys"
 
     def test_scenario_uses_product_entrypoint_and_narrow_causal_pair(self) -> None:
         self.assertNotIn("visual_driver", self.scenario.metadata)

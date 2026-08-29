@@ -11,8 +11,8 @@ sys.path.insert(0, str(ROOT))
 
 from tribunal.discovery import discover  # noqa: E402
 
-SCENARIO = ROOT / "source/advanced-systems/tests/tribunal/aps_anti_drone.py"
-APS_SOURCE = ROOT / "source/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf"
+SCENARIO = ROOT / "mods/advanced-systems/tests/tribunal/aps_anti_drone.py"
+APS_SOURCE = ROOT / "mods/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf"
 
 
 class ApsAntiDroneScenarioTests(unittest.TestCase):

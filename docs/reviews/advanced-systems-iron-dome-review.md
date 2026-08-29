@@ -3,7 +3,7 @@
 ## Scope and result
 
 This review applies the canonical feature-review program to the automatic
-OPHANIM artillery-interception subsystem in `source/advanced-systems`.  It
+OPHANIM artillery-interception subsystem in `mods/advanced-systems`.  It
 covers the public launcher asset, native-artillery entry, server assignment,
 physical interceptor, terminal result, bounded retry/task lifecycle, authority,
 locality, replication and cleanup.  Launch audio is configuration-checked but

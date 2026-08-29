@@ -15,19 +15,19 @@ from tribunal.discovery import discover  # noqa: E402
 class VigilDebugChannelContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.engage = (
-            ROOT / "source/visual-support-tablet/addons/VIGIL/functions/task_cas/fn_airAutoEngage.sqf"
+            ROOT / "mods/visual-support-tablet/addons/VIGIL/functions/task_cas/fn_airAutoEngage.sqf"
         ).read_text()
         self.settings = (
-            ROOT / "source/visual-support-tablet/addons/VIGIL/functions/global/fn_initSettings.sqf"
+            ROOT / "mods/visual-support-tablet/addons/VIGIL/functions/global/fn_initSettings.sqf"
         ).read_text()
         self.utils = (
-            ROOT / "source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf"
+            ROOT / "mods/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf"
         ).read_text()
         self.harness = (
-            ROOT / "source/visual-support-tablet/addons/VIGIL/functions/global/fn_fwLaserTest.sqf"
+            ROOT / "mods/visual-support-tablet/addons/VIGIL/functions/global/fn_fwLaserTest.sqf"
         ).read_text()
         self.scenario = discover(
-            [ROOT / "source/visual-support-tablet/tests/tribunal"]
+            [ROOT / "mods/visual-support-tablet/tests/tribunal"]
         )["vigil-debug-channel"]
 
     def test_aae_debug_uses_only_the_registered_vigil_gate(self) -> None:

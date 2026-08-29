@@ -5,7 +5,7 @@
 This review applies the canonical 12-question program to named-operation
 routing to the server/object owner/group owner; server TTL deduplication;
 recipient resolution and scoped fan-out; curator notification boundaries; and
-bootstrap cache state in `source/core/addons/CORDIS`.
+bootstrap cache state in `mods/core/addons/CORDIS`.
 
 **Classification: `REFINED; KEEP AS-IS AND SPEC-TEST — ACCEPTED / COVERED`.**
 
@@ -130,7 +130,7 @@ alive-human intersection.
 
 12. **What belongs in Tribunal?** Only the existing generic scenario runner,
     identity-aware assertions, evidence packaging, and cleanup machinery.
-    `cordis-routing` stays in `source/core/tests/tribunal`; no CORDIS semantics
+    `cordis-routing` stays in `mods/core/tests/tribunal`; no CORDIS semantics
     enter generic Tribunal code.
 
 ## Permanent evidence matrix

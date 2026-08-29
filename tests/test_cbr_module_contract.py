@@ -15,7 +15,7 @@ import pontifex_multiplayer as multiplayer  # noqa: E402
 class CbrModuleContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.scenario = multiplayer.FEATURE_SCENARIOS["advsys-cbr-modules"]
-        self.addon = ROOT / "source/advanced-systems/addons/AdvSys"
+        self.addon = ROOT / "mods/advanced-systems/addons/AdvSys"
 
     def test_scenario_uses_product_entrypoint_and_narrow_artillery_pair(self) -> None:
         self.assertNotIn("visual_driver", self.scenario.metadata)

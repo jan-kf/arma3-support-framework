@@ -63,7 +63,7 @@ class ApsModuleContractTests(unittest.TestCase):
 
 
     def test_module_handler_accepts_only_native_typed_server_dispatch(self) -> None:
-        source = (ROOT / "source/advanced-systems/addons/AdvSys/functions/aps/fn_apsModuleEnable.sqf").read_text(encoding="utf-8")
+        source = (ROOT / "mods/advanced-systems/addons/AdvSys/functions/aps/fn_apsModuleEnable.sqf").read_text(encoding="utf-8")
         self.assertIn("_className isEqualTo \"YAS_APS_Module\"", source)
         self.assertIn("_owner isEqualTo 2", source)
         self.assertIn("_remoteOwner <= 2", source)

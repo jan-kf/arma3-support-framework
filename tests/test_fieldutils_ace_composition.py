@@ -14,7 +14,7 @@ from tribunal.discovery import discover  # noqa: E402
 
 class FieldUtilitiesAceCompositionTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.scenario = discover([ROOT / "source" / "field-utilities" / "tests" / "tribunal"])["fieldutils-ace-composition"]
+        self.scenario = discover([ROOT / "mods" / "field-utilities" / "tests" / "tribunal"])["fieldutils-ace-composition"]
 
     def test_contract_is_exact_and_data_only(self) -> None:
         self.assertEqual(self.scenario.review.outcome, "KEEP AS-IS AND SPEC-TEST")

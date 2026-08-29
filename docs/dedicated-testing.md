@@ -72,7 +72,7 @@ The runner reports build/provision/start failures, early process exit, timeout, 
 
 The state file records PID, `/proc` start ticks, process group, command, and run ID. Stop validates all identity fields and never searches by process name. Cleanup escalates only that process group from SIGINT to SIGTERM to SIGKILL when required.
 
-## Known source/runtime observations
+## Known mods/runtime observations
 
 - Existing HEMTT warnings remain, including two VIGIL `fn_homepage.sqf` type-inference warnings and Field Utilities `CfgPatches` omissions.
 - The test proves server-side config/function/postInit loading, not client UI or client locality.

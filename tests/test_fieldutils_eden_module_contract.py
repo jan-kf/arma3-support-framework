@@ -15,7 +15,7 @@ import pontifex_multiplayer as multiplayer  # noqa: E402
 class FieldUtilitiesEdenModuleContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.scenario = multiplayer.FEATURE_SCENARIOS["fieldutils-eden-modules"]
-        self.addon = ROOT / "source/field-utilities/addons/FieldUtils"
+        self.addon = ROOT / "mods/field-utilities/addons/FieldUtils"
 
     def test_scenario_uses_four_authentic_modules_and_native_syncs(self) -> None:
         modules = [entity for entity in self.scenario.mission_entities if entity.data_type == "Logic"]

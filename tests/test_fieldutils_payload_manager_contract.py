@@ -6,10 +6,10 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-FPV = ROOT / "source/field-utilities/addons/FieldUtils/functions/drone/fn_fpv.sqf"
-UI = ROOT / "source/field-utilities/addons/FieldUtils/ui/payload_manager.hpp"
-CONFIG = ROOT / "source/field-utilities/addons/FieldUtils/config.cpp"
-SETTINGS = ROOT / "source/field-utilities/addons/FieldUtils/functions/global/fn_initSettings.sqf"
+FPV = ROOT / "mods/field-utilities/addons/FieldUtils/functions/drone/fn_fpv.sqf"
+UI = ROOT / "mods/field-utilities/addons/FieldUtils/ui/payload_manager.hpp"
+CONFIG = ROOT / "mods/field-utilities/addons/FieldUtils/config.cpp"
+SETTINGS = ROOT / "mods/field-utilities/addons/FieldUtils/functions/global/fn_initSettings.sqf"
 
 
 class PayloadManagerContractTests(unittest.TestCase):

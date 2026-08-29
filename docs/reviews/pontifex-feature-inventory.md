@@ -53,10 +53,10 @@ Five top-level runtime families are present:
 
 | Family | Purpose | Primary locations | Overall state | Coverage summary |
 | --- | --- | --- | --- | --- |
-| CORDIS shared runtime | Locality routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Refined, with reserved bootstrap files | **ACCEPTED / COVERED** for the one-client trusted broker; GUI/audio/debug and client-N/JIP remain deferred |
-| Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **STRONGLY COVERED**; APS projectile/anti-drone, Counter Battery Radar, and Iron Dome have representative permanent contracts; shared topology/presentation tails remain |
-| Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
-| Field Utilities | Fabrication, logistics, bridges, towing, small-UAV payloads | `source/field-utilities/addons/FieldUtils` | Implemented, mature core | **ACCEPTED / COVERED** for the supported one-client contract, with strong fabrication, logistics, Bridge Builder, towing, object lifecycle, Payload Manager transaction, and live controller deployment proof |
+| CORDIS shared runtime | Locality routing, recipient resolution, deduplication, notifications, diagnostics | `mods/core/addons/CORDIS` | Refined, with reserved bootstrap files | **ACCEPTED / COVERED** for the one-client trusted broker; GUI/audio/debug and client-N/JIP remain deferred |
+| Advanced Systems | Vehicle protection, artillery sensing, area interception | `mods/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **STRONGLY COVERED**; APS projectile/anti-drone, Counter Battery Radar, and Iron Dome have representative permanent contracts; shared topology/presentation tails remain |
+| Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `mods/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
+| Field Utilities | Fabrication, logistics, bridges, towing, small-UAV payloads | `mods/field-utilities/addons/FieldUtils` | Implemented, mature core | **ACCEPTED / COVERED** for the supported one-client contract, with strong fabrication, logistics, Bridge Builder, towing, object lifecycle, Payload Manager transaction, and live controller deployment proof |
 | Cross-mod composition | Contracts joining CORDIS, Vigil, Field Utilities, ACE/CBA, and editor/Zeus surfaces | calls across all addons/configs | Implemented, some optional/degraded paths | **PARTIALLY COVERED**; one composite path direct, most incidental |
 
 Tribunal/Pontifex validation is documented separately below. It is substantial
@@ -65,7 +65,7 @@ repository architecture, but is not counted as a shipped product family.
 ## 1. CORDIS shared runtime
 
 CORDIS is the common operational runtime, not standalone gameplay. Primary
-locations are `source/core/addons/CORDIS/config.cpp` and `functions/`.
+locations are `mods/core/addons/CORDIS/config.cpp` and `functions/`.
 
 ### 1.1 Authority-aware execution
 
@@ -109,7 +109,7 @@ see [`core-cordis-review.md`](core-cordis-review.md).
 
 ## 2. Advanced Systems
 
-Primary locations: `source/advanced-systems/addons/AdvSys/config.cpp` and
+Primary locations: `mods/advanced-systems/addons/AdvSys/config.cpp` and
 `functions/{aps,cbr,iron_dome}`. Dependencies: CORDIS, CBA, ACE interaction,
 and Arma vehicle/projectile locality.
 
@@ -279,7 +279,7 @@ marker/beam helpers remain unpromised. See
 
 ## 3. Vigil support tablet
 
-Primary locations: `source/visual-support-tablet/addons/VIGIL/config.cpp`,
+Primary locations: `mods/visual-support-tablet/addons/VIGIL/config.cpp`,
 `ui/`, and `functions/`. Vigil depends on CORDIS/CBA and optionally Field
 Utilities for fixed-wing airdrop.
 
@@ -398,7 +398,7 @@ Utilities for fixed-wing airdrop.
   **Implemented; COVERED** by `vigil-cas`.
 * **Target/combat selection** filters hostile ground targets to area, excludes
   friendly/neutral/outside controls, selects real ammunition, and correlates
-  exact fire with hostile-local `HitPart` or an exact source/ammunition
+  exact fire with hostile-local `HitPart` or an exact mods/ammunition
   `HandleDamage` callback; controls cover every channel plus no-target and
   no-ammunition outcomes. **REFINED; ACCEPTED / COVERED.** This proves impact,
   not material damage or kill. Sensor/reveal dependence is **REVIEWED / NEEDS
@@ -505,7 +505,7 @@ Full analysis: [`vigil-feedback-review.md`](vigil-feedback-review.md).
 
 ## 4. Field Utilities
 
-Primary locations: `source/field-utilities/addons/FieldUtils/config.cpp`,
+Primary locations: `mods/field-utilities/addons/FieldUtils/config.cpp`,
 `functions/`, and `ui/`. Dependencies: CORDIS, CBA, ACE, ZEN, optionally Vigil.
 
 ### 4.1 Virtual Storage and Fabricator
@@ -782,7 +782,7 @@ projectile/artillery/aviation/combat/delivery/designation/locality/visual
 evidence, fail-closed assertions, artifacts, and terminal lifecycle. Pontifex
 owns builds, Steam/Proton/server runtime, private network/security, Live Mode,
 and feature scenarios. Locations include `tribunal/`, `tools/`, and
-`source/*/tests/tribunal`.
+`mods/*/tests/tribunal`.
 
 Permanent feature scenarios discovered by the runtime adapter are:
 
@@ -842,7 +842,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | VLS target handshake | **REVIEWED / CHARACTERIZED** | four fresh physical A/B pairs prove the combined knowledge step is required; individual calls remain unisolated |
 | Transport hidden-pad landing | **KEEP + CHARACTERIZE ENGINE REQUIREMENT; ACCEPTED / COVERED** | three independent server-local airborne A/B proofs: exact hidden-pad treatment settles within 25 m; matched no-pad control remains airborne beyond 104 m at 90 seconds; scope is one class/corridor/approach |
 | Developer laser harness | **REVIEWED / DEFERRED** | unreachable preInit diagnostic; destructive owner-routed run and unbounded client-supplied result store lack a product boundary |
-| Vigil CAS physical-effect oracle | **REFINED; ACCEPTED / COVERED** | exact hostile target/source/`ACE_20mm_HE` callback is correlated with independent fire and absent from controls; no material damage or kill is claimed; a generic handler/ammunition/penetration matrix remains separate characterization |
+| Vigil CAS physical-effect oracle | **REFINED; ACCEPTED / COVERED** | exact hostile target/mods/`ACE_20mm_HE` callback is correlated with independent fire and absent from controls; no material damage or kill is claimed; a generic handler/ammunition/penetration matrix remains separate characterization |
 | Vigil CAS auto-engage debug | **REFINED; ACCEPTED / COVERED** for one-client setting-gate topology | unique exact tokens in server RPT plus delegated client false/true receipts through registered `YSF_showDebugMessages`; pixels, client-N/JIP and rate/volume excluded |
 | APS anti-drone | **REFINED; ACCEPTED / COVERED** | side-agnostic closing-speed threat rule, atomic resource/owner transaction, scoped Payload Manager suppression, unrelated handler preservation and cleanup proved in `20260828T165018Z-56bdad28` |
 | CBR output audience | **REVIEWED / DEFERRED** | observation rows and origin markers are global while visual impact clusters are client-local and radio warning is side-filtered |

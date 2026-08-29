@@ -228,7 +228,7 @@ The permanent coverage matrix is branch-oriented rather than Cartesian:
 
 | Scenario | Target/request | Source path | Pattern/count | Physical/control proof |
 | --- | --- | --- | --- | --- |
-| native circle | real grid control and submit | mortar/native artillery | 3-round circle | exact firing source/magazine/projectiles, termination coordinates, centroid/radial bounds, server completion |
+| native circle | real grid control and submit | mortar/native artillery | 3-round circle | exact firing mods/magazine/projectiles, termination coordinates, centroid/radial bounds, server completion |
 | native line | product task using the same parsed grid | same native branch | 4-round line with large spacing | along-axis span/order and bounded perpendicular error despite dispersion |
 | request controls | invalid grid, zero rounds, out of range, empty ammunition | native validation branches | none | no correlated Fired/ArtilleryShellFired events and explicit failed/skipped state |
 | platform discovery | engine config/runtime inventory | mortar, tube, rocket representatives | n/a | capability and magazine/range evidence without repeating identical firing code |
@@ -238,7 +238,7 @@ Each strike uses a unique token and a fresh observer window. Tribunal records
 the requested and resolved points, firing platform, weapon, magazine/ammo,
 projectile netId and locality, fire time, sampled trajectory, last observed
 position/termination time, and task state. Spatial assertions tolerate the
-calibrated weapon dispersion but fail on missing rounds, wrong source/ammo,
+calibrated weapon dispersion but fail on missing rounds, wrong mods/ammo,
 stale events, wrong target region, or internal completion without physical
 evidence. Generic collection and geometry live in Tribunal; Vigil scenarios
 retain only product controls, tasks, and expected semantics.

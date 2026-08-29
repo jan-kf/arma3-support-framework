@@ -9,7 +9,7 @@ here — they are canonical and this file must not drift from them.
 | | Pontifex | Tribunal |
 | --- | --- | --- |
 | What | The Arma 3 mod suite / in-universe company | A generic Arma mod-validation framework |
-| Where | `source/`, `tools/`, `build/`, `server/`, `client/`, `runs/` | `tribunal/` |
+| Where | `mods/`, `tools/`, `build/`, `server/`, `client/`, `runs/` | `tribunal/` |
 | Owns | Four mods (CORDIS, Field Utilities, Advanced Systems, VIGIL), builds, Steam/Proton/server runtime, Live Mode, feature scenarios | Mission/PBO packaging, assertion protocol, scenario discovery, generic fixtures/observers, evidence attachments, terminal lifecycle |
 
 Hard boundaries, enforced by `tests/test_tribunal_architecture.py`:
@@ -17,7 +17,7 @@ Hard boundaries, enforced by `tests/test_tribunal_architecture.py`:
 * **Tribunal must never contain product names or semantics.** No `aps`,
   `vigil`, `field utilities`, `iron dome`, or `pontifex` tokens anywhere under
   `tribunal/**.py`. Tribunal supplies mechanics; it never decides product success.
-* **Production mods must never depend on Tribunal.** Nothing in `source/*/addons`
+* **Production mods must never depend on Tribunal.** Nothing in `mods/*/addons`
   may reference the framework.
 * Tribunal is intended to stay reusable by unrelated future mods. Do not promote
   a mechanic into it speculatively — only with a concrete first consumer and a
@@ -61,7 +61,7 @@ request explicitly asks for sequential continuation.
 ## Test ownership separation
 
 * **Feature-owned scenarios** live beside the mod they validate, in
-  `source/<component>/tests/tribunal/*.py`, and export a `TRIBUNAL_SCENARIO`
+  `mods/<component>/tests/tribunal/*.py`, and export a `TRIBUNAL_SCENARIO`
   (`Scenario` + `ScenarioReview`). They consume Tribunal mechanics and apply
   product semantics. They may reference private product APIs to reach or observe
   behavior — those names are evidence adapters, never the contract.

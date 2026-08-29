@@ -8,12 +8,12 @@
 
 ## Method and its limits
 
-* Enumerated every `.sqf`, `.hpp` and `config.cpp` under `source/`, every
+* Enumerated every `.sqf`, `.hpp` and `config.cpp` under `mods/`, every
   `CfgFunctions` registration, every `CfgVehicles`/`CfgSounds`/`CfgRadio`/
   `CfgFactionClasses` class, every IDC constant, every `CBA_fnc_addSetting` key,
   and every `TRIBUNAL_SCENARIO` identifier.
 * "No caller" means no textual reference to the global's name anywhere under
-  `source/`, `tribunal/{scenarios,runner,mission}`, or `tools/`, excluding its
+  `mods/`, `tribunal/{scenarios,runner,mission}`, or `tools/`, excluding its
   own definition line. **This is a textual heuristic.** A symbol reached only by
   a runtime-composed string, a `remoteExec` target named at runtime, or a
   mission-authored call from outside the repository would be misreported as
@@ -34,15 +34,15 @@ table lists twelve identifiers. Discovery over the four registered roots yields
 
 | Identifier | Scenario file |
 | --- | --- |
-| `advsys-aps-eden-module` | `source/advanced-systems/tests/tribunal/aps_eden_module.py` |
-| `advsys-aps-zeus-module` | `source/advanced-systems/tests/tribunal/aps_zeus_module.py` |
-| `advsys-cbr-modules` | `source/advanced-systems/tests/tribunal/counter_battery_radar_modules.py` |
-| `advsys-iron-dome` | `source/advanced-systems/tests/tribunal/iron_dome.py` |
-| `fieldutils-ace-composition` | `source/field-utilities/tests/tribunal/ace_composition.py` |
-| `fieldutils-bridge-builder` | `source/field-utilities/tests/tribunal/bridge_builder.py` |
-| `fieldutils-eden-modules` | `source/field-utilities/tests/tribunal/fabricator_eden_modules.py` |
-| `fieldutils-towing` | `source/field-utilities/tests/tribunal/towing.py` |
-| `vigil-whitelist-modules` | `source/visual-support-tablet/tests/tribunal/vigil_whitelist_modules.py` |
+| `advsys-aps-eden-module` | `mods/advanced-systems/tests/tribunal/aps_eden_module.py` |
+| `advsys-aps-zeus-module` | `mods/advanced-systems/tests/tribunal/aps_zeus_module.py` |
+| `advsys-cbr-modules` | `mods/advanced-systems/tests/tribunal/counter_battery_radar_modules.py` |
+| `advsys-iron-dome` | `mods/advanced-systems/tests/tribunal/iron_dome.py` |
+| `fieldutils-ace-composition` | `mods/field-utilities/tests/tribunal/ace_composition.py` |
+| `fieldutils-bridge-builder` | `mods/field-utilities/tests/tribunal/bridge_builder.py` |
+| `fieldutils-eden-modules` | `mods/field-utilities/tests/tribunal/fabricator_eden_modules.py` |
+| `fieldutils-towing` | `mods/field-utilities/tests/tribunal/towing.py` |
+| `vigil-whitelist-modules` | `mods/visual-support-tablet/tests/tribunal/vigil_whitelist_modules.py` |
 
 Each of these is described in the inventory's prose as accepted or covered, so
 the divergence is in the summary table only. It matters because that table is
@@ -96,7 +96,7 @@ what exists so later reviews can choose stable behavioral contracts".
 
 ### 2.1 Vigil tablet — an entire unrealized navigation design
 
-`source/visual-support-tablet/addons/VIGIL/ui/idc.hpp` defines IDC constants for
+`mods/visual-support-tablet/addons/VIGIL/ui/idc.hpp` defines IDC constants for
 a page family that has no page file and no reference anywhere in the tree:
 
 * `IDC_PAGE_MAP` (88110) — a map page that does not exist. Its child constants
@@ -133,7 +133,7 @@ there is nothing to review, only a naming intent.
 Inventory §3.2 records the Eden/Zeus whitelist path as **REFINED; ACCEPTED /
 COVERED**, with server-private exact membership and replay/forgery rejection.
 
-`source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf:33-37`
+`mods/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf:33-37`
 defines a second, globally named entry point:
 
 ```sqf
@@ -158,7 +158,7 @@ without reference to it.
 
 ### 2.4 Advanced Systems Counter Battery Radar — two dead tuning constants
 
-`source/advanced-systems/addons/AdvSys/functions/cbr/fn_cbr.sqf`:
+`mods/advanced-systems/addons/AdvSys/functions/cbr/fn_cbr.sqf`:
 
 * `:13` — `YOSHI_CB_MEMBER_TTL = 2.0;` defined, never read.
 * `:18` / `:369` — `YOSHI_CB_nextUid` assigned to 0 twice, never read. Shell UIDs
@@ -223,7 +223,7 @@ a maintenance fact worth a line.
 
 `YFU_bridge_beginPlanPreview` has no product caller. Its sole invocation in the
 repository is
-`source/field-utilities/tests/tribunal/bridge_builder.py:344`
+`mods/field-utilities/tests/tribunal/bridge_builder.py:344`
 (`[_box, false] call YFU_bridge_beginPlanPreview;`).
 
 The canonical program is explicit that a contract must be driven from its real

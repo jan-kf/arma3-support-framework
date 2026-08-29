@@ -22,7 +22,7 @@ to the result.
 
 The already reviewed CAS lifecycle now has a stable physical-impact oracle:
 independently observed exact fire must correlate with hostile-local `HitPart` or
-an exact source/ammunition `HandleDamage` callback, while every equivalent
+an exact mods/ammunition `HandleDamage` callback, while every equivalent
 control channel remains empty. Final run `20260826T021218Z-72eb945f` passed all
 17 server and 6 client feature assertions with zero failures and complete
 cleanup. Because the feature review and most CAS lifecycle coverage already

@@ -2,10 +2,10 @@
 
 Pontifex is a four-mod Arma 3 suite. This directory is the canonical Gustav workspace:
 
-- `source/core` — CORDIS, the shared core (`CORDIS.pbo`)
-- `source/field-utilities` — Field Utilities (`FieldUtils.pbo`)
-- `source/advanced-systems` — Advanced Systems (`AdvSys.pbo`)
-- `source/visual-support-tablet` — VIGIL Visual Support Tablet (`VIGIL.pbo`)
+- `mods/core` — CORDIS, the shared core (`CORDIS.pbo`)
+- `mods/field-utilities` — Field Utilities (`FieldUtils.pbo`)
+- `mods/advanced-systems` — Advanced Systems (`AdvSys.pbo`)
+- `mods/visual-support-tablet` — VIGIL Visual Support Tablet (`VIGIL.pbo`)
 
 ## Normal commands
 
@@ -59,7 +59,7 @@ HEMTT 1.20.1 is project-bootstrapped on first use and checksum-verified. The rep
 
 ## Runtime and results
 
-- Editable source: `source/`
+- Editable source: `mods/`
 - Current build artifacts: `build/current/`
 - Future release artifacts: `release/`
 - Future isolated Arma server: `server/runtime/`

@@ -16,7 +16,7 @@ import pontifex_multiplayer as multiplayer  # noqa: E402
 class ApsControlsContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.source = (ROOT / "source" / "advanced-systems" / "addons" / "AdvSys" / "functions" / "aps" / "fn_aps.sqf").read_text(encoding="utf-8")
+        cls.source = (ROOT / "mods" / "advanced-systems" / "addons" / "AdvSys" / "functions" / "aps" / "fn_aps.sqf").read_text(encoding="utf-8")
 
     def test_actions_use_one_authenticated_request_boundary(self) -> None:
         self.assertIn("YOSHI_fnc_apsRequestOperation", self.source)

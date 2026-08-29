@@ -120,7 +120,7 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn("!isNull effectiveCommander _aircraft", client)
 
     def test_vigil_transport_product_refinements_are_fail_closed(self) -> None:
-        root = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
+        root = ROOT / "mods" / "visual-support-tablet" / "addons" / "VIGIL"
         core = (root / "functions" / "global" / "fn_core.sqf").read_text(encoding="utf-8")
         request = (root / "functions" / "task_transport" / "fn_transport.sqf").read_text(encoding="utf-8")
         task = (root / "functions" / "task_transport" / "fn_transport_task.sqf").read_text(encoding="utf-8")
@@ -144,7 +144,7 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn('setVariable ["YSF_helicopterStab_speedAlt", nil]', stabilizer)
 
     def test_vigil_cas_is_scoped_fail_closed_and_uses_real_rtb(self) -> None:
-        root = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
+        root = ROOT / "mods" / "visual-support-tablet" / "addons" / "VIGIL"
         request = (root / "functions" / "task_cas" / "fn_cas.sqf").read_text(encoding="utf-8")
         task = (root / "functions" / "task_cas" / "fn_cas_task.sqf").read_text(encoding="utf-8")
         engage = (root / "functions" / "task_cas" / "fn_airAutoEngage.sqf").read_text(encoding="utf-8")
@@ -219,7 +219,7 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn("call YOSHI_taskCAS_submit", client)
 
     def test_vigil_fixed_wing_preserves_state_and_does_not_rewrite_native_laser_bombs(self) -> None:
-        root = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
+        root = ROOT / "mods" / "visual-support-tablet" / "addons" / "VIGIL"
         source = (root / "functions" / "task_fixedWing" / "fn_initFixedWingFunctions.sqf").read_text(encoding="utf-8")
         self.assertIn("_newVehicle setFuel", source)
         self.assertIn("_vehicle setAmmoOnPylon", source)
@@ -287,8 +287,8 @@ class TierFrameworkTests(unittest.TestCase):
         }))
 
     def test_vigil_logistics_is_authoritative_bounded_and_fail_closed(self) -> None:
-        vigil_root = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
-        field_root = ROOT / "source" / "field-utilities" / "addons" / "FieldUtils"
+        vigil_root = ROOT / "mods" / "visual-support-tablet" / "addons" / "VIGIL"
+        field_root = ROOT / "mods" / "field-utilities" / "addons" / "FieldUtils"
         fixed_wing = (vigil_root / "functions" / "task_fixedWing" / "fn_initFixedWingFunctions.sqf").read_text(encoding="utf-8")
         assets = (field_root / "functions" / "fabricator" / "fn_assets.sqf").read_text(encoding="utf-8")
         self.assertIn("YSF_fwRequestLogistics", fixed_wing)

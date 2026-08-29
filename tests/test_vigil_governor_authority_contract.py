@@ -7,7 +7,7 @@ from tribunal.discovery import discover
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VIGIL = ROOT / "source" / "visual-support-tablet" / "addons" / "VIGIL"
+VIGIL = ROOT / "mods" / "visual-support-tablet" / "addons" / "VIGIL"
 
 
 class VigilGovernorAuthorityContractTests(unittest.TestCase):
@@ -82,7 +82,7 @@ class VigilGovernorAuthorityContractTests(unittest.TestCase):
 
     def test_permanent_scenario_has_complete_evidence_contract(self) -> None:
         scenario = discover(
-            [ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal"]
+            [ROOT / "mods" / "visual-support-tablet" / "tests" / "tribunal"]
         )["vigil-governor-authority"]
         self.assertEqual(scenario.tier, "gameplay")
         self.assertEqual(len(scenario.server_expected), 9)

@@ -14,7 +14,7 @@ from tribunal.discovery import discover  # noqa: E402
 
 class PayloadControlScenarioTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.scenario = discover([ROOT / "source/field-utilities/tests/tribunal"])["fieldutils-payload-control"]
+        self.scenario = discover([ROOT / "mods/field-utilities/tests/tribunal"])["fieldutils-payload-control"]
 
     def test_control_hud_effects_negatives_and_cleanup_are_exact(self) -> None:
         self.assertEqual(self.scenario.review.outcome, "KEEP AS-IS AND SPEC-TEST")

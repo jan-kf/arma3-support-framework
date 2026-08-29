@@ -93,7 +93,7 @@ the physical artillery locality result.
 `doArtilleryFire`, `inRangeOfArtillery`, ammunition inventory, commander
 locality, `Fired`/`ArtilleryShellFired`, VLS projectile physics, target
 knowledge, trajectory sampling, termination, and network identity are Arma
-mechanics. Tokenized observer windows, exact source/magazine/ammunition
+mechanics. Tokenized observer windows, exact mods/magazine/ammunition
 correlation, projectile sampling, spatial tolerances, negative-event windows,
 locality records, and fixture cleanup are Tribunal evidence mechanics. Circle
 and line generation, artillery eligibility, request bounds, platform grouping,
@@ -190,7 +190,7 @@ diagnostic runs `20260825T224845Z-b0838bdc` and
 artillery feature assertions passed in each; they are regression support, not
 substitutes for their failed/timed-out overall outcomes.
 
-Exact source/ammunition/event identity prevents unrelated fire from satisfying
+Exact mods/ammunition/event identity prevents unrelated fire from satisfying
 the native result. Requested-versus-observed counts prevent a completion flag
 from replacing physical fire. Independent target points and sampled terminal
 positions reject wrong-region rounds. The VLS result requires exact launch
@@ -222,7 +222,7 @@ requirements.
 ### 12. Which mechanics should be promoted into Tribunal?
 
 The existing product-neutral artillery observer is the correct promotion:
-tokenized exact source/weapon/magazine/ammunition/projectile records, locality,
+tokenized exact mods/weapon/magazine/ammunition/projectile records, locality,
 requested-position correlation, trajectory/termination samples, and negative
 windows. Generic circle/line spatial analysis is also appropriately reusable.
 Vigil grid syntax, capability policy, governor stages, VLS class selection,

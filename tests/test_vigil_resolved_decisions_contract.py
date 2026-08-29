@@ -5,8 +5,8 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-VIGIL = ROOT / "source/visual-support-tablet/addons/VIGIL"
-FIELD = ROOT / "source/field-utilities/addons/FieldUtils"
+VIGIL = ROOT / "mods/visual-support-tablet/addons/VIGIL"
+FIELD = ROOT / "mods/field-utilities/addons/FieldUtils"
 
 
 class VigilResolvedDecisionContractTests(unittest.TestCase):

@@ -12,7 +12,7 @@ import pontifex_multiplayer as multiplayer  # noqa: E402
 class VigilWhitelistModuleContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.scenario = multiplayer.FEATURE_SCENARIOS["vigil-whitelist-modules"]
-        self.addon = ROOT / "source/visual-support-tablet/addons/VIGIL"
+        self.addon = ROOT / "mods/visual-support-tablet/addons/VIGIL"
 
     def test_configured_entrypoint_and_repeated_reversal_are_permanent(self) -> None:
         self.assertNotIn("visual_driver", self.scenario.metadata)

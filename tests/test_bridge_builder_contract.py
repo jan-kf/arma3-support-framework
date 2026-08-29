@@ -20,10 +20,10 @@ import tribunal_ace_probe  # noqa: E402
 class BridgeBuilderContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.scenario = discover([
-            ROOT / "source" / "field-utilities" / "tests" / "tribunal"
+            ROOT / "mods" / "field-utilities" / "tests" / "tribunal"
         ])["fieldutils-bridge-builder"]
         self.source = (
-            ROOT / "source" / "field-utilities" / "addons" / "FieldUtils"
+            ROOT / "mods" / "field-utilities" / "addons" / "FieldUtils"
             / "functions" / "bridge" / "fn_bridgeUtils.sqf"
         ).read_text(encoding="utf-8")
 
@@ -31,7 +31,7 @@ class BridgeBuilderContractTests(unittest.TestCase):
         self.assertNotIn("FootBridge_0_ACR", self.source)
         self.assertIn('case "Land_Plank_01_4m_F"', self.source)
         config = (
-            ROOT / "source" / "field-utilities" / "addons" / "FieldUtils" / "config.cpp"
+            ROOT / "mods" / "field-utilities" / "addons" / "FieldUtils" / "config.cpp"
         ).read_text(encoding="utf-8")
         self.assertIn("A3_Structures_F_Exp_Civilian_Accessories", config)
 

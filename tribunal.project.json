@@ -5,9 +5,9 @@
   "assertion_prefix": "PONTIFEX_TEST",
   "entrypoint": "./pontifex",
   "scenario_roots": [
-    "source/core/tests/tribunal",
-    "source/advanced-systems/tests/tribunal",
-    "source/field-utilities/tests/tribunal",
-    "source/visual-support-tablet/tests/tribunal"
+    "mods/core/tests/tribunal",
+    "mods/advanced-systems/tests/tribunal",
+    "mods/field-utilities/tests/tribunal",
+    "mods/visual-support-tablet/tests/tribunal"
   ]
 }

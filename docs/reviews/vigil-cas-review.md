@@ -66,7 +66,7 @@ duplicate request is rejected.
     support. Sensor reveal, LOITER, fire controller ordering and fire-mode
     selection remain replaceable implementation details.
 12. **Promoted Tribunal mechanics.** Product-neutral source Fired observation,
-    exact source/weapon/ammo/projectile/locality records, trajectory samples,
+    exact mods/weapon/ammo/projectile/locality records, trajectory samples,
     target HitPart/damage/kill evidence, and deterministic handler cleanup join
     the existing aviation trajectory/locality/landing observer.
 
@@ -106,7 +106,7 @@ deadline prevents indefinite dispatch/on-station waits.
 | sensor/reveal dependency | NEEDS EXPERIMENTATION | used but not frozen as contract |
 | SAD combat waypoint | REWRITE BEFORE PERMANENT COVERAGE | safe LOITER plus explicit targets |
 | gun/guided weapon selection | REFINE BEFORE PERMANENT COVERAGE | ammunition and real config envelopes |
-| Fired/target evidence | REFINED; ACCEPTED / COVERED | exact Fired plus target-local HitPart or exact source/ammunition HandleDamage callback; controls require event absence |
+| Fired/target evidence | REFINED; ACCEPTED / COVERED | exact Fired plus target-local HitPart or exact mods/ammunition HandleDamage callback; controls require event absence |
 | timer authority | KEEP AS-IS AND SPEC-TEST | server time, bounded deadline |
 | duplicate/invalid work | REFINE BEFORE PERMANENT COVERAGE | reject duplicate, crew, lethal-ammo failures |
 | combat disengagement/RTB | REFINE BEFORE PERMANENT COVERAGE | proven reboot + MOVE through transport RTB |
@@ -159,7 +159,7 @@ the product ledger's exact aircraft/hostile pair, and either exact hostile
 HitPart or a target-local `HandleDamage` callback naming that aircraft and
 `ACE_20mm_HE`. The callback proves attributable impact, not material damage or
 a kill. Controls require no targeting ledger, no HitPart, no matching
-source/ammunition damage callback, and zero aggregate damage. Return
+mods/ammunition damage callback, and zero aggregate damage. Return
 requires a sampled physical trajectory, approach, landing, settling and home
 state; cleanup requires an idle manager and deleted fixtures.
 

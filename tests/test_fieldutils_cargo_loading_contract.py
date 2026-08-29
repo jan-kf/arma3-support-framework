@@ -15,18 +15,18 @@ from tribunal.discovery import discover  # noqa: E402
 class FieldUtilitiesCargoLoadingContractTests(unittest.TestCase):
     def setUp(self) -> None:
         discovered = discover(
-            [ROOT / "source" / "field-utilities" / "tests" / "tribunal"]
+            [ROOT / "mods" / "field-utilities" / "tests" / "tribunal"]
         )
         self.scenario = discovered["fieldutils-cargo-loading"]
         self.policy_scenario = discovered["fieldutils-ace-cargo-policy"]
         self.product = (
-            ROOT / "source/field-utilities/addons/FieldUtils/functions/global/fn_objectHandling.sqf"
+            ROOT / "mods/field-utilities/addons/FieldUtils/functions/global/fn_objectHandling.sqf"
         ).read_text()
         self.field_config = (
-            ROOT / "source/field-utilities/addons/FieldUtils/config.cpp"
+            ROOT / "mods/field-utilities/addons/FieldUtils/config.cpp"
         ).read_text()
         self.advanced_config = (
-            ROOT / "source/advanced-systems/addons/AdvSys/config.cpp"
+            ROOT / "mods/advanced-systems/addons/AdvSys/config.cpp"
         ).read_text()
 
     def test_registered_child_routes_to_authenticated_server_request(self) -> None:

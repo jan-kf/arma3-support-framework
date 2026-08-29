@@ -6,6 +6,6 @@
 /server/dependencies/
 /server/cache/
 /client/runtime/
-/source/*/.hemttout/
+/mods/*/.hemttout/
 **/__pycache__/
 *.pyc

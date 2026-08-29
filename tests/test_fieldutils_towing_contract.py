@@ -15,9 +15,9 @@ from tribunal.discovery import discover  # noqa: E402
 class FieldUtilitiesTowingContractTests(unittest.TestCase):
     def setUp(self) -> None:
         self.scenario = discover(
-            [ROOT / "source" / "field-utilities" / "tests" / "tribunal"]
+            [ROOT / "mods" / "field-utilities" / "tests" / "tribunal"]
         )["fieldutils-towing"]
-        self.addon = ROOT / "source/field-utilities/addons/FieldUtils"
+        self.addon = ROOT / "mods/field-utilities/addons/FieldUtils"
         self.server = (
             self.addon / "functions/ropes/fn_towingServer.sqf"
         ).read_text()

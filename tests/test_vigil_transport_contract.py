@@ -15,7 +15,7 @@ class VigilTransportContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.scenario = discover([
-            ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal"
+            ROOT / "mods" / "visual-support-tablet" / "tests" / "tribunal"
         ])["vigil-transport"]
 
     def test_evidence_contract_covers_every_feature_assertion_once(self) -> None:
@@ -95,7 +95,7 @@ class VigilTransportContractTests(unittest.TestCase):
         )
         product = (
             ROOT
-            / "source"
+            / "mods"
             / "visual-support-tablet"
             / "addons"
             / "VIGIL"
