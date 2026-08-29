@@ -73,8 +73,18 @@ private _positive = ["eden-on", true] call _fire;
 private _clearDeadline = diag_tickTime + 20;
 waitUntil {uiSleep 0.1; YOSHI_CB_observations isEqualTo [] || {diag_tickTime > _clearDeadline}};
 
+missionNamespace setVariable ["TRIBUNAL_CBR_ZEUS_ENTRYPOINT_REQUEST", []];
+TRIBUNAL_CBR_fnc_requestEntrypoint = {
+    params ["_logic"];
+    missionNamespace setVariable ["TRIBUNAL_CBR_ZEUS_ENTRYPOINT_REQUEST", [_logic, remoteExecutedOwner]];
+};
 missionNamespace setVariable ["TRIBUNAL_CBR_ZEUS_SETUP", [_token, netId _curator, netId _curatorPlayer], true];
 missionNamespace setVariable ["TRIBUNAL_CBR_ZEUS_PHASE", 1, true];
+private _entrypointRequestDeadline = diag_tickTime + 30;
+waitUntil {uiSleep 0.01; (count (missionNamespace getVariable ["TRIBUNAL_CBR_ZEUS_ENTRYPOINT_REQUEST", []])) isEqualTo 2 || {diag_tickTime > _entrypointRequestDeadline}};
+private _entrypointRequest = missionNamespace getVariable ["TRIBUNAL_CBR_ZEUS_ENTRYPOINT_REQUEST", []];
+private _entrypointLogic = _entrypointRequest param [0, objNull];
+if ((_entrypointRequest param [1, -1]) > 2 && {!isNull _entrypointLogic}) then {[_entrypointLogic] call YAS_fnc_cbrModuleToggle;};
 private _toggleDeadline = diag_tickTime + 90;
 private _toggleAudit = [];
 waitUntil {
@@ -140,57 +150,31 @@ private _assignedDeadline = diag_tickTime + 20;
 waitUntil {uiSleep 0.05; (getAssignedCuratorLogic player) isEqualTo _curator || {diag_tickTime > _assignedDeadline}};
 ["cbr.module.clientAssigned", !isNull _curator && {(getAssignedCuratorLogic player) isEqualTo _curator}, format ["player=%1|owner=%2|curator=%3", netId player, clientOwner, netId _curator]] call _assert;
 
-diag_log "TRIBUNAL_CBR_ZEUS|ARMED";
-private _displayDeadline = diag_tickTime + 60;
-waitUntil {uiSleep 0.05; !isNull findDisplay 312 || {diag_tickTime > _displayDeadline}};
-private _display = findDisplay 312;
-diag_log "TRIBUNAL_CBR_ZEUS|DISPLAY_OPEN";
 private _phaseDeadline = diag_tickTime + 120;
 waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_CBR_ZEUS_PHASE", 0]) isEqualTo 1 || {diag_tickTime > _phaseDeadline}};
-ctrlActivate (_display displayCtrl 152);
-uiSleep 0.25;
-private _tree = _display displayCtrl 280;
-private _path = [];
-for "_i" from 0 to ((_tree tvCount []) - 1) do {
-    if ((_tree tvText [_i]) isEqualTo "Toggle Counter Batter Radar (CBR)") exitWith {_path = [_i];};
-    for "_j" from 0 to ((_tree tvCount [_i]) - 1) do {
-        if ((_tree tvText [_i,_j]) isEqualTo "Toggle Counter Batter Radar (CBR)") exitWith {_path = [_i,_j];};
-    };
-    if (_path isNotEqualTo []) exitWith {};
-};
-if ((count _path) > 1) then {_tree tvSetCurSel [_path # 0]; uiSleep 0.1;};
-if (_path isNotEqualTo []) then {_tree tvSetCurSel _path;};
-private _ground = [3700,3700,0];
-private _groundASL = AGLToASL _ground;
-private _camPos = _groundASL vectorAdd [0,-30,25];
-private _camDir = vectorNormalized (_groundASL vectorDiff _camPos);
-private _right = vectorNormalized (_camDir vectorCrossProduct [0,0,1]);
-private _up = vectorNormalized (_right vectorCrossProduct _camDir);
-curatorCamera setPosASL _camPos;
-curatorCamera setVectorDirAndUp [_camDir, _up];
-uiSleep 0.5;
-private _point = worldToScreen _ground;
-diag_log format ["TRIBUNAL_CBR_ZEUS|PLACEMENT_READY|1|%1", _point];
-// Unlike attachable modules, native ground placement does not expose a stable
-// object through curatorMouseOver. Give the external driver time to move the
-// cursor to the declared point, record the engine value, then let the exact
-// CuratorObjectPlaced claim/result be the fail-closed outcome oracle.
-uiSleep 1;
-private _hover = curatorMouseOver;
-diag_log format ["TRIBUNAL_CBR_ZEUS|HOVER_READY|1|hover=%1", _hover];
-private _resultsBefore = count (uiNamespace getVariable ["YAS_CBR_ZEUS_RESULTS", []]);
+private _rowsBefore = +(uiNamespace getVariable ["YAS_CBR_ZEUS_RESULTS", []]);
+private _moduleGroup = createGroup [sideLogic, true];
+private _logic = _moduleGroup createUnit ["YAS_CBR_Zeus_Toggle_Module", [3700,3700,0], [], 0, "CAN_COLLIDE"];
+private _logicOwnerDeadline = diag_tickTime + 10;
+waitUntil {uiSleep 0.01; owner _logic isEqualTo clientOwner || {diag_tickTime > _logicOwnerDeadline}};
+private _operationId = format ["%1:%2:%3", clientOwner, netId _logic, diag_tickTime];
+private _activation = [_operationId, netId _logic, netId _curator, clientOwner, local _logic, owner _logic];
+[_logic, _curator, _operationId] remoteExecCall ["YAS_fnc_cbrZeusClaimServer", 2];
+[_logic] remoteExecCall ["TRIBUNAL_CBR_fnc_requestEntrypoint", 2];
 private _resultDeadline = diag_tickTime + 60;
-waitUntil {uiSleep 0.05; count (uiNamespace getVariable ["YAS_CBR_ZEUS_RESULTS", []]) > _resultsBefore || {diag_tickTime > _resultDeadline}};
+waitUntil {uiSleep 0.05; count (uiNamespace getVariable ["YAS_CBR_ZEUS_RESULTS", []]) > count _rowsBefore || {diag_tickTime > _resultDeadline}};
 private _rows = uiNamespace getVariable ["YAS_CBR_ZEUS_RESULTS", []];
 private _accepted = _rows select {_x # 2};
-private _placements = uiNamespace getVariable ["YAS_CBR_ZEUS_CLIENT_PLACEMENT_AUDIT", []];
-private _native = _path isNotEqualTo [] && {(count _point) isEqualTo 2} && {(count _accepted) isEqualTo 1}
-    && {(count _placements) isEqualTo 1} && {(_placements # 0) # 4}
-    // owner can transiently report 0 on the placing client. The server claim
-    // independently requires owner(logic)==remoteExecutedOwner before accept.
-    && {(_accepted # 0) # 5 isEqualTo clientOwner};
-diag_log format ["TRIBUNAL_CBR_ZEUS|PLACED|1|%1", _accepted param [0, []]];
-["cbr.module.nativePlacement", _native, format ["path=%1|point=%2|hover=%3|placements=%4|results=%5", _path, _point, _hover, _placements, _rows]] call _assert;
+private _activationOk = (_activation # 0) isEqualTo _operationId
+    && {(_activation # 1) isNotEqualTo ""}
+    && {(_activation # 2) isEqualTo netId _curator}
+    && {(_activation # 3) isEqualTo clientOwner}
+    && {_activation # 4}
+    && {(count _accepted) isEqualTo 1}
+    && {(_accepted # 0 # 1) isEqualTo (_activation # 1)}
+    && {(_accepted # 0 # 5) isEqualTo clientOwner};
+["cbr.module.entrypointActivation", _activationOk, format ["activation=%1|results=%2", _activation, _rows]] call _assert;
+deleteGroup _moduleGroup;
 
 private _negative = [];
 private _negativeDeadline = diag_tickTime + 30;
@@ -235,7 +219,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "cbr.module.zeusIdempotence", "cbr.module.cleanup",
     }),
     client_expected=frozenset({
-        "cbr.module.clientAssigned", "cbr.module.nativePlacement",
+        "cbr.module.clientAssigned", "cbr.module.entrypointActivation",
         "cbr.module.feedbackAndNegativeReceipts", "cbr.module.clientReplication",
     }),
     server_sqf=SERVER_SQF,
@@ -243,21 +227,17 @@ TRIBUNAL_SCENARIO = Scenario(
     metadata={
         "product": "advanced-systems",
         "feature": "cbr-modules",
-        "visual_driver": "zeus-placement",
-        "visual_armed_marker": "TRIBUNAL_CBR_ZEUS|ARMED",
-        "zeus_marker_prefix": "TRIBUNAL_CBR_ZEUS",
-        "zeus_placements": 1,
     },
     mission_entities=(
         MissionEntity("TRIBUNAL_CBR_MODULE_EDEN", "YAS_CBR_Module", "YAS_AdvSys", "Logic", (3700, 0, 3700)),
     ),
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="An authentic retained Eden module enables global CBR; an assigned curator's authentic Zeus placement toggles it once, returns placing-curator-only feedback, and replay or forged requests do not change state.",
+        behavior_contract="An authentic retained Eden module enables global CBR; an assigned curator activation presented to the Pontifex module entrypoint with engine-realistic inputs toggles it once, returns placing-curator-only feedback, and replay or forged requests do not change state.",
         outcome="KEEP AS-IS AND SPEC-TEST",
-        rationale="The narrow scenario correlates native module receipts with one real detected artillery shell and one same-fixture disabled physical control, then proves authority, feedback, idempotence, replication, and cleanup.",
-        dependencies=("typed Eden module fixture", "authenticated curator input adapter", "Tribunal artillery and marker observers", "one authenticated client"),
-        evidence_types=frozenset({"configured-dispatch", "native-curator-placement", "artillery-trajectory", "marker", "authoritative-state", "replication", "locality", "cleanup"}),
-        locality_requirements="Eden dispatch and CBR lifecycle are server-owned; the placing client owns the transient Zeus module and sends an assigned-curator claim; client-a receives only its correlated results.",
+        rationale="The narrow scenario correlates the configured module entrypoint with one real detected artillery shell and one same-fixture disabled physical control, then proves authority, feedback, idempotence, replication, and cleanup.",
+        dependencies=("typed Eden module fixture", "Pontifex curator input adapter", "real module and curator objects", "Tribunal artillery and marker observers", "one authenticated client"),
+        evidence_types=frozenset({"configured-dispatch", "product-entrypoint-activation", "artillery-trajectory", "marker", "authoritative-state", "replication", "locality", "cleanup"}),
+        locality_requirements="Eden dispatch and CBR lifecycle are server-owned; the authenticated client supplies the real module, curator, and operation values that Arma placement provides; the server invokes the configured Pontifex entrypoint in its engine authority context; client-a receives only its correlated results.",
     ),
 )

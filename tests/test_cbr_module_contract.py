@@ -17,10 +17,8 @@ class CbrModuleContractTests(unittest.TestCase):
         self.scenario = multiplayer.FEATURE_SCENARIOS["advsys-cbr-modules"]
         self.addon = ROOT / "source/advanced-systems/addons/AdvSys"
 
-    def test_scenario_uses_authentic_entries_and_narrow_artillery_pair(self) -> None:
-        self.assertEqual(self.scenario.metadata["visual_driver"], "zeus-placement")
-        self.assertEqual(self.scenario.metadata["zeus_marker_prefix"], "TRIBUNAL_CBR_ZEUS")
-        self.assertEqual(self.scenario.metadata["zeus_placements"], 1)
+    def test_scenario_uses_product_entrypoint_and_narrow_artillery_pair(self) -> None:
+        self.assertNotIn("visual_driver", self.scenario.metadata)
         self.assertEqual(len(self.scenario.mission_entities), 1)
         entity = self.scenario.mission_entities[0]
         self.assertEqual((entity.class_name, entity.data_type), ("YAS_CBR_Module", "Logic"))
@@ -28,9 +26,13 @@ class CbrModuleContractTests(unittest.TestCase):
         self.assertEqual(self.scenario.server_sqf.count("call _fire;"), 2)
         self.assertIn("cbr.module.edenCausalDetection", self.scenario.server_expected)
         self.assertIn("cbr.module.zeusOffPhysicalControl", self.scenario.server_expected)
-        self.assertIn("Toggle Counter Batter Radar (CBR)", self.scenario.client_sqf)
+        self.assertIn("createUnit [\"YAS_CBR_Zeus_Toggle_Module\"", self.scenario.client_sqf)
+        self.assertIn("remoteExecCall [\"YAS_fnc_cbrZeusClaimServer\", 2]", self.scenario.client_sqf)
+        self.assertIn("remoteExecCall [\"TRIBUNAL_CBR_fnc_requestEntrypoint\", 2]", self.scenario.client_sqf)
+        self.assertIn("[_entrypointLogic] call YAS_fnc_cbrModuleToggle", self.scenario.server_sqf)
+        self.assertNotIn("findDisplay 312", self.scenario.client_sqf)
+        self.assertNotIn("curatorMouseOver", self.scenario.client_sqf)
         self.assertNotIn("call YAS_fnc_cbrModuleEnable", self.scenario.server_sqf)
-        self.assertNotIn("call YAS_fnc_cbrModuleToggle", self.scenario.server_sqf)
 
     def test_product_boundary_is_exact_scoped_and_idempotent(self) -> None:
         eden = (self.addon / "functions/cbr/fn_cbrModuleEnable.sqf").read_text(encoding="utf-8")
@@ -58,7 +60,7 @@ class CbrModuleContractTests(unittest.TestCase):
         self.assertIn('typeOf _logic isEqualTo "YAS_CBR_Zeus_Toggle_Module"', client)
         self.assertIn('remoteExecCall ["YAS_fnc_cbrZeusClaimServer", 2]', client)
 
-    def test_generated_sqf_and_generic_driver_prefix_are_registered(self) -> None:
+    def test_generated_sqf_uses_no_stock_zeus_ui_driver(self) -> None:
         plan = multiplayer.select_plan("gameplay", "advsys-cbr-modules")
         with tempfile.TemporaryDirectory() as temporary:
             mission = Path(temporary) / "Tier.Stratis"
@@ -66,20 +68,10 @@ class CbrModuleContractTests(unittest.TestCase):
             server = (mission / "initServer.sqf").read_text(encoding="ascii")
             client = (mission / "initPlayerLocal.sqf").read_text(encoding="ascii")
         self.assertIn("cbr.module.edenDispatch", server)
-        self.assertIn("TRIBUNAL_CBR_ZEUS|PLACEMENT_READY", client)
-        runner = (ROOT / "tools/pontifex_multiplayer.py").read_text(encoding="utf-8")
-        driver = (ROOT / "tools/tribunal_zeus_probe.py").read_text(encoding="utf-8")
-        self.assertIn("zeus_marker_prefix", runner)
-        self.assertIn("--marker-prefix", driver)
-        self.assertIn("re.escape(args.marker_prefix)", driver)
-        self.assertIn("max(reports, key=lambda path: path.stat().st_mtime_ns)", driver)
-        self.assertEqual(driver.count('rfb.pointer_move(1, 1)'), 2)
-        self.assertIn('"pointer_moved_in": True', driver)
-        self.assertIn('"pointer_moved_away": True', driver)
-        self.assertIn("not 1 <= len(points) <= 16", driver)
-        self.assertIn("wait_marker(hover_pattern", driver)
-        self.assertIn('"normalized_candidates": points', driver)
-        self.assertNotIn('for path in sorted(profile.glob("*.rpt"))', driver)
+        self.assertIn("YAS_fnc_cbrZeusClaimServer", client)
+        self.assertIn("TRIBUNAL_CBR_fnc_requestEntrypoint", client)
+        self.assertIn("YAS_fnc_cbrModuleToggle", server)
+        self.assertNotIn("TRIBUNAL_CBR_ZEUS|PLACEMENT_READY", client)
 
 
 if __name__ == "__main__":
