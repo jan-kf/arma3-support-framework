@@ -5,6 +5,11 @@ from __future__ import annotations
 import tempfile
 import unittest
 from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+from pontifex_paths import TRIBUNAL_ROOT  # noqa: E402
 
 from tribunal.discovery import discover
 from tribunal.mission.aviation import aviation_observer_sqf
@@ -16,9 +21,6 @@ from tribunal.observability.ui import Region, changed_pixel_fraction, region_dif
 from tribunal.network import NETWORK_PROFILES
 from tribunal.reporting.evidence import EvidenceAttachment, attach_evidence
 from tribunal.runner.model import ClientIdentity, client_identity_map
-
-
-ROOT = Path(__file__).resolve().parents[1]
 
 
 class TribunalCapabilityTests(unittest.TestCase):
@@ -108,7 +110,7 @@ class TribunalCapabilityTests(unittest.TestCase):
             client_identity_map((clients[0], ClientIdentity("client-b", "Bravo", Path("/state/a"), 21)))
 
     def test_framework_capability_scenarios_are_product_neutral(self) -> None:
-        scenarios = discover([ROOT / "tribunal" / "scenarios"])
+        scenarios = discover([TRIBUNAL_ROOT / "tribunal" / "scenarios"])
         self.assertEqual(set(scenarios), {"locality-probe", "visual-framebuffer"})
         locality = scenarios["locality-probe"]
         self.assertIn("TRIBUNAL_fnc_waitForLocality", locality.server_sqf)

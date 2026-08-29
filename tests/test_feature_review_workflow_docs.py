@@ -2,12 +2,16 @@
 
 from pathlib import Path
 import re
+import sys
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "tools"))
+from pontifex_paths import TRIBUNAL_ROOT  # noqa: E402
+
 ENTRY = ROOT / "CLAUDE.md"
-PROGRAM = ROOT / "tribunal" / "docs" / "feature-review-program.md"
+PROGRAM = TRIBUNAL_ROOT / "docs" / "feature-review-program.md"
 
 
 class FeatureReviewWorkflowDocsTests(unittest.TestCase):
@@ -18,10 +22,10 @@ class FeatureReviewWorkflowDocsTests(unittest.TestCase):
         cls.program_flat = " ".join(cls.program.split())
 
     def test_memoryless_agent_discovers_one_canonical_program(self) -> None:
-        self.assertIn("tribunal/docs/feature-review-program.md", self.entry)
+        self.assertIn("$TRIBUNAL_ROOT/docs/feature-review-program.md", self.entry)
         self.assertIn("the canonical 12-question feature-review", self.entry)
         self.assertIn("/mnt/services/arma-knowledge/README.md", self.entry)
-        self.assertIn("tribunal/evidence/README.md", self.entry)
+        self.assertIn("$TRIBUNAL_ROOT/tribunal/evidence/README.md", self.entry)
         self.assertIn("short prompt quoted in the canonical program is sufficient", self.entry)
 
     def test_cold_read_covers_selection_review_evidence_and_closeout(self) -> None:

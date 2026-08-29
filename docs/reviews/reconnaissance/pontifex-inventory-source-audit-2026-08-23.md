@@ -71,7 +71,7 @@ edited because it is accepted project guidance.
 ### 1.3 Two accepted surfaces have no durable review document
 
 The program states that "Completed reviews are durable evidence and live beside
-the program: `tribunal/docs/*-review.md`". Two scenarios carry complete
+the program: `docs/reviews/*-review.md`". Two scenarios carry complete
 `ScenarioReview` metadata with outcome `KEEP AS-IS AND SPEC-TEST`, and are
 recorded as **COVERED** in inventory §3.4 and §3.4/§3.1, but have no
 corresponding review file:

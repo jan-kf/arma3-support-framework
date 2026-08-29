@@ -8,6 +8,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+import sys
 
 from tribunal.evidence import (
     EvidenceContractError,
@@ -19,8 +20,11 @@ from tribunal.evidence import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
-PACKAGES = ROOT / "tribunal" / "evidence" / "packages"
-RUN = ROOT / "runs" / "20260821T153013Z-0a8b2c91"
+sys.path.insert(0, str(ROOT / "tools"))
+from pontifex_paths import PATHS  # noqa: E402
+
+PACKAGES = ROOT / "evidence" / "accepted"
+RUN = PATHS.runs / "20260821T153013Z-0a8b2c91"
 
 
 class EvidenceContractV1Tests(unittest.TestCase):

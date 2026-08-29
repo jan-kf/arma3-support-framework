@@ -235,7 +235,7 @@ def main() -> int:
         type=Path,
         default=Path("/mnt/services/arma-knowledge/src/arma_knowledge/tribunal_exemplars.json"),
     )
-    parser.add_argument("--output", type=Path, default=ROOT / "tribunal" / "evidence" / "packages")
+    parser.add_argument("--output", type=Path, default=ROOT / "evidence" / "accepted")
     args = parser.parse_args()
     curation = json.loads(args.curation.read_text(encoding="utf-8"))
     args.output.mkdir(parents=True, exist_ok=True)

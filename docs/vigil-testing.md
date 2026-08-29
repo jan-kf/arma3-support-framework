@@ -290,7 +290,7 @@ zero damage. Physical trajectory proves dispatch and return; the authoritative
 active window proves timer behavior and no post-expiry fire. The same aircraft
 then completes a no-target request with no new fire, and a separate zero-ammo
 aircraft must fail closed. See
-[`../tribunal/docs/vigil-cas-review.md`](../tribunal/docs/vigil-cas-review.md)
+[`reviews/vigil-cas-review.md`](reviews/vigil-cas-review.md)
 for the review, experimental comparisons and false-PASS analysis.
 
 ## Fixed-wing strike support
@@ -315,7 +315,7 @@ showed native Bomb04 already guides physically and the replacement doubled the
 round count. Fuel and per-pylon ammunition restoration and a bounded RTB result
 were added before permanent coverage. The remaining 3CB Hellfire mapping is
 explicitly experimental because the installed content cannot exercise it. See
-[`../tribunal/docs/vigil-fixed-wing-review.md`](../tribunal/docs/vigil-fixed-wing-review.md).
+[`reviews/vigil-fixed-wing-review.md`](reviews/vigil-fixed-wing-review.md).
 
 ## Fixed-wing logistics
 
@@ -328,7 +328,7 @@ capacity/weight implementation, so the scenario does not invent one.
 
 Generic inventory-tree and cargo/parachute evidence lives in Tribunal; Vigil
 role, request, task and reuse semantics remain product-side. See
-[`../tribunal/docs/vigil-fixed-wing-logistics-review.md`](../tribunal/docs/vigil-fixed-wing-logistics-review.md)
+[`reviews/vigil-fixed-wing-logistics-review.md`](reviews/vigil-fixed-wing-logistics-review.md)
 for the architecture review, engine characterizations, Live calibration and
 false-PASS analysis.
 
@@ -340,4 +340,4 @@ from deployment and no request, sensor collection, user-visible result, task
 lifecycle or multiplayer propagation exists. The disconnected Recon form has no
 submit action and an empty task implementation. Tribunal therefore adds no
 gameplay scenario until the information product and lifecycle are decided. See
-[`../tribunal/docs/vigil-fixed-wing-recon-review.md`](../tribunal/docs/vigil-fixed-wing-recon-review.md).
+[`reviews/vigil-fixed-wing-recon-review.md`](reviews/vigil-fixed-wing-recon-review.md).

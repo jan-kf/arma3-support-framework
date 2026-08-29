@@ -25,19 +25,19 @@ Hard boundaries, enforced by `tests/test_tribunal_architecture.py`:
 
 ## Canonical methodology — read before changing product behavior
 
-* [`tribunal/docs/feature-review-program.md`](tribunal/docs/feature-review-program.md)
+* `$TRIBUNAL_ROOT/docs/feature-review-program.md`
   — **the canonical 12-question feature-review and validation program.** Any
   feature review or substantial permanent coverage must follow it as written,
   including its classification gates, execution phases, and acceptance rules.
   There is exactly one review program; do not create a local variant.
-* [`tribunal/docs/testing-methodology.md`](tribunal/docs/testing-methodology.md)
+* `$TRIBUNAL_ROOT/docs/testing-methodology.md`
   — test taxonomy, existing coverage audit, generic capability backlog.
-* [`tribunal/docs/architecture.md`](tribunal/docs/architecture.md) — who owns
+* `$TRIBUNAL_ROOT/docs/architecture.md` — who owns
   which mechanism, capability contracts, security/network/audio boundaries.
-* [`tribunal/docs/pontifex-feature-inventory.md`](tribunal/docs/pontifex-feature-inventory.md)
+* [`docs/reviews/pontifex-feature-inventory.md`](docs/reviews/pontifex-feature-inventory.md)
   — **the feature inventory and review queue.** Pick the next review from its
   prioritized list; a completed review updates its statuses.
-* [`tribunal/evidence/README.md`](tribunal/evidence/README.md) — the portable
+* `$TRIBUNAL_ROOT/tribunal/evidence/README.md` — the portable
   Evidence Contract v1 producer boundary. The canonical review program tells
   you when and how to publish, ingest, and distill it.
 * `/mnt/services/arma-knowledge/README.md` — the Sacred Texts, applicability,
@@ -45,7 +45,7 @@ Hard boundaries, enforced by `tests/test_tribunal_architecture.py`:
   interface used by the canonical review program.
 
 Completed reviews are durable evidence and live beside the program:
-`tribunal/docs/*-review.md`. Read the relevant one before touching a covered
+`docs/reviews/*-review.md`. Read the relevant one before touching a covered
 feature.
 
 "Perform the canonical feature-review program" means the whole thing described
@@ -65,11 +65,11 @@ request explicitly asks for sequential continuation.
   (`Scenario` + `ScenarioReview`). They consume Tribunal mechanics and apply
   product semantics. They may reference private product APIs to reach or observe
   behavior — those names are evidence adapters, never the contract.
-* **Generic Tribunal capability scenarios** live in `tribunal/scenarios/` and
+* **Generic Tribunal capability scenarios** live under `$TRIBUNAL_ROOT/tribunal/scenarios/` and
   prove the framework, not any product feature.
 * **Static/contract tests** live in `tests/` (`python3 -m unittest discover -s tests`).
 * Every permanent scenario must carry complete `ScenarioReview` metadata
-  (`tribunal/runner/model.py`): test type, behavior contract, outcome,
+  (`$TRIBUNAL_ROOT/tribunal/runner/model.py`): test type, behavior contract, outcome,
   rationale, dependencies, evidence types, locality, and any
   `CharacterizedBehavior` records. `behavior_contract` must not name private
   product symbols.

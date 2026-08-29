@@ -19,6 +19,7 @@ from tribunal.mission.entities import render_typed_entities
 from tribunal.runner.model import MissionEntity, MissionSync, Scenario  # noqa: E402
 import pontifex_multiplayer as multiplayer  # noqa: E402
 import pontifex_server as dedicated  # noqa: E402
+from pontifex_paths import TRIBUNAL_ROOT  # noqa: E402
 
 
 class TribunalArchitectureTests(unittest.TestCase):
@@ -207,7 +208,7 @@ class TribunalArchitectureTests(unittest.TestCase):
 
     def test_generic_tribunal_sources_do_not_encode_pontifex_features(self) -> None:
         prohibited = (r"\baps\b", r"iron dome", r"\bvigil\b", r"field utilities", r"\bpontifex\b")
-        for path in (ROOT / "tribunal").rglob("*.py"):
+        for path in (TRIBUNAL_ROOT / "tribunal").rglob("*.py"):
             text = path.read_text(encoding="utf-8").casefold()
             self.assertFalse(any(re.search(pattern, text) for pattern in prohibited), path)
 

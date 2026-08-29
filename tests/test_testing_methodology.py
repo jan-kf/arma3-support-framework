@@ -9,6 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "tools"))
+
+from pontifex_paths import TRIBUNAL_ROOT  # noqa: E402
 
 from tribunal.discovery import discover  # noqa: E402
 from tribunal.interactions.ace import AceInteractionRequest  # noqa: E402
@@ -18,7 +21,7 @@ from tribunal.runner.model import CharacterizedBehavior, ScenarioReview  # noqa:
 class TestingMethodologyTests(unittest.TestCase):
     def test_all_permanent_scenarios_declare_review_metadata(self) -> None:
         scenarios = discover([
-            ROOT / "tribunal" / "scenarios",
+            TRIBUNAL_ROOT / "tribunal" / "scenarios",
             ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
             ROOT / "source" / "field-utilities" / "tests" / "tribunal",
             ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
@@ -34,7 +37,7 @@ class TestingMethodologyTests(unittest.TestCase):
         """Mission .sqf files are written as ASCII; a stray dash breaks the tier."""
 
         scenarios = discover([
-            ROOT / "tribunal" / "scenarios",
+            TRIBUNAL_ROOT / "tribunal" / "scenarios",
             ROOT / "source" / "advanced-systems" / "tests" / "tribunal",
             ROOT / "source" / "field-utilities" / "tests" / "tribunal",
             ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
