@@ -27,16 +27,18 @@ if str(PROJECT_ROOT) not in sys.path:
 from tribunal.assertions.protocol import parse_protocol as parse_tribunal_protocol
 from tribunal.mission.pbo import build_mission_pbo, sha256
 from tribunal.reporting.artifacts import atomic_json
+from pontifex_paths import PATHS
 
 
 ROOT = PROJECT_ROOT
 SERVER = ROOT / "server"
-RUNTIME = SERVER / "runtime"
+RUNTIME = PATHS.server
 INSTALL_VIEW = RUNTIME / "install"
 CA_CERTIFICATE_BUNDLE = RUNTIME / "ca-certificates.crt"
-DEPENDENCIES = SERVER / "dependencies"
-CACHE = SERVER / "cache"
-RUNS = ROOT / "runs"
+DEPENDENCIES = PATHS.dependencies
+CACHE = PATHS.cache
+RUNS = PATHS.runs
+BUILD = PATHS.builds
 LOCK_FILE = SERVER / "dependencies.lock.json"
 STEAM_DLC_CATALOG = SERVER / "steam-arma3-dlc-catalog.json"
 STATE_FILE = RUNTIME / "server.json"
@@ -278,10 +280,10 @@ def prepare_runtime() -> None:
     shutil.rmtree(runtime_mods, ignore_errors=True)
     runtime_mods.mkdir()
     pontifex_mods = {
-        "@cordis": (ROOT / "build" / "current" / "@CORDIS", "CORDIS.pbo"),
-        "@fieldutils": (ROOT / "build" / "current" / "@FieldUtils", "FieldUtils.pbo"),
-        "@advsys": (ROOT / "build" / "current" / "@AdvSys", "AdvSys.pbo"),
-        "@vigil": (ROOT / "build" / "current" / "@VIGIL_Support_Tablet", "VIGIL.pbo"),
+        "@cordis": (BUILD / "current" / "@CORDIS", "CORDIS.pbo"),
+        "@fieldutils": (BUILD / "current" / "@FieldUtils", "FieldUtils.pbo"),
+        "@advsys": (BUILD / "current" / "@AdvSys", "AdvSys.pbo"),
+        "@vigil": (BUILD / "current" / "@VIGIL_Support_Tablet", "VIGIL.pbo"),
     }
     for alias, (source, pbo_name) in pontifex_mods.items():
         deployed = runtime_mods / alias
@@ -350,7 +352,7 @@ def git_info() -> dict:
 
 def pbo_manifest() -> list[dict]:
     output = []
-    for path in sorted((ROOT / "build" / "current").glob("*/addons/*.pbo")):
+    for path in sorted((BUILD / "current").glob("*/addons/*.pbo")):
         output.append({"path": str(path.relative_to(ROOT)), "size": path.stat().st_size, "sha256": sha256(path)})
     return output
 

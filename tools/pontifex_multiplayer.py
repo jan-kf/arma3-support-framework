@@ -31,13 +31,14 @@ from tribunal.reporting.evidence import EvidenceAttachment, attach_evidence
 from tribunal.runner.model import ClientIdentity, TierPlan as TestPlan, client_identity_map
 
 import pontifex_server as dedicated
+from pontifex_paths import PATHS
 
 
 ROOT = dedicated.ROOT
 RUNTIME = dedicated.RUNTIME
 RUNS = dedicated.RUNS
 CLIENT = ROOT / "client"
-CLIENT_RUNTIME = CLIENT / "runtime"
+CLIENT_RUNTIME = PATHS.client
 CLIENT_HOME = CLIENT_RUNTIME / "home"
 CLIENT_SECURITY = CLIENT / "security"
 SECCOMP_PROFILE = CLIENT_SECURITY / "pontifex-steam-seccomp.json"

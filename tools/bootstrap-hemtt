@@ -5,13 +5,18 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 VERSION="1.20.1"
 SHA256="4ec152f9174be9745c8ee571df0862246b1beb9819c92d3f8876f1c406faf3ea"
 URL="https://github.com/BrettMayson/HEMTT/releases/download/v${VERSION}/linux-x64"
-DEST="$ROOT/.tools/hemtt"
+if [[ -n "${PONTIFEX_STATE_ROOT:-}" && "$PONTIFEX_STATE_ROOT" != "$ROOT" ]]; then
+    TOOLS="$PONTIFEX_STATE_ROOT/dependencies/tools"
+else
+    TOOLS="$ROOT/.tools"
+fi
+DEST="$TOOLS/hemtt"
 
 if [[ -x "$DEST" ]] && [[ "$($DEST --version 2>&1)" == "hemtt $VERSION" ]]; then
     exit 0
 fi
 
-mkdir -p "$ROOT/.tools"
+mkdir -p "$TOOLS"
 TMP="$DEST.tmp.$$"
 trap 'rm -f "$TMP"' EXIT
 curl -fsSL "$URL" -o "$TMP"
@@ -20,4 +25,3 @@ chmod +x "$TMP"
 mv "$TMP" "$DEST"
 trap - EXIT
 echo "Installed HEMTT $VERSION at $DEST"
-
