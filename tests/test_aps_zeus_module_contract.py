@@ -17,10 +17,8 @@ class ApsZeusModuleContractTests(unittest.TestCase):
         self.scenario = multiplayer.FEATURE_SCENARIOS["advsys-aps-zeus-module"]
         self.addon = ROOT / "source/advanced-systems/addons/AdvSys"
 
-    def test_scenario_uses_authentic_curator_input_and_narrow_causal_pair(self) -> None:
-        self.assertEqual(self.scenario.metadata["visual_driver"], "zeus-placement")
-        self.assertEqual(self.scenario.metadata["zeus_placements"], 1)
-        self.assertEqual(self.scenario.metadata["visual_armed_marker"], "TRIBUNAL_APS_ZEUS|ARMED")
+    def test_scenario_uses_product_entrypoint_and_narrow_causal_pair(self) -> None:
+        self.assertNotIn("visual_driver", self.scenario.metadata)
         self.assertTrue({
             "aps.zeus.offImpact",
             "aps.zeus.onTransition", "aps.zeus.onIntercept",
@@ -28,7 +26,7 @@ class ApsZeusModuleContractTests(unittest.TestCase):
             "aps.zeus.logicCleanup", "aps.zeus.cleanup",
         }.issubset(self.scenario.server_expected))
         self.assertTrue({
-            "aps.zeus.nativePlacement", "aps.zeus.feedback",
+            "aps.zeus.entrypointActivation", "aps.zeus.feedback",
             "aps.zeus.clientNegativeReceipts", "aps.zeus.clientReplication",
         }.issubset(self.scenario.client_expected))
         self.assertIn("assignCurator", self.scenario.server_sqf)
@@ -39,15 +37,14 @@ class ApsZeusModuleContractTests(unittest.TestCase):
         self.assertIn("private _protected", self.scenario.server_sqf)
         self.assertEqual(self.scenario.server_sqf.count("call _fire;"), 2)
         self.assertIn("deleteVehicle _targetControl", self.scenario.server_sqf)
-        self.assertIn("ctrlActivate (_display displayCtrl 152)", self.scenario.client_sqf)
-        self.assertIn("Toggle Active Protection System (APS)", self.scenario.client_sqf)
-        self.assertIn("worldToScreen", self.scenario.client_sqf)
-        self.assertIn("curatorMouseOver", self.scenario.client_sqf)
-        self.assertIn("HOVER_READY", self.scenario.client_sqf)
-        self.assertNotIn("tvCount _tree", self.scenario.client_sqf)
-        self.assertIn("_tree tvCount []", self.scenario.client_sqf)
-        self.assertIn("_tree tvSetCurSel [_path # 0]", self.scenario.client_sqf)
-        self.assertNotIn("call YAS_fnc_apsModuleToggle", self.scenario.server_sqf)
+        self.assertIn("createUnit [\"YAS_APS_Zeus_Toggle_Module\"", self.scenario.client_sqf)
+        self.assertIn("attachTo [_target, [0,0,0]]", self.scenario.client_sqf)
+        self.assertIn("remoteExecCall [\"YAS_fnc_apsZeusClaimServer\", 2]", self.scenario.client_sqf)
+        self.assertIn("remoteExecCall [\"TRIBUNAL_APS_fnc_requestEntrypoint\", 2]", self.scenario.client_sqf)
+        self.assertIn("[_entrypointLogic] call YAS_fnc_apsModuleToggle", self.scenario.server_sqf)
+        self.assertNotIn("BIS_fnc_curatorObjectPlaced", self.scenario.client_sqf)
+        self.assertNotIn("findDisplay 312", self.scenario.client_sqf)
+        self.assertNotIn("curatorMouseOver", self.scenario.client_sqf)
         self.assertNotIn("createVehicle ['YAS_APS_Zeus_Toggle_Module'", self.scenario.server_sqf)
 
     def test_product_boundary_binds_assigned_curator_exact_logic_target_and_operation(self) -> None:
@@ -77,7 +74,7 @@ class ApsZeusModuleContractTests(unittest.TestCase):
         self.assertIn("class apsZeusClaimServer {};", config)
         self.assertIn("class apsZeusToggleResult {};", config)
 
-    def test_generated_sqf_and_external_driver_are_registered(self) -> None:
+    def test_generated_sqf_uses_no_stock_zeus_ui_driver(self) -> None:
         plan = multiplayer.select_plan("gameplay", "advsys-aps-zeus-module")
         with tempfile.TemporaryDirectory() as temporary:
             mission = Path(temporary) / "Tier.Stratis"
@@ -85,15 +82,11 @@ class ApsZeusModuleContractTests(unittest.TestCase):
             server = (mission / "initServer.sqf").read_text(encoding="ascii")
             client = (mission / "initPlayerLocal.sqf").read_text(encoding="ascii")
         self.assertIn("aps.zeus.offImpact", server)
-        self.assertIn("TRIBUNAL_APS_ZEUS|PLACEMENT_READY", client)
+        self.assertIn("YAS_fnc_apsZeusClaimServer", client)
+        self.assertIn("TRIBUNAL_APS_fnc_requestEntrypoint", client)
+        self.assertIn("YAS_fnc_apsModuleToggle", server)
+        self.assertNotIn("TRIBUNAL_APS_ZEUS|PLACEMENT_READY", client)
         self.assertNotIn("{direct_fixture_sqf()}", server)
-        runner = (ROOT / "tools/pontifex_multiplayer.py").read_text(encoding="utf-8")
-        driver = (ROOT / "tools/tribunal_zeus_probe.py").read_text(encoding="utf-8")
-        self.assertIn('visual_driver == "zeus-placement"', runner)
-        self.assertIn("tribunal_zeus_probe.py", runner)
-        self.assertIn('keyboard.chord(ord("y"))', driver)
-        self.assertIn("pointer_click", driver)
-        self.assertIn("PLACEMENT_READY", driver)
 
 
 if __name__ == "__main__":

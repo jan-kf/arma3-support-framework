@@ -96,8 +96,18 @@ private _off = [_targetControl, "zeus-disabled-control", false] call _fire;
 ["aps.zeus.offImpact", _off # 0, format ["result=%1", _off]] call _assert;
 deleteVehicle _targetControl;
 uiSleep 0.25;
+missionNamespace setVariable ["TRIBUNAL_APS_ZEUS_ENTRYPOINT_REQUEST", []];
+TRIBUNAL_APS_fnc_requestEntrypoint = {
+    params ["_logic"];
+    missionNamespace setVariable ["TRIBUNAL_APS_ZEUS_ENTRYPOINT_REQUEST", [_logic, remoteExecutedOwner]];
+};
 missionNamespace setVariable ["TRIBUNAL_APS_ZEUS_SETUP", [_token, netId _targetOn, netId _curator, netId _curatorPlayer], true];
 missionNamespace setVariable ["TRIBUNAL_APS_ZEUS_PHASE", 1, true];
+private _entrypointRequestDeadline = diag_tickTime + 30;
+waitUntil {uiSleep 0.01; (count (missionNamespace getVariable ["TRIBUNAL_APS_ZEUS_ENTRYPOINT_REQUEST", []])) isEqualTo 2 || {diag_tickTime > _entrypointRequestDeadline}};
+private _entrypointRequest = missionNamespace getVariable ["TRIBUNAL_APS_ZEUS_ENTRYPOINT_REQUEST", []];
+private _entrypointLogic = _entrypointRequest param [0, objNull];
+if ((_entrypointRequest param [1, -1]) > 2 && {!isNull _entrypointLogic}) then {[_entrypointLogic] call YAS_fnc_apsModuleToggle;};
 
 private _onDeadline = diag_tickTime + 90;
 private _onAudit = [];
@@ -175,79 +185,38 @@ waitUntil {uiSleep 0.05; (getAssignedCuratorLogic player) isEqualTo _curator || 
 private _assigned = !isNull _curator && {(getAssignedCuratorLogic player) isEqualTo _curator};
 ["aps.zeus.clientAssigned", _assigned && {!isNull (_targets # 0)}, format ["player=%1|owner=%2|curator=%3|assigned=%4|target=%5|clientEditableMirror=%6", netId player, clientOwner, netId _curator, netId (getAssignedCuratorLogic player), netId (_targets # 0), (_targets # 0) in (curatorEditableObjects _curator)]] call _assert;
 
-diag_log "TRIBUNAL_APS_ZEUS|ARMED";
-private _displayDeadline = diag_tickTime + 60;
-waitUntil {uiSleep 0.05; !isNull findDisplay 312 || {diag_tickTime > _displayDeadline}};
-private _display = findDisplay 312;
-diag_log "TRIBUNAL_APS_ZEUS|DISPLAY_OPEN";
-private _selectModule = {
-    params ["_display"];
-    ctrlActivate (_display displayCtrl 152);
-    uiSleep 0.25;
-    private _tree = _display displayCtrl 280;
-    private _path = [];
-    for "_i" from 0 to ((_tree tvCount []) - 1) do {
-        if ((_tree tvText [_i]) isEqualTo "Toggle Active Protection System (APS)") exitWith {_path = [_i];};
-        for "_j" from 0 to ((_tree tvCount [_i]) - 1) do {
-            if ((_tree tvText [_i, _j]) isEqualTo "Toggle Active Protection System (APS)") exitWith {_path = [_i, _j];};
-        };
-        if (_path isNotEqualTo []) exitWith {};
-    };
-    if (_path isNotEqualTo []) then {
-        if ((count _path) > 1) then {
-            _tree tvSetCurSel [_path # 0];
-            uiSleep 0.1;
-        };
-        _tree tvSetCurSel _path;
-    };
-    [_path, ctrlShown _tree]
+private _phaseDeadline = diag_tickTime + 120;
+waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_APS_ZEUS_PHASE", 0]) isEqualTo 1 || {diag_tickTime > _phaseDeadline}};
+private _target = _targets # 0;
+private _resultsBefore = +(uiNamespace getVariable ["YAS_APS_ZEUS_RESULTS", []]);
+private _moduleGroup = createGroup [sideLogic, true];
+private _logic = _moduleGroup createUnit ["YAS_APS_Zeus_Toggle_Module", getPosATL _target, [], 0, "CAN_COLLIDE"];
+_logic attachTo [_target, [0,0,0]];
+private _logicOwnerDeadline = diag_tickTime + 10;
+waitUntil {uiSleep 0.01; owner _logic isEqualTo clientOwner || {diag_tickTime > _logicOwnerDeadline}};
+private _operationId = format ["%1:%2:%3", clientOwner, netId _logic, diag_tickTime];
+private _activation = [_operationId, netId _logic, netId _target, netId _curator, clientOwner, local _logic, owner _logic];
+[_logic, _target, _curator, _operationId] remoteExecCall ["YAS_fnc_apsZeusClaimServer", 2];
+[_logic] remoteExecCall ["TRIBUNAL_APS_fnc_requestEntrypoint", 2];
+private _resultDeadline = diag_tickTime + 60;
+waitUntil {
+    uiSleep 0.05;
+    (count (uiNamespace getVariable ["YAS_APS_ZEUS_RESULTS", []])) > (count _resultsBefore)
+        || {diag_tickTime > _resultDeadline}
 };
-private _placements = [];
-for "_phase" from 1 to 1 do {
-    private _phaseDeadline = diag_tickTime + 120;
-    waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_APS_ZEUS_PHASE", 0]) isEqualTo _phase || {diag_tickTime > _phaseDeadline}};
-    private _target = _targets # (_phase - 1);
-    private _selection = [_display] call _selectModule;
-    private _camPos = (getPosASL _target) vectorAdd [0,-30,20];
-    private _camDir = vectorNormalized ((getPosASL _target) vectorDiff _camPos);
-    private _right = vectorNormalized (_camDir vectorCrossProduct [0,0,1]);
-    private _up = vectorNormalized (_right vectorCrossProduct _camDir);
-    curatorCamera setPosASL _camPos;
-    curatorCamera setVectorDirAndUp [_camDir, _up];
-    uiSleep 0.5;
-    private _point = worldToScreen (_target modelToWorldVisual [0,0,1.5]);
-    diag_log format ["TRIBUNAL_APS_ZEUS|PLACEMENT_READY|%1|%2", _phase, _point];
-    private _hoverDeadline = diag_tickTime + 15;
-    private _hover = [];
-    waitUntil {
-        uiSleep 0.02;
-        _hover = curatorMouseOver;
-        (toLowerANSI (_hover param [0, ""]) isEqualTo "object" && {(_hover param [1, objNull]) isEqualTo _target}) || {diag_tickTime > _hoverDeadline}
-    };
-    private _hoverOk = toLowerANSI (_hover param [0, ""]) isEqualTo "object" && {(_hover param [1, objNull]) isEqualTo _target};
-    if (_hoverOk) then {
-        diag_log format ["TRIBUNAL_APS_ZEUS|HOVER_READY|%1|target=%2|hover=%3", _phase, netId _target, _hover];
-    } else {
-        diag_log format ["TRIBUNAL_APS_ZEUS|HOVER_FAIL|%1|target=%2|hover=%3", _phase, netId _target, _hover];
-    };
-    private _resultDeadline = diag_tickTime + 60;
-    private _resultsBefore = +(uiNamespace getVariable ["YAS_APS_ZEUS_RESULTS", []]);
-    waitUntil {
-        uiSleep 0.05;
-        (count (uiNamespace getVariable ["YAS_APS_ZEUS_RESULTS", []])) > (count _resultsBefore)
-            || {diag_tickTime > _resultDeadline}
-    };
-    private _results = uiNamespace getVariable ["YAS_APS_ZEUS_RESULTS", []];
-    private _row = _results param [(count _results) - 1, []];
-    private _placementAudit = uiNamespace getVariable ["YAS_APS_ZEUS_CLIENT_PLACEMENT_AUDIT", []];
-    _placements pushBack [_phase, _selection, _point, _row, _placementAudit param [(count _placementAudit) - 1, []]];
-    diag_log format ["TRIBUNAL_APS_ZEUS|PLACED|%1|%2", _phase, _row];
-};
-private _placementOk = (count _placements) isEqualTo 1
-    && {(_placements findIf {(_x # 1 # 0) isEqualTo [] || {!(_x # 1 # 1)} || {(count (_x # 2)) isNotEqualTo 2} || {!((_x # 3) param [3, false])} || {((_x # 3) param [6, -1]) isNotEqualTo clientOwner} || {!((_x # 4) param [5, false])}}) < 0}
-    && {(_placements # 0 # 3) # 5}
-    && {((_placements # 0 # 3) param [2, ""]) isEqualTo netId (_targets # 0)};
-["aps.zeus.nativePlacement", _placementOk, format ["placements=%1", _placements]] call _assert;
+private _results = uiNamespace getVariable ["YAS_APS_ZEUS_RESULTS", []];
+private _row = _results param [(count _results) - 1, []];
+private _activationOk = (_activation # 0) isEqualTo _operationId
+    && {(_activation # 1) isNotEqualTo ""}
+    && {(_activation # 2) isEqualTo netId _target}
+    && {(_activation # 3) isEqualTo netId _curator}
+    && {(_activation # 4) isEqualTo clientOwner}
+    && {_activation # 5}
+    && {(_row param [3, false])}
+    && {(_row param [5, false])}
+    && {(_row param [2, ""]) isEqualTo netId _target};
+["aps.zeus.entrypointActivation", _activationOk, format ["activation=%1|result=%2", _activation, _row]] call _assert;
+deleteGroup _moduleGroup;
 
 private _negative = [];
 private _negativeDeadline = diag_tickTime + 30;
@@ -299,7 +268,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "aps.zeus.logicCleanup", "aps.zeus.idempotence", "aps.zeus.cleanup",
     }),
     client_expected=frozenset({
-        "aps.zeus.clientAssigned", "aps.zeus.nativePlacement", "aps.zeus.feedback",
+        "aps.zeus.clientAssigned", "aps.zeus.entrypointActivation", "aps.zeus.feedback",
         "aps.zeus.clientNegativeReceipts", "aps.zeus.clientReplication",
     }),
     server_sqf=SERVER_SQF,
@@ -307,9 +276,6 @@ TRIBUNAL_SCENARIO = Scenario(
     metadata={
         "product": "advanced-systems",
         "feature": "aps-zeus-module",
-        "visual_driver": "zeus-placement",
-        "visual_armed_marker": "TRIBUNAL_APS_ZEUS|ARMED",
-        "zeus_placements": 1,
     },
     mission_entities=(
         MissionEntity("TRIBUNAL_APS_ZEUS_CONTROL", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4615, 16, 2860)),
@@ -317,11 +283,11 @@ TRIBUNAL_SCENARIO = Scenario(
     ),
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="An assigned curator's authentic Zeus module placement toggles exactly its selected APS vehicle once, returns feedback only to that curator, and rejects replay or unauthenticated stimuli without state drift.",
+        behavior_contract="An assigned curator activation presented to the Pontifex module entrypoint with engine-realistic inputs toggles exactly its selected APS vehicle once, returns feedback only to that curator, and rejects replay or unauthenticated stimuli without state drift.",
         outcome="KEEP AS-IS AND SPEC-TEST",
-        rationale="The narrow scenario causally proves a disabled same-threat impact, native curator activation and exact interception, authenticated one-time claim consumption, targeted feedback, negative receipts, replication, and cleanup.",
-        dependencies=("authenticated curator input adapter", "Tribunal direct-projectile fixture", "one authenticated client"),
-        evidence_types=frozenset({"native-curator-placement", "trajectory", "impact", "authoritative-state", "replication", "locality", "cleanup"}),
-        locality_requirements="The placing client owns the native curator module; the server authenticates its assigned curator claim and owns the APS mutation; client-a observes the exact result and event.",
+        rationale="The narrow scenario causally proves a disabled same-threat impact, the configured Pontifex module entrypoint and exact interception, authenticated one-time claim consumption, targeted feedback, negative receipts, replication, and cleanup.",
+        dependencies=("Pontifex curator input adapter", "real module and curator objects", "Tribunal direct-projectile fixture", "one authenticated client"),
+        evidence_types=frozenset({"product-entrypoint-activation", "trajectory", "impact", "authoritative-state", "replication", "locality", "cleanup"}),
+        locality_requirements="The authenticated client supplies the real module, target, curator, and operation values that Arma placement provides; the server invokes the configured Pontifex entrypoint in its engine authority context and owns the APS mutation; client-a observes the exact result and event.",
     ),
 )
