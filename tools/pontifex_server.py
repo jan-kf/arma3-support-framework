@@ -358,7 +358,10 @@ def git_info() -> dict:
 def pbo_manifest() -> list[dict]:
     output = []
     for path in sorted((BUILD / "current").glob("*/addons/*.pbo")):
-        output.append({"path": str(path.relative_to(ROOT)), "size": path.stat().st_size, "sha256": sha256(path)})
+        # Keep the Evidence Contract's historical project-relative artifact
+        # identity even though generated builds now live outside the checkout.
+        evidence_path = Path("build") / path.relative_to(BUILD)
+        output.append({"path": str(evidence_path), "size": path.stat().st_size, "sha256": sha256(path)})
     return output
 
 
