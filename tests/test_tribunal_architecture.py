@@ -206,6 +206,11 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertEqual(set(manifest_scenarios), set(multiplayer.FEATURE_SCENARIOS))
         self.assertTrue(all(root.is_dir() for root in roots))
 
+    def test_client_probes_consume_the_external_tribunal_package(self) -> None:
+        runner = (ROOT / "tools/pontifex_multiplayer.py").read_text(encoding="utf-8")
+        self.assertIn('f"{TRIBUNAL_ROOT}:/tribunal:ro"', runner)
+        self.assertIn('"PYTHONPATH=/tribunal"', runner)
+
     def test_generic_tribunal_sources_do_not_encode_pontifex_features(self) -> None:
         prohibited = (r"\baps\b", r"iron dome", r"\bvigil\b", r"field utilities", r"\bpontifex\b")
         for path in (TRIBUNAL_ROOT / "tribunal").rglob("*.py"):
