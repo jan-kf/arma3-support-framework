@@ -1,0 +1,949 @@
+{
+  "assertion_prefix": "PONTIFEX_TEST",
+  "project": "Pontifex",
+  "scenarios": [
+    {
+      "client_assertions": {
+        "client-a": [
+          "aps.module.clientAuthorityStimulus",
+          "aps.module.clientReplication"
+        ]
+      },
+      "id": "advsys-aps-eden-module",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "aps.module.authority",
+        "aps.module.cleanup",
+        "aps.module.dispatch",
+        "aps.module.intercepts",
+        "aps.module.locality",
+        "aps.module.multiple",
+        "aps.module.retained",
+        "aps.module.targets",
+        "aps.module.unsyncedImpact"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "aps.zeus.clientAssigned",
+          "aps.zeus.clientNegativeReceipts",
+          "aps.zeus.clientReplication",
+          "aps.zeus.entrypointActivation",
+          "aps.zeus.feedback"
+        ]
+      },
+      "id": "advsys-aps-zeus-module",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "aps.zeus.authority",
+        "aps.zeus.cleanup",
+        "aps.zeus.idempotence",
+        "aps.zeus.logicCleanup",
+        "aps.zeus.offImpact",
+        "aps.zeus.onIntercept",
+        "aps.zeus.onTransition",
+        "aps.zeus.setup"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "cbr.module.clientAssigned",
+          "cbr.module.clientReplication",
+          "cbr.module.entrypointActivation",
+          "cbr.module.feedbackAndNegativeReceipts"
+        ]
+      },
+      "id": "advsys-cbr-modules",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "cbr.module.cleanup",
+        "cbr.module.curatorSetup",
+        "cbr.module.edenCausalDetection",
+        "cbr.module.edenDispatch",
+        "cbr.module.edenRetained",
+        "cbr.module.zeusAuthority",
+        "cbr.module.zeusIdempotence",
+        "cbr.module.zeusLogicCleanup",
+        "cbr.module.zeusOffPhysicalControl",
+        "cbr.module.zeusOffTransition"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "cbr.client.enabledReplicated",
+          "cbr.client.noLocalState",
+          "cbr.client.observationsReplicated",
+          "cbr.client.shapeEnvelope",
+          "cbr.client.visualEnvelope",
+          "cbr.client.warningDelivered",
+          "cbr.client.warningOutOfRadius",
+          "cbr.client.warningSameSide",
+          "cbr.client.zoomClustering"
+        ]
+      },
+      "id": "advsys-counter-battery-radar",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "cbr.cleanup",
+        "cbr.control.disabledNoDetection",
+        "cbr.control.disabledShotProven",
+        "cbr.detection.observations",
+        "cbr.detection.provenance",
+        "cbr.detection.timing",
+        "cbr.detection.zoneCentre",
+        "cbr.expiry.cleared",
+        "cbr.lifecycle.start",
+        "cbr.lifecycle.stop",
+        "cbr.locality",
+        "cbr.origin.confirmed",
+        "cbr.origin.narrows",
+        "cbr.prediction.impactAccuracy",
+        "cbr.warning.launchPipeline"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "iron.client.authorityStimulus",
+          "iron.client.eventReplicated"
+        ]
+      },
+      "id": "advsys-iron-dome",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "iron.authority.rejected",
+        "iron.cleanup",
+        "iron.concurrent.distinctThreats",
+        "iron.concurrent.protected",
+        "iron.control.disabledImpact",
+        "iron.control.disabledNoEngagement",
+        "iron.control.outOfRangeImpact",
+        "iron.control.outOfRangeNoEngagement",
+        "iron.fixture.nativeArtillery",
+        "iron.launcher.registered",
+        "iron.locality",
+        "iron.positive.exactIntercept",
+        "iron.positive.physicalInterceptor",
+        "iron.positive.protected"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "apsDrone.clientOwnership"
+        ]
+      },
+      "id": "aps-anti-drone",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "apsDrone.authority",
+        "apsDrone.cleanup",
+        "apsDrone.fixture",
+        "apsDrone.handlerCompatibility",
+        "apsDrone.motionPolicy",
+        "apsDrone.neutralization",
+        "apsDrone.ordinaryCrashPayload",
+        "apsDrone.payloadSuppression"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "aps.controls.authority",
+          "aps.controls.composition",
+          "aps.controls.lifecycle",
+          "aps.controls.menu",
+          "aps.controls.resultReplication",
+          "aps.controls.transitions",
+          "aps.replication"
+        ]
+      },
+      "id": "aps-intercept",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "aps.control.directionAway",
+        "aps.control.disabledImpact",
+        "aps.control.disabledNoEngagement",
+        "aps.control.outsideEnvelope",
+        "aps.controls.authoritativeAudit",
+        "aps.controls.hardOffImpact",
+        "aps.controls.rebootIntercept",
+        "aps.positive.chargeConsumed",
+        "aps.positive.collisionCourse",
+        "aps.positive.engaged",
+        "aps.positive.neutralized",
+        "aps.positive.projectileSpawned",
+        "aps.positive.protected",
+        "aps.softkill.deflection"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "cordis.client.fanout",
+          "cordis.client.identity",
+          "cordis.client.ownerExecution",
+          "cordis.client.queued"
+        ]
+      },
+      "id": "cordis-routing",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "cordis.cleanup",
+        "cordis.client.serverRoute",
+        "cordis.dedupe.operationTtl",
+        "cordis.destination.noClaim",
+        "cordis.emit.decisions",
+        "cordis.failure.noClaim",
+        "cordis.group.serverOwner",
+        "cordis.notify.decisions",
+        "cordis.owner.remote",
+        "cordis.recipient.fixture",
+        "cordis.recipients.exact",
+        "cordis.result.states"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "field.aceCargo.clientLoad",
+          "field.aceCargo.clientPolicy"
+        ]
+      },
+      "id": "fieldutils-ace-cargo-policy",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "field.aceCargo.cleanup",
+        "field.aceCargo.exactLoad",
+        "field.aceCargo.fixture",
+        "field.aceCargo.selectivePolicy"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "fieldAce.coexistence",
+          "fieldAce.noMutation",
+          "fieldAce.registry",
+          "fieldAce.relevance"
+        ]
+      },
+      "id": "fieldutils-ace-composition",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "fieldAce.cleanup",
+        "fieldAce.fixture"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "bridge.advanced.replication",
+          "bridge.build.replication",
+          "bridge.cleanup.client",
+          "bridge.dialog.open",
+          "bridge.interaction.conditions",
+          "bridge.interaction.registration",
+          "bridge.interruption.request",
+          "bridge.preview.plan",
+          "bridge.ramp.traversal",
+          "bridge.remove.replication",
+          "bridge.traversal.physical"
+        ]
+      },
+      "id": "fieldutils-bridge-builder",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "bridge.advanced.cleanup",
+        "bridge.advanced.plan",
+        "bridge.auto.support",
+        "bridge.build.authority",
+        "bridge.build.geometry",
+        "bridge.build.locality",
+        "bridge.cleanup",
+        "bridge.fixture",
+        "bridge.interruption.cleanup",
+        "bridge.ramp.physical",
+        "bridge.remove.scope",
+        "bridge.result.lifecycle",
+        "bridge.traversal.authoritative",
+        "bridge.wide.vehicle"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "field.cargo.clientAction",
+          "field.cargo.clientNegatives",
+          "field.cargo.clientReceipt",
+          "field.cargo.clientReplica",
+          "field.contact.clientDeleteReplica",
+          "field.contact.clientRepeatReplica",
+          "field.contact.clientReplica"
+        ]
+      },
+      "id": "fieldutils-cargo-loading",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "field.cargo.authority",
+        "field.cargo.cleanup",
+        "field.cargo.fixture",
+        "field.cargo.negatives",
+        "field.cargo.noCollateral",
+        "field.contact.attachment",
+        "field.contact.carrierStable",
+        "field.contact.cleanup",
+        "field.contact.deleteAttached",
+        "field.contact.repeatAttachment",
+        "field.contact.stimulus"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "fabricator.module.clientAdversarialStimulus",
+          "fabricator.module.clientAuthorityResult",
+          "fabricator.module.clientMirrors",
+          "fabricator.module.inventoryActionDisabled",
+          "fabricator.module.inventoryActionEnabled"
+        ]
+      },
+      "id": "fieldutils-eden-modules",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "fabricator.module.aggregate",
+        "fabricator.module.authority",
+        "fabricator.module.cleanup",
+        "fabricator.module.dispatch",
+        "fabricator.module.inventoryToggle",
+        "fabricator.module.retained"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "fabricator.client.carryStarted",
+          "fabricator.client.deliveryReplicated",
+          "fabricator.client.inventoryGate",
+          "fabricator.client.modulesReplicated",
+          "fabricator.client.noLocalCreation",
+          "fabricator.client.orderAccepted",
+          "fabricator.client.rejectionSurfaced"
+        ]
+      },
+      "id": "fieldutils-fabricator",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "fabricator.authority.serverOwned",
+        "fabricator.catalogue.notConsumed",
+        "fabricator.cleanup",
+        "fabricator.control.acceptBypass",
+        "fabricator.control.activeDiscardAtomic",
+        "fabricator.control.airdropEligibility",
+        "fabricator.control.airdropUnauthorized",
+        "fabricator.control.deepWaterAtomic",
+        "fabricator.control.duplicateRequest",
+        "fabricator.control.foreignDiscardRefused",
+        "fabricator.control.malformedRefused",
+        "fabricator.control.multiContainerAtomic",
+        "fabricator.control.noStorage",
+        "fabricator.control.outOfRange",
+        "fabricator.control.registryForge",
+        "fabricator.control.severeGradientAtomic",
+        "fabricator.control.singleDeepWaterAtomic",
+        "fabricator.control.unpackableAtomic",
+        "fabricator.control.unregistered",
+        "fabricator.control.watchdogAtomic",
+        "fabricator.control.workerBypass",
+        "fabricator.delivery.landPlacement",
+        "fabricator.delivery.massIsolation",
+        "fabricator.delivery.multiContainerPlacement",
+        "fabricator.delivery.packed",
+        "fabricator.delivery.severeGradientRecovery",
+        "fabricator.delivery.shoreline",
+        "fabricator.delivery.singleTerrainBoundary",
+        "fabricator.delivery.terrainMatrix",
+        "fabricator.fidelity.cargo",
+        "fabricator.fixture",
+        "fabricator.result.lifecycle",
+        "fabricator.result.retirement"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "fabricator.empty.client.rejected"
+        ]
+      },
+      "id": "fieldutils-fabricator-empty-ui",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "fabricator.empty.cleanup",
+        "fabricator.empty.fixture",
+        "fabricator.empty.noRequest"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "fabricator.ui.client.browseQueue",
+          "fabricator.ui.client.invalidGridRejected",
+          "fabricator.ui.client.mixedAccepted",
+          "fabricator.ui.client.normalAccepted"
+        ]
+      },
+      "id": "fieldutils-fabricator-ui",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "fabricator.ui.cleanup",
+        "fabricator.ui.fixture",
+        "fabricator.ui.invalidGridNoRequest",
+        "fabricator.ui.mixedPacked",
+        "fabricator.ui.normalAccepted"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "payloadControl.contextGate",
+          "payloadControl.control",
+          "payloadControl.cycle",
+          "payloadControl.empty",
+          "payloadControl.grenades",
+          "payloadControl.hud",
+          "payloadControl.satchel"
+        ]
+      },
+      "id": "fieldutils-payload-control",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "payloadControl.authority",
+        "payloadControl.cleanup",
+        "payloadControl.effects",
+        "payloadControl.fixture"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "payload.apply",
+          "payload.atomicRefusal",
+          "payload.reorderOwnership",
+          "payload.themeBindings",
+          "payload.worldUi"
+        ]
+      },
+      "id": "fieldutils-payload-manager",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "payload.authority",
+        "payload.cleanup",
+        "payload.fixture"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "field.towing.clientAction",
+          "field.towing.clientAttachResult",
+          "field.towing.clientBreak",
+          "field.towing.clientConflict",
+          "field.towing.clientIdentity",
+          "field.towing.clientNegatives",
+          "field.towing.clientReplica",
+          "field.towing.clientReuse",
+          "field.towing.clientScopedStow"
+        ]
+      },
+      "id": "fieldutils-towing",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "field.towing.authority",
+        "field.towing.breakCleanup",
+        "field.towing.cleanup",
+        "field.towing.conflict",
+        "field.towing.fixture",
+        "field.towing.negatives",
+        "field.towing.noTowControl",
+        "field.towing.physicalTreatment",
+        "field.towing.reuse",
+        "field.towing.scopedStow"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "field.towingMigration.attachReceipt",
+          "field.towingMigration.clientMigrationReplica",
+          "field.towingMigration.clientOwnedReplica",
+          "field.towingMigration.stowReceipt"
+        ]
+      },
+      "id": "fieldutils-towing-ownership-migration",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "field.towingMigration.activeOnClientOwner",
+        "field.towingMigration.activeSurvivesMigration",
+        "field.towingMigration.cleanup",
+        "field.towingMigration.clientOwnedFixture",
+        "field.towingMigration.exactOnceFinalization"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "tribunal.locality.clientOwned",
+          "tribunal.locality.executionMachine"
+        ]
+      },
+      "id": "locality-probe",
+      "requires_project_mods": false,
+      "server_assertions": [
+        "tribunal.locality.clientTransfer",
+        "tribunal.locality.remoteExactlyOnce",
+        "tribunal.locality.serverInitial",
+        "tribunal.locality.serverRestored"
+      ],
+      "tier": "capability"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.artillery.grid.invalid",
+          "vigil.artillery.grid.valid",
+          "vigil.artillery.request.circle",
+          "vigil.artillery.request.line",
+          "vigil.artillery.request.locality"
+        ]
+      },
+      "id": "vigil-artillery",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.artillery.circle.completed",
+        "vigil.artillery.circle.identity",
+        "vigil.artillery.circle.roundCount",
+        "vigil.artillery.circle.spatial",
+        "vigil.artillery.cleanup",
+        "vigil.artillery.control.noAmmo",
+        "vigil.artillery.control.outOfRange",
+        "vigil.artillery.control.zeroRounds",
+        "vigil.artillery.line.completed",
+        "vigil.artillery.line.identity",
+        "vigil.artillery.line.roundCount",
+        "vigil.artillery.line.spatial",
+        "vigil.artillery.locality",
+        "vigil.artillery.platforms",
+        "vigil.artillery.vls.arrival",
+        "vigil.artillery.vls.guidance",
+        "vigil.artillery.vls.launch",
+        "vigil.artillery.vls.targetCleanup",
+        "vigil.artillery.vls.vertical"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.cas.client.dispatch",
+          "vigil.cas.client.eligible",
+          "vigil.cas.client.home",
+          "vigil.cas.client.locality",
+          "vigil.cas.client.noTarget",
+          "vigil.cas.client.onStation"
+        ]
+      },
+      "id": "vigil-cas",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.cas.attack.correlated",
+        "vigil.cas.attack.effect",
+        "vigil.cas.attack.fired",
+        "vigil.cas.cleanup",
+        "vigil.cas.disengaged",
+        "vigil.cas.dispatch.accepted",
+        "vigil.cas.dispatch.duplicateRejected",
+        "vigil.cas.fixture",
+        "vigil.cas.home",
+        "vigil.cas.locality",
+        "vigil.cas.noAmmo",
+        "vigil.cas.noTarget",
+        "vigil.cas.onStation",
+        "vigil.cas.rtb",
+        "vigil.cas.target.controls",
+        "vigil.cas.timer",
+        "vigil.cas.transit"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.aaeDebug.clientCleanup",
+          "vigil.aaeDebug.clientDisabled",
+          "vigil.aaeDebug.clientEnabled"
+        ]
+      },
+      "id": "vigil-debug-channel",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.aaeDebug.cleanup",
+        "vigil.aaeDebug.fixture",
+        "vigil.aaeDebug.policy"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.fixedWing.client.deploy",
+          "vigil.fixedWing.client.designationCleanup",
+          "vigil.fixedWing.client.irDesignation",
+          "vigil.fixedWing.client.irRequest",
+          "vigil.fixedWing.client.irResult",
+          "vigil.fixedWing.client.locality",
+          "vigil.fixedWing.client.noDesignation",
+          "vigil.fixedWing.client.normalDesignation",
+          "vigil.fixedWing.client.normalRequest",
+          "vigil.fixedWing.client.normalResult",
+          "vigil.fixedWing.client.registry",
+          "vigil.fixedWing.client.rtb",
+          "vigil.fixedWing.client.uavDeployRejected"
+        ]
+      },
+      "id": "vigil-fixed-wing",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.fixedWing.cleanup",
+        "vigil.fixedWing.control.noDesignation",
+        "vigil.fixedWing.control.uavDeployRejected",
+        "vigil.fixedWing.designation.ir",
+        "vigil.fixedWing.designation.normal",
+        "vigil.fixedWing.dispatch.ingress",
+        "vigil.fixedWing.dispatch.reconstructed",
+        "vigil.fixedWing.egress.cleanup",
+        "vigil.fixedWing.egress.flight",
+        "vigil.fixedWing.locality",
+        "vigil.fixedWing.registration.originalRemoved",
+        "vigil.fixedWing.registration.snapshot",
+        "vigil.fixedWing.strike.ir.effect",
+        "vigil.fixedWing.strike.ir.guidance",
+        "vigil.fixedWing.strike.ir.release",
+        "vigil.fixedWing.strike.normal.effect",
+        "vigil.fixedWing.strike.normal.guidance",
+        "vigil.fixedWing.strike.normal.release",
+        "vigil.fixedWing.strike.repeated"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.logistics.client.egress",
+          "vigil.logistics.client.emptyRejected",
+          "vigil.logistics.client.inventory",
+          "vigil.logistics.client.locality",
+          "vigil.logistics.client.manifest",
+          "vigil.logistics.client.releaseEstimate",
+          "vigil.logistics.client.replication",
+          "vigil.logistics.client.request",
+          "vigil.logistics.client.ui"
+        ]
+      },
+      "id": "vigil-fixed-wing-logistics",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.logistics.accuracy",
+        "vigil.logistics.cleanup",
+        "vigil.logistics.control.duplicateRejected",
+        "vigil.logistics.descent",
+        "vigil.logistics.egress",
+        "vigil.logistics.ingress",
+        "vigil.logistics.landing",
+        "vigil.logistics.locality",
+        "vigil.logistics.manifest",
+        "vigil.logistics.parachute",
+        "vigil.logistics.reconstructed",
+        "vigil.logistics.registration",
+        "vigil.logistics.release",
+        "vigil.logistics.request.accepted",
+        "vigil.logistics.survival"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.fwModules.clientAssigned",
+          "vigil.fwModules.clientDeployEndpoint",
+          "vigil.fwModules.clientReplication",
+          "vigil.fwModules.entrypointActivation",
+          "vigil.fwModules.feedbackAndNegatives"
+        ]
+      },
+      "id": "vigil-fixed-wing-modules",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.fwModules.cleanup",
+        "vigil.fwModules.curatorSetup",
+        "vigil.fwModules.edenAssets",
+        "vigil.fwModules.nativeDispatch",
+        "vigil.fwModules.nearestEgress",
+        "vigil.fwModules.nearestIngress",
+        "vigil.fwModules.negativesIdempotent",
+        "vigil.fwModules.pointAggregation",
+        "vigil.fwModules.zeusAuthority"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.governorAuthority.clientAudience",
+          "vigil.governorAuthority.clientReceipts"
+        ]
+      },
+      "id": "vigil-governor-authority",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.governorAuthority.cleanup",
+        "vigil.governorAuthority.duplicateAndBusy",
+        "vigil.governorAuthority.fixture",
+        "vigil.governorAuthority.legacyCodeRejected",
+        "vigil.governorAuthority.malformedAndUnsupported",
+        "vigil.governorAuthority.requesterAndAsset",
+        "vigil.governorAuthority.serverBuilt",
+        "vigil.governorAuthority.terminalResults",
+        "vigil.governorAuthority.validSchemas"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.governor.clientReceipt"
+        ]
+      },
+      "id": "vigil-governor-lifecycle",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.governor.cancellation",
+        "vigil.governor.cleanup",
+        "vigil.governor.duplicate",
+        "vigil.governor.earlyComplete",
+        "vigil.governor.failure",
+        "vigil.governor.fixture",
+        "vigil.governor.normal",
+        "vigil.governor.successor",
+        "vigil.governor.vehicleLoss"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.marker.cleanup",
+          "vigil.marker.clientLocality",
+          "vigil.marker.closeArmed",
+          "vigil.marker.closeCleanup",
+          "vigil.marker.dynamicBacking",
+          "vigil.marker.dynamicReplacement",
+          "vigil.marker.firstBacking",
+          "vigil.marker.firstPosition",
+          "vigil.marker.fixtureReady",
+          "vigil.marker.initialEmpty",
+          "vigil.marker.mapReady",
+          "vigil.marker.tabLeaveCleanup",
+          "vigil.marker.tabReturnClean"
+        ]
+      },
+      "id": "vigil-markers",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.marker.serverCleanup",
+        "vigil.marker.serverFixture",
+        "vigil.marker.serverNoDisplay",
+        "vigil.marker.serverNoState"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.queue.activationMessages",
+          "vigil.queue.clientCleanup",
+          "vigil.queue.compactUi",
+          "vigil.queue.overlayCrossTab",
+          "vigil.queue.overlayTheme",
+          "vigil.queue.receipts",
+          "vigil.queue.refreshMovement"
+        ]
+      },
+      "id": "vigil-task-queue",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.queue.accepted",
+        "vigil.queue.bounded",
+        "vigil.queue.cleanup",
+        "vigil.queue.duplicateSpecific",
+        "vigil.queue.fifoActivation",
+        "vigil.queue.fixture",
+        "vigil.queue.historyBounded",
+        "vigil.queue.replacement",
+        "vigil.queue.snapshot"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.transport.client.abnormalDispatch",
+          "vigil.transport.client.abnormalFailure",
+          "vigil.transport.client.dispatch",
+          "vigil.transport.client.eligible",
+          "vigil.transport.client.home",
+          "vigil.transport.client.locality",
+          "vigil.transport.client.rtb",
+          "vigil.transport.client.waiting"
+        ]
+      },
+      "id": "vigil-transport",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.transport.abnormal.cleanup",
+        "vigil.transport.abnormal.destruction",
+        "vigil.transport.abnormal.fixture",
+        "vigil.transport.abnormal.padCleanup",
+        "vigil.transport.abnormal.terminal",
+        "vigil.transport.arrival",
+        "vigil.transport.cleanup",
+        "vigil.transport.dispatch.accepted",
+        "vigil.transport.dispatch.duplicateRejected",
+        "vigil.transport.dispatch.flight",
+        "vigil.transport.fixture",
+        "vigil.transport.home",
+        "vigil.transport.locality",
+        "vigil.transport.rtb.accepted",
+        "vigil.transport.rtb.flight",
+        "vigil.transport.stabilizer.deferred",
+        "vigil.transport.waiting"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.transport.padAB.clientComplete"
+        ]
+      },
+      "id": "vigil-transport-pad-ab",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.transport.padAB.cleanup",
+        "vigil.transport.padAB.comparison",
+        "vigil.transport.padAB.control",
+        "vigil.transport.padAB.fixture",
+        "vigil.transport.padAB.treatment"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.access.bluOpens",
+          "vigil.access.independentOpens",
+          "vigil.access.matrixCleanup",
+          "vigil.access.opforOpens",
+          "vigil.access.overrideOpens",
+          "vigil.access.requiredRejects",
+          "vigil.browser.artilleryExact",
+          "vigil.browser.casExact",
+          "vigil.browser.fixtureReplicated",
+          "vigil.browser.transportExact",
+          "vigil.close.state",
+          "vigil.fixture.inputReady",
+          "vigil.fixture.itemEquipped",
+          "vigil.input.artilleryTab",
+          "vigil.locality.clientContext",
+          "vigil.open.controls",
+          "vigil.open.display",
+          "vigil.reopen.state"
+        ]
+      },
+      "id": "vigil-ui",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.browser.cleanup",
+        "vigil.browser.serverFixture",
+        "vigil.browser.serverLocality",
+        "vigil.locality.noServerOpenPath",
+        "vigil.locality.serverNoDisplay"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "vigil.whitelist.clientAssigned",
+          "vigil.whitelist.clientEdenRetirement",
+          "vigil.whitelist.clientEdenSource",
+          "vigil.whitelist.clientFixtureStable",
+          "vigil.whitelist.clientReplication",
+          "vigil.whitelist.entrypointActivations",
+          "vigil.whitelist.feedbackAndNegatives"
+        ]
+      },
+      "id": "vigil-whitelist-modules",
+      "requires_project_mods": true,
+      "server_assertions": [
+        "vigil.whitelist.cleanup",
+        "vigil.whitelist.curatorSetup",
+        "vigil.whitelist.edenAggregate",
+        "vigil.whitelist.edenDeletionRetires",
+        "vigil.whitelist.edenRetained",
+        "vigil.whitelist.fixtureStable",
+        "vigil.whitelist.idempotence",
+        "vigil.whitelist.zeusAuthority",
+        "vigil.whitelist.zeusCleanup",
+        "vigil.whitelist.zeusTransition1",
+        "vigil.whitelist.zeusTransition2",
+        "vigil.whitelist.zeusTransition3"
+      ],
+      "tier": "gameplay"
+    },
+    {
+      "client_assertions": {
+        "client-a": [
+          "tribunal.visual.lifecycle"
+        ]
+      },
+      "id": "visual-framebuffer",
+      "requires_project_mods": false,
+      "server_assertions": [],
+      "tier": "capability"
+    }
+  ],
+  "schema": 1
+}
