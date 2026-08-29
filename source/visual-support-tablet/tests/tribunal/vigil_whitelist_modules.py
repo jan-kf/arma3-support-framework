@@ -81,6 +81,13 @@ private _assignedDeadline = diag_tickTime + 10;
 waitUntil {uiSleep 0.05; (getAssignedCuratorLogic _curatorPlayer) isEqualTo _curator || {diag_tickTime > _assignedDeadline}};
 ["vigil.whitelist.curatorSetup", !isNull _curatorPlayer && {!isNull _curator} && {(getAssignedCuratorLogic _curatorPlayer) isEqualTo _curator} && {_assetA in curatorEditableObjects _curator} && {_assetC in curatorEditableObjects _curator}, format ["player=%1|curator=%2|assigned=%3|editable=%4", netId _curatorPlayer, netId _curator, netId (getAssignedCuratorLogic _curatorPlayer), [_assetA, _assetC] apply {_x in curatorEditableObjects _curator}]] call _assert;
 
+missionNamespace setVariable ["TRIBUNAL_VIGIL_WHITELIST_ENTRYPOINT_REQUESTS", []];
+TRIBUNAL_VIGIL_WHITELIST_fnc_requestEntrypoint = {
+    params ["_logic"];
+    private _requests = missionNamespace getVariable ["TRIBUNAL_VIGIL_WHITELIST_ENTRYPOINT_REQUESTS", []];
+    _requests pushBack [_logic, remoteExecutedOwner];
+    missionNamespace setVariable ["TRIBUNAL_VIGIL_WHITELIST_ENTRYPOINT_REQUESTS", _requests];
+};
 missionNamespace setVariable ["TRIBUNAL_VIGIL_WHITELIST_SETUP", [_token, netId _assetA, netId _assetB, netId _assetC, netId _control, netId _curator, netId _curatorPlayer], true];
 private _edenObservedDeadline = diag_tickTime + 30;
 waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_VIGIL_WHITELIST_EDEN_OBSERVED", ""]) isEqualTo _token || {diag_tickTime > _edenObservedDeadline}};
@@ -106,6 +113,11 @@ waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_VIGIL_WHITELIS
 private _acceptedToggles = [];
 for "_phase" from 1 to 3 do {
     missionNamespace setVariable ["TRIBUNAL_VIGIL_WHITELIST_PHASE", _phase, true];
+    private _entrypointRequestDeadline = diag_tickTime + 30;
+    waitUntil {uiSleep 0.01; (count (missionNamespace getVariable ["TRIBUNAL_VIGIL_WHITELIST_ENTRYPOINT_REQUESTS", []])) >= _phase || {diag_tickTime > _entrypointRequestDeadline}};
+    private _entrypointRequest = (missionNamespace getVariable ["TRIBUNAL_VIGIL_WHITELIST_ENTRYPOINT_REQUESTS", []]) param [_phase - 1, []];
+    private _entrypointLogic = _entrypointRequest param [0, objNull];
+    if ((_entrypointRequest param [1, -1]) > 2 && {!isNull _entrypointLogic}) then {[_entrypointLogic] call YSF_fnc_toggleObjectInWhitelist;};
     private _toggleDeadline = diag_tickTime + 90;
     waitUntil {
         uiSleep 0.05;
@@ -189,7 +201,8 @@ missionNamespace setVariable ["YSF_WHITELISTED_ASSETS", [], true];
     "TRIBUNAL_VIGIL_WHITELIST_PHASE",
     "TRIBUNAL_VIGIL_WHITELIST_NEGATIVE",
     "TRIBUNAL_VIGIL_WHITELIST_RESULT",
-    "TRIBUNAL_VIGIL_WHITELIST_CLIENT_DONE"
+    "TRIBUNAL_VIGIL_WHITELIST_CLIENT_DONE",
+    "TRIBUNAL_VIGIL_WHITELIST_ENTRYPOINT_REQUESTS"
 ];
 private _cleanupDeadline = diag_tickTime + 5;
 waitUntil {uiSleep 0.05; (_all findIf {!isNull _x}) < 0 || {diag_tickTime > _cleanupDeadline}};
@@ -259,84 +272,47 @@ private _replicaStable = _replicaStableSince >= 0
     && {(_replicaPositions findIf {(_x distance (_replicaAnchor # _forEachIndex)) > 0.05}) < 0};
 ["vigil.whitelist.clientFixtureStable", _replicaStable, format ["state=%1|stableFor=%2", _replicaState, if (_replicaStableSince < 0) then {-1} else {diag_tickTime - _replicaStableSince}]] call _assert;
 
-diag_log "TRIBUNAL_VIGIL_WHITELIST_ZEUS|ARMED";
-private _displayDeadline = diag_tickTime + 60;
-waitUntil {uiSleep 0.05; !isNull findDisplay 312 || {diag_tickTime > _displayDeadline}};
-private _display = findDisplay 312;
-diag_log "TRIBUNAL_VIGIL_WHITELIST_ZEUS|DISPLAY_OPEN";
-private _selectModule = {
-    params ["_display"];
-    ctrlActivate (_display displayCtrl 152); uiSleep 0.25;
-    private _tree = _display displayCtrl 280; private _path = [];
-    for "_i" from 0 to ((_tree tvCount []) - 1) do {
-        if ((_tree tvText [_i]) isEqualTo "Add/Remove from Whitelist") exitWith {_path = [_i];};
-        for "_j" from 0 to ((_tree tvCount [_i]) - 1) do {if ((_tree tvText [_i,_j]) isEqualTo "Add/Remove from Whitelist") exitWith {_path = [_i,_j];};};
-        if (_path isNotEqualTo []) exitWith {};
-    };
-    if ((count _path) > 1) then {_tree tvSetCurSel [_path # 0]; uiSleep 0.1;};
-    if (_path isNotEqualTo []) then {_tree tvSetCurSel _path;};
-    _path
-};
-private _placements = [];
+private _activations = [];
 for "_phase" from 1 to 3 do {
     private _phaseDeadline = diag_tickTime + 120;
     waitUntil {uiSleep 0.05; (missionNamespace getVariable ["TRIBUNAL_VIGIL_WHITELIST_PHASE", 0]) isEqualTo _phase || {diag_tickTime > _phaseDeadline}};
-    private _target = _assetC;
-    private _path = [_display] call _selectModule;
-    diag_log format ["TRIBUNAL_VIGIL_WHITELIST_ZEUS|SELECTION|%1|path=%2|target=%3|editable=%4|asl=%5|velocity=%6|angular=%7|grounded=%8|attached=%9", _phase, _path, netId _target, _target in curatorEditableObjects _curator, getPosASL _target, velocity _target, angularVelocity _target, isTouchingGround _target, attachedObjects _target];
-    private _centerASL = AGLToASL (_target modelToWorldVisual (getCenterOfMass _target));
-    private _aimASL = _centerASL;
-    private _camPos = _aimASL vectorAdd [0,-40,15];
-    private _camDir = vectorNormalized (_aimASL vectorDiff _camPos);
-    private _right = vectorNormalized (_camDir vectorCrossProduct [0,0,1]);
-    private _up = vectorNormalized (_right vectorCrossProduct _camDir);
-    private _surfaceHits = lineIntersectsSurfaces [_camPos, _centerASL, objNull, objNull, true, 32, "VIEW", "FIRE"];
-    private _targetHit = _surfaceHits select {(_x # 2) isEqualTo _target};
-    if (_targetHit isNotEqualTo []) then {_aimASL = (_targetHit # 0) # 0;};
-    private _aimATL = ASLToAGL _aimASL;
-    private _points = [];
-    private _projectionDeadline = diag_tickTime + 5;
-    waitUntil {
-        curatorCamera setPosASL _camPos;
-        curatorCamera setVectorDirAndUp [_camDir, _up];
-        uiSleep 0.05;
-        private _originPoint = worldToScreen (ASLToAGL (getPosASL _target));
-        private _surfacePoint = worldToScreen _aimATL;
-        _points = [];
-        if ((count _originPoint) isEqualTo 2) then {
-            {
-                private _candidate = [(_originPoint # 0) + (_x # 0), (_originPoint # 1) + (_x # 1)];
-                if ((_candidate # 0) >= 0 && {(_candidate # 0) <= 1} && {(_candidate # 1) >= 0} && {(_candidate # 1) <= 1}) then {_points pushBack _candidate;};
-            } forEach [[0,0],[0,0.075],[0,-0.075],[0.025,0],[0.025,0.075],[0.025,-0.075],[-0.025,0],[-0.025,0.075],[-0.025,-0.075],[0.075,0],[0.075,0.075],[0.075,-0.075],[-0.075,0],[-0.075,0.075],[-0.075,-0.075]];
-        };
-        if ((count _surfacePoint) isEqualTo 2 && {(_surfacePoint # 0) >= 0} && {(_surfacePoint # 0) <= 1} && {(_surfacePoint # 1) >= 0} && {(_surfacePoint # 1) <= 1}) then {_points pushBack _surfacePoint;};
-        _points = _points arrayIntersect _points;
-        _points isNotEqualTo [] || {diag_tickTime > _projectionDeadline}
-    };
-    diag_log format ["TRIBUNAL_VIGIL_WHITELIST_ZEUS|PLACEMENT_READY|%1|%2", _phase, _points];
-    private _hover = []; private _hoverDeadline = diag_tickTime + 15;
-    waitUntil {uiSleep 0.02; _hover = curatorMouseOver; (toLowerANSI (_hover param [0, ""]) isEqualTo "object" && {(_hover param [1, objNull]) isEqualTo _target}) || {diag_tickTime > _hoverDeadline}};
-    if (toLowerANSI (_hover param [0, ""]) isEqualTo "object" && {(_hover param [1, objNull]) isEqualTo _target}) then {diag_log format ["TRIBUNAL_VIGIL_WHITELIST_ZEUS|HOVER_READY|%1|target=%2|hover=%3", _phase, netId _target, _hover];} else {diag_log format ["TRIBUNAL_VIGIL_WHITELIST_ZEUS|HOVER_FAIL|%1|target=%2|hover=%3", _phase, netId _target, _hover];};
-    private _before = count (uiNamespace getVariable ["YSF_WHITELIST_ZEUS_RESULTS", []]);
+    private _resultsBefore = +(uiNamespace getVariable ["YSF_WHITELIST_ZEUS_RESULTS", []]);
+    private _moduleGroup = createGroup [sideLogic, true];
+    private _logic = _moduleGroup createUnit ["YSF_Toggle_To_Whitelist_Module", getPosATL _assetC, [], 0, "CAN_COLLIDE"];
+    _logic attachTo [_assetC, [0,0,0]];
+    private _logicOwnerDeadline = diag_tickTime + 10;
+    waitUntil {uiSleep 0.01; owner _logic isEqualTo clientOwner || {diag_tickTime > _logicOwnerDeadline}};
+    private _operationId = format ["whitelist-%1-%2-%3-%4", _phase, clientOwner, netId _logic, diag_tickTime];
+    private _activation = [_phase, _operationId, netId _logic, netId _assetC, netId _curator, clientOwner, local _logic, owner _logic];
+    [_logic, _curator, _operationId, _assetC] remoteExecCall ["YSF_fnc_whitelistZeusClaimServer", 2];
+    [_logic] remoteExecCall ["TRIBUNAL_VIGIL_WHITELIST_fnc_requestEntrypoint", 2];
     private _resultDeadline = diag_tickTime + 60;
-    waitUntil {uiSleep 0.05; count (uiNamespace getVariable ["YSF_WHITELIST_ZEUS_RESULTS", []]) > _before || {diag_tickTime > _resultDeadline}};
+    waitUntil {uiSleep 0.05; (count (uiNamespace getVariable ["YSF_WHITELIST_ZEUS_RESULTS", []])) > count _resultsBefore || {diag_tickTime > _resultDeadline}};
     private _rows = uiNamespace getVariable ["YSF_WHITELIST_ZEUS_RESULTS", []];
     private _row = _rows param [(count _rows) - 1, []];
     private _source = call YOSHI_getAllVehicles;
     private _expected = [[_assetB, _assetC], [_assetB], [_assetB, _assetC]] select (_phase - 1);
-    _placements pushBack [_phase, _path, _points, _row, [_source, _expected] call _sameObjects];
-    diag_log format ["TRIBUNAL_VIGIL_WHITELIST_ZEUS|PLACED|%1|%2", _phase, _row];
+    _activations pushBack [_activation, _row, [_source, _expected] call _sameObjects];
+    deleteGroup _moduleGroup;
 };
-private _placementAudit = uiNamespace getVariable ["YSF_WHITELIST_ZEUS_PLACEMENT_AUDIT", []];
-private _native = (count _placements) isEqualTo 3 && {(count _placementAudit) isEqualTo 3}
-    && {(_placements findIf {(_x # 1) isEqualTo [] || {(_x # 2) isEqualTo []} || {!((_x # 3) # 2)} || {!(_x # 4)}}) < 0}
-    && {(_placementAudit apply {_x # 0}) isEqualTo (_placements apply {_x # 3 # 0})}
-    && {(_placementAudit apply {_x # 1}) isEqualTo (_placements apply {_x # 3 # 1})}
-    && {(_placementAudit apply {_x # 4}) isEqualTo [netId _assetC, netId _assetC, netId _assetC]}
-    && {(_placements apply {_x # 3 # 4}) isEqualTo [netId _assetC, netId _assetC, netId _assetC]}
-    && {(_placements apply {_x # 3 # 5}) isEqualTo [true, false, true]}
-    && {(_placementAudit findIf {(_x # 2) isNotEqualTo "YSF_Toggle_To_Whitelist_Module" || {(_x # 5) isNotEqualTo clientOwner}}) < 0};
-["vigil.whitelist.nativePlacements", _native, format ["placements=%1|audit=%2", _placements, _placementAudit]] call _assert;
+private _activationLogicIds = _activations apply {_x # 0 # 2};
+private _activationOk = (count _activations) isEqualTo 3
+    && {(_activations findIf {
+        private _activation = _x # 0; private _row = _x # 1;
+        (_activation # 2) isEqualTo ""
+            || {(_activation # 3) isNotEqualTo netId _assetC}
+            || {(_activation # 4) isNotEqualTo netId _curator}
+            || {(_activation # 5) isNotEqualTo clientOwner}
+            || {!(_activation # 6)}
+            || {!(_row # 2)}
+            || {(_row # 0) isNotEqualTo (_activation # 1)}
+            || {(_row # 1) isNotEqualTo (_activation # 2)}
+            || {(_row # 4) isNotEqualTo netId _assetC}
+            || {!(_x # 2)}
+    }) < 0}
+    && {count (_activationLogicIds arrayIntersect _activationLogicIds) isEqualTo 3}
+    && {(_activations apply {_x # 1 # 5}) isEqualTo [true, false, true]};
+["vigil.whitelist.entrypointActivations", _activationOk, format ["activations=%1", _activations]] call _assert;
 
 private _negative = [];
 private _negativeDeadline = diag_tickTime + 30;
@@ -361,7 +337,6 @@ waitUntil {uiSleep 0.05; _result = missionNamespace getVariable ["TRIBUNAL_VIGIL
 private _replicated = (_result param [0, ""]) isEqualTo _token && {(_result param [1, []]) isEqualTo ([_assetB, _assetC] apply {netId _x})} && {(_result param [2, []]) isEqualTo [netId _assetC, netId _assetC, netId _assetC]} && {[(call YOSHI_getAllVehicles), [_assetB, _assetC]] call _sameObjects};
 ["vigil.whitelist.clientReplication", _replicated, format ["result=%1|source=%2", _result, (call YOSHI_getAllVehicles) apply {netId _x}]] call _assert;
 uiNamespace setVariable ["YSF_WHITELIST_ZEUS_RESULTS", []];
-uiNamespace setVariable ["YSF_WHITELIST_ZEUS_PLACEMENT_AUDIT", []];
 missionNamespace setVariable ["TRIBUNAL_VIGIL_WHITELIST_CLIENT_DONE", _token, true];
 '''
 
@@ -383,7 +358,7 @@ ASSERT_TOGGLE = [
     "vigil.whitelist.zeusAuthority",
     "vigil.whitelist.zeusCleanup",
     "vigil.whitelist.clientAssigned",
-    "vigil.whitelist.nativePlacements",
+    "vigil.whitelist.entrypointActivations",
 ]
 ASSERT_NEGATIVE = [
     "vigil.whitelist.idempotence",
@@ -406,7 +381,7 @@ EVIDENCE_CONTRACT = {
             "applicability": "Arma 3 dedicated multiplayer with one independently authenticated assigned-curator client",
             "participants": {
                 "server": "authoritative whitelist and module owner",
-                "client-a": "assigned curator, native-placement actor, and replication observer",
+                "client-a": "assigned curator, product-entrypoint actor, and replication observer",
             },
         },
     },
@@ -427,7 +402,7 @@ EVIDENCE_CONTRACT = {
         {
             "key": "authorized_toggle",
             "role": "treatment",
-            "description": "Three genuine placements in one display add, remove, and re-add the same exact asset",
+            "description": "Three configured Pontifex entrypoint activations add, remove, and re-add the same exact asset",
             "assertions": ASSERT_TOGGLE,
         },
         {
@@ -469,10 +444,10 @@ EVIDENCE_CONTRACT = {
         },
         {
             "id": "pontifex:vigil:whitelist-zeus-toggle",
-            "text": "An assigned curator can authentically add, remove, and re-add the same asset in one retained display, with exact private results, idempotent replay rejection, replication, and cleanup.",
+            "text": "An assigned curator can add, remove, and re-add the same asset through the configured Pontifex entrypoint, with exact private results, idempotent replay rejection, replication, and cleanup.",
             "intended_use": "primary_result",
             "assertions": ASSERT_TOGGLE + ASSERT_NEGATIVE + ASSERT_REPLICATION,
-            "rationale": "Three native hover/click stimuli are correlated to distinct client-owned logics, exact same-target server claims, alternating authoritative transitions, requester-owned results, final client membership, and delivered negative controls.",
+            "rationale": "Three product-entrypoint activations with engine-realistic inputs are correlated to distinct client-owned logics, exact same-target server claims, alternating authoritative transitions, requester-owned results, final client membership, and delivered negative controls.",
         },
     ],
     "unresolved": [
@@ -495,15 +470,13 @@ TRIBUNAL_SCENARIO = Scenario(
     client_expected=frozenset({
         "vigil.whitelist.clientAssigned", "vigil.whitelist.clientEdenSource",
         "vigil.whitelist.clientEdenRetirement", "vigil.whitelist.clientFixtureStable",
-        "vigil.whitelist.nativePlacements", "vigil.whitelist.feedbackAndNegatives",
+        "vigil.whitelist.entrypointActivations", "vigil.whitelist.feedbackAndNegatives",
         "vigil.whitelist.clientReplication",
     }),
     server_sqf=SERVER_SQF,
     client_sqf=CLIENT_SQF,
     metadata={
         "product": "visual-support-tablet", "feature": "whitelist-modules",
-        "visual_driver": "zeus-placement", "visual_armed_marker": "TRIBUNAL_VIGIL_WHITELIST_ZEUS|ARMED",
-        "zeus_marker_prefix": "TRIBUNAL_VIGIL_WHITELIST_ZEUS", "zeus_placements": 3,
     },
     mission_entities=(
         MissionEntity("TRIBUNAL_VIGIL_WHITELIST_MODULE_A", "YSF_Asset_Whitelist_Module", "YSF_Tablet", "Logic", (3600, 0, 3600)),
@@ -519,12 +492,12 @@ TRIBUNAL_SCENARIO = Scenario(
     ),
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="Multiple authentic Eden whitelist modules aggregate exact synchronized assets and retire a deleted source; one assigned curator authentically adds, removes, and re-adds the same asset in one display, receives exact private results, and cannot replay or forge another mutation.",
+        behavior_contract="Multiple authentic Eden whitelist modules aggregate exact synchronized assets and retire a deleted source; one assigned curator invokes the configured Pontifex entrypoint with engine-realistic inputs to add, remove, and re-add the same asset, receives exact private results, and cannot replay or forge another mutation.",
         outcome="KEEP AS-IS AND SPEC-TEST",
-        rationale="The scenario proves configured dispatch, native Sync identity, deleted-source retirement, exact client discovery snapshots, three same-target native curator stimuli, alternating transitions, authority, idempotence, feedback, replication, and cleanup.",
-        dependencies=("typed Eden module fixture", "authenticated curator input adapter", "accepted Vigil mixed-fleet browser", "one authenticated client"),
-        evidence_types=frozenset({"configured-dispatch", "native-sync", "native-curator-placement", "exact-identity", "negative-control", "authoritative-state", "replication", "locality", "cleanup"}),
-        locality_requirements="Eden registration and whitelist mutation are server-owned; the placing client owns transient curator modules and receives only its correlated result snapshots.",
+        rationale="The scenario proves configured dispatch, native Sync identity, deleted-source retirement, exact client discovery snapshots, three same-target configured curator entrypoint activations, alternating transitions, authority, idempotence, feedback, replication, and cleanup.",
+        dependencies=("typed Eden module fixture", "Pontifex curator input adapter", "real module, target, and curator objects", "accepted Vigil mixed-fleet browser", "one authenticated client"),
+        evidence_types=frozenset({"configured-dispatch", "native-sync", "product-entrypoint-activation", "exact-identity", "negative-control", "authoritative-state", "replication", "locality", "cleanup"}),
+        locality_requirements="Eden registration and whitelist mutation are server-owned; the authenticated client supplies real module, target, curator, and operation values that Arma placement provides; the server invokes the configured Pontifex entrypoint in its engine authority context; the client receives only its correlated result snapshots.",
     ),
     evidence_contract=EVIDENCE_CONTRACT,
 )
