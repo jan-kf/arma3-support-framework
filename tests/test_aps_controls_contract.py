@@ -65,6 +65,8 @@ class ApsControlsContractTests(unittest.TestCase):
         self.assertIn("ace_interact_menu_fnc_compileMenu", client)
         self.assertIn("YOSHI_APS_ActionData_Local", client)
         self.assertIn("_fieldInitial isEqualTo _fieldSuspended", client)
+        self.assertIn("(_fieldInitial # 0) isEqualTo [1, 1, 1, 0]", client)
+        self.assertIn('!("UAV_field_task" in (_fieldInitial # 1))', client)
         self.assertIn("_apsSuspendedLeaves isEqualTo [\"YOSHI_APS_Resume\"]", client)
         self.assertIn("call (_data # 3)", client)
         self.assertIn('"operator_ineligible"', client)

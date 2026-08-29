@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 import pontifex_multiplayer as multiplayer  # noqa: E402
 from tribunal.assertions.protocol import parse_protocol  # noqa: E402
+from tribunal.runner.model import MissionEntity, Scenario  # noqa: E402
 
 
 class TierFrameworkTests(unittest.TestCase):
@@ -47,6 +48,32 @@ class TierFrameworkTests(unittest.TestCase):
         self.assertIn("allPlayers select { owner _x isEqualTo _actionOwner }", server)
         self.assertIn("objectFromNetId _vehicleId", client)
         self.assertIn("gameplay.enterVehicle", client)
+
+    def test_tier_mission_rejects_player_spawn_inside_object_fixture(self) -> None:
+        scenario = Scenario(
+            "spawn-collision",
+            "gameplay",
+            frozenset(),
+            frozenset(),
+            "",
+            "",
+            metadata={"player_spawn": "100,5,200"},
+            mission_entities=(
+                MissionEntity("TARGET", "Example_Target", "Example_Targets", "Object", (105, 5, 200)),
+            ),
+        )
+        plan = multiplayer.TestPlan(
+            "gameplay",
+            frozenset(),
+            frozenset(),
+            gameplay=True,
+            selected=frozenset({"spawn-collision"}),
+        )
+        with patch.dict(multiplayer.ALL_SCENARIOS, {"spawn-collision": scenario}):
+            with tempfile.TemporaryDirectory() as temporary:
+                mission = Path(temporary) / "Tier.Stratis"
+                with self.assertRaisesRegex(RuntimeError, "player spawn .* overlaps mission object TARGET"):
+                    multiplayer.write_tier_mission(mission, "collision-test-deadbeef", plan)
 
     def test_aps_gameplay_fixture_requires_causal_interception_evidence(self) -> None:
         plan = multiplayer.select_plan("gameplay", "aps-intercept")

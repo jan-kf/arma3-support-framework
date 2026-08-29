@@ -186,6 +186,15 @@ class TribunalArchitectureTests(unittest.TestCase):
         self.assertIn('class LinkIDProvider { nextID=1; };', connections)
         self.assertIn('linkID=0;', connections)
         self.assertNotIn('id=102;', connections)
+        with self.assertRaisesRegex(ValueError, "overlap fixture footprints"):
+            render_typed_entities(
+                (
+                    MissionEntity("TARGET_A", "Example_Target", "Example_Targets", "Object", (110, 5, 200)),
+                    MissionEntity("TARGET_B", "Example_Target", "Example_Targets", "Object", (115, 5, 200)),
+                ),
+                (),
+                first_item=0,
+            )
         with self.assertRaises(ValueError):
             Scenario("bad", "gameplay", frozenset(), frozenset(), "", "", mission_entities=entities, mission_syncs=(MissionSync("MODULE_A", "MISSING"),))
 

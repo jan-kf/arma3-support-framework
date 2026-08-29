@@ -21,6 +21,21 @@ def render_typed_entities(
     """
     rows = tuple(entities)
     links = tuple(syncs)
+    object_fixtures: list[MissionEntity] = []
+    for entity in rows:
+        if entity.data_type != "Object":
+            continue
+        for previous in object_fixtures:
+            distance_squared = sum(
+                (left - right) ** 2
+                for left, right in zip(entity.position, previous.position)
+            )
+            if distance_squared < 100:
+                raise ValueError(
+                    f"mission objects {previous.name} and {entity.name} overlap fixture footprints "
+                    f"at {previous.position} and {entity.position}"
+                )
+        object_fixtures.append(entity)
     ids = {entity.name: first_id + offset for offset, entity in enumerate(rows)}
     rendered: list[str] = []
     for offset, entity in enumerate(rows):

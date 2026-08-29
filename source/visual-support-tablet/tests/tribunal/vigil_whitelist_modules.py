@@ -508,10 +508,10 @@ TRIBUNAL_SCENARIO = Scenario(
     mission_entities=(
         MissionEntity("TRIBUNAL_VIGIL_WHITELIST_MODULE_A", "YSF_Asset_Whitelist_Module", "YSF_Tablet", "Logic", (3600, 0, 3600)),
         MissionEntity("TRIBUNAL_VIGIL_WHITELIST_MODULE_B", "YSF_Asset_Whitelist_Module", "YSF_Tablet", "Logic", (3620, 0, 3600)),
-        MissionEntity("TRIBUNAL_VIGIL_WHITELIST_A", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4550, 16, 2785)),
-        MissionEntity("TRIBUNAL_VIGIL_WHITELIST_B", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4575, 16, 2785)),
-        MissionEntity("TRIBUNAL_VIGIL_WHITELIST_C", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4600, 16, 2785)),
-        MissionEntity("TRIBUNAL_VIGIL_WHITELIST_CONTROL", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4625, 16, 2785)),
+        MissionEntity("TRIBUNAL_VIGIL_WHITELIST_A", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4550, 16, 2900)),
+        MissionEntity("TRIBUNAL_VIGIL_WHITELIST_B", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4575, 16, 2900)),
+        MissionEntity("TRIBUNAL_VIGIL_WHITELIST_C", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4600, 16, 2900)),
+        MissionEntity("TRIBUNAL_VIGIL_WHITELIST_CONTROL", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4625, 16, 2900)),
     ),
     mission_syncs=(
         MissionSync("TRIBUNAL_VIGIL_WHITELIST_MODULE_A", "TRIBUNAL_VIGIL_WHITELIST_A"),

@@ -312,8 +312,8 @@ TRIBUNAL_SCENARIO = Scenario(
         "zeus_placements": 1,
     },
     mission_entities=(
-        MissionEntity("TRIBUNAL_APS_ZEUS_CONTROL", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4615, 16, 2785)),
-        MissionEntity("TRIBUNAL_APS_ZEUS_TARGET_ON", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4600, 16, 2785)),
+        MissionEntity("TRIBUNAL_APS_ZEUS_CONTROL", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4615, 16, 2860)),
+        MissionEntity("TRIBUNAL_APS_ZEUS_TARGET_ON", "O_MBT_02_cannon_F", "A3_Armor_F_Beta", "Object", (4600, 16, 2860)),
     ),
     review=ScenarioReview(
         test_type="specification",

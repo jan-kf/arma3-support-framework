@@ -834,6 +834,18 @@ def write_tier_mission(destination: Path, token: str, plan: TestPlan, *, live: b
     player_x, player_y, player_z = player_position
     selected_scenarios = [ALL_SCENARIOS[item] for item in sorted(plan.selected) if item in ALL_SCENARIOS]
     mission_entities = tuple(entity for scenario in selected_scenarios for entity in scenario.mission_entities)
+    for entity in mission_entities:
+        if entity.data_type != "Object":
+            continue
+        distance_squared = sum(
+            (left - right) ** 2
+            for left, right in zip(player_position, entity.position)
+        )
+        if distance_squared < 100:
+            raise RuntimeError(
+                f"player spawn {tuple(player_position)} overlaps mission object "
+                f"{entity.name} at {entity.position}"
+            )
     mission_syncs = tuple(sync for scenario in selected_scenarios for sync in scenario.mission_syncs)
     entity_names = [entity.name for entity in mission_entities]
     if len(set(entity_names)) != len(entity_names):
@@ -1276,11 +1288,11 @@ missionNamespace setVariable ["PONTIFEX_TIER_apsReplication", [_token, netId _ap
      && {_resumeState # 1}
      && {_preserved};
  ["aps.controls.lifecycle", _lifecycleOk, format ["emptyReboot=%1|softOff=%2|softOn=%3|antiOff=%4|voiceOff=%5|before=%6|suspend=%7|resumeActive=%8|resume=%9|preserved=%10", _emptyReboot # 1, _softOff # 1, _softOn # 1, _antiDroneOff # 1, _voiceOff # 1, _beforeSuspend, _suspend # 1, _resumeWasActive, _resume # 1, _preserved]] call _assert;
- private _fieldCountsOk = (_fieldInitial # 0) isEqualTo [1, 1, 1, 1]
-     && {(_fieldUninstalled # 0) isEqualTo [1, 1, 1, 1]}
-     && {(_fieldBeforeSuspend # 0) isEqualTo [1, 1, 1, 1]}
-     && {(_fieldSuspended # 0) isEqualTo [1, 1, 1, 1]}
-     && {(_fieldResumed # 0) isEqualTo [1, 1, 1, 1]};
+ private _fieldCountsOk = (_fieldInitial # 0) isEqualTo [1, 1, 1, 0]
+     && {(_fieldUninstalled # 0) isEqualTo [1, 1, 1, 0]}
+     && {(_fieldBeforeSuspend # 0) isEqualTo [1, 1, 1, 0]}
+     && {(_fieldSuspended # 0) isEqualTo [1, 1, 1, 0]}
+     && {(_fieldResumed # 0) isEqualTo [1, 1, 1, 0]};
  private _fieldStable = _fieldInitial isEqualTo _fieldBeforeSuspend
      && {_fieldInitial isEqualTo _fieldSuspended}
      && {_fieldInitial isEqualTo _fieldResumed}

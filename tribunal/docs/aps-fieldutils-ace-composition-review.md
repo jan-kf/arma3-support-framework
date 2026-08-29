@@ -41,7 +41,7 @@ order, authority/effects, and JIP are not implicit promises.
    adapter mutates ACE scratch state.
 8. **Is a better mechanism available?** Preserve ACE's class and object action
    mechanisms. The authenticated APS endpoint and installed-version ACE observer now provide the required existing mechanisms; no additional UI automation or composition framework is needed. No UI/VNC automation is necessary for data identity.
-9. **What is the stable contract and causal proof?** An identical uninstalled control has four exact singleton Field roots and no APS registration. The installed target has the same singleton Field roots; only Towing is relevant under the measured fixture state. Across authenticated suspension and resume, the entire Field snapshot remains byte-for-byte equal, APS leaves become exactly Resume, then return to the exact preserved-mode set. Field rope and UAV payload state remain unchanged.
+9. **What is the stable contract and causal proof?** An identical uninstalled control has the three applicable singleton Field roots and no APS registration. The installed target has the same singleton Field roots; only Towing is relevant under the measured fixture state. The retired `UAV_field_task` root is absent because Payload Manager now registers its object action only on eligible UAVs. Across authenticated suspension and resume, the entire Field snapshot remains byte-for-byte equal, APS leaves become exactly Resume, then return to the exact preserved-mode set. Field rope and UAV payload state remain unchanged.
 10. **Which details remain free?** Labels, icons, ordering, nesting, private ACE
     namespaces, local flags, remote-exec key, registration helper, and adapter
     internals remain replaceable. Exact product-owned node identity can change
@@ -63,6 +63,6 @@ mutation.
 
 ## Permanent evidence
 
-Fresh autonomous run `20260820T223222Z-3046910b` passed 18 server and 11 client assertions with zero failures. `aps.controls.composition` proved four exact singleton Field roots on both installed and uninstalled same-class tanks, only `TowActions` relevant in the controlled state, zero rope/FPV mutation, exact APS active leaf sets, exactly `YOSHI_APS_Resume` while suspended, and restoration of the preserved-mode leaf set after resume. The same run retained the causal hard-off impact and reboot interception pair, so the lifecycle phases were genuine. Both containers, the private network, and run state were removed.
+The original autonomous run `20260820T223222Z-3046910b` passed 18 server and 11 client assertions with zero failures before Payload Manager replaced the legacy `UAV_field_task` root. The current `aps.controls.composition` contract requires the three still-applicable singleton Field roots on both installed and uninstalled same-class tanks, explicitly excludes that retired UAV root from tanks, requires only `TowActions` to be relevant in the controlled state, and retains zero rope/payload mutation, exact APS active leaf sets, exactly `YOSHI_APS_Resume` while suspended, and restoration of the preserved-mode leaf set after resume. The causal hard-off impact and reboot interception pair remain unchanged.
 
 Client-B/JIP, explicit uninstall, repeated init, object deletion, and ownership migration remain deferred. Anti-drone gameplay remains governed by its separate review.
