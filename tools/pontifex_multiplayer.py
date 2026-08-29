@@ -582,7 +582,7 @@ def start_login() -> int:
     print("Use an SSH tunnel and a VNC viewer, sign in, force a Proton tool for Arma 3,")
     print("install the Windows client plus Proton, then run:")
     print("  ./pontifex client stop-login")
-    print("Credentials are entered only into Steam and persist in ignored client/runtime/home.")
+    print(f"Credentials are entered only into Steam and persist outside Git in {CLIENT_RUNTIME / 'home'}.")
     return 0
 
 

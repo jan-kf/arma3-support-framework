@@ -26,7 +26,12 @@ def resolve_paths(project_root: Path, environ: Mapping[str, str] | None = None) 
     env = os.environ if environ is None else environ
     project_root = project_root.resolve()
     configured = env.get("PONTIFEX_STATE_ROOT", "").strip()
-    state_root = Path(configured).expanduser().resolve() if configured else project_root
+    if configured:
+        state_root = Path(configured).expanduser().resolve()
+    elif project_root.parent.name == "arma-projects":
+        state_root = (project_root.parent.parent / "arma-state" / project_root.name).resolve()
+    else:
+        state_root = project_root
     legacy = state_root == project_root
     if legacy:
         return PontifexPaths(

@@ -9,7 +9,7 @@ Pontifex is a four-mod Arma 3 suite. This directory is the canonical Gustav work
 
 ## Normal commands
 
-Run these from `/mnt/services/pontifex`:
+Run these from `/mnt/services/arma-projects/pontifex`:
 
 ```bash
 ./pontifex check
@@ -28,7 +28,7 @@ Run these from `/mnt/services/pontifex`:
 ./pontifex client status
 ```
 
-`check` performs HEMTT config/SQF checks plus harness syntax checks. `build` produces four unsigned development PBOs under `build/current/`. Plain `test` is the fast/static suite. `test smoke`, `test integration`, and `test gameplay` are the fresh real-client tiers; see [multiplayer testing](docs/multiplayer-testing.md#test-tiers). `test dedicated` runs the real server-only test. `test multiplayer` is the one-real-player experiment: it creates an isolated Docker bridge, launches the server and a normal Steam/Proton player client at different virtual addresses, parses both origins, and removes its containers/network.
+`check` performs HEMTT config/SQF checks plus harness syntax checks. `build` produces four unsigned development PBOs under `$PONTIFEX_STATE_ROOT/builds/current/`. Plain `test` is the fast/static suite. `test smoke`, `test integration`, and `test gameplay` are the fresh real-client tiers; see [multiplayer testing](docs/multiplayer-testing.md#test-tiers). `test dedicated` runs the real server-only test. `test multiplayer` is the one-real-player experiment: it creates an isolated Docker bridge, launches the server and a normal Steam/Proton player client at different virtual addresses, parses both origins, and removes its containers/network.
 
 The generic framework is the independent Tribunal repository resolved by
 `TRIBUNAL_ROOT`. Pontifex is its first registered mod suite; feature scenarios
@@ -39,11 +39,11 @@ or `tribunal run tribunal.project.json ...` through an installed CLI.
 Inspect the latest dedicated result with:
 
 ```bash
-jq . runs/latest/results.json
-less runs/latest/server.rpt
+jq . /mnt/services/arma-state/pontifex/runs/latest/results.json
+less /mnt/services/arma-state/pontifex/runs/latest/server.rpt
 ```
 
-Each run is retained under `runs/<run-id>/`. `server status` shows the controlled process, pinned dependencies, and latest result. `server stop` validates the recorded PID, process start time, process group, and command before stopping anything.
+Each run is retained under `$PONTIFEX_STATE_ROOT/runs/<run-id>/`. `server status` shows the controlled process, pinned dependencies, and latest result. `server stop` validates the recorded PID, process start time, process group, and command before stopping anything.
 
 The multiplayer command currently requires one manual, credential-bearing provisioning step. Build and verify the credential-free image with:
 
@@ -53,24 +53,24 @@ The multiplayer command currently requires one manual, credential-bearing provis
 ./pontifex client login
 ```
 
-`client login` exposes Steam VNC only on Gustav `127.0.0.1:5903`. Reach it through an SSH tunnel, sign in directly to Steam, force a Proton tool for Arma 3, and install the Windows client. Then run `./pontifex client stop-login` and `./pontifex client status`. Steam state and the large game installation remain ignored under `client/runtime/`; never put a password in a command or repository file.
+`client login` exposes Steam VNC only on Gustav `127.0.0.1:5903`. Reach it through an SSH tunnel, sign in directly to Steam, force a Proton tool for Arma 3, and install the Windows client. Then run `./pontifex client stop-login` and `./pontifex client status`. Steam state and the large game installation live outside Git under `$PONTIFEX_STATE_ROOT/client/`; never put a password in a command or repository file.
 
-HEMTT 1.20.1 is project-bootstrapped on first use and checksum-verified. The repository contains source and tooling configuration; generated `.hemttout`, `build`, `release`, `runs`, and server runtime files are ignored.
+HEMTT 1.20.1 is project-bootstrapped on first use and checksum-verified. The repository contains source and tooling configuration. Runtime and generated state live under `PONTIFEX_STATE_ROOT`, which defaults to `/mnt/services/arma-state/pontifex` for this checkout and may be overridden explicitly.
 
 ## Runtime and results
 
 - Editable source: `mods/`
-- Current build artifacts: `build/current/`
+- Current build artifacts: `$PONTIFEX_STATE_ROOT/builds/current/`
 - Future release artifacts: `release/`
-- Future isolated Arma server: `server/runtime/`
+- Isolated Arma server: `$PONTIFEX_STATE_ROOT/server/`
 - Future server profiles/config: `server/config/`
 - Future test missions: `tests/missions/`
-- Future per-run logs and machine results: `runs/`
+- Per-run logs and machine results: `$PONTIFEX_STATE_ROOT/runs/`
 - Preserved original import: `archive/Pontifex-original.zip`
 
-Dependencies are pinned in `server/dependencies.lock.json`, installed outside Git under `server/dependencies/`, and checksum-verified. Provision explicitly with `./pontifex dependencies provision`; dedicated tests provision missing packages automatically. Updates require changing the pinned version, URL, and SHA-256 in the lock file. No Steam credentials are used for CBA, ACE, or Zeus Enhanced.
+Dependencies are pinned in `server/dependencies.lock.json`, installed outside Git under `$PONTIFEX_STATE_ROOT/dependencies/`, and checksum-verified. Provision explicitly with `./pontifex dependencies provision`; dedicated tests provision missing packages automatically. Updates require changing the pinned version, URL, and SHA-256 in the lock file. No Steam credentials are used for CBA, ACE, or Zeus Enhanced.
 
-The Arma 3 2.20.152984 base files are currently shared read-only from the preserved legacy Steam installation through a generated view under `server/runtime/`; test config, dependencies, missions, profiles, deployment copies, state, and logs are Pontifex-owned. The lifecycle does not call PufferPanel. The old panel remains separately managed at `/mnt/services/arma3-server`.
+The Arma 3 2.20.152984 base files are currently shared read-only from the preserved legacy Steam installation through a generated view under `$PONTIFEX_STATE_ROOT/server/`; test config, dependencies, missions, profiles, deployment copies, state, and logs are Pontifex-owned. The lifecycle does not call PufferPanel. The old panel remains separately managed at `/mnt/services/arma3-server`.
 
 ## Next step
 

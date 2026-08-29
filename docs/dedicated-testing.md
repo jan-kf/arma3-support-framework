@@ -2,9 +2,9 @@
 
 ## What the command does
 
-`./pontifex test dedicated` creates a unique `runs/<UTC-time>-<random>/` directory, records Git/Arma/dependency provenance, rebuilds all four Pontifex mods, provisions pinned dependencies, prepares the disposable runtime view, launches Arma on loopback port 2312, waits for an explicit mission completion record, and stops only its own process group.
+`./pontifex test dedicated` creates a unique `$PONTIFEX_STATE_ROOT/runs/<UTC-time>-<random>/` directory, records Git/Arma/dependency provenance, rebuilds all four Pontifex mods, provisions pinned dependencies, prepares the disposable runtime view, launches Arma on loopback port 2312, waits for an explicit mission completion record, and stops only its own process group.
 
-The controller is `tools/pontifex_server.py`. It holds `server/runtime/control.lock` for the complete lifecycle. Persistent/manual server start is deliberately not implemented.
+The controller is `tools/pontifex_server.py`. It holds `$PONTIFEX_STATE_ROOT/server/control.lock` for the complete lifecycle. Persistent/manual server start is deliberately not implemented.
 
 ## Runtime ownership
 
@@ -14,9 +14,9 @@ Arma 3 Server 2.20.152984 (Steam build 18981937) is reused from:
 /mnt/services/arma3-server/pufferpanel/data/servers/80e9c1f3
 ```
 
-The executable and base/DLC PBO banks are exposed through symlinks in `server/runtime/install`. PufferPanel is never invoked. Pontifex owns the generated Linux-normalized mod deployment, mission, server config, dependency packages, runtime state, per-run profile, and logs. The legacy payload must remain until it is moved or replaced with a project-owned SteamCMD installation.
+The executable and base/DLC PBO banks are exposed through symlinks in `$PONTIFEX_STATE_ROOT/server/install`. PufferPanel is never invoked. Pontifex owns the generated Linux-normalized mod deployment, mission, server config, dependency packages, runtime state, per-run profile, and logs. The legacy payload must remain until it is moved or replaced with a project-owned SteamCMD installation.
 
-Linux Arma requires lowercase mod/PBO paths. Build artifacts retain their historical names; `server/runtime/mods` contains generated lowercase deployment copies. Dependency releases are hard-linked into `server/runtime/dependency-mods` so both host and container lifecycles see a physical game-directory deployment. Installed official DLC PBO banks are wrapped as generated test mods because the legacy server did not activate those banks itself.
+Linux Arma requires lowercase mod/PBO paths. Build artifacts retain their historical names; `$PONTIFEX_STATE_ROOT/server/mods` contains generated lowercase deployment copies. Dependency releases are hard-linked into `$PONTIFEX_STATE_ROOT/server/dependency-mods` so both host and container lifecycles see a physical game-directory deployment. Installed official DLC PBO banks are wrapped as generated test mods because the legacy server did not activate those banks itself.
 
 ## Dependencies
 
@@ -28,7 +28,7 @@ The complete official releases are used instead of maintaining a fragile hand-pr
 | ACE3 | 3.21.0 | ACE3 GitHub release |
 | Zeus Enhanced | 1.15.1 | ZEN GitHub release |
 
-Versions, URLs, archive names, and SHA-256 values are tracked in `server/dependencies.lock.json`. Archives cache under `server/cache`; extracted packages live under `server/dependencies`. Both are ignored by Git. GitHub downloads need no Steam account or Steam Guard. To update, edit and review the lock entry, then run `./pontifex dependencies provision`.
+Versions, URLs, archive names, and SHA-256 values are tracked in `server/dependencies.lock.json`. Archives cache under `$PONTIFEX_STATE_ROOT/dependencies/cache`; extracted packages live under `$PONTIFEX_STATE_ROOT/dependencies`. Both are ignored by Git. GitHub downloads need no Steam account or Steam Guard. To update, edit and review the lock entry, then run `./pontifex dependencies provision`.
 
 ## Mission and protocol
 
@@ -57,7 +57,7 @@ Linux dedicated Arma emits its RPT stream to stdout in this installation. The co
 Each run retains:
 
 ```text
-runs/<run-id>/
+$PONTIFEX_STATE_ROOT/runs/<run-id>/
 ├── manifest.json       # Git state, hashes, versions, command, timestamps
 ├── results.json        # parsed PASS/FAIL and reason
 ├── server.rpt          # canonical captured Arma RPT stream

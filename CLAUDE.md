@@ -9,7 +9,7 @@ here — they are canonical and this file must not drift from them.
 | | Pontifex | Tribunal |
 | --- | --- | --- |
 | What | The Arma 3 mod suite / in-universe company | A generic Arma mod-validation framework |
-| Where | `mods/`, `tools/`, `build/`, `server/`, `client/`, `runs/` | `tribunal/` |
+| Where | `/mnt/services/arma-projects/pontifex` | `/mnt/services/tribunal` |
 | Owns | Four mods (CORDIS, Field Utilities, Advanced Systems, VIGIL), builds, Steam/Proton/server runtime, Live Mode, feature scenarios | Mission/PBO packaging, assertion protocol, scenario discovery, generic fixtures/observers, evidence attachments, terminal lifecycle |
 
 Hard boundaries, enforced by `tests/test_tribunal_architecture.py`:
@@ -73,19 +73,17 @@ request explicitly asks for sequential continuation.
   rationale, dependencies, evidence types, locality, and any
   `CharacterizedBehavior` records. `behavior_contract` must not name private
   product symbols.
-* Scenario roots are registered in `tools/pontifex_multiplayer.py`
-  (`FEATURE_SCENARIOS`). A new scenario file is auto-discovered from a
-  registered root and joins the `gameplay` tier automatically. Note the known,
-  recorded inconsistency: `tribunal.project.json` lists only the
-  advanced-systems root for the generic CLI.
+* Scenario roots are registered in `tribunal.project.json` and mirrored by
+  `tools/pontifex_multiplayer.py` (`FEATURE_SCENARIOS`). A new scenario file
+  is auto-discovered from a registered root and joins the `gameplay` tier.
 
 ## Commands
 
-Run from `/mnt/services/pontifex`:
+Run from `/mnt/services/arma-projects/pontifex`:
 
 ```bash
 ./pontifex check                                  # HEMTT config/SQF checks + python unit suite
-./pontifex build                                  # four unsigned dev PBOs into build/current/
+./pontifex build                                  # four unsigned dev PBOs into $PONTIFEX_STATE_ROOT/builds/current/
 ./pontifex test                                   # fast/static suite (== check)
 ./pontifex test gameplay                          # fresh real-client gameplay tier (all feature scenarios)
 ./pontifex test gameplay --select <scenario-id>   # one scenario, fresh cold run
@@ -93,7 +91,7 @@ Run from `/mnt/services/pontifex`:
 ./pontifex test live                              # start durable Developer Live Mode
 ./pontifex live exec server '<sqf>'               # Live probe (also: live exec client, live status, live reset, live stop)
 ./pontifex test dedicated                         # real server-only test
-jq . runs/latest/results.json                     # machine results of the last run
+jq . /mnt/services/arma-state/pontifex/runs/latest/results.json                     # machine results of the last run
 ```
 
 More detail: [`README.md`](README.md),
@@ -112,7 +110,7 @@ development aid, never proof.
 
 Conventions:
 
-* Each run is retained under `runs/<run-id>/`; `runs/latest` symlinks the newest.
+* Each run is retained under `$PONTIFEX_STATE_ROOT/runs/<run-id>/`; `runs/latest` symlinks the newest.
 * **A fresh autonomous proof is a single-scenario `--select` run.** That is how
   every milestone to date was proven.
 * **Know your timeout.** `./pontifex test gameplay` dispatches to the `tier`

@@ -1,4 +1,4 @@
-"""Runtime state is configurable without changing the legacy checkout layout."""
+"""Runtime state follows the split layout and remains explicitly configurable."""
 
 import sys
 import tempfile
@@ -12,14 +12,23 @@ from pontifex_paths import resolve_paths, resolve_tribunal_root  # noqa: E402
 
 
 class PontifexPathTests(unittest.TestCase):
-    def test_unconfigured_paths_preserve_the_current_layout(self) -> None:
+    def test_relocated_checkout_defaults_to_sibling_state_root(self) -> None:
         paths = resolve_paths(ROOT, {})
+        expected = ROOT.parent.parent / "arma-state" / "pontifex"
+        self.assertFalse(paths.legacy_layout)
+        self.assertEqual(paths.state_root, expected)
+        self.assertEqual(paths.runs, expected / "runs")
+        self.assertEqual(paths.builds, expected / "builds")
+        self.assertEqual(paths.client, expected / "client")
+        self.assertEqual(paths.server, expected / "server")
+        self.assertEqual(paths.dependencies, expected / "dependencies")
+
+    def test_unrelocated_checkout_retains_legacy_fallback(self) -> None:
+        legacy_root = Path("/srv/pontifex")
+        paths = resolve_paths(legacy_root, {})
         self.assertTrue(paths.legacy_layout)
-        self.assertEqual(paths.runs, ROOT / "runs")
-        self.assertEqual(paths.builds, ROOT / "build")
-        self.assertEqual(paths.client, ROOT / "client/runtime")
-        self.assertEqual(paths.server, ROOT / "server/runtime")
-        self.assertEqual(paths.dependencies, ROOT / "server/dependencies")
+        self.assertEqual(paths.runs, legacy_root / "runs")
+        self.assertEqual(paths.builds, legacy_root / "build")
 
     def test_configured_root_uses_the_split_state_layout(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

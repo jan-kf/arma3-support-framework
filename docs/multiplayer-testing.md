@@ -129,7 +129,7 @@ Connect a VNC viewer to laptop `127.0.0.1:5903`, then:
 5. confirm the Windows `arma3_x64.exe` depot exists;
 6. close Steam and run `./pontifex client stop-login`.
 
-Do not type a password into a Pontifex command, configuration, shell history, or Codex conversation. Steam's own session files and game payload persist under mode-0700 `client/runtime/home`, which is ignored by Git. The login container is label-validated before removal.
+Do not type a password into a Pontifex command, configuration, shell history, or Codex conversation. Steam's own session files and game payload persist under mode-0700 `$PONTIFEX_STATE_ROOT/client/home`, outside Git. The login container is label-validated before removal.
 
 Check readiness without reading or printing session contents:
 
@@ -166,7 +166,7 @@ The multiplayer server adds assertions for exactly one `allPlayers` entry, a non
 Multiplayer runs retain:
 
 ```text
-runs/<run-id>/
+$PONTIFEX_STATE_ROOT/runs/<run-id>/
 ├── manifest.json
 ├── results.json
 ├── build.log
@@ -190,7 +190,7 @@ runs/<run-id>/
 
 The manifest records Git/PBO/dependency identities, both Arma builds, Proton path, container IDs and host PIDs, virtual IP/MAC/gateway data, commands, and GPU state. Results group assertions by origin and retain periodic Docker CPU/memory plus GPU utilization/memory/power samples.
 
-State is stored in `server/runtime/multiplayer.json`. Removal validates each run label before touching a container or network. Build, graphics, Steam, launch, mission, protocol, timeout, early-exit, and cleanup failures all return nonzero with retained evidence. `./pontifex server stop` covers both the Phase Two process lifecycle and this container lifecycle.
+State is stored in `$PONTIFEX_STATE_ROOT/server/multiplayer.json`. Removal validates each run label before touching a container or network. Build, graphics, Steam, launch, mission, protocol, timeout, early-exit, and cleanup failures all return nonzero with retained evidence. `./pontifex server stop` covers both the Phase Two process lifecycle and this container lifecycle.
 
 ## Licensing references
 

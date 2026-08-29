@@ -14,12 +14,17 @@ else
 fi
 export TRIBUNAL_ROOT="$TRIBUNAL_CHECKOUT"
 export PYTHONPATH="$TRIBUNAL_CHECKOUT${PYTHONPATH:+:$PYTHONPATH}"
-if [[ -n "${PONTIFEX_STATE_ROOT:-}" && "$PONTIFEX_STATE_ROOT" != "$ROOT" ]]; then
+if [[ -n "${PONTIFEX_STATE_ROOT:-}" ]]; then
     STATE_ROOT="$PONTIFEX_STATE_ROOT"
+elif [[ "$(basename "$(dirname "$ROOT")")" == "arma-projects" ]]; then
+    STATE_ROOT=$(cd "$ROOT/../.." && pwd)/arma-state/$(basename "$ROOT")
+else
+    STATE_ROOT="$ROOT"
+fi
+if [[ "$STATE_ROOT" != "$ROOT" ]]; then
     BUILD_ROOT="$STATE_ROOT/builds"
     HEMTT="$STATE_ROOT/dependencies/tools/hemtt"
 else
-    STATE_ROOT="$ROOT"
     BUILD_ROOT="$ROOT/build"
     HEMTT="$ROOT/.tools/hemtt"
 fi

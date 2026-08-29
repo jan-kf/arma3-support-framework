@@ -5,8 +5,11 @@ ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 VERSION="1.20.1"
 SHA256="4ec152f9174be9745c8ee571df0862246b1beb9819c92d3f8876f1c406faf3ea"
 URL="https://github.com/BrettMayson/HEMTT/releases/download/v${VERSION}/linux-x64"
-if [[ -n "${PONTIFEX_STATE_ROOT:-}" && "$PONTIFEX_STATE_ROOT" != "$ROOT" ]]; then
+if [[ -n "${PONTIFEX_STATE_ROOT:-}" ]]; then
     TOOLS="$PONTIFEX_STATE_ROOT/dependencies/tools"
+elif [[ "$(basename "$(dirname "$ROOT")")" == "arma-projects" ]]; then
+    STATE_ROOT=$(cd "$ROOT/../.." && pwd)/arma-state/$(basename "$ROOT")
+    TOOLS="$STATE_ROOT/dependencies/tools"
 else
     TOOLS="$ROOT/.tools"
 fi
