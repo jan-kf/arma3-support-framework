@@ -24,10 +24,15 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from pontifex_paths import PATHS, TRIBUNAL_ROOT
+
+if str(TRIBUNAL_ROOT) in sys.path:
+    sys.path.remove(str(TRIBUNAL_ROOT))
+sys.path.insert(0, str(TRIBUNAL_ROOT))
+
 from tribunal.assertions.protocol import parse_protocol as parse_tribunal_protocol
 from tribunal.mission.pbo import build_mission_pbo, sha256
 from tribunal.reporting.artifacts import atomic_json
-from pontifex_paths import PATHS
 
 
 ROOT = PROJECT_ROOT

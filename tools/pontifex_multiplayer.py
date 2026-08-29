@@ -22,6 +22,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from pontifex_paths import TRIBUNAL_ROOT
+
+if str(TRIBUNAL_ROOT) in sys.path:
+    sys.path.remove(str(TRIBUNAL_ROOT))
+sys.path.insert(0, str(TRIBUNAL_ROOT))
+
 from tribunal.assertions.protocol import validate_origin
 from tribunal.evidence import emit_execution_package
 from tribunal.mission.entities import render_typed_entities
@@ -50,7 +56,7 @@ FEATURE_SCENARIOS = discover([
     ROOT / "source" / "field-utilities" / "tests" / "tribunal",
     ROOT / "source" / "visual-support-tablet" / "tests" / "tribunal",
 ])
-FRAMEWORK_SCENARIOS = discover([ROOT / "tribunal" / "scenarios"])
+FRAMEWORK_SCENARIOS = discover([TRIBUNAL_ROOT / "tribunal" / "scenarios"])
 ALL_SCENARIOS = {**FRAMEWORK_SCENARIOS, **FEATURE_SCENARIOS}
 APS_SCENARIO = FEATURE_SCENARIOS["aps-intercept"]
 STEAM_DLC_CATALOG = ROOT / "server" / "steam-arma3-dlc-catalog.json"

@@ -13,6 +13,12 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from pontifex_paths import TRIBUNAL_ROOT  # noqa: E402
+
+if str(TRIBUNAL_ROOT) in sys.path:
+    sys.path.remove(str(TRIBUNAL_ROOT))
+sys.path.insert(0, str(TRIBUNAL_ROOT))
+
 from tribunal.discovery import discover  # noqa: E402
 import tribunal.scenarios  # noqa: E402
 

@@ -56,5 +56,22 @@ def resolve_paths(project_root: Path, environ: Mapping[str, str] | None = None) 
     )
 
 
+def resolve_tribunal_root(project_root: Path, environ: Mapping[str, str] | None = None) -> Path:
+    """Locate the independent Tribunal checkout without a host-specific path."""
+
+    env = os.environ if environ is None else environ
+    configured = env.get("TRIBUNAL_ROOT", "").strip()
+    candidates = [Path(configured).expanduser()] if configured else [
+        project_root.resolve().parent / "tribunal",
+        project_root.resolve().parent.parent / "tribunal",
+    ]
+    for candidate in candidates:
+        resolved = candidate.resolve()
+        if (resolved / "tribunal/__init__.py").is_file() and (resolved / "bin/tribunal").is_file():
+            return resolved
+    raise RuntimeError("independent Tribunal checkout not found; set TRIBUNAL_ROOT")
+
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PATHS = resolve_paths(PROJECT_ROOT)
+TRIBUNAL_ROOT = resolve_tribunal_root(PROJECT_ROOT)

@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
-from pontifex_paths import resolve_paths  # noqa: E402
+from pontifex_paths import resolve_paths, resolve_tribunal_root  # noqa: E402
 
 
 class PontifexPathTests(unittest.TestCase):
@@ -33,6 +33,12 @@ class PontifexPathTests(unittest.TestCase):
             self.assertEqual(paths.dependencies, root / "dependencies")
             self.assertEqual(paths.cache, root / "dependencies/cache")
             self.assertEqual(paths.tools, root / "dependencies/tools")
+
+    def test_tribunal_checkout_resolves_before_and_after_project_relocation(self) -> None:
+        expected = Path("/mnt/services/tribunal")
+        self.assertEqual(resolve_tribunal_root(ROOT), expected)
+        relocated = Path("/mnt/services/arma-projects/pontifex")
+        self.assertEqual(resolve_tribunal_root(relocated), expected)
 
 
 if __name__ == "__main__":

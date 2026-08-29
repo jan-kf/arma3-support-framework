@@ -2,6 +2,18 @@
 set -euo pipefail
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+if [[ -n "${TRIBUNAL_ROOT:-}" ]]; then
+    TRIBUNAL_CHECKOUT="$TRIBUNAL_ROOT"
+elif [[ -f "$ROOT/../tribunal/tribunal/__init__.py" ]]; then
+    TRIBUNAL_CHECKOUT=$(cd "$ROOT/../tribunal" && pwd)
+elif [[ -f "$ROOT/../../tribunal/tribunal/__init__.py" ]]; then
+    TRIBUNAL_CHECKOUT=$(cd "$ROOT/../../tribunal" && pwd)
+else
+    echo "Independent Tribunal checkout not found; set TRIBUNAL_ROOT." >&2
+    exit 2
+fi
+export TRIBUNAL_ROOT="$TRIBUNAL_CHECKOUT"
+export PYTHONPATH="$TRIBUNAL_CHECKOUT${PYTHONPATH:+:$PYTHONPATH}"
 if [[ -n "${PONTIFEX_STATE_ROOT:-}" && "$PONTIFEX_STATE_ROOT" != "$ROOT" ]]; then
     STATE_ROOT="$PONTIFEX_STATE_ROOT"
     BUILD_ROOT="$STATE_ROOT/builds"

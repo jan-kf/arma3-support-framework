@@ -1,6 +1,7 @@
 {
-  "schema": 1,
-  "project": "Pontifex",
+    "schema": 1,
+    "project": "Pontifex",
+    "tribunal_api": 1,
   "assertion_prefix": "PONTIFEX_TEST",
   "entrypoint": "./pontifex",
   "scenario_roots": [
