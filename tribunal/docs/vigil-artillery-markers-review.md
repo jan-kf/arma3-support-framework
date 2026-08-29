@@ -2,19 +2,18 @@
 
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
-**Classification: SPLIT.** The reachable artillery strike-pattern preview is
+**Classification: ACCEPTED / COVERED for the retained one-client lifecycle.** The reachable artillery strike-pattern preview is
 **KEEP AS-IS AND SPEC-TEST; ACCEPTED / COVERED** for one client changing a
 valid circle request through count `0 -> 1 -> 3 -> 0`: the preview follows the
 requested world position, replaces stale markers, and clears on the explicit
 zero-count transition. Close-time removal from an active non-empty strike
 pattern, its first-round ETA marker, and the selected-asset overlay is now
 **KEEP AS-IS AND SPEC-TEST; COVERED** through exact pre-close identity capture
-and post-close census. The separate coordinate-preview marker created
-by the same grid handler is **PARTIALLY COVERED; REFINE BEFORE COVERAGE**
-because current source does not include it in dialog cleanup. Line rendering,
-range-colour and ETA-value presentation variants, VLS sizing, tab-switch
-behavior, client-B/JIP, and invalid-input presentation remain bounded gaps
-described below.
+and post-close census. The coordinate preview, strike/ETA generation and draft
+hash-map state are now explicitly UI-owned: leaving Artillery or closing the
+tablet deletes them, and returning starts clean. Line rendering, range-colour
+and ETA-value presentation variants, VLS sizing, client-B/JIP, and invalid-input
+presentation remain non-blocking bounded gaps described below.
 
 This is the canonical review and Evidence Contract closeout for the revised
 permanent `vigil-markers` scenario. Fresh Arma acceptance, package provenance,
@@ -33,9 +32,8 @@ pattern; setting count to zero removes it. Closing the tablet should not leave
 Vigil-owned preview markers behind.
 
 The product also places a distinct coordinate symbol at the entered grid. Its
-intended lifetime across tab changes and tablet close is not documented. The
-safe candidate outcome is therefore cleanup with the owning UI unless product
-owners explicitly choose persistence.
+lifetime is now explicitly the owning artillery workspace: tab exit and tablet
+close retire it together with every other unsubmitted draft.
 
 ### 2. What does the feature actually do now?
 
@@ -52,10 +50,11 @@ golden-angle disk; positive line requests distribute them across the requested
 bearing. It creates local ellipse markers, with an optional local ETA icon for
 the first position, and stores only those names in `YOSHI_sp_markers`.
 
-The dialog's reachable `onUnload` calls `YSF_clearAllMarkers`, which traverses
-`YOSHI_sp_markers` and `YSF_map_overlay_markers`. It neither deletes nor clears
-the coordinate-preview variable. Tab selection changes the asset type and
-refreshes controls but does not explicitly retire artillery previews.
+`YSF_taskArtyClearWorkspace` deletes the local coordinate and strike marker
+identities, clears generated positions, and discards the draft state map.
+Artillery tab exit and entry call it defensively, while the dialog's reachable
+`onUnload` reaches it through `YSF_clearAllMarkers`. Authoritative submitted
+task records and operational-picture rows are not touched.
 
 ### 3. Which machines and lifecycle stages own the behavior?
 
@@ -239,8 +238,8 @@ calibration evidence only.
 | --- | --- | --- |
 | Circle count/position `0 -> 1 -> 3 -> 0`, stale replacement | **ACCEPTED / COVERED** | Retain permanent scenario |
 | Active non-empty strike/ETA/overlay identities closed through real UI | **ACCEPTED CONTRACT / COVERED BY PERMANENT ARM** | Retain the causal Escape close arm and exact post-close identity census |
-| Coordinate-preview marker cleanup | **PARTIALLY COVERED; PRODUCT DEFECT CANDIDATE** | Decide persistence, refine cleanup, then prove active close/reopen |
-| Tab switch with active artillery preview | **NEEDS PRODUCT DECISION** | Choose retain-versus-retire semantics before testing |
+| Coordinate-preview marker cleanup | **ACCEPTED / COVERED** | Retain exact local identity retirement on tab exit and close |
+| Tab switch with active artillery preview | **ACCEPTED / COVERED** | Retain full draft reset and clean return; submitted tasks remain operational |
 | Visible line/spread/direction variants | **OPTIONAL / LOW VALUE** | One representative line image is enough if visual parity matters; do not build a matrix |
 | Range colour, ETA-value validity/presentation, VLS-specific sizes | **PARTIALLY COVERED** | One ETA marker identity is covered; add value/range/VLS controls only if these cues are retained product promises |
 | Invalid grid/count presentation | **PARTIALLY COVERED elsewhere** | Parser rejection belongs with artillery request review; visual hint/field behavior is optional UI work |
@@ -256,9 +255,17 @@ rendering, locality, and cleanup. Source plus the exact permanent assertions
 support a narrower conclusion: the accepted scenario directly proves the
 circle count/position replacement slice and explicit zero-count cleanup. It
 does not render a line arm, exercise range-colour/VLS-size cues, inspect
-`YSF_arty_coord_preview`, or prove tab-switch cleanup. It now does select a live
-artillery fixture, proves one first-round ETA marker per tested generation, and
-closes from a causally captured non-empty strike/ETA/overlay set.
+`YSF_arty_coord_preview`, or prove tab-switch cleanup. Evidence Contract v2 and
+accepted run `20260828T230352Z-c4584ec7` now add both boundaries while retaining
+the live fixture, one first-round ETA marker per generation, and causal active
+close. The run passed 4/0 server and 13/0 client feature assertions.
+
+Its Evidence Contract v2 package was ingested twice idempotently. Reviewed
+distillation revision `accepted-tribunal-findings-2026-08-28-19` records the
+ephemeral targeting workspace as project-specific only; it promotes no generic
+Arma claim. The post-ingestion ledger contains 49 evidence packages, 50 runs,
+1,325 artifacts and 5,636 source revisions, and the full knowledge audit is
+accepted with no serious failures.
 
 Accordingly, the accepted core and active-close lifecycle should remain
 covered, while the family remains partially covered only for the meaningful

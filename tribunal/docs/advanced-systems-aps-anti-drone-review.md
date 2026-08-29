@@ -8,8 +8,52 @@ UAV discovery, eligibility, resource consumption, destruction, delayed cleanup,
 ACE control statements, locality, authority and the boundary with the accepted
 projectile APS contract.
 
-**Classification: `DEFER` (product decisions and refinement required; reviewed,
-not covered).**
+**Classification: `REFINED; ACCEPTED / COVERED`.**
+
+## Resolved compatibility contract (2026-08-28)
+
+The resolved implementation does **not** remove UAV event handlers. APS arms a
+feature-owned `YOSHI_APS_AntiDroneNeutralized` marker before owner-local
+neutralization; Payload Manager reads that marker only to suppress its own
+crash-release path. Every handler installed by a mission or another mod remains
+installed and is allowed to execute with its normal semantics, including
+third-party handlers that trigger payloads. Pontifex neither owns nor attempts
+to rewrite those behaviors. It also does not claim that the Pontifex marker can
+suppress an uncooperative third-party handler.
+
+This is a compatibility boundary, not an optional test detail. The permanent
+`aps-anti-drone` scenario installs an independent client-owner `Killed` sentinel
+and requires it to fire during APS neutralization. Accepted run
+`20260828T165018Z-56bdad28` proved sentinel survival/execution while the
+Pontifex-owned Payload Manager crash effect alone was suppressed. The same run
+separately proved that ordinary destruction releases/detonates the full
+Pontifex payload manifest for kinetic-impact use.
+
+The remainder of this document records the original reconnaissance and the
+
+## Accepted threat and transaction contract
+
+An eligible live `Air` UAV below 1000 kg is a threat only when it is inside the
+configured 25 m default radius, relative speed exceeds the configured 40 km/h
+default threshold, and radial closing speed toward the protected vehicle also
+exceeds that threshold. Side is irrelevant. Departing, transverse/minimal-
+closing, and slow nearby controls remain untouched. The server serializes the
+vehicle and UAV, reserves exactly 0.02 fuel on the vehicle owner, arms only the
+Pontifex suppression marker, routes lethal damage to the UAV owner, and commits
+only after the authenticated owner acknowledgement; failure rolls back and
+consumes nothing. Accepted Evidence Contract v1 run
+`20260828T165018Z-56bdad28` proved two opposing-side client-owned treatments,
+all motion controls, exact fuel `0.80 -> 0.76`, ordinary satchel crash release,
+APS-only Payload Manager suppression, unrelated `Killed` handler execution,
+replication and cleanup.
+
+Corrected package revision v2 uses canonical numeric BIKI concept identities.
+Production ingestion advanced once from 40 to 41 packages and 41 to 42 runs;
+the identical second pass was count-stable and the full knowledge audit passed.
+Reviewed distillation classified the proposition as project-specific and added
+no generic Arma lemma; its identical second pass was idempotent.
+risks that drove refinement. Statements about the former implementation are
+historical and do not override the resolved contract above.
 
 The repository establishes a broad intent—an APS-equipped vehicle can expose an
 experimental anti-drone control and spend soft-kill power against small, fast

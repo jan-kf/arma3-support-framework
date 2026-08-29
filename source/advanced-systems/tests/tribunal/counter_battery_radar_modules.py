@@ -1,11 +1,10 @@
 """Authentic Eden and Zeus activation coverage for Counter Battery Radar."""
 
 from tribunal.mission.artillery import artillery_observer_sqf
-from tribunal.mission.markers import marker_observer_sqf
 from tribunal.runner.model import MissionEntity, Scenario, ScenarioReview
 
 
-SERVER_SQF = artillery_observer_sqf() + marker_observer_sqf() + r'''
+SERVER_SQF = artillery_observer_sqf() + r'''
 private _module = objNull;
 private _auditDeadline = diag_tickTime + 30;
 waitUntil {uiSleep 0.05; (count (localNamespace getVariable ["YAS_CBR_MODULE_DISPATCH_AUDIT", []])) >= 1 || {diag_tickTime > _auditDeadline}};
@@ -49,14 +48,11 @@ private _fire = {
     private _sourceObserved = [_shotToken, _gun, [_target]] call TRIBUNAL_fnc_artilleryObserveSource;
     _gun setVehicleAmmo 1;
     _gun doArtilleryFire [_target, "8Rnd_82mm_Mo_shells", 1];
-    private _peakClusters = 0;
-    private _peakMarkers = [];
+    private _peakObservations = 0;
     private _deadline = diag_tickTime + 150;
     waitUntil {
         uiSleep 0.05;
-        _peakClusters = _peakClusters max (count YOSHI_CB_clusters);
-        private _names = ["YOSHI_cb_"] call TRIBUNAL_fnc_markerNames;
-        {_peakMarkers pushBackUnique _x;} forEach _names;
+        _peakObservations = _peakObservations max (count YOSHI_CB_observations);
         private _events = ([_shotToken] call TRIBUNAL_fnc_artilleryObserverState) getOrDefault ["events", []];
         ((count _events) isEqualTo 1 && {(_events # 0) getOrDefault ["terminated", false]}) || {diag_tickTime > _deadline}
     };
@@ -68,14 +64,14 @@ private _fire = {
         && {_event getOrDefault ["terminated", false]}
         && {(count (_event getOrDefault ["samples", []])) > 10}
         && {(count _last) >= 2} && {_last distance2D _target < 250};
-    private _causal = if (_expectDetection) then {_peakClusters > 0 && {(count _peakMarkers) >= 2}} else {_peakClusters isEqualTo 0 && {_peakMarkers isEqualTo []}};
-    [_physical && {_causal}, _physical, _peakClusters, _peakMarkers, _last, count (_event getOrDefault ["samples", []]), _event getOrDefault ["artilleryEvent", false]]
+    private _causal = if (_expectDetection) then {_peakObservations > 0} else {_peakObservations isEqualTo 0};
+    [_physical && {_causal}, _physical, _peakObservations, _last, count (_event getOrDefault ["samples", []]), _event getOrDefault ["artilleryEvent", false]]
 };
 
 private _positive = ["eden-on", true] call _fire;
 ["cbr.module.edenCausalDetection", _positive # 0, format ["result=%1", _positive]] call _assert;
 private _clearDeadline = diag_tickTime + 20;
-waitUntil {uiSleep 0.1; YOSHI_CB_clusters isEqualTo [] && {(["YOSHI_cb_"] call TRIBUNAL_fnc_markerNames) isEqualTo []} || {diag_tickTime > _clearDeadline}};
+waitUntil {uiSleep 0.1; YOSHI_CB_observations isEqualTo [] || {diag_tickTime > _clearDeadline}};
 
 missionNamespace setVariable ["TRIBUNAL_CBR_ZEUS_SETUP", [_token, netId _curator, netId _curatorPlayer], true];
 missionNamespace setVariable ["TRIBUNAL_CBR_ZEUS_PHASE", 1, true];

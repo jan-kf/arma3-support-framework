@@ -83,6 +83,21 @@ class PayloadManagerContractTests(unittest.TestCase):
         self.assertIn("YFU_DARK_COLOR", self.ui)
         self.assertIn("YFU_V_DARK_COLOR", self.ui)
 
+    def test_uav_death_releases_payloads_except_feature_owned_aps_suppression(self) -> None:
+        self.assertIn('addMissionEventHandler ["EntityKilled"', self.fpv)
+        self.assertIn("YFU_fnc_payloadCrashServer", self.fpv)
+        for marker in (
+            "YFU_PAYLOAD_CRASH_HANDLED",
+            'setVariable ["YFU_PAYLOAD_STATE", [_revision + 1, [], 0], true]',
+            'getVariable ["YOSHI_APS_AntiDroneNeutralized", ""]',
+            '"aps-suppressed"',
+            '"crash-release"',
+            'if (_deployKind isEqualTo "satchel") then {_effect setDamage 1;}',
+            "unrelated mod event handlers are never removed or rewritten",
+        ):
+            self.assertIn(marker, self.fpv)
+        self.assertNotIn("removeAllEventHandlers", self.fpv)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -33,11 +33,60 @@ OBSERVER_IDENTITIES = ("client-a",)
 CLIENT_EXPECTED = frozenset({
     "cbr.client.enabledReplicated",
     "cbr.client.noLocalState",
-    "cbr.client.markersReplicated",
+    "cbr.client.observationsReplicated",
+    "cbr.client.visualEnvelope",
+    "cbr.client.zoomClustering",
+    "cbr.client.shapeEnvelope",
     "cbr.client.warningOutOfRadius",
     "cbr.client.warningDelivered",
     "cbr.client.warningSameSide",
 })
+
+EVIDENCE_CONTRACT = {
+    "scenario": {
+        "id": "pontifex.advanced-systems.counter-battery-radar",
+        "version": 1,
+        "feature_family": "pontifex-advanced-systems-cbr",
+        "name": "Counter Battery Radar strike observations and scale-aware map presentation",
+        "definition": {
+            "kind": "controlled multiplayer specification",
+            "reference": "source/advanced-systems/tests/tribunal/counter_battery_radar.py",
+            "applicability": "Arma 3 dedicated multiplayer with one authenticated client, native server-owned mortar shells, and the main client map control",
+            "participants": {
+                "server": "native artillery, prediction, durable observation, origin, warning and evidence authority",
+                "client-a": "replicated-observation, local map-renderer and side-radio observer",
+            },
+        },
+    },
+    "knowledge_subject": {
+        "key": "pontifex:advanced-systems:counter-battery-radar",
+        "label": "Counter Battery Radar strike observations and map presentation",
+        "kind": "product_behavior",
+        "aliases": ["CBR", "counter-battery radar"],
+        "biki_context": ["biki-page:8369", "biki-page:1644"],
+    },
+    "arms": [
+        {"key": "disabled-real-shot", "role": "negative_control", "description": "A proven native artillery shot produces no observation, origin, warning-zone display, or retained state while CBR is disabled", "assertions": ["cbr.control.disabledShotProven", "cbr.control.disabledNoDetection"]},
+        {"key": "tracked-native-salvo", "role": "treatment", "description": "Eight exact native shells produce eight independent timed uncertainty observations with provenance and terrain-accurate predictions", "assertions": ["cbr.detection.observations", "cbr.detection.provenance", "cbr.detection.timing", "cbr.prediction.impactAccuracy", "cbr.detection.zoneCentre"]},
+        {"key": "scale-aware-map", "role": "treatment", "description": "Replicated real-shell rows render on the real client map and expire visually without becoming authoritative client state", "assertions": ["cbr.client.observationsReplicated", "cbr.client.visualEnvelope"]},
+        {"key": "walking-close-map", "role": "positive_control", "description": "Four separated linear observations remain distinct at close map zoom", "assertions": ["cbr.client.zoomClustering"]},
+        {"key": "walking-overview-map", "role": "treatment", "description": "The same four rows merge at overview zoom into a bounded elongated capsule without losing underlying identities", "assertions": ["cbr.client.zoomClustering", "cbr.client.shapeEnvelope"]},
+        {"key": "warning-controls", "role": "treatment", "description": "A real hostile near salvo warns once while hostile-far and friendly-near launches do not", "assertions": ["cbr.warning.launchPipeline", "cbr.client.warningOutOfRadius", "cbr.client.warningDelivered", "cbr.client.warningSameSide"]},
+        {"key": "origin-and-lifecycle", "role": "treatment", "description": "Origin uncertainty narrows to a confirmed launcher fix, observations expire independently, and stop/cleanup remove retained state", "assertions": ["cbr.origin.narrows", "cbr.origin.confirmed", "cbr.expiry.cleared", "cbr.lifecycle.start", "cbr.lifecycle.stop", "cbr.cleanup"]},
+    ],
+    "causal_relationships": [
+        {"key": "enable-causes-observation", "relation": "COMPARES_WITH", "source": "tracked-native-salvo", "target": "disabled-real-shot", "controlled_dimensions": ["native mortar", "ammunition", "elevated target", "physical flight"]},
+        {"key": "zoom-changes-presentation-only", "relation": "COMPARES_WITH", "source": "walking-overview-map", "target": "walking-close-map", "controlled_dimensions": ["four observation identities", "positions", "uncertainty geometry", "timing", "map control"]},
+    ],
+    "propositions": [{
+        "id": "pontifex:advanced-systems:cbr-observation-presentation-contract",
+        "text": "CBR retains one timed, provenance-bearing uncertainty observation per physical strike and derives non-destructive client-local visual clusters from current map scale; zooming changes only presentation, and linear barrages use a bounded elongated envelope instead of an enclosing circle.",
+        "intended_use": "primary_result",
+        "assertions": ["cbr.control.disabledShotProven", "cbr.control.disabledNoDetection", "cbr.detection.observations", "cbr.detection.provenance", "cbr.detection.timing", "cbr.prediction.impactAccuracy", "cbr.detection.zoneCentre", "cbr.client.observationsReplicated", "cbr.client.visualEnvelope", "cbr.client.zoomClustering", "cbr.client.shapeEnvelope", "cbr.expiry.cleared", "cbr.lifecycle.start", "cbr.lifecycle.stop", "cbr.cleanup"],
+        "rationale": "Exact native shell identities and trajectories, unique stored UIDs, retained uncertainty/timing/provenance fields, client replication, two real map scales, unchanged underlying IDs, explicit capsule dimensions, disabled stimulus and full expiry/stop controls jointly exclude fixed-zone assignment, destructive aggregation, circle inflation, no-stimulus and ledger-only false passes.",
+    }],
+    "unresolved": ["Warning cadence, independent confirmed-origin expiry, authenticated owner-bound telemetry, marker audience, client-B/JIP and cross-owner artillery remain outside this resolved observation-and-presentation decision. No active-observation cap is introduced; future performance evidence may justify a separate bounded policy."],
+}
 
 CLIENT_SQF = marker_observer_sqf() + r'''
 private _identity = missionNamespace getVariable ["TRIBUNAL_MACHINE_IDENTITY", ""];
@@ -51,7 +100,7 @@ private _enabledDeadline = diag_tickTime + 240;
 waitUntil {uiSleep 0.25; (missionNamespace getVariable ["TRIBUNAL_CBR_ENABLED_AT", ""]) isEqualTo _token || diag_tickTime > _enabledDeadline};
 ["cbr.client.enabledReplicated", (missionNamespace getVariable ["YOSHI_CBR_ENABLED", false]) && {hasInterface} && {!isServer} && {_identity isNotEqualTo ""}, format ["enabled=%1|hasInterface=%2|server=%3|identity=%4", missionNamespace getVariable ["YOSHI_CBR_ENABLED", "missing"], hasInterface, isServer, _identity]] call _assert;
 
-["cbr.client.noLocalState", (YOSHI_CB_clusters isEqualTo []) && {(count YOSHI_originTrack) isEqualTo 0}, format ["identity=%1|clusters=%2|tracks=%3", _identity, count YOSHI_CB_clusters, count YOSHI_originTrack]] call _assert;
+["cbr.client.noLocalState", (YOSHI_CB_observations isEqualTo []) && {(count YOSHI_originTrack) isEqualTo 0}, format ["identity=%1|serverObservations=%2|tracks=%3", _identity, count YOSHI_CB_observations, count YOSHI_originTrack]] call _assert;
 
 // Radio delivery evidence. This proves the warning reached this client's radio
 // playback path; automated clients run -noSound, so audible output is not claimed.
@@ -65,16 +114,21 @@ TRIBUNAL_CBR_fnc_warnCount = {
     (+TRIBUNAL_CBR_RADIO) select {(_x # 1) isEqualTo "YAS_CBR_WarningLaunchDetected"}
 };
 
-// The authoritative zone must become visible on this client while the threat is
-// airborne, then disappear with it. Observed on its own worker so the warning
-// gates below are never blocked by the zone lifecycle.
+// The map renderer is client-owned. Open the real map before the salvo and
+// retain its local-marker lifecycle independently of the radio gates.
+openMap true;
+private _mapDeadline = diag_tickTime + 20;
+waitUntil {uiSleep 0.1; visibleMap && {!isNull findDisplay 12} || {diag_tickTime > _mapDeadline}};
 TRIBUNAL_CBR_ZONE_SAMPLES = nil;
+TRIBUNAL_CBR_REPLICATED_PEAK = [];
 private _zoneWorker = [] spawn {
     private _saw = false;
     TRIBUNAL_CBR_ZONE_SAMPLES = [
         "YOSHI_cb_",
         {
             params ["_census"];
+            private _rows = missionNamespace getVariable ["YOSHI_CBR_OBSERVATIONS", []];
+            if ((count _rows) > count TRIBUNAL_CBR_REPLICATED_PEAK) then {TRIBUNAL_CBR_REPLICATED_PEAK = +_rows};
             if ((_census getOrDefault ["count", 0]) > 0) then {_saw = true};
             _saw && {(_census getOrDefault ["count", 0]) isEqualTo 0}
         },
@@ -122,37 +176,30 @@ private _afterSame = call TRIBUNAL_CBR_fnc_warnCount;
 ["cbr.client.warningSameSide", (count _afterSame) isEqualTo (count _afterWarn), format ["identity=%1|beforeControl=%2|afterControl=%3|records=%4", _identity, count _afterWarn, count _afterSame, _afterSame]] call _assert;
 YCD_fnc_playSideRadioLocal = TRIBUNAL_CBR_ORIGINAL_RADIO;
 
-// Replication must be of the exact authoritative markers, not merely of two
-// markers that happen to share the product prefix.
+// Replication is the durable observation ledger, not server-authored display
+// clusters. The client derives a local capsule/ellipse and label from it.
 private _zoneDeadline = diag_tickTime + 280;
 waitUntil {uiSleep 0.5; (scriptDone _zoneWorker) || diag_tickTime > _zoneDeadline};
 private _samples = if (isNil "TRIBUNAL_CBR_ZONE_SAMPLES") then {[]} else {TRIBUNAL_CBR_ZONE_SAMPLES};
 private _zoneEvidence = [_samples] call TRIBUNAL_fnc_markerLifecycleEvidence;
 private _authoritative = missionNamespace getVariable ["TRIBUNAL_CBR_ZONE_RECORD", []];
-private _expectedZone = _authoritative param [0, ""];
-private _expectedIcon = _authoritative param [1, ""];
-private _expectedCentre = _authoritative param [2, []];
-private _expectedSize = _authoritative param [3, []];
-private _expectedCount = _authoritative param [4, -1];
+private _expectedCentre = _authoritative param [0, []];
+private _expectedCount = _authoritative param [1, -1];
 private _seen = _zoneEvidence getOrDefault ["everSeen", []];
-private _matched = createHashMap;
 private _iconTexts = [];
+private _areaSeen = false;
 {
     private _records = _x getOrDefault ["records", createHashMap];
-    private _zoneRecord = _records getOrDefault [_expectedZone, createHashMap];
-    if ((count _zoneRecord) > 0
-        && {((_zoneRecord getOrDefault ["position", [1e9,1e9,0]]) distance2D _expectedCentre) < 1}
-        && {(_zoneRecord getOrDefault ["shape", ""]) isEqualTo "ELLIPSE"}
-        && {(_zoneRecord getOrDefault ["color", ""]) isEqualTo "ColorRed"}
-        && {abs (((_zoneRecord getOrDefault ["size", [0,0]]) # 0) - (_expectedSize param [0, -1])) < 1}) then {
-        _matched set ["zone", true];
-    };
-    private _iconRecord = _records getOrDefault [_expectedIcon, createHashMap];
-    if ((count _iconRecord) > 0 && {(_iconRecord getOrDefault ["type", ""]) isEqualTo "mil_warning"}) then {
-        _matched set ["icon", true];
-        private _text = _iconRecord getOrDefault ["text", ""];
-        if (_text isNotEqualTo "") then {_iconTexts pushBackUnique _text};
-    };
+    {
+        private _record = _y;
+        if ((_record getOrDefault ["color", ""]) isEqualTo "ColorRed"
+            && {(_record getOrDefault ["shape", ""]) in ["ELLIPSE", "RECTANGLE"]}
+            && {((_record getOrDefault ["position", [1e9,1e9,0]]) distance2D _expectedCentre) < 250}) then {_areaSeen = true};
+        if ((_record getOrDefault ["type", ""]) isEqualTo "mil_warning") then {
+            private _text = _record getOrDefault ["text", ""];
+            if (_text isNotEqualTo "") then {_iconTexts pushBackUnique _text};
+        };
+    } forEach _records;
 } forEach _samples;
 // The label itself must replicate, not merely a marker of the right type. The
 // count field is asserted exactly against the authoritative peak; the countdown
@@ -164,15 +211,66 @@ private _labelSeen = _expectedCount > 0
 private _originDeadline = diag_tickTime + 20;
 waitUntil {uiSleep 0.25; (scriptDone _originWorker) || diag_tickTime > _originDeadline};
 private _originSeen = TRIBUNAL_CBR_ORIGIN_SEEN;
-private _replicatedOk = (_expectedZone isNotEqualTo "")
-    && {_expectedZone in _seen}
-    && {_expectedIcon in _seen}
-    && {_matched getOrDefault ["zone", false]}
-    && {_matched getOrDefault ["icon", false]}
+private _replicated = +TRIBUNAL_CBR_REPLICATED_PEAK;
+private _replicatedOk = _expectedCount > 0
+    && {(count _replicated) >= _expectedCount}
+    && {((count (_replicated apply {_x # 0})) isEqualTo count ((_replicated apply {_x # 0}) arrayIntersect (_replicated apply {_x # 0})))}
+    && {(_replicated findIf {(count _x) >= 8 && {(_x # 2) isEqualTo ["ellipse", [100,100], 0]} && {(count (_x # 7)) >= 5}}) >= 0};
+["cbr.client.observationsReplicated", _replicatedOk, format ["identity=%1|expected=%2|replicated=%3|rows=%4", _identity, _expectedCount, count _replicated, _replicated]] call _assert;
+private _visualOk = _areaSeen
+    && {(_seen findIf {(_x find "YOSHI_cb_view_") isEqualTo 0}) >= 0}
     && {_zoneEvidence getOrDefault ["cleared", false]}
     && {(_originSeen findIf {(_x find "YOSHI_origin") isEqualTo 0}) >= 0}
     && {_labelSeen};
-["cbr.client.markersReplicated", _replicatedOk, format ["identity=%1|expectedZone=%2|expectedIcon=%3|everSeen=%4|zoneMatched=%5|iconMatched=%6|cleared=%7|originReplicated=%8|samples=%9|expectedCount=%10|labelSeen=%11|iconTexts=%12", _identity, _expectedZone, _expectedIcon, _seen, _matched getOrDefault ["zone", false], _matched getOrDefault ["icon", false], _zoneEvidence getOrDefault ["cleared", false], _originSeen, count _samples, _expectedCount, _labelSeen, _iconTexts]] call _assert;
+["cbr.client.visualEnvelope", _visualOk, format ["identity=%1|centre=%2|everSeen=%3|area=%4|cleared=%5|origin=%6|expectedCount=%7|label=%8|texts=%9", _identity, _expectedCentre, _seen, _areaSeen, _zoneEvidence getOrDefault ["cleared", false], _originSeen, _expectedCount, _labelSeen, _iconTexts]] call _assert;
+
+// Controlled presentation arm: four durable observations form a straight
+// walking barrage. The real map control must split them when zoomed in and
+// merge them when zoomed out, without altering the four underlying rows.
+private _map = (findDisplay 12) displayCtrl 51;
+private _base = getPosASL player;
+private _synthetic = [];
+for "_i" from 0 to 3 do {
+    _synthetic pushBack [
+        format ["%1-walk-%2", _token, _i],
+        [(_base # 0) + ((_i - 1.5) * 300), _base # 1, 0],
+        ["ellipse", [100,100], 0], time, time, 30 - _i, time + 40,
+        [clientOwner, "synthetic-walking-barrage", "mortar", "mortar", "EAST", clientOwner]
+    ];
+};
+missionNamespace setVariable ["YOSHI_CBR_OBSERVATIONS", +_synthetic];
+private _centre = [(_base # 0), _base # 1, 0];
+_map ctrlMapAnimAdd [0, 0.01, _centre];
+ctrlMapAnimCommit _map;
+uiSleep 0.5;
+[_map] call YOSHI_CB_renderMap;
+private _zoomInScale = ctrlMapScale _map;
+private _zoomInCount = count YOSHI_CB_visualClusters;
+_map ctrlMapAnimAdd [0, 1.0, _centre];
+ctrlMapAnimCommit _map;
+uiSleep 0.5;
+[_map] call YOSHI_CB_renderMap;
+private _zoomOutScale = ctrlMapScale _map;
+private _zoomOut = +YOSHI_CB_visualClusters;
+private _zoomOutCount = count _zoomOut;
+private _underlyingAfter = missionNamespace getVariable ["YOSHI_CBR_OBSERVATIONS", []];
+private _zoomOk = _zoomInScale < _zoomOutScale
+    && {_zoomInCount > _zoomOutCount} && {_zoomOutCount isEqualTo 1}
+    && {(count _underlyingAfter) isEqualTo count _synthetic}
+    && {((_underlyingAfter apply {_x # 0}) isEqualTo (_synthetic apply {_x # 0}))};
+["cbr.client.zoomClustering", _zoomOk, format ["scales=%1/%2|clusters=%3/%4|underlying=%5|ids=%6", _zoomInScale, _zoomOutScale, _zoomInCount, _zoomOutCount, count _underlyingAfter, _underlyingAfter apply {_x # 0}]] call _assert;
+private _envelope = _zoomOut param [0, []];
+private _halfLength = _envelope param [3, 0];
+private _radius = _envelope param [4, 1e9];
+private _shapeOk = (_envelope param [8, 0]) isEqualTo 4
+    && {_halfLength > (3 * _radius)}
+    && {_radius <= 110}
+    && {(count (_envelope param [9, []])) isEqualTo 4}
+    && {(markerShape (YOSHI_CB_renderMarkers param [0, ""])) isEqualTo "RECTANGLE"};
+["cbr.client.shapeEnvelope", _shapeOk, format ["envelope=%1|halfLength=%2|radius=%3|markers=%4", _envelope, _halfLength, _radius, YOSHI_CB_renderMarkers apply {[_x, markerShape _x, markerSize _x]}]] call _assert;
+missionNamespace setVariable ["YOSHI_CBR_OBSERVATIONS", []];
+call YOSHI_CB_clearRenderMarkers;
+openMap false;
 
 private _completionDeadline = diag_tickTime + 240;
 waitUntil {uiSleep 0.25; (missionNamespace getVariable ["TRIBUNAL_CBR_COMPLETE", ""]) isEqualTo _token || diag_tickTime > _completionDeadline};
@@ -186,9 +284,9 @@ TRIBUNAL_SCENARIO = Scenario(
         "cbr.control.disabledShotProven",
         "cbr.control.disabledNoDetection",
         "cbr.lifecycle.start",
-        "cbr.detection.cluster",
-        "cbr.detection.zoneMarker",
-        "cbr.detection.iconMarker",
+        "cbr.detection.observations",
+        "cbr.detection.provenance",
+        "cbr.detection.timing",
         "cbr.prediction.impactAccuracy",
         "cbr.detection.zoneCentre",
         "cbr.expiry.cleared",
@@ -346,11 +444,11 @@ private _disabledZones = [_zonePrefix] call TRIBUNAL_fnc_markerNames;
 private _disabledOrigins = [_originPrefix] call TRIBUNAL_fnc_markerNames;
 private _disabledOk = _controlShotOk
     && {!_disabledEnabled}
-    && {YOSHI_CB_clusters isEqualTo []}
+    && {YOSHI_CB_observations isEqualTo []}
     && {_disabledZones isEqualTo []}
     && {_disabledOrigins isEqualTo []}
     && {(count YOSHI_originTrack) isEqualTo 0};
-["cbr.control.disabledNoDetection", _disabledOk, format ["shotProven=%1|enabled=%2|clusters=%3|zones=%4|origins=%5|tracks=%6", _controlShotOk, _disabledEnabled, count YOSHI_CB_clusters, _disabledZones, _disabledOrigins, count YOSHI_originTrack]] call _assert;
+["cbr.control.disabledNoDetection", _disabledOk, format ["shotProven=%1|enabled=%2|observations=%3|zones=%4|origins=%5|tracks=%6", _controlShotOk, _disabledEnabled, count YOSHI_CB_observations, _disabledZones, _disabledOrigins, count YOSHI_originTrack]] call _assert;
 
 // ---------------------------------------------------------------- start ----
 private _started = [] call YOSHI_fnc_cbrStart;
@@ -426,13 +524,7 @@ private _predictEh = _gun addEventHandler ["Fired", {
 
 private _peakMembers = 0;
 private _peakCentre = [];
-private _peakZone = "";
-private _peakIcon = "";
-private _peakText = "";
-private _peakType = "";
-private _peakShape = "";
-private _peakColour = "";
-private _peakSize = [];
+private _peakObservations = [];
 private _peakEtaMin = -1;
 private _peakEtaMax = -1;
 private _peakAt = -1;
@@ -445,25 +537,21 @@ _gun doArtilleryFire [_target, _ordnance, _rounds];
 private _flightDeadline = diag_tickTime + 180;
 waitUntil {
     uiSleep 0.25;
-    {
-        private _members = count (_x select 0);
-        if (_members > _peakMembers) then {
-            _peakMembers = _members;
-            _peakCentre = +(_x select 1);
-            _peakZone = _x select 5;
-            _peakIcon = _x select 6;
-            _peakText = markerText (_x select 6);
-            _peakType = markerType (_x select 6);
-            _peakShape = markerShape (_x select 5);
-            _peakColour = markerColor (_x select 5);
-            _peakSize = markerSize (_x select 5);
-            _peakEtaMin = _x select 3;
-            _peakEtaMax = _x select 4;
-            // The instant the label was read, so the shells that were really in
-            // the air at that moment can be recovered from their own timings.
-            _peakAt = diag_tickTime;
-        };
-    } forEach YOSHI_CB_clusters;
+    private _current = +YOSHI_CB_observations;
+    if ((count _current) > _peakMembers) then {
+        _peakMembers = count _current;
+        _peakObservations = _current;
+        private _sumX = 0;
+        private _sumY = 0;
+        {_sumX = _sumX + ((_x # 1) # 0); _sumY = _sumY + ((_x # 1) # 1)} forEach _current;
+        _peakCentre = [_sumX / _peakMembers, _sumY / _peakMembers, 0];
+        private _etas = _current apply {_x # 5};
+        _peakEtaMin = selectMin _etas;
+        _peakEtaMax = selectMax _etas;
+        // The instant the ledger was read, so the shells that were really in
+        // the air at that moment can be recovered from their own timings.
+        _peakAt = diag_tickTime;
+    };
     {
         private _radius = _y getOrDefault ["radius", -1];
         if (_radius >= 0) then {_originRadii pushBackUnique _radius};
@@ -476,18 +564,19 @@ _gun removeEventHandler ["Fired", _predictEh];
 private _fireState = [_fireToken] call TRIBUNAL_fnc_artilleryObserverStop;
 private _events = _fireState getOrDefault ["events", []];
 private _predictions = missionNamespace getVariable ["TRIBUNAL_CBR_PREDICTIONS", []];
-missionNamespace setVariable ["TRIBUNAL_CBR_ZONE_RECORD", [_peakZone, _peakIcon, _peakCentre, _peakSize, _peakMembers], true];
+missionNamespace setVariable ["TRIBUNAL_CBR_ZONE_RECORD", [_peakCentre, _peakMembers], true];
 
-private _clusterOk = _observed && {(count _events) isEqualTo _rounds} && {_peakMembers >= 2};
-["cbr.detection.cluster", _clusterOk, format ["observed=%1|firedEvents=%2|peakMembers=%3|rounds=%4", _observed, count _events, _peakMembers, _rounds]] call _assert;
+private _uids = _peakObservations apply {_x # 0};
+private _observationsOk = _observed && {(count _events) isEqualTo _rounds} && {_peakMembers >= 2}
+    && {(count _uids) isEqualTo count (_uids arrayIntersect _uids)}
+    && {(_peakObservations findIf {(count _x) < 8 || {!((_x # 2) isEqualTo ["ellipse", [100,100], 0])} || {(_x # 3) > (_x # 4)} || {(_x # 6) <= (_x # 4)}}) < 0};
+["cbr.detection.observations", _observationsOk, format ["observed=%1|events=%2|peak=%3|uids=%4|rows=%5", _observed, count _events, _peakMembers, _uids, _peakObservations]] call _assert;
+private _provenanceOk = _peakMembers > 0
+    && {(_peakObservations findIf {(count (_x # 7)) < 6 || {((_x # 7) # 1) isNotEqualTo netId _gun} || {((_x # 7) # 2) isEqualTo ""} || {((_x # 7) # 3) isEqualTo ""}}) < 0};
+["cbr.detection.provenance", _provenanceOk, format ["gun=%1|rows=%2", netId _gun, _peakObservations apply {_x # 7}]] call _assert;
 
-private _zoneOk = _peakZone isNotEqualTo "" && {_peakShape isEqualTo "ELLIPSE"} && {_peakColour isEqualTo "ColorRed"}
-    && {(count _peakSize) isEqualTo 2} && {(_peakSize # 0) > 0};
-["cbr.detection.zoneMarker", _zoneOk, format ["marker=%1|shape=%2|colour=%3|size=%4|centre=%5", _peakZone, _peakShape, _peakColour, _peakSize, _peakCentre]] call _assert;
-
-// Marker properties are captured while the zone is live: it is deleted as soon
-// as the last tracked shell expires, so reading them here would race cleanup.
-// The label must state the count and remaining time the product actually holds,
+// The ledger is captured while the threat is live: it expires shortly after
+// each shell lands. Its aggregate label inputs must state count and remaining time,
 // and that time must be consistent with the flights Tribunal measured.
 private _flights = _predictions apply {_x # 4};
 private _maximumFlight = if (_flights isEqualTo []) then {0} else {selectMax _flights};
@@ -545,12 +634,9 @@ private _maxDelta = _peakEtaMax - _derivedMax;
 private _etaOk = (count _remaining) >= 4
     && {_minDelta <= _etaOverTolerance} && {_minDelta >= -_etaUnderTolerance}
     && {_maxDelta <= _etaOverTolerance} && {_maxDelta >= -_etaUnderTolerance};
-private _expectedText = format ["%1 shells | ETA %2-%3s", _peakMembers, _peakEtaMin, _peakEtaMax];
-private _iconOk = _peakIcon isNotEqualTo "" && {_peakType isEqualTo "mil_warning"}
-    && {_peakText isEqualTo _expectedText}
-    && {_peakEtaMin >= 0} && {_peakEtaMin <= _peakEtaMax}
+private _timingOk = _peakEtaMin >= 0 && {_peakEtaMin <= _peakEtaMax}
     && {_countOk} && {_etaOk};
-["cbr.detection.iconMarker", _iconOk, format ["icon=%1|type=%2|text=%3|peakAt=%4|shownCount=%5|liveDefinite=%6|livePossible=%7|shownEta=%8-%9|derivedEta=%10-%11|delta=%12/%13|tolerance=+%14/-%15|liveDetail=%16", _peakIcon, _peakType, _peakText, _peakAt, _peakMembers, count _strictLive, count _looseLive, _peakEtaMin, _peakEtaMax, _derivedMin, _derivedMax, _minDelta, _maxDelta, _etaOverTolerance, _etaUnderTolerance, _strictLive]] call _assert;
+["cbr.detection.timing", _timingOk, format ["peakAt=%1|storedCount=%2|liveDefinite=%3|livePossible=%4|storedEta=%5-%6|derivedEta=%7-%8|delta=%9/%10|tolerance=+%11/-%12|liveDetail=%13", _peakAt, _peakMembers, count _strictLive, count _looseLive, _peakEtaMin, _peakEtaMax, _derivedMin, _derivedMax, _minDelta, _maxDelta, _etaOverTolerance, _etaUnderTolerance, _strictLive]] call _assert;
 
 private _errors = [];
 private _etaErrors = [];
@@ -580,10 +666,11 @@ if !(_impacts isEqualTo []) then {
 private _centreError = if ((count _peakCentre) >= 2 && {!(_impacts isEqualTo [])}) then {_peakCentre distance2D _centroid} else {1e9};
 ["cbr.detection.zoneCentre", (count _impacts) >= 4 && {_centreError < 30}, format ["zoneCentre=%1|impactCentroid=%2|metres=%3|impacts=%4", _peakCentre, _centroid, _centreError, count _impacts]] call _assert;
 
-private _expirySamples = [_zonePrefix, {params ["_census"]; (_census getOrDefault ["count", 0]) isEqualTo 0}, 60, 0.5] call TRIBUNAL_fnc_markerObserve;
-private _expiry = [_expirySamples] call TRIBUNAL_fnc_markerLifecycleEvidence;
-private _expiryOk = _peakMembers > 0 && {_expiry getOrDefault ["cleared", false]} && {YOSHI_CB_clusters isEqualTo []};
-["cbr.expiry.cleared", _expiryOk, format ["peakMembers=%1|samples=%2|maximum=%3|final=%4|removed=%5|clusters=%6", _peakMembers, _expiry getOrDefault ["samples", 0], _expiry getOrDefault ["maximumCount", -1], _expiry getOrDefault ["finalCount", -1], _expiry getOrDefault ["removed", []], count YOSHI_CB_clusters]] call _assert;
+private _expiryDeadline = diag_tickTime + 60;
+waitUntil {uiSleep 0.25; YOSHI_CB_observations isEqualTo [] || {diag_tickTime > _expiryDeadline}};
+private _expiryOk = _peakMembers > 0 && {YOSHI_CB_observations isEqualTo []}
+    && {(missionNamespace getVariable ["YOSHI_CBR_OBSERVATIONS", [["stale"]]]) isEqualTo []};
+["cbr.expiry.cleared", _expiryOk, format ["peakMembers=%1|serverRows=%2|publishedRows=%3", _peakMembers, count YOSHI_CB_observations, count (missionNamespace getVariable ["YOSHI_CBR_OBSERVATIONS", []])]] call _assert;
 
 // ---------------------------------------------------------------- origin ---
 private _minRadius = if (_originRadii isEqualTo []) then {1e9} else {selectMin _originRadii};
@@ -733,11 +820,11 @@ private _stopOk = !_stopped
     && {!(missionNamespace getVariable ["YOSHI_CBR_ENABLED", true])}
     && {_stopZones isEqualTo []}
     && {_stopOrigins isEqualTo []}
-    && {YOSHI_CB_clusters isEqualTo []}
+    && {YOSHI_CB_observations isEqualTo []}
     && {(count YOSHI_originTrack) isEqualTo 0}
     && {scriptDone (missionNamespace getVariable ["YOSHI_CBR_MANAGER_THREAD", scriptNull])}
     && {scriptDone (missionNamespace getVariable ["YOSHI_CBR_ORIGIN_THREAD", scriptNull])};
-["cbr.lifecycle.stop", _stopOk, format ["stopped=%1|enabled=%2|zones=%3|origins=%4|clusters=%5|tracks=%6|manager=%7|origin=%8", _stopped, missionNamespace getVariable ["YOSHI_CBR_ENABLED", true], _stopZones, _stopOrigins, count YOSHI_CB_clusters, count YOSHI_originTrack, scriptDone (missionNamespace getVariable ["YOSHI_CBR_MANAGER_THREAD", scriptNull]), scriptDone (missionNamespace getVariable ["YOSHI_CBR_ORIGIN_THREAD", scriptNull])]] call _assert;
+["cbr.lifecycle.stop", _stopOk, format ["stopped=%1|enabled=%2|zones=%3|origins=%4|observations=%5|tracks=%6|manager=%7|origin=%8", _stopped, missionNamespace getVariable ["YOSHI_CBR_ENABLED", true], _stopZones, _stopOrigins, count YOSHI_CB_observations, count YOSHI_originTrack, scriptDone (missionNamespace getVariable ["YOSHI_CBR_MANAGER_THREAD", scriptNull]), scriptDone (missionNamespace getVariable ["YOSHI_CBR_ORIGIN_THREAD", scriptNull])]] call _assert;
 
 // ---------------------------------------------------------------- cleanup --
 {
@@ -771,32 +858,31 @@ missionNamespace setVariable ["TRIBUNAL_CBR_COMPLETE", _token, true];
         "product": "advanced-systems",
         "feature": "counter-battery-radar",
         "detection_source": "native-artillery",
-        "evidence": "predicted-impact,map-markers,side-radio",
+        "evidence": "predicted-impact,strike-observations,zoom-aware-local-map,side-radio",
         # Without this the player respawns at the map origin, which on Stratis is
         # open water, leaving nowhere to place the artillery that must land
         # inside the observer's warning radius. Matches the fixed-wing scenarios.
         "respawn_on_start": "0",
         "observer_identities": ",".join(OBSERVER_IDENTITIES),
-        "future_client_isolation": "client-b must observe the same authoritative markers and receive its own side-filtered warning",
+        "future_client_isolation": "client-b must receive the same authoritative observations, derive its own map presentation, and receive its own side-filtered warning",
     },
     review=ScenarioReview(
         test_type="specification",
         behavior_contract=(
-            "While the system is enabled, hostile artillery fire produces an authoritative predicted-impact "
-            "zone whose drawn centre matches the real impact area and whose label states the tracked shell "
-            "count and remaining time, a launch-origin estimate that narrows with repeated fire until it is "
+            "While the system is enabled, each hostile artillery shell produces an independent authoritative "
+            "predicted-impact observation retaining uncertainty, timing and provenance. Each client dynamically "
+            "clusters those observations for its current map scale without destroying them and renders a bounded "
+            "shape-preserving envelope and count/ETA label. A launch-origin estimate narrows with repeated fire until it is "
             "confirmed at the firing position, and one launch warning per airborne cycle delivered only to "
             "opposing-side players within the warning radius; all of it disappears when the threat expires and "
             "when the system is stopped, and a real shot produces nothing while it is disabled."
         ),
-        outcome="REFINE BEFORE PERMANENT COVERAGE",
+        outcome="KEEP AS-IS AND SPEC-TEST",
         rationale=(
-            "Impact prediction integrated to sea level rather than to the ground under the projected point, "
-            "placing the drawn zone tens of metres downrange of the real impact whenever the target was above "
-            "the waterline. The scenario asserts predicted-versus-real impact per shell against Tribunal's "
-            "independent launch and trajectory observer, and drives every warning claim — positive, "
-            "out-of-radius and same-side — through real artillery launches rather than the warning helper. "
-            "Cluster layout, marker names, uid format and polling cadence remain evidence adapters."
+            "The terrain prediction defect was corrected, and fixed 100-metre server clusters were replaced by "
+            "durable per-strike observations plus client-local screen-space clustering. The scenario asserts "
+            "exact real-shell storage, timing and provenance, real-map zoom split/merge, a shape-preserving "
+            "walking-barrage capsule, prediction versus real impact, and every warning claim through native launches."
         ),
         dependencies=(
             "Tribunal artillery observer",
@@ -809,9 +895,10 @@ missionNamespace setVariable ["TRIBUNAL_CBR_COMPLETE", _token, true];
             "fire-event", "trajectory", "impact", "map-marker", "replication", "negative-control", "locality", "cleanup",
         }),
         locality_requirements=(
-            "The dedicated server owns detection, clustering, prediction, origin estimation and every marker; "
-            "each observing client identity observes the same authoritative markers, receives its own "
-            "side-filtered radio warning, and holds no cluster or origin state of its own."
+            "The dedicated server owns detection, observations, prediction and origin estimation. Each observing "
+            "client receives the authoritative observation rows, derives disposable visual clusters on its own "
+            "map control, receives its side-filtered radio warning, and owns no authoritative observation state."
         ),
     ),
+    evidence_contract=EVIDENCE_CONTRACT,
 )

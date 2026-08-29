@@ -54,7 +54,7 @@ Five top-level runtime families are present:
 | Family | Purpose | Primary locations | Overall state | Coverage summary |
 | --- | --- | --- | --- | --- |
 | CORDIS shared runtime | Locality routing, recipient resolution, deduplication, notifications, diagnostics | `source/core/addons/CORDIS` | Refined, with reserved bootstrap files | **ACCEPTED / COVERED** for the one-client trusted broker; GUI/audio/debug and client-N/JIP remain deferred |
-| Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **PARTIALLY COVERED**; APS, Counter Battery Radar, and Iron Dome strong; APS anti-drone remains uncovered |
+| Advanced Systems | Vehicle protection, artillery sensing, area interception | `source/advanced-systems/addons/AdvSys` | Implemented, mixed maturity | **STRONGLY COVERED**; APS projectile/anti-drone, Counter Battery Radar, and Iron Dome have representative permanent contracts; shared topology/presentation tails remain |
 | Vigil support tablet | UI and rotary, artillery, fixed-wing, logistics, designation workflows | `source/visual-support-tablet/addons/VIGIL` | Implemented, with explicit recon/UAV gaps | **PARTIALLY COVERED**; major operational paths strong |
 | Field Utilities | Fabrication, logistics, bridges, towing, small-UAV payloads | `source/field-utilities/addons/FieldUtils` | Implemented, mature core | **ACCEPTED / COVERED** for the supported one-client contract, with strong fabrication, logistics, Bridge Builder, towing, object lifecycle, Payload Manager transaction, and live controller deployment proof |
 | Cross-mod composition | Contracts joining CORDIS, Vigil, Field Utilities, ACE/CBA, and editor/Zeus surfaces | calls across all addons/configs | Implemented, some optional/degraded paths | **PARTIALLY COVERED**; one composite path direct, most incidental |
@@ -185,13 +185,13 @@ locality, and client replication.
 
 #### 2.1.5 Experimental anti-drone
 
-Detects nearby fast sub-1000 kg airborne UAVs, consumes soft-kill fuel,
-destroys the UAV, schedules cleanup, and exposes ACE controls/status.
-**Implemented; REVIEWED / DEFERRED pending product decisions and refinement.**
-The review found undefined threat/side/operator policy, a split owner-routed
-resource transaction, destructive mutation without an owner acknowledgment,
-unscoped event-handler removal, and caller-trusting ACE endpoints. It remains
-outside projectile APS coverage. See
+Detects nearby sub-1000 kg airborne UAVs and engages only those inside the
+configured radius whose relative and radial closing speeds both exceed the
+configured threshold. **REFINED; ACCEPTED / COVERED.** Run
+`20260828T165018Z-56bdad28` proves side independence, client-owned treatments,
+motion controls, exact atomic fuel, owner acknowledgements, ordinary crash
+payload release, APS-only suppression, unrelated handler execution and cleanup.
+It remains a separate contract from projectile APS. See
 [`advanced-systems-aps-anti-drone-review.md`](advanced-systems-aps-anti-drone-review.md).
 
 ### 2.2 Counter Battery Radar
@@ -206,19 +206,18 @@ and the disabled and stop controls.
   **Implemented; COVERED.** Prediction previously integrated to sea level and was
   refined to resolve the ground under the projected point; per-shell predicted
   versus real impact is now asserted. The integration mechanism is not contract.
-* **Impact clustering/warnings** groups predictions, updates red zone/count/ETA
-  markers, warns by side, and prunes expiry. **Implemented; COVERED** for one
-  launcher. The zone label is asserted against the product's own count and
-  remaining time, and every warning claim travels the real launch pipeline with
-  real hostile-far and friendly-near negative controls, including the
-  once-per-airborne-cycle rule. Multi-launcher and multi-cluster arbitration are
-  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE; PRODUCT DECISIONS REQUIRED**.
-  Warning cadence currently depends on firing-machine ownership, cluster
-  assignment is fixed at first nearest-center selection, and owner-local launch/
-  track endpoints accept unbound caller-authored telemetry. Choose grouping and
-  warning semantics, bind updates to source owner/launcher, then prove same- and
-  cross-owner close/far pairs, reverse-order invariance, independent origins/
-  expiry, and forgery rejection. See
+* **Strike observations and map presentation** retain one authoritative row per
+  physical shell with position, uncertainty, timing and provenance, then derive
+  disposable client-local screen-space clusters. **REFINED; ACCEPTED / COVERED**
+  in run 20260828T175511Z-44e26fea. The real map splits four linear
+  observations at scale 0.01 and merges them at scale 1.0 without losing rows;
+  the overview uses a 450-by-100-metre buffered capsule rather than an enclosing
+  circle. There is no arbitrary active-row cap. Fixed membership, reassignment,
+  walking-barrage migration, aggregate shape and overload-cap questions are
+  closed. Warning cadence, confirmed-origin lifetime, output audience,
+  authenticated owner/launcher binding, cross-owner artillery, client-B and JIP
+  remain decision-bound or externally blocked. Existing hostile-near,
+  hostile-far and friendly-near warning controls remain accepted. See
   [`advanced-systems-cbr-concurrency-review.md`](advanced-systems-cbr-concurrency-review.md).
 * **Origin estimation** narrows repeated launch origins into a search marker.
   **Implemented; COVERED** for narrowing and confirmation at the real gun
@@ -243,13 +242,14 @@ Full analysis:
 ### 2.3 OPHANIM / Iron Dome
 
 * **Launcher asset/registry** registers enabled `YAS_OPHANIM_box` instances.
-  **REVIEWED / REFINE BEFORE PERMANENT COVERAGE (refined; covered).** The
+  **REVIEWED / SPECIFICATION COVERED.** The
   server initializes it every run and rejects client-originated internal
   registration calls.
 * **Shell tasks/assignment** deduplicate threats, select in-range launchers,
-  schedule launcher spacing, and retry within shot limits. **REVIEWED / REFINE
-  BEFORE PERMANENT COVERAGE (refined; covered).** Distinct concurrent threats
-  are proven and exhausted work now retires after active monitors finish.
+  schedule launcher spacing, and retry within shot limits. **REVIEWED /
+  SPECIFICATION COVERED.** Selection now uses predicted impact rather than
+  current shell proximity; distinct concurrent threats are proven and exhausted
+  work retires after active monitors finish.
 * **Interceptor/terminal monitoring** creates a Jian missile, guides/monitors
   it, detonates near the shell, and records retry/end reasons. **REVIEWED /
   SPECIFICATION COVERED.** A same-native-threat A/B proves disabled impact and
@@ -257,6 +257,11 @@ Full analysis:
 * **Range setting/launch audio** expose CBA configuration and randomized sound.
   **PARTIALLY REVIEWED.** The out-of-range physical control is covered; audible
   output remains unproven because autonomous clients use `-noSound`.
+
+Accepted run `20260828T165140Z-686b63d6` covers the current server-owned native
+shell topology. Native client/HC-fired shell generation is externally blocked;
+the product owner-routing architecture is present but that outcome is not
+claimed until a real fixture can create the topology.
 
 Permanent scenario: `advsys-iron-dome`.  Full analysis:
 [`advanced-systems-iron-dome-review.md`](advanced-systems-iron-dome-review.md).
@@ -289,10 +294,14 @@ Utilities for fixed-wing airdrop.
   and resets. **Implemented; COVERED** with real input/framebuffer/locality.
 * **Tabbed navigation** registers Home, Assets, and task views. **Implemented;
   PARTIALLY COVERED.** Visible artillery navigation is direct, not every page.
-* **Homepage task management** is **REVIEWED / DEFERRED.** Its page and
-  registration are commented out; the client renderer rejects the server-local
-  manager shape; cancellation has no authoritative request or correct
-  finalization; visibility/authority/history policy is undecided. See
+* **Lightweight task status/history and operational overlay** are **REFINED;
+  ACCEPTED / COVERED** on the reachable Assets page. `vigil-task-queue` proves
+  side-scoped active snapshots, compact selected-asset status and eight-record
+  recent history, all active artillery/transport/rotary-CAS assets across tabs,
+  target lines, configured theme opacity, three-second movement/state refresh,
+  and cleanup. The old **homepage task management** page remains a **RETIRE /
+  REMOVE CANDIDATE**: its page/registration are commented out and its broad
+  navigation/cancel scaffold is not needed by the resolved design. See
   [`vigil-homepage-task-management-review.md`](vigil-homepage-task-management-review.md).
 
 ### 3.2 Asset discovery and whitelist
@@ -325,27 +334,36 @@ Utilities for fixed-wing airdrop.
   AI reboot, engine/landing mode, and safe/transit AI presets are **implemented;
   PARTIALLY COVERED** through artillery/flight outcomes. Helpers are replaceable.
 * The **task governor** is **REFINED; ACCEPTED / COVERED** for its server-owned
-  terminal lifecycle and one-client declarative request authority. The
+  terminal lifecycle, one-client declarative request authority, and bounded
+  per-asset queue/replacement/history contract. The
   `vigil-governor-lifecycle` contract covers ordered/abnormal terminal paths,
   exact-once finalization, generation-aware retirement and successor
   preservation. `vigil-governor-authority` covers authenticated data-only
   artillery/transport/CAS requests, server-built handlers, same-side/whitelist
-  eligibility, replay/busy rejection, forged/code-bearing rejection, correlated
-  requester-only receipts and cleanup. Remote cancellation policy, durable
-  history, ownership migration, headless/client-owned vehicles, client-N and
-  JIP remain excluded. See
+  eligibility, replay/semantic-duplicate rejection, forged/code-bearing
+  rejection, correlated requester-only receipts and cleanup.
+  `vigil-task-queue` adds serialized ingress, one active generation, four FIFO
+  entries, explicit replacement priority, eight recent terminal summaries,
+  activation/terminal messaging, and side-scoped operational snapshots; the
+  static contract also guards the confirmation dialog and three real Replace
+  controls. Any legitimate same-side tablet user may queue or explicitly
+  overwrite after confirmation; overwrite is the retained cancellation
+  operation and operational task messages are side-wide. There is no separate
+  remote-cancel product surface. Ownership migration, headless/client-owned
+  vehicles, client-N and JIP remain excluded. See
   [`vigil-task-governor-review.md`](vigil-task-governor-review.md).
 
 ### 3.4 Artillery and VLS
 
 * **Request UI/preview markers** render grid/ordnance/spread/count/direction and
-  circle/line state client-locally. **Implemented; PARTIALLY COVERED.**
+  circle/line state client-locally. **Implemented; ACCEPTED / COVERED for the
+  retained lifecycle.**
   `vigil-markers` causally proves client-a circle `0 -> 1 -> 3 -> 0`, exact
   position/rendering, stale-generation replacement, explicit zero-count
-  cleanup, server absence, and real Escape cleanup of exact live strike, ETA,
-  and selected-asset overlay identities. Coordinate-marker and tab-switch
-  lifetime need a product decision. Line/range/ETA/VLS visual variants are
-  non-blocking. See
+  cleanup, server absence, complete coordinate/strike/draft cleanup on tab
+  leave, clean re-entry, and real Escape cleanup of exact live coordinate,
+  strike, ETA, and selected-asset overlay identities. Submitted task state is
+  unaffected. Line/range/ETA/VLS visual variants are non-blocking. See
   [`vigil-artillery-markers-review.md`](vigil-artillery-markers-review.md).
 * **Native artillery execution** fires exact physical circle/line counts and
   rejects zero, out-of-range, and no-ammo requests. **Implemented; COVERED** by
@@ -447,8 +465,9 @@ Full analysis: [`vigil-developer-laser-harness-review.md`](vigil-developer-laser
 
 * **RECON role bit/label** is **scaffolded; REVIEWED / DEFERRED** because
   semantics are undefined.
-* **Grid/altitude/radius form state** is **scaffolded/unreachable; REVIEWED /
-  DEFERRED**: no reachable tab/submit and `fn_recon_task.sqf` is empty.
+* The former **grid/altitude/radius form, classifier and empty task
+  registration** are **RETIRED**. They were unreachable and did not define a
+  product. Generic fixed-wing/task/map seams remain for a future coherent design.
 * **Task, sensors, contacts/imagery/report, persistence, cleanup, replication/**
   **JIP** are absent and **REVIEWED / DEFERRED**. Define the information product
   and lifecycle first.
@@ -462,12 +481,12 @@ Full analysis: [`vigil-developer-laser-harness-review.md`](vigil-developer-laser
   Normal transport and CAS RTB no longer enroll automatically. Explicit
   experimental finalization now clears all stabilizer state. See
   [`vigil-helicopter-stabilizer-review.md`](vigil-helicopter-stabilizer-review.md).
-* **Radio/chat/curator feedback** wraps CORDIS. **REVIEWED / NEEDS PRODUCT
-  DECISION; PRESENTATION EXPERIMENT DEFERRED.** Real task callers exist,
-  but they default to all-live-player routing and curator empty-scope fallback;
-  requester/side/curator audience is unresolved. Accepted task state, wrapper
-  return, or one recipient does not prove correct delivery, and actual audio is
-  unproven under `-noSound`.
+* **Radio/chat/curator feedback** wraps CORDIS. **REVIEWED / PARTIALLY
+  COVERED; PRESENTATION EXPERIMENT DEFERRED.** Vigil operational task messages
+  are side-wide by product decision. Real task callers and one-client delivery
+  exist; second-client side isolation remains shared C1 proof, not unresolved
+  policy. Curator-only feedback and empty-scope behavior remain separate
+  non-task presentation policy. Actual audio is unproven under `-noSound`.
 * **CAS auto-engage debug** is **REFINED; ACCEPTED / COVERED** for the exact
   server-log and one-client presentation-gate contract. The unregistered
   always-true private gate was removed; exact AAE tokens now always reach the
@@ -592,8 +611,10 @@ review for excluded terrain cases.
   box-scoped removal, bounded results, and cleanup are proven. Accepted run
   `20260828T010359Z-31876e6c` additionally proves authenticated lease
   consumption plus exact partial-chain and operation retirement when the
-  builder box disappears. Construction resource/refund economics remain
-  decision-bound because no product contract exists.
+  builder box disappears. Leases are concurrency/ownership grants only;
+  current construction is free and has no debit/refund/supply/cost contract.
+  The authoritative transaction boundary remains available for a separately
+  designed future Field Utilities economy.
 * **Direct chain-extension actions** coexist with plan UI. **Implemented-looking;
   DEFERRED.** Helpers exist but action attachment is empty and no supported
   intent/authority contract was established.
@@ -673,10 +694,12 @@ Full analysis:
 * **ID/location marker helpers** are **REVIEWED / DEFERRED**: compiled global
   scaffold with no normal caller; authority, visibility, labels, and cleanup
   have no product contract.
-* **Airdrop direction/ETA feedback** is **REVIEWED / NEEDS PRODUCT DECISION AND
-  EXPERIMENTATION**. The live client announcement uses target-to-aircraft
-  bearing and altitude-only vacuum fall time at acceptance, which does not model
-  ingress or parachute descent.
+* **Airdrop direction/ETA feedback** is **REFINED; ACCEPTED / COVERED**. The
+  requesting client waits for real closing flight motion, predicts the release
+  point at Vigil's authoritative gate, reports its target-relative compass
+  direction, and rounds time-to-release to five seconds. It does not promise
+  parachute or ETA-to-ground. Run `20260828T234039Z-8be1c0e0` observed a 20 s
+  announcement versus 19.14 s to release and 17.26 m release-point error.
 * **Shared sound, global ACE registration, and debug/chat wrappers** are
   **REVIEWED / DEFERRED AS A STANDALONE FEATURE; CONSUMER-OWNED**. Bridge
   Builder proves its exact current-client action, while airdrop feedback keeps
@@ -770,7 +793,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `advsys-aps-eden-module` | authentic synchronized Eden APS activation and causal protected outcome |
 | `advsys-aps-zeus-module` | assigned-curator APS activation, authority, causal outcome, and cleanup |
 | `vigil-ui` | real tablet open/navigation/close/reopen and UI locality |
-| `vigil-markers` | client-a circle preview rendering/replacement/explicit-zero cleanup and server absence; active close and coordinate lifetime remain bounded gaps |
+| `vigil-markers` | client-a circle preview rendering/replacement/explicit-zero cleanup and server absence; exact tab-leave, clean-return, coordinate, active-close, and draft-state cleanup |
 | `vigil-artillery` | circle/line artillery, controls, server-local VLS flight, firing-fixture/observer cleanup; temporary VLS target cleanup remains partial |
 | `vigil-transport` | helicopter outbound/LZ/wait/RTB lifecycle |
 | `vigil-transport-pad-ab` | bounded hidden-pad versus no-pad landing characterization |
@@ -778,6 +801,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `vigil-debug-channel` | CAS auto-engage and shared production debug server logging, registered false/true client presentation gate, restoration |
 | `vigil-governor-lifecycle` | server-owned ordered stages, terminal causes, exact-once finalization, duplicate rejection, successor preservation, cleanup |
 | `vigil-governor-authority` | authenticated declarative artillery/transport/CAS requests, server-built tasks, rejection/correlation, terminal receipts, cleanup |
+| `vigil-task-queue` | serialized per-asset admission, task-specific duplicate rejection, bounded FIFO/replacement/history, activation/terminal receipts, themed cross-tab operational display, movement refresh, cleanup |
 | `vigil-fixed-wing` | registry/reconstruction, two designation strikes, control, egress |
 | `vigil-fixed-wing-logistics` | manifest airdrop, parachute/landing/inventory, egress |
 | `vigil-fixed-wing-modules` | authentic typed Eden aggregation, nearest points, assigned-curator add, authority/replication/cleanup |
@@ -794,7 +818,7 @@ Permanent feature scenarios discovered by the runtime adapter are:
 | `fieldutils-eden-modules` | authentic Virtual Storage/Fabricator Eden aggregation, authority, replication, retained logic, and local-inventory action gate |
 | `fieldutils-towing` | authenticated physical towing/stow, rope identity, loss/reuse lifecycle, replication, and cleanup |
 | `fieldutils-towing-ownership-migration` | client-owned attach, correlated owner-local parent mutation, active client-to-server migration, exact-once stow, and cleanup |
-| `advsys-counter-battery-radar` | artillery detection, impact prediction/zone, origin fix, side warning, lifecycle |
+| advsys-counter-battery-radar | per-shell impact observations, zoom-aware shape-preserving map view, terrain prediction, origin fix, side warning, lifecycle |
 | `advsys-cbr-modules` | authentic CBR Eden activation and assigned-curator toggle authority/lifecycle |
 | `advsys-iron-dome` | physical artillery interception, controls, concurrent threats, authority, replication, and cleanup |
 
@@ -810,8 +834,8 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 | Area | Classification | Repository-grounded reason |
 | --- | --- | --- |
-| Vigil homepage task management | **REVIEWED / DEFERRED** | unreachable commented page; incompatible client/server data shape and no authoritative cancellation contract |
-| Vigil reconnaissance | **REVIEWED / DEFERRED** | role/state only; unreachable form, no submit, empty task, no sensor/output/lifecycle |
+| Vigil homepage task management | **RETIRE / REMOVE CANDIDATE** | unreachable commented legacy page; the accepted lightweight Assets-page task surface supersedes its display/history purpose, and confirmed Replace supplies the retained cancellation semantics |
+| Vigil reconnaissance | **REVIEWED / INTENTIONALLY DEFERRED; dead scaffold RETIRED** | unreachable form/state and empty task registration removed; fixed-wing role metadata and generic extension seams retained; no sensor/output/lifecycle claim |
 | Fixed-wing UAV deploy | **REVIEWED / NEEDS EXPERIMENTATION** | explicitly rejected as unstable |
 | Helicopter stabilizer | **REVIEWED / DEFERRED** | controlled physical A/B missed predeclared usefulness gates; automatic transport/CAS enrollment is off; any future mechanism requires a new bounded rewrite/experiment |
 | 3CB Hellfire mapping | **REVIEWED / NEEDS EXPERIMENTATION** | no compatible installed pylon row for A/B |
@@ -820,12 +844,12 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Developer laser harness | **REVIEWED / DEFERRED** | unreachable preInit diagnostic; destructive owner-routed run and unbounded client-supplied result store lack a product boundary |
 | Vigil CAS physical-effect oracle | **REFINED; ACCEPTED / COVERED** | exact hostile target/source/`ACE_20mm_HE` callback is correlated with independent fire and absent from controls; no material damage or kill is claimed; a generic handler/ammunition/penetration matrix remains separate characterization |
 | Vigil CAS auto-engage debug | **REFINED; ACCEPTED / COVERED** for one-client setting-gate topology | unique exact tokens in server RPT plus delegated client false/true receipts through registered `YSF_showDebugMessages`; pixels, client-N/JIP and rate/volume excluded |
-| APS anti-drone | **REVIEWED / DEFERRED** | threat/side/operator policy is undecided; resource authority and destructive cleanup require refinement before coverage |
-| CBR marker sharing policy | **REVIEWED / DEFERRED** | zone/origin markers are global while the radio warning is side-filtered |
+| APS anti-drone | **REFINED; ACCEPTED / COVERED** | side-agnostic closing-speed threat rule, atomic resource/owner transaction, scoped Payload Manager suppression, unrelated handler preservation and cleanup proved in `20260828T165018Z-56bdad28` |
+| CBR output audience | **REVIEWED / DEFERRED** | observation rows and origin markers are global while visual impact clusters are client-local and radio warning is side-filtered |
 | CBR confirmed-origin persistence | **REVIEWED / DEFERRED** | confirmed fix never expires; decay policy undecided |
-| CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; re-warning for a walking barrage undecided |
+| CBR warning coverage | **REVIEWED / DEFERRED** | one warning per firing machine per airborne cycle, on the first round only, at a fixed 1000 m radius; launcher/salvo/window semantics and walking-barrage re-warning remain undecided |
 | CBR module/Zeus activation | **REFINED; ACCEPTED / COVERED** | fresh typed Eden + authentic assigned-curator proof; reverse/repeated/client-B cases bounded |
-| Iron Dome client-owned artillery | **REVIEWED / DEFERRED** | current server handler deliberately rejects non-server-local shells; no owner-routing product policy is chosen |
+| Iron Dome client/HC-owned artillery | **EXTERNALLY BLOCKED** | topology-independent owner observers, authenticated telemetry and acknowledged owner-local neutralization are implemented; native client/HC-fired shell creation is unavailable in the current fixture and no client-owned outcome is claimed |
 | Iron Dome threat policy/audio | **REVIEWED / DEFERRED** | friendly/outgoing versus protected-impact-area filtering is undecided; audio is unproven under `-noSound` |
 | Fabricator delivery mass cap and carry boundary | **REFINED; ACCEPTED / COVERED** | the exact clone is stably mass 200 before publication through ACE's global mass event; client-a waits for that replicated boundary and begins ACE carry on the same net ID |
 | Fabricator bounded land/terrain placement | **REFINED; ACCEPTED / COVERED** | authentic packed orders settle on flat, moderate-gradient, dense-obstruction, shoreline and severe-gradient-recovery fixtures; an eight-light-crate order publishes two distinct settled pallets only when both targets exist; bounded all-water, all-severe, and later-target-unavailable controls refuse atomically; the single-item branch publishes and hands the exact shoreline clone to ACE carry and refuses atomically in all-water; ponds, other terrain shapes, land beyond 15 m, other single-item terrain boundaries and other multi-container matrices remain unproven |
@@ -836,7 +860,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 | Field nearby supply loading | **REFINED; ACCEPTED / COVERED** for server-owned, one-client topology | exact ACE child, authenticated authority, command + membership receipt, negatives, replication and cleanup |
 | Field selective ACE cargo | **REFINED; ACCEPTED / COVERED** for exact Bridge/OPHANIM classes on ACE 3.21 | explicit opt-in preserves size 2 and authentic loadability; ordinary ammo box remains ACE-disabled; other classes/versions/localities and unload/concurrency remain open |
 | Field ID/location markers | **REVIEWED / DEFERRED** | no product caller; global marker authority/lifetime/cleanup undefined |
-| Field airdrop direction/ETA | **REVIEWED / NEEDS PRODUCT DECISION AND EXPERIMENTATION** | direction/audience/ETA interval undefined; current fall formula omits ingress and parachute descent |
+| Field airdrop direction/ETA | **REFINED; ACCEPTED / COVERED** | real closing-state estimate to the authoritative release gate, target-relative direction and coarse rounding; no ETA-to-ground; side-wide audience resolved and client-B proof shared with C1 |
 | Helicopter sling helper | **REVIEWED / DEFERRED** | compiled orphan; destructive all-rope stow, non-atomic creation, no supported entry/authority/cleanup |
 | Bridge direct extension | **DEFERRED** | helpers exist, but no reachable action or supported ownership contract was established |
 | Core settings/utils files | **Scaffolded / UNKNOWN** | reserved files contain no behavior |
@@ -846,7 +870,7 @@ their independently loaded identifiers so future manifest drift fails closed.
 
 The ground-up audit in
 [`pontifex-remaining-work-audit-2026-08-27.md`](pontifex-remaining-work-audit-2026-08-27.md)
-is authoritative for remaining-work priority. The scoped campaign has no MUST or SHOULD item and is substantially complete. The decided small-UAV redesign is accepted for the native themed manager, separated real inventory, server-authoritative atomic transfer and refusal, and UAV-owned reordering by run `20260828T130038Z-9f4e37a1`; live controller gating, current-binding themed HUD, occupied-only cycling, and causal grenade/satchel deployment are accepted by run `20260828T133445Z-8924da44`. Mortars remain intentionally deferred; client-B/JIP and deterministic pond coverage remain externally blocked; broader ACE dependency removal and arbitrary catalogue, class, terrain, and presentation matrices remain outside this bounded follow-up.
+is authoritative for remaining-work priority. The scoped campaign has no MUST or SHOULD item and is substantially complete. Vigil C7 is closed: `vigil-task-queue` v2 run `20260828T215908Z-8d34ac9c` accepts the queue/history/display and confirmed-overwrite mechanism; product policy now establishes side-wide operational messages and authority for any legitimate same-side tablet user to queue or overwrite. Client-B/JIP delivery and simultaneous-user proof remain C1 only. The decided small-UAV redesign is accepted for the native themed manager, separated real inventory, server-authoritative atomic transfer and refusal, and UAV-owned reordering by run `20260828T130038Z-9f4e37a1`; live controller gating, current-binding themed HUD, occupied-only cycling, and causal grenade/satchel deployment are accepted by run `20260828T133445Z-8924da44`. Mortars remain intentionally deferred; client-B/JIP and deterministic pond coverage remain externally blocked; broader ACE dependency removal and arbitrary catalogue, class, terrain, and presentation matrices remain outside this bounded follow-up.
 
 ## Evidence sources
 

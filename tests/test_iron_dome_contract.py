@@ -40,7 +40,14 @@ class IronDomeContractTests(unittest.TestCase):
             self.assertIn(f'[_token, "{operation}"] call YAS_fnc_ironDomeAuthorized', self.product)
         self.assertIn('"token-rejected", remoteExecutedOwner', self.product)
         self.assertIn('[_entity, localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""]] call YAS_fnc_ironDomeRegisterBox', self.product)
-        self.assertIn('[_vehicle, _ammo, _shell, localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""]] call YAS_fnc_ironDomeHandleShellFired', self.product)
+        self.assertIn('remoteExecCall ["YAS_fnc_ironDomeSubmitShellTelemetry", 2]', self.product)
+        self.assertIn('_sourceOwner isNotEqualTo owner _shell', self.product)
+        self.assertIn('if (isNull _shell || {!local _shell}) exitWith {}', self.product)
+        self.assertIn('(_shell call YOSHI_predictFallTimeAndPos) # 1', self.product)
+        self.assertIn('private _impactDistance = _launcher distance2D _impactPos', self.product)
+        self.assertNotIn('private _shellDistance = _launcher distance2D _shell', self.product)
+        self.assertIn('remoteExecCall ["YAS_fnc_ironDomeNeutralizeShellLocal", _effectOwner]', self.product)
+        self.assertIn('remoteExecutedOwner isEqualTo _expectedOwner', self.product)
 
     def test_terminal_events_are_exact_bounded_and_exhausted_tasks_retire(self) -> None:
         self.assertIn('YAS_IRONDOME_EVENT_LIMIT = 64', self.product)

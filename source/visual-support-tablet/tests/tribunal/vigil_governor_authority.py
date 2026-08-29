@@ -23,7 +23,7 @@ CLIENT_ASSERTIONS = [
 EVIDENCE_CONTRACT = {
     "scenario": {
         "id": "vigil-governor-authority",
-        "version": 1,
+        "version": 2,
         "feature_family": "pontifex-vigil-task-governor-authority",
         "name": "Vigil declarative task-request authority",
         "definition": {
@@ -48,7 +48,7 @@ EVIDENCE_CONTRACT = {
         {"key": "valid", "role": "positive_control", "description": "Declarative artillery, transport, and CAS schemas create server-built task generations", "assertions": SERVER_ASSERTIONS[1:3]},
         {"key": "authority-negatives", "role": "negative_control", "description": "Forged requester and wrong-side asset requests reach exact rejection receipts", "assertions": [SERVER_ASSERTIONS[3]]},
         {"key": "schema-negatives", "role": "negative_control", "description": "Code-bearing malformed and unsupported-type requests reach exact rejection receipts without executing caller code", "assertions": [SERVER_ASSERTIONS[4], SERVER_ASSERTIONS[6]]},
-        {"key": "concurrency", "role": "negative_control", "description": "Replay and distinct active replacement are rejected without replacing the accepted generation", "assertions": [SERVER_ASSERTIONS[5]]},
+        {"key": "concurrency", "role": "negative_control", "description": "Replay and task-equivalent active requests are rejected without replacing the accepted generation", "assertions": [SERVER_ASSERTIONS[5]]},
         {"key": "results", "role": "treatment", "description": "Requester-only correlated acceptance/rejection and terminal results are observed before complete cleanup", "assertions": [SERVER_ASSERTIONS[7], SERVER_ASSERTIONS[8]] + CLIENT_ASSERTIONS},
     ],
     "causal_relationships": [
@@ -77,14 +77,14 @@ EVIDENCE_CONTRACT = {
         },
         {
             "id": "pontifex:vigil:governor-request-correlation",
-            "text": "Vigil correlates requester-scoped acceptance, rejection, and terminal results by request ID while rejecting replay and active replacement without changing the accepted generation.",
+            "text": "Vigil correlates requester-scoped acceptance, rejection, and terminal results by request ID while rejecting replay and task-equivalent active requests without changing the accepted generation.",
             "intended_use": "primary_result",
             "assertions": [SERVER_ASSERTIONS[5], SERVER_ASSERTIONS[7], SERVER_ASSERTIONS[8]] + CLIENT_ASSERTIONS,
             "rationale": "The accepted generation identity is compared before and after replay/busy stimuli, then all accepted tasks are terminated through the shared finalizer and matched to client receipts.",
         },
     ],
     "unresolved": [
-        "Remote cancellation eligibility, queue/replace policy beyond reject-active, durable terminal history, retry/invalid-return policy, headless/client-owned vehicles, client-N, JIP, and network interruption remain outside this one-client request-authority proof."
+        "Queue ordering, confirmed replacement, bounded terminal history, operational map presentation, remote cancellation eligibility, retry/invalid-return policy, headless/client-owned vehicles, client-N, JIP, and network interruption remain outside this request-authority proof."
     ],
 }
 
@@ -182,7 +182,7 @@ private _schemaOk = ([format ["%1-code-payload", _token], false, "malformed_payl
 private _casTask = _tasks param [2, objNull];
 private _casRec = (call YSF__mgr) getOrDefault [[_cas] call YSF_taskKey, objNull];
 private _duplicateOk = ([format ["%1-cas", _token], false, "duplicate"] call _find) >= 0
-    && {([format ["%1-cas-busy", _token], false, "asset_busy"] call _find) >= 0}
+    && {([format ["%1-cas-busy", _token], false, "equivalent_duplicate"] call _find) >= 0}
     && {typeName _casTask isEqualTo "HASHMAP"}
     && {typeName _casRec isEqualTo "HASHMAP"}
     && {((_casRec get "task") get "id") isEqualTo (_casTask get "id")}
@@ -276,7 +276,7 @@ waitUntil {
 private _accepted = _rows select {(_x # 1) isEqualTo "accepted" && {_x # 2}};
 private _rejected = _rows select {(_x # 1) isEqualTo "rejected" && {!(_x # 2)}};
 private _reasons = _rejected apply {_x # 3};
-private _expectedReasons = ["duplicate", "asset_busy", "invalid_requester", "wrong_side", "malformed_payload", "unsupported_task_type"];
+private _expectedReasons = ["duplicate", "equivalent_duplicate", "invalid_requester", "wrong_side", "malformed_payload", "unsupported_task_type"];
 private _receiptOk = (count _accepted) isEqualTo 3 && {(count _rejected) isEqualTo 6}
     && {_expectedReasons findIf {!(_x in _reasons)} < 0};
 ["vigil.governorAuthority.clientReceipts", _receiptOk, format ["owner=%1|rows=%2", clientOwner, _rows]] call _assert;
@@ -299,7 +299,7 @@ TRIBUNAL_SCENARIO = Scenario(
     metadata={"product": "visual-support-tablet", "feature": "task-governor-authority"},
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A real authenticated client submits only bounded declarative artillery, transport, and CAS data; Vigil validates requester and asset authority, builds registered handlers on the server, rejects code-bearing/malformed/replayed/busy requests, and returns correlated requester-scoped acceptance and terminal results.",
+        behavior_contract="A real authenticated client submits only bounded declarative artillery, transport, and CAS data; Vigil validates requester and asset authority, builds registered handlers on the server, rejects code-bearing, malformed, replayed, and task-equivalent requests, and returns correlated requester-scoped acceptance and terminal results.",
         outcome="REFINE BEFORE PERMANENT COVERAGE",
         rationale="The canonical review found that clients constructed executable handler maps and opaque tasks for generic server execution. The refined data-only endpoint and matched real-client positive and negative requests make boundary arrival, server construction, rejection cause, generation preservation, nonexecution, correlation, and cleanup direct oracles.",
         dependencies=("Vigil server governor", "Vigil artillery/transport/CAS handler factories", "CBA", "one authenticated real player client"),

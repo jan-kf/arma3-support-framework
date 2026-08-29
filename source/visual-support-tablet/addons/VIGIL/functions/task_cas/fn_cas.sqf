@@ -50,6 +50,7 @@ YOSHI_taskCAS_SyncControlsFromState = {
 };
 
 YOSHI_taskCAS_submit = {
+  params [["_policy", "queue"]];
   private _vehicle = uiNamespace getVariable ["YSF_current_selected_asset", objNull];
   if (isNull _vehicle) exitWith {"No vehicle selected for cas task" call YSF_fnc_debugMsg;};
 
@@ -60,7 +61,7 @@ YOSHI_taskCAS_submit = {
   private _altitude = _s get "alt";
   private _time_limit = _s get "time_limit";
 
-  [_vehicle, "cas", [_location, _altitude, _time_limit]] call YSF_taskRequestRemote;
+  [_vehicle, "cas", [_location, _altitude, _time_limit], _policy] call YSF_taskRequestRemote;
 };
 
 YSF_taskCASAssign = {

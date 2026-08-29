@@ -20,6 +20,9 @@
 
 #define YSF_REQUEST_REPLAY_TTL 120
 #define YSF_REQUEST_AUDIT_LIMIT 128
+#define YSF_TASK_QUEUE_LIMIT 4
+#define YSF_TASK_HISTORY_LIMIT 8
+#define YSF_TASK_SNAPSHOT_INTERVAL 3
 
 /* ---------- Manager registry ---------- */
 if (isNil { missionNamespace getVariable "YSF_task_managers" }) then {
@@ -32,6 +35,9 @@ if (isNil { missionNamespace getVariable "YSF_task_request_audit" }) then {
   missionNamespace setVariable ["YSF_task_request_audit", []];
 };
 localNamespace setVariable ["YSF_task_authority_token", format ["ysf-%1-%2-%3", diag_tickTime, random 1e9, random 1e9]];
+if (isNil {localNamespace getVariable "YSF_task_ingress_queue"}) then {
+  localNamespace setVariable ["YSF_task_ingress_queue", []];
+};
 
 /* ---------- Small utility helpers ---------- */
 YSF_now = { diag_tickTime };
@@ -103,6 +109,108 @@ YSF_taskGet = {
   (call YSF__mgr) getOrDefault [[_veh] call YSF_taskKey, objNull]
 };
 
+YSF_taskTarget = {
+  params ["_task"];
+  if (typeName _task isNotEqualTo "HASHMAP") exitWith {[]};
+  private _target = _task getOrDefault ["displayTarget", []];
+  if (_target isEqualType [] && {count _target >= 2}) exitWith {+_target};
+  []
+};
+
+YSF_taskEquivalent = {
+  params ["_left", "_right"];
+  if (typeName _left isNotEqualTo "HASHMAP" || {typeName _right isNotEqualTo "HASHMAP"}) exitWith {false};
+  private _type = _left getOrDefault ["type", ""];
+  if (_type isNotEqualTo (_right getOrDefault ["type", ""])) exitWith {false};
+  private _a = _left getOrDefault ["fnParams", []];
+  private _b = _right getOrDefault ["fnParams", []];
+
+  switch (_type) do {
+    case "artillery": {
+      if ((count _a) isNotEqualTo 2 || {(count _b) isNotEqualTo 2}) exitWith {false};
+      if ((_a # 1) isNotEqualTo (_b # 1)) exitWith {false};
+      private _ap = _a # 0;
+      private _bp = _b # 0;
+      if ((count _ap) isNotEqualTo (count _bp)) exitWith {false};
+      private _same = true;
+      for "_index" from 0 to ((count _ap) - 1) do {
+        if (((_ap # _index) distance2D (_bp # _index)) > 5) exitWith {_same = false;};
+      };
+      _same
+    };
+    case "transport": {
+      if ((count _a) < 5 || {(count _b) < 5}) exitWith {false};
+      ((_a # 4) isEqualTo (_b # 4))
+        && {(_a # 2) isEqualTo (_b # 2)}
+        && {(_a # 3) isEqualTo (_b # 3)}
+        && {abs ((_a # 1) - (_b # 1)) <= 1}
+        && {((_a # 0) distance2D (_b # 0)) <= 15}
+    };
+    case "cas": {
+      if ((count _a) isNotEqualTo 3 || {(count _b) isNotEqualTo 3}) exitWith {false};
+      ((_a # 0) distance2D (_b # 0)) <= 25
+        && {abs ((_a # 1) - (_b # 1)) <= 1}
+        && {abs ((_a # 2) - (_b # 2)) <= 0.1}
+    };
+    default {_a isEqualTo _b};
+  }
+};
+
+YSF_taskHistoryAppend = {
+  params ["_rec", "_task"];
+  private _history = +(_rec getOrDefault ["history", []]);
+  _history pushBack [
+    _task getOrDefault ["id", ""],
+    _task getOrDefault ["type", "unknown"],
+    _task getOrDefault ["state", "failed"],
+    _task getOrDefault ["requestId", ""],
+    _task getOrDefault ["activatedAt", _task getOrDefault ["t0", serverTime]],
+    serverTime,
+    [_task] call YSF_taskTarget
+  ];
+  if ((count _history) > YSF_TASK_HISTORY_LIMIT) then {
+    _history deleteRange [0, (count _history) - YSF_TASK_HISTORY_LIMIT];
+  };
+  _rec set ["history", _history];
+};
+
+YSF_taskPublishSnapshot = {
+  if (!isServer) exitWith {false};
+  private _rows = [];
+  {
+    private _rec = _y;
+    if (typeName _rec isEqualTo "HASHMAP") then {
+      private _veh = _rec getOrDefault ["veh", objNull];
+      if (!isNull _veh) then {
+        private _active = _rec getOrDefault ["enabled", false];
+        private _task = _rec getOrDefault ["task", objNull];
+        private _queue = _rec getOrDefault ["queue", []];
+        private _queueRows = _queue apply {
+          [_x getOrDefault ["id", ""], _x getOrDefault ["type", "unknown"], [_x] call YSF_taskTarget, _x getOrDefault ["requestId", ""], "queued"]
+        };
+        private _replacement = _rec getOrDefault ["replacement", objNull];
+        if (typeName _replacement isEqualTo "HASHMAP") then {
+          _queueRows insert [0, [[_replacement getOrDefault ["id", ""], _replacement getOrDefault ["type", "unknown"], [_replacement] call YSF_taskTarget, _replacement getOrDefault ["requestId", ""], "replacement"]]];
+        };
+        _rows pushBack [
+          netId _veh,
+          str ([_veh] call YSF_taskAssetSide),
+          _active,
+          if (typeName _task isEqualTo "HASHMAP") then {_task getOrDefault ["type", "unknown"]} else {""},
+          if (typeName _task isEqualTo "HASHMAP") then {_task getOrDefault ["state", ""]} else {""},
+          if (typeName _task isEqualTo "HASHMAP") then {_task getOrDefault ["stage", YSF_STAGE_DONE]} else {YSF_STAGE_DONE},
+          if (_active) then {[_task] call YSF_taskTarget} else {[]},
+          _queueRows,
+          +(_rec getOrDefault ["history", []]),
+          serverTime
+        ];
+      };
+    };
+  } forEach (call YSF__mgr);
+  missionNamespace setVariable ["YSF_TASK_OPERATIONAL_ROWS", _rows, true];
+  true
+};
+
 YSF_taskAssign = {
   params ["_veh","_task", ["_authorityToken", ""]];
   private _trustedInternal = _authorityToken isEqualTo (localNamespace getVariable ["YSF_task_authority_token", "missing"]);
@@ -117,13 +225,18 @@ YSF_taskAssign = {
   if (_existingEnabled && {!_existingFinalizing}) exitWith {false};
 
   format ["[YSF_Governor] Assigning task %1 to vehicle %2", (_task get "id"), _veh] call YSF_fnc_debugMsg;
-  private _rec = createHashMap;
+  private _rec = if (typeName _existing isEqualTo "HASHMAP") then {_existing} else {createHashMap};
   _rec set ["veh",_veh];
   _rec set ["task",_task];
   _rec set ["enabled",true];
   _rec set ["lastTick",0];
-  _rec set ["tickInterval",0.5];  
+  _rec set ["tickInterval",0.5];
+  if (isNil {_rec get "queue"}) then {_rec set ["queue", []];};
+  if (isNil {_rec get "history"}) then {_rec set ["history", []];};
+  if (isNil {_rec get "replacement"}) then {_rec set ["replacement", objNull];};
+  _task set ["activatedAt", serverTime];
   (call YSF__mgr) set [_vehicleKey, _rec];
+  call YSF_taskPublishSnapshot;
   _task
 };
 
@@ -228,11 +341,18 @@ YSF_taskRequestBuild = {
   };
   if ((count _handlers) isEqualTo 0) exitWith {[false, "malformed_payload", objNull]};
   private _task = [_taskType, _vehicle, _handlers, _fnParams, 10, 3] call YSF_taskNew;
+  private _displayTarget = switch (_taskType) do {
+    case "artillery": {+((_fnParams # 0) # 0)};
+    case "transport": {+(_fnParams # 0)};
+    case "cas": {+(_fnParams # 0)};
+    default {[]};
+  };
+  _task set ["displayTarget", _displayTarget];
   [true, "accepted", _task]
 };
 
 YSF_taskRequestProcess = {
-  params ["_requestId", "_requester", "_vehicle", "_taskType", "_payload", "_requestOwner", "_authorityToken"];
+  params ["_requestId", "_requester", "_vehicle", "_taskType", "_payload", "_policy", "_requestOwner", "_authorityToken"];
   if (!isServer || {_authorityToken isNotEqualTo (localNamespace getVariable ["YSF_task_authority_token", "missing"])}) exitWith {false};
   private _requesterClaim = _requester;
   _requester = objNull;
@@ -249,8 +369,8 @@ YSF_taskRequestProcess = {
     [_requestId, _requestOwner, _taskType, _accepted, _reason, _vehicle, _taskId] call YSF_taskRequestAudit;
     [_requestOwner, _requestId, ["rejected", "accepted"] select _accepted, _accepted, _reason, _taskId] call YSF_taskRequestReply;
     if (!isNull _vehicle && {_taskType in ["transport", "cas"]}) then {
-      private _status = if (_accepted) then {"accepted"} else {
-        if (_reason in ["asset_busy", "duplicate"]) then {"duplicate_rejected"} else {_reason}
+      private _status = if (_accepted) then {_reason} else {
+        if (_reason in ["duplicate", "equivalent_duplicate"]) then {"duplicate_rejected"} else {_reason}
       };
       _vehicle setVariable [format ["YSF_%1_lastRequest", _taskType], _status, true];
     };
@@ -278,14 +398,10 @@ YSF_taskRequestProcess = {
   if !(_taskType isEqualType "" && {_taskType in ["artillery", "transport", "cas"]}) exitWith {
     [false, "unsupported_task_type"] call _finish
   };
+  if !(_policy isEqualType "" && {_policy in ["queue", "replace"]}) exitWith {[false, "invalid_policy"] call _finish};
   if !(_payload isEqualType []) exitWith {[false, "malformed_payload"] call _finish};
   private _asset = [_requester, _vehicle] call YSF_taskAssetAllowed;
   if !(_asset # 0) exitWith {[false, _asset # 1] call _finish};
-
-  private _existing = (call YSF__mgr) getOrDefault [[_vehicle] call YSF_taskKey, objNull];
-  if (typeName _existing isEqualTo "HASHMAP" && {_existing getOrDefault ["enabled", false]}) exitWith {
-    [false, "asset_busy"] call _finish
-  };
 
   private _built = [_taskType, _vehicle, _payload] call YSF_taskRequestBuild;
   if !(_built # 0) exitWith {[false, _built # 1] call _finish};
@@ -293,16 +409,60 @@ YSF_taskRequestProcess = {
   _task set ["serverBuilt", true];
   _task set ["requestId", _requestId];
   _task set ["requestOwner", _requestOwner];
+
+  private _existing = (call YSF__mgr) getOrDefault [[_vehicle] call YSF_taskKey, objNull];
+  private _active = typeName _existing isEqualTo "HASHMAP" && {_existing getOrDefault ["enabled", false]};
+  if (_active) exitWith {
+    private _current = _existing getOrDefault ["task", objNull];
+    private _queue = +(_existing getOrDefault ["queue", []]);
+    private _replacement = _existing getOrDefault ["replacement", objNull];
+    if ([_current, _task] call YSF_taskEquivalent
+        || {typeName _replacement isEqualTo "HASHMAP" && {[_replacement, _task] call YSF_taskEquivalent}}
+        || {(_queue findIf {[_x, _task] call YSF_taskEquivalent}) >= 0}) exitWith {
+      [false, "equivalent_duplicate", _task] call _finish
+    };
+
+    if (_policy isEqualTo "replace") then {
+      if (typeName _replacement isEqualTo "HASHMAP") exitWith {
+        [false, "replacement_pending", _task] call _finish
+      };
+      _existing set ["replacement", _task];
+      _current set ["replacedBy", _task getOrDefault ["id", ""]];
+      [_current, "cancelled"] call YSF__terminate;
+      call YSF_taskPublishSnapshot;
+      [true, "replacing", _task] call _finish
+    } else {
+      if ((count _queue) >= YSF_TASK_QUEUE_LIMIT) exitWith {[false, "queue_full", _task] call _finish};
+      _queue pushBack _task;
+      _existing set ["queue", _queue];
+      call YSF_taskPublishSnapshot;
+      [true, "queued", _task] call _finish
+    };
+  };
+
   private _assigned = [_vehicle, _task, _authorityToken] call YSF_taskAssign;
   if (typeName _assigned isNotEqualTo "HASHMAP") exitWith {[false, "asset_busy"] call _finish};
   [true, "accepted", _task] call _finish
 };
 
 YSF_taskRequestRemote = {
-  params ["_vehicle", "_taskType", "_payload"];
+  params ["_vehicle", "_taskType", "_payload", ["_policy", "queue"], ["_confirmed", false]];
   if (!hasInterface || {isNull player} || {isNull _vehicle}) exitWith {false};
+  if (_policy isEqualTo "replace" && {!_confirmed}) exitWith {
+    [_vehicle, _taskType, _payload] spawn {
+      params ["_vehicle", "_taskType", "_payload"];
+      private _confirmed = [
+        "Cancel the active task and replace it with this request? Queued tasks will keep their order.",
+        "VIGIL Replace Active Task",
+        true,
+        true
+      ] call BIS_fnc_guiMessage;
+      if (_confirmed) then {[_vehicle, _taskType, _payload, "replace", true] call YSF_taskRequestRemote;};
+    };
+    "confirmation_pending"
+  };
   private _requestId = format ["YSF_TASK_%1_%2_%3", clientOwner, floor (diag_tickTime * 1000), floor random 1000000];
-  [_requestId, clientOwner, _vehicle, _taskType, _payload] remoteExecCall ["YSF_fnc_taskRequestServer", 2];
+  [_requestId, clientOwner, _vehicle, _taskType, _payload, _policy] remoteExecCall ["YSF_fnc_taskRequestServer", 2];
   _requestId
 };
 
@@ -366,6 +526,51 @@ YSF__terminate = {
   _task set ["tries",0];
 };
 
+YSF_taskActivateNext = {
+  params ["_rec"];
+  if (typeName _rec isNotEqualTo "HASHMAP" || {_rec getOrDefault ["enabled", false]}) exitWith {false};
+  private _veh = _rec getOrDefault ["veh", objNull];
+  private _queue = +(_rec getOrDefault ["queue", []]);
+  private _replacement = _rec getOrDefault ["replacement", objNull];
+
+  private _pending = if (typeName _replacement isEqualTo "HASHMAP") then {[_replacement] + _queue} else {_queue};
+  if (isNull _veh || {!alive _veh}) then {
+    {
+      private _failed = _x;
+      _failed set ["state", "failed"];
+      _failed set ["status", "failed"];
+      [_rec, _failed] call YSF_taskHistoryAppend;
+      private _owner = _failed getOrDefault ["requestOwner", 0];
+      private _requestId = _failed getOrDefault ["requestId", ""];
+      if (_owner > 2 && {_requestId isNotEqualTo ""}) then {
+        [_owner, _requestId, "terminal", true, "asset_lost_before_start", _failed getOrDefault ["id", ""], "failed"] call YSF_taskRequestReply;
+      };
+    } forEach _pending;
+    _queue = [];
+    _replacement = objNull;
+  };
+  _rec set ["replacement", _replacement];
+  _rec set ["queue", _queue];
+  if ((count _pending) isEqualTo 0 || {isNull _veh} || {!alive _veh}) exitWith {call YSF_taskPublishSnapshot; false};
+
+  private _next = if (typeName _replacement isEqualTo "HASHMAP") then {
+    _rec set ["replacement", objNull];
+    _replacement
+  } else {
+    private _queued = _queue deleteAt 0;
+    _rec set ["queue", _queue];
+    _queued
+  };
+  private _assigned = [_veh, _next, localNamespace getVariable ["YSF_task_authority_token", "missing"]] call YSF_taskAssign;
+  if (typeName _assigned isNotEqualTo "HASHMAP") exitWith {false};
+  private _owner = _next getOrDefault ["requestOwner", 0];
+  private _requestId = _next getOrDefault ["requestId", ""];
+  if (_owner > 2 && {_requestId isNotEqualTo ""}) then {
+    [_owner, _requestId, "started", true, "activated", _next getOrDefault ["id", ""], "running"] call YSF_taskRequestReply;
+  };
+  true
+};
+
 YSF__finalize = {
   params ["_task", "_rec"];
   if (_task getOrDefault ["finalized", false]) exitWith {false};
@@ -379,6 +584,7 @@ YSF__finalize = {
   _task set ["finalized",true];
   _task set ["stage",YSF_STAGE_DONE];
   _task set ["status",_task getOrDefault ["state", "complete"]];
+  [_rec, _task] call YSF_taskHistoryAppend;
 
   private _requestOwner = _task getOrDefault ["requestOwner", 0];
   private _requestId = _task getOrDefault ["requestId", ""];
@@ -390,7 +596,11 @@ YSF__finalize = {
   private _sameGeneration = typeName _currentTask isEqualTo "HASHMAP"
     && {(_currentTask get "id") isEqualTo (_task get "id")}
     && {(_currentTask get "gen") isEqualTo (_task get "gen")};
-  if (_sameGeneration) then {_rec set ["enabled",false];};
+  if (_sameGeneration) then {
+    _rec set ["enabled",false];
+    [_rec] call YSF_taskActivateNext;
+  };
+  call YSF_taskPublishSnapshot;
   true
 };
 
@@ -490,6 +700,11 @@ YSF_governorHandle = {
       };
     };
   } forEach _m;
+  private _lastSnapshot = localNamespace getVariable ["YSF_task_last_snapshot", -YSF_TASK_SNAPSHOT_INTERVAL];
+  if ((serverTime - _lastSnapshot) >= YSF_TASK_SNAPSHOT_INTERVAL) then {
+    localNamespace setVariable ["YSF_task_last_snapshot", serverTime];
+    call YSF_taskPublishSnapshot;
+  };
 };
 
 YSF_governorStart = {
@@ -501,6 +716,7 @@ YSF_governorStart = {
   "[YSF_Governor] Started" call YSF_fnc_debugMsg;
 
   missionNamespace setVariable ["YSF_governorPFH",_id, true];
+  call YSF_taskPublishSnapshot;
 };
 
 YSF_governorStop = {

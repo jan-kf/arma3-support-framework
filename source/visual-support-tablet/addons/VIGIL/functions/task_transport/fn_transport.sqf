@@ -63,6 +63,7 @@ YOSHI_taskTRN_SyncControlsFromState = {
 };
 
 YOSHI_taskTRN_submit = {
+  params [["_policy", "queue"]];
 
   private _vehicle = uiNamespace getVariable ["YSF_current_selected_asset", objNull];
 
@@ -76,7 +77,7 @@ YOSHI_taskTRN_submit = {
   private _do_not_climb = _s get "do_not_climb";
   private _ignoreEn = _s get "ignore_en";
 
-  [_vehicle, "transport", [_destPos, _maxAlt, _do_not_climb, _ignoreEn, "dispatch"]] call YSF_taskRequestRemote;
+  [_vehicle, "transport", [_destPos, _maxAlt, _do_not_climb, _ignoreEn, "dispatch"], _policy] call YSF_taskRequestRemote;
 
 };
 

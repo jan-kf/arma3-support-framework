@@ -109,12 +109,6 @@ YOSHI_isArmedHelicopter = {
 
 
 
-// true if vehicle is UAV/UGV recon asset
-YOSHI_isRecon = {
-  params ["_veh"];
-  unitIsUAV _veh && [_veh] call YOSHI_cfgSideIsPlayer
-};
-
 YOSHI_isTransportHelicopter = {
   params ["_veh"];
   if (!(_veh isKindOf "Helicopter")) exitWith {false};
@@ -225,10 +219,7 @@ YOSHI_assetCoordChanged = {
       _color = call YSF_getBaseColorFormatted;//"Color3_FD_F";
       _symbol = "loc_plane";
     };
-    default {
-      _color = call YSF_getBaseColorFormatted;//"Color2_FD_F";
-      [_pos] call YOSHI_recon_setGrid;
-    };
+    default {};
   };
 
   private _markerName = format ["YSF_%1_coord_preview", _tab];
@@ -299,7 +290,6 @@ YOSHI_handleDoubleClick = {
   private _idc = switch (_tab) do {
     case "arty": {IDC_TASK_ARTY_GRID_REF};
     case "cas": {IDC_TASK_CAS_GRID_REF};
-    case "recon": {IDC_TASK_RECON_GRID_REF};
     case "fixedwing": {-1};
     default {IDC_TASK_TXP_GRID_REF};
   };

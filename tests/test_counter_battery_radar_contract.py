@@ -57,7 +57,7 @@ class CounterBatteryRadarContractTests(unittest.TestCase):
 
     def test_permanent_scenario_is_causal_and_fail_closed(self) -> None:
         review = self.scenario.review
-        self.assertEqual(review.outcome, "REFINE BEFORE PERMANENT COVERAGE")
+        self.assertEqual(review.outcome, "KEEP AS-IS AND SPEC-TEST")
         self.assertEqual(review.test_type, "specification")
         self.assertIn("map-marker", review.evidence_types)
         self.assertIn("negative-control", review.evidence_types)
@@ -73,9 +73,11 @@ class CounterBatteryRadarContractTests(unittest.TestCase):
         self.assertIn("_targetHeight > 100", server)
         # Disabled control must precede enabling.
         self.assertLess(server.index("cbr.control.disabledNoDetection"), server.index("YOSHI_fnc_cbrStart"))
-        # Marker properties are captured live, not read after cleanup.
-        self.assertIn("_peakType = markerType", server)
-        self.assertNotIn("{(markerType _peakIcon) isEqualTo", server)
+        # Observation rows and client-local visual markers are captured live,
+        # before normal expiry clears both.
+        self.assertIn("_peakObservations = _current", server)
+        self.assertIn("TRIBUNAL_CBR_REPLICATED_PEAK", client)
+        self.assertIn("TRIBUNAL_fnc_markerObserve", client)
         self.assertIn("TRIBUNAL_CBR_ORIGINAL_RADIO", client)
         self.assertIn("YCD_fnc_playSideRadioLocal = TRIBUNAL_CBR_ORIGINAL_RADIO", client)
         for scope in (server, client):
@@ -140,13 +142,26 @@ class CounterBatteryRadarContractTests(unittest.TestCase):
         self.assertIn("(count _afterFar) isEqualTo 0", client)
         self.assertIn("(count _afterSame) isEqualTo (count _afterWarn)", client)
 
-    def test_client_correlates_exact_authoritative_markers(self) -> None:
+    def test_observations_are_durable_and_presentation_is_derived(self) -> None:
+        source = self.source
+        self.assertIn("YOSHI_CB_observations = []", source)
+        self.assertIn('["ellipse", [YOSHI_CB_UNCERTAINTY_RADIUS, YOSHI_CB_UNCERTAINTY_RADIUS], 0]', source)
+        self.assertIn("_observation set [4, _observedAt]", source)
+        self.assertIn("_observation set [7, +_provenance]", source)
+        self.assertIn('missionNamespace setVariable ["YOSHI_CBR_OBSERVATIONS"', source)
+        self.assertNotIn("YOSHI_CB_LINK_DIST", source)
+        self.assertNotIn("YOSHI_CB_clusters", source)
+        self.assertNotIn("YOSHI_CB_MAX", source)
+
         client = self.scenario.client_sqf
         self.assertIn("TRIBUNAL_CBR_ZONE_RECORD", client)
-        self.assertIn("_expectedZone in _seen", client)
-        self.assertIn("_expectedIcon in _seen", client)
-        self.assertIn('distance2D _expectedCentre) < 1', client)
-        self.assertIn('_zoneRecord getOrDefault ["color", ""]) isEqualTo "ColorRed"', client)
+        self.assertIn("TRIBUNAL_CBR_REPLICATED_PEAK", client)
+        self.assertIn('(_x # 2) isEqualTo ["ellipse", [100,100], 0]', client)
+        self.assertIn("YOSHI_CB_visualClusters", client)
+        self.assertIn("_zoomInCount > _zoomOutCount", client)
+        self.assertIn("_zoomOutCount isEqualTo 1", client)
+        self.assertIn("_halfLength > (3 * _radius)", client)
+        self.assertIn("YOSHI_CB_renderMarkers", client)
         self.assertIn("TRIBUNAL_CBR_ORIGIN_SEEN", client)
         self.assertIn('(_originSeen findIf {(_x find "YOSHI_origin") isEqualTo 0}) >= 0', client)
 
@@ -155,9 +170,7 @@ class CounterBatteryRadarContractTests(unittest.TestCase):
 
         server = self.scenario.server_sqf
         client = self.scenario.client_sqf
-        # Well-formedness against product state is retained, but is not the proof.
-        self.assertIn("_peakText isEqualTo _expectedText", server)
-        # The count and remaining time come from observed projectiles instead.
+        # The stored count and remaining time come from observed projectiles.
         self.assertIn("_peakAt = diag_tickTime", server)
         self.assertIn('_firedAt = _x getOrDefault ["firedAt", -1]', server)
         self.assertIn('_endedAt = _x getOrDefault ["terminatedAt", -1]', server)
@@ -179,7 +192,7 @@ class CounterBatteryRadarContractTests(unittest.TestCase):
         self.assertIn("deliberately asymmetric", server)
         # Shell identity is the observer's event index: netId is "0:0" for shells.
         self.assertIn('_identity = [_x getOrDefault ["index", -1]', server)
-        self.assertIn("liveDetail=%16", server)
+        self.assertIn("liveDetail=%13", server)
         # The label itself must replicate to the client.
         self.assertIn("_countPrefix = format [\"%1 shells | ETA \", _expectedCount]", client)
         self.assertIn("_labelSeen", client)

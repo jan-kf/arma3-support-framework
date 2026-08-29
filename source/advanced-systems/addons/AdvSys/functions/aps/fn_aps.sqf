@@ -32,6 +32,13 @@ YOSHI_APS_SOFTKILL_TRIGGER_SOUNDS = ["ApsSoftKillGlitch1", "ApsSoftKillGlitch2",
 YOSHI_APS_ANTIDRONE_TRIGGER_SOUNDS = ["ApsDronePulse1", "ApsDronePulse2"];
 YOSHI_APS_OPERATOR_RANGE = 10;
 YOSHI_APS_OPERATION_AUDIT_LIMIT = 64;
+YOSHI_APS_DRONE_TRANSACTION_TIMEOUT = 5;
+YOSHI_APS_DRONE_AUDIT_LIMIT = 64;
+
+if (isNil "YOSHI_APS_DRONE_TRANSACTIONS") then {YOSHI_APS_DRONE_TRANSACTIONS = createHashMap;};
+if (isNil "YOSHI_APS_DRONE_LOCKS") then {YOSHI_APS_DRONE_LOCKS = [];};
+if (isNil "YOSHI_APS_DRONE_TX_COUNTER") then {YOSHI_APS_DRONE_TX_COUNTER = 0;};
+if (isNil "YOSHI_APS_DRONE_LOCAL_RESERVATIONS") then {YOSHI_APS_DRONE_LOCAL_RESERVATIONS = createHashMap;};
 
 // Consequential menu requests arrive through one authenticated server entry.
 // A machine-local token prevents the globally named mutation helper from
@@ -805,15 +812,200 @@ YOSHI_fnc_apsEnsureLocalRuntime = {
     true
 };
 
-YOSHI_detectDrones = {
-    params ["_vehicle", ["_range", -1], ["_interval", 0.5], ["_cooldown", 0.5]];
+YOSHI_fnc_apsDroneObjectUid = {
+    params ["_object"];
+    if (isNull _object) exitWith {""};
+    private _uid = netId _object;
+    if (_uid isEqualTo "" || {_uid isEqualTo "0:0"}) then {_uid = str _object;};
+    _uid
+};
 
-    if (_range == -1) then {
-        private _boundingBox = boundingBoxReal _vehicle;
-        _range = ((_boundingBox select 0) distance (_boundingBox select 1)) * 2;
+YOSHI_fnc_apsAntiDroneRange = {
+    (missionNamespace getVariable ["YAS_apsAntiDroneEngagementRadius", 25]) max 0
+};
+
+YOSHI_fnc_apsAntiDroneMinimumSpeed = {
+    ((missionNamespace getVariable ["YAS_apsAntiDroneMinimumSpeed", 40]) max 0) / 3.6
+};
+
+YOSHI_fnc_apsEvaluateDroneThreat = {
+    params ["_vehicle", "_uav", ["_range", -1]];
+    if (isNull _vehicle || {isNull _uav}) exitWith {[]};
+    if (!alive _vehicle || {!alive _uav}) exitWith {[]};
+    if !(_vehicle getVariable ["YOSHI_APS_Enabled", false]) exitWith {[]};
+    if !(_vehicle getVariable ["YOSHI_APS_AntiDrone_Enabled", true]) exitWith {[]};
+    if !(_uav isKindOf "Air") exitWith {[]};
+    if ((getMass _uav) >= 1000) exitWith {[]};
+    if (_range < 0) then {_range = call YOSHI_fnc_apsAntiDroneRange;};
+    private _relativePosition = (getPosWorld _uav) vectorDiff (getPosWorld _vehicle);
+    private _distance = vectorMagnitude _relativePosition;
+    if (_distance <= 0.01 || {_distance > _range}) exitWith {[]};
+    private _relativeVelocity = (velocity _uav) vectorDiff (velocity _vehicle);
+    private _relativeSpeed = vectorMagnitude _relativeVelocity;
+    private _minimumSpeed = call YOSHI_fnc_apsAntiDroneMinimumSpeed;
+    if (_relativeSpeed <= _minimumSpeed) exitWith {[]};
+    private _closingSpeed = -(_relativeVelocity vectorDotProduct (vectorNormalized _relativePosition));
+    if (_closingSpeed <= _minimumSpeed) exitWith {[]};
+    [_distance, _relativeSpeed, _closingSpeed, _range, _minimumSpeed]
+};
+
+YOSHI_fnc_apsDroneAudit = {
+    params ["_operation", "_decision", ["_txId", ""], ["_detail", []]];
+    if (!isServer) exitWith {};
+    private _rows = missionNamespace getVariable ["YOSHI_APS_DRONE_AUDIT", []];
+    _rows pushBack [diag_tickTime, _operation, _decision, _txId, _detail];
+    if ((count _rows) > YOSHI_APS_DRONE_AUDIT_LIMIT) then {_rows deleteRange [0, (count _rows) - YOSHI_APS_DRONE_AUDIT_LIMIT];};
+    missionNamespace setVariable ["YOSHI_APS_DRONE_AUDIT", _rows, false];
+};
+
+YOSHI_fnc_apsDroneFinalizeResourceLocal = {
+    params ["_txId", "_vehicle", ["_commit", false]];
+    private _record = YOSHI_APS_DRONE_LOCAL_RESERVATIONS getOrDefault [_txId, []];
+    if (_record isEqualTo []) exitWith {false};
+    if (isNull _vehicle || {!local _vehicle} || {(_record # 0) isNotEqualTo _vehicle}) exitWith {false};
+    if (!_commit) then {_vehicle setFuel (((fuel _vehicle) + (_record # 1)) min 1);};
+    YOSHI_APS_DRONE_LOCAL_RESERVATIONS deleteAt _txId;
+    true
+};
+
+YOSHI_fnc_apsDroneFinishServer = {
+    params ["_txId", ["_success", false], ["_reason", "failed"], ["_effectOwner", -1]];
+    if (!isServer) exitWith {false};
+    private _tx = YOSHI_APS_DRONE_TRANSACTIONS getOrDefault [_txId, createHashMap];
+    if ((count _tx) <= 0) exitWith {false};
+    private _vehicle = _tx getOrDefault ["vehicle", objNull];
+    private _uav = _tx getOrDefault ["uav", objNull];
+    private _resourceOwner = _tx getOrDefault ["vehicleOwner", 2];
+    [_txId, _vehicle, _success] remoteExecCall ["YOSHI_fnc_apsDroneFinalizeResourceLocal", _resourceOwner];
+    if (_success) then {
+        private _events = missionNamespace getVariable ["YOSHI_APS_DRONE_ENGAGEMENT_EVENTS", []];
+        _events pushBack [_txId, _tx getOrDefault ["vehicleUid", ""], _tx getOrDefault ["uavUid", ""], "engaged", _resourceOwner, _effectOwner, _tx getOrDefault ["metrics", []], _tx getOrDefault ["fuelBefore", -1], _tx getOrDefault ["fuelAfter", -1], diag_tickTime];
+        if ((count _events) > 64) then {_events deleteRange [0, (count _events) - 64];};
+        missionNamespace setVariable ["YOSHI_APS_DRONE_ENGAGEMENT_EVENTS", _events, true];
     };
+    ["transaction", _reason, _txId, [_success, _resourceOwner, _effectOwner]] call YOSHI_fnc_apsDroneAudit;
+    if (!isNull _vehicle) then {_vehicle setVariable ["YOSHI_APS_DroneBusy", "", false];};
+    if (!isNull _uav) then {
+        _uav setVariable ["YOSHI_APS_DroneBusy", "", false];
+        if (!_success && {(_uav getVariable ["YOSHI_APS_AntiDroneNeutralized", ""]) isEqualTo _txId}) then {_uav setVariable ["YOSHI_APS_AntiDroneNeutralized", "", true];};
+    };
+    YOSHI_APS_DRONE_LOCKS = YOSHI_APS_DRONE_LOCKS select {(_x # 2) isNotEqualTo _txId};
+    YOSHI_APS_DRONE_TRANSACTIONS deleteAt _txId;
+    true
+};
+
+YOSHI_fnc_apsDroneReserveResourceLocal = {
+    params ["_txId", "_vehicle", "_cost"];
+    private _ok = !isNull _vehicle && {local _vehicle} && {alive _vehicle};
+    private _before = if (isNull _vehicle) then {-1} else {fuel _vehicle};
+    if (_ok) then {_ok = _before >= _cost;};
+    private _after = _before;
+    if (_ok) then {
+        _after = (_before - _cost) max 0;
+        _vehicle setFuel _after;
+        YOSHI_APS_DRONE_LOCAL_RESERVATIONS set [_txId, [_vehicle, _cost, _before, _after]];
+    };
+    [_txId, _ok, _before, _after] remoteExecCall ["YOSHI_fnc_apsDroneResourceReservedServer", 2];
+};
+
+YOSHI_fnc_apsDroneNeutralizeLocal = {
+    params ["_txId", "_vehicle", "_uav"];
+    private _ok = !isNull _uav && {local _uav} && {alive _uav};
+    if (_ok) then {
+        _uav setVariable ["YOSHI_APS_AntiDroneNeutralized", _txId, true];
+        private _triggerSound = ["drone"] call YOSHI_fnc_apsSelectTriggerSound;
+        [_vehicle, _uav, 1, 0.2, 0.2, [0, 1, 1, 1], 15, _triggerSound, true, 300] call YOSHI_animateAPS;
+        _uav setDamage [1, false];
+        _ok = !alive _uav || {(damage _uav) >= 1};
+        if (_ok) then {[_uav, 30] call YOSHI_fnc_apsScheduleDelete;};
+    };
+    [_txId, _ok, if (isNull _uav) then {-1} else {damage _uav}, local _uav] remoteExecCall ["YOSHI_fnc_apsDroneNeutralizedServer", 2];
+};
+
+YOSHI_fnc_apsDroneResourceReservedServer = {
+    params ["_txId", "_ok", "_before", "_after"];
+    if (!isServer) exitWith {false};
+    private _tx = YOSHI_APS_DRONE_TRANSACTIONS getOrDefault [_txId, createHashMap];
+    if ((count _tx) <= 0 || {(_tx getOrDefault ["state", ""]) isNotEqualTo "reserving"}) exitWith {false};
+    private _expectedOwner = _tx getOrDefault ["vehicleOwner", -1];
+    if (remoteExecutedOwner isNotEqualTo _expectedOwner) exitWith {
+        ["resource", "owner-rejected", _txId, [remoteExecutedOwner, _expectedOwner]] call YOSHI_fnc_apsDroneAudit;
+        [_txId, false, "resource-owner-rejected"] call YOSHI_fnc_apsDroneFinishServer;
+        false
+    };
+    if (!_ok) exitWith {[_txId, false, "resource-refused"] call YOSHI_fnc_apsDroneFinishServer; false};
+    _tx set ["fuelBefore", _before];
+    _tx set ["fuelAfter", _after];
+    _tx set ["state", "reserved"];
+    _tx set ["deadline", diag_tickTime + YOSHI_APS_DRONE_TRANSACTION_TIMEOUT];
+    private _uav = _tx getOrDefault ["uav", objNull];
+    private _effectOwner = if (isNull _uav) then {-1} else {owner _uav};
+    _tx set ["uavOwner", _effectOwner];
+    YOSHI_APS_DRONE_TRANSACTIONS set [_txId, _tx];
+    // Arm feature-owned suppression before the owner-local kill. Payload
+    // Manager can distinguish APS neutralization from ordinary kinetic impact
+    // without deleting or mutating any unrelated event handlers. Third-party
+    // Killed handlers remain installed and retain their normal semantics.
+    if (!isNull _uav) then {
+        _uav setVariable ["YOSHI_APS_AntiDroneNeutralized", _txId, true];
+    };
+    [_txId, _tx getOrDefault ["vehicle", objNull], _uav] remoteExecCall ["YOSHI_fnc_apsDroneNeutralizeLocal", _effectOwner];
+    true
+};
+
+YOSHI_fnc_apsDroneNeutralizedServer = {
+    params ["_txId", "_ok", "_damage", "_wasLocal"];
+    if (!isServer) exitWith {false};
+    private _tx = YOSHI_APS_DRONE_TRANSACTIONS getOrDefault [_txId, createHashMap];
+    if ((count _tx) <= 0 || {(_tx getOrDefault ["state", ""]) isNotEqualTo "reserved"}) exitWith {false};
+    private _expectedOwner = _tx getOrDefault ["uavOwner", -1];
+    private _accepted = remoteExecutedOwner isEqualTo _expectedOwner && {_ok} && {_wasLocal};
+    [_txId, _accepted, if (_accepted) then {"engaged"} else {"effect-refused"}, remoteExecutedOwner] call YOSHI_fnc_apsDroneFinishServer
+};
+
+YOSHI_fnc_apsRequestDroneEngagementServer = {
+    params ["_vehicle", "_uav", ["_metrics", []]];
+    if (!isServer || {isNull _vehicle} || {isNull _uav}) exitWith {false};
+    _metrics = [_vehicle, _uav] call YOSHI_fnc_apsEvaluateDroneThreat;
+    if (_metrics isEqualTo []) exitWith {false};
+    if ((_vehicle getVariable ["YOSHI_APS_DroneBusy", ""]) isNotEqualTo "") exitWith {false};
+    if ((_uav getVariable ["YOSHI_APS_DroneBusy", ""]) isNotEqualTo "") exitWith {false};
+    if ((fuel _vehicle) < YOSHI_APS_SOFTKILL_FUEL_COST) exitWith {
+        _vehicle setVariable ["YOSHI_APS_AntiDrone_Enabled", false, true];
+        [_vehicle] call YOSHI_fnc_apsAnnounceInsufficientPower;
+        false
+    };
+    YOSHI_APS_DRONE_TX_COUNTER = YOSHI_APS_DRONE_TX_COUNTER + 1;
+    private _txId = format ["aps-drone-%1-%2", YOSHI_APS_DRONE_TX_COUNTER, round (diag_tickTime * 1000)];
+    private _vehicleOwner = owner _vehicle;
+    private _uavOwner = owner _uav;
+    private _tx = createHashMapFromArray [
+        ["vehicle", _vehicle], ["uav", _uav], ["vehicleUid", [_vehicle] call YOSHI_fnc_apsDroneObjectUid],
+        ["uavUid", [_uav] call YOSHI_fnc_apsDroneObjectUid], ["vehicleOwner", _vehicleOwner], ["uavOwner", _uavOwner],
+        ["metrics", _metrics], ["state", "reserving"], ["deadline", diag_tickTime + YOSHI_APS_DRONE_TRANSACTION_TIMEOUT]
+    ];
+    YOSHI_APS_DRONE_TRANSACTIONS set [_txId, _tx];
+    YOSHI_APS_DRONE_LOCKS pushBack [_vehicle, _uav, _txId];
+    _vehicle setVariable ["YOSHI_APS_DroneBusy", _txId, false];
+    _uav setVariable ["YOSHI_APS_DroneBusy", _txId, false];
+    ["transaction", "reserved-requested", _txId, [_vehicleOwner, _uavOwner, _metrics]] call YOSHI_fnc_apsDroneAudit;
+    [_txId, _vehicle, YOSHI_APS_SOFTKILL_FUEL_COST] remoteExecCall ["YOSHI_fnc_apsDroneReserveResourceLocal", _vehicleOwner];
+    true
+};
+
+YOSHI_fnc_apsProcessDroneTransactions = {
+    if (!isServer) exitWith {};
+    private _expired = [];
+    {if ((_y getOrDefault ["deadline", 0]) < diag_tickTime) then {_expired pushBack _x;};} forEach YOSHI_APS_DRONE_TRANSACTIONS;
+    {[_x, false, "timeout"] call YOSHI_fnc_apsDroneFinishServer;} forEach _expired;
+};
+
+YOSHI_detectDrones = {
+    params ["_vehicle", ["_range", -1], ["_interval", 0.5]];
+    if (!isServer) exitWith {};
 
     while {alive _vehicle && (_vehicle getVariable ["YOSHI_APS_Enabled", false])} do {
+        call YOSHI_fnc_apsProcessDroneTransactions;
         private _antiDroneEnabled = _vehicle getVariable ["YOSHI_APS_AntiDrone_Enabled", true];
         if (!_antiDroneEnabled) then {
             sleep _interval;
@@ -827,37 +1019,10 @@ YOSHI_detectDrones = {
             continue;
         };
 
-        private _uavs = allUnitsUAV select { (_x isKindOf "Air") && ((getMass _x) < 1000) && ((_x distance _vehicle) <= _range) };
+        private _uavs = allUnitsUAV;
         {
-            private _isHit = _x getVariable ["YOSHI_APS_HIT", false];
-            if (abs (speed _x) > 40 && !_isHit) then {
-                if !([_vehicle] call YOSHI_fnc_apsConsumeSoftKillChargeAuthoritative) exitWith {
-                    _vehicle setVariable ["YOSHI_APS_AntiDrone_Enabled", false, true];
-                    [_vehicle] call YOSHI_fnc_apsAnnounceInsufficientPower;
-                };
-
-                private _triggerSound = ["drone"] call YOSHI_fnc_apsSelectTriggerSound;
-                [_vehicle, _x, 1, 0.2, 0.2, [0, 1, 1, 1], 15, _triggerSound, true, 300] call YOSHI_animateAPS;
-
-                _x removeAllEventHandlers "Killed";
-                _x removeAllEventHandlers "Hit";
-                _x removeAllEventHandlers "HitPart";
-                _x removeAllEventHandlers "HandleDamage";
-                _x removeAllEventHandlers "Dammaged";
-                _x removeAllEventHandlers "Deleted";
-                _x removeAllEventHandlers "EpeContact";
-                _x removeAllEventHandlers "EpeContactStart";
-                _x removeAllEventHandlers "EpeContactEnd";
-                _x removeAllEventHandlers "Fired";
-                _x removeAllEventHandlers "LandedStopped";
-                _x removeAllEventHandlers "Landing";
-                _x removeAllEventHandlers "LandedTouchDown";
-                _x setDamage [1, false];
-                _x setVariable ["YOSHI_APS_HIT", true, true];
-                [_x, 30] call YOSHI_fnc_apsScheduleDelete;
-
-                sleep _cooldown;
-            };
+            private _metrics = [_vehicle, _x, _range] call YOSHI_fnc_apsEvaluateDroneThreat;
+            if !(_metrics isEqualTo []) then {[_vehicle, _x, _metrics] call YOSHI_fnc_apsRequestDroneEngagementServer;};
         } forEach _uavs;
 
         sleep _interval;

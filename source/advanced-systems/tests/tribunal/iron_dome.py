@@ -63,6 +63,8 @@ private _replicated = (count _expected) >= 3
     && {_matched # 0 param [8, false]}
     && {_matched # 0 param [9, false]};
 ["iron.client.eventReplicated", _replicated, format ["identity=%1|expected=%2|matches=%3|events=%4", _identity, _expected, count _matched, count _events]] call _assert;
+if (!isNull _clientGunner) then {deleteVehicle _clientGunner;};
+deleteGroup _clientGroup;
 '''
 
 
@@ -92,6 +94,7 @@ private _shellEh = addMissionEventHandler ["ArtilleryShellFired", {
         ["label", _label], ["testUid", _testUid],
         ["productUid", _shell getVariable ["YAS_ironDome_uid", ""]],
         ["object", _shell], ["class", typeOf _shell], ["local", local _shell],
+        ["owner", owner _shell], ["targetPosition", _targetPosition],
         ["initialPosition", getPosASL _shell], ["initialVelocity", velocity _shell],
         ["samples", []], ["lastPosition", []], ["closestTarget", 1e9],
         ["terminated", false], ["artilleryEvent", true]
@@ -102,6 +105,8 @@ private _shellEh = addMissionEventHandler ["ArtilleryShellFired", {
         params ["_record", "_shell", "_target"];
         private _deadline = diag_tickTime + 60;
         while {!isNull _shell && {diag_tickTime < _deadline}} do {
+            private _productUid = _shell getVariable ["YAS_ironDome_uid", ""];
+            if (_productUid isNotEqualTo "") then {_record set ["productUid", _productUid];};
             private _position = getPosASL _shell;
             private _samples = _record getOrDefault ["samples", []];
             _samples pushBack [diag_tickTime, _position, velocity _shell, local _shell];
@@ -162,7 +167,7 @@ private _interceptorObserver = [] spawn {
     };
 };
 
-private _target = createVehicle ["O_MBT_02_cannon_F", _targetPos, [], 0, "NONE"];
+private _target = createVehicle ["O_Truck_03_transport_F", _targetPos, [], 0, "NONE"];
 _created pushBack _target;
 _target setFuel 0;
 _target engineOn false;
@@ -407,6 +412,46 @@ private _cleanup = (count YAS_IRONDOME_TASKS) isEqualTo 0
 ["iron.cleanup", _cleanup, format ["tasks=%1|registry=%2|targetNull=%3|gunNull=%4", count YAS_IRONDOME_TASKS, count YAS_IRONDOME_REGISTRY, isNull _target, isNull _gun]] call _assert;
 '''
 
+EVIDENCE_CONTRACT = {
+    "scenario": {
+        "id": "pontifex.advanced-systems.iron-dome",
+        "version": 5,
+        "feature_family": "pontifex-advanced-systems-iron-dome",
+        "name": "Ophanim Iron Dome predicted-impact interception",
+        "definition": {
+            "kind": "controlled multiplayer specification",
+            "reference": "source/advanced-systems/tests/tribunal/iron_dome.py",
+            "applicability": "Arma 3 dedicated multiplayer with one authenticated client; server-owned native mortar shells and enabled/absent/out-of-impact-coverage launchers",
+            "participants": {"server": "registry, native artillery source, impact tasking, interceptor and evidence authority", "client-a": "replicated-event observer and adversarial caller"},
+        },
+    },
+    "knowledge_subject": {
+        "key": "pontifex:advanced-systems:iron-dome",
+        "label": "Ophanim Iron Dome predicted-impact interception",
+        "kind": "product_behavior",
+        "aliases": ["Iron Dome", "Ophanim"],
+        "biki_context": ["biki-page:8369", "biki-page:1644", "biki-page:1601", "biki-page:25694"],
+    },
+    "arms": [
+        {"key": "no-launcher", "role": "negative_control", "description": "The native shell physically impacts with no enabled launcher and creates no engagement", "assertions": ["iron.fixture.nativeArtillery", "iron.control.disabledImpact", "iron.control.disabledNoEngagement"]},
+        {"key": "covered-impact", "role": "treatment", "description": "A launcher covering the predicted impact launches one physical interceptor and protects the target", "assertions": ["iron.launcher.registered", "iron.positive.exactIntercept", "iron.positive.physicalInterceptor", "iron.positive.protected"]},
+        {"key": "concurrent-threats", "role": "treatment", "description": "Two simultaneous shells receive distinct physical interceptors and neither impacts", "assertions": ["iron.concurrent.distinctThreats", "iron.concurrent.protected"]},
+        {"key": "uncovered-impact", "role": "negative_control", "description": "A launcher outside the predicted-impact radius does not engage and the proven shell impacts", "assertions": ["iron.control.outOfRangeImpact", "iron.control.outOfRangeNoEngagement"]},
+        {"key": "authority-and-publication", "role": "negative_control", "description": "An untrusted mutation is rejected while the exact accepted event replicates and all state cleans up", "assertions": ["iron.authority.rejected", "iron.locality", "iron.client.authorityStimulus", "iron.client.eventReplicated", "iron.cleanup"]},
+    ],
+    "causal_relationships": [
+        {"key": "coverage-causes-engagement", "relation": "COMPARES_WITH", "source": "covered-impact", "target": "uncovered-impact", "controlled_dimensions": ["native gun", "ammo", "aim point", "target", "launcher enabled state"]},
+    ],
+    "propositions": [{
+        "id": "pontifex:advanced-systems:iron-dome-impact-contract",
+        "text": "Ophanim engages side-agnostic server-owned native artillery threats when their predicted impact lies inside an enabled launcher's configured radius and does not engage otherwise matched shells whose predicted impact lies outside coverage.",
+        "intended_use": "primary_result",
+        "assertions": sorted(SERVER_EXPECTED | CLIENT_EXPECTED),
+        "rationale": "Native impact controls, matched impact geometry, independent shell/interceptor trajectories, exact identities, client ownership, authenticated acknowledgements, adversarial receipt, replication and cleanup exclude proximity/overflight, server-local-only, ledger-only and no-stimulus false passes.",
+    }],
+    "unresolved": ["Native client-fired and HC-fired artillery stimuli, Client-B/JIP, configurable ammunition expenditure, and audio audibility remain outside this representative proof. Rejected calibrations established that the automated client fixture cannot make a local AI or player mortar emit ArtilleryShellFired, native artillery ammo exposes no stable netId/client object reference, and setOwner does not migrate it. The product retains owner-local observers, authenticated telemetry, current-owner routing and acknowledged remote neutralization for future topology proof."],
+}
+
 
 TRIBUNAL_SCENARIO = Scenario(
     identifier="advsys-iron-dome",
@@ -421,10 +466,11 @@ TRIBUNAL_SCENARIO = Scenario(
     review=ScenarioReview(
         test_type="specification",
         behavior_contract="An enabled Ophanim automatically launches a physical interceptor against each eligible native artillery shell within range, neutralizes the exact shell before its otherwise-proven impact, handles concurrent threats independently, rejects untrusted mutation, replicates the authoritative result, and leaves disabled/out-of-range stimuli untouched.",
-        outcome="REFINE BEFORE PERMANENT COVERAGE",
-        rationale="Controlled Live A/B proved the physical pipeline and exposed a client-callable authority defect plus non-retiring exhausted tasks; those bounded defects are refined before this causal specification is accepted.",
+        outcome="KEEP AS-IS AND SPEC-TEST",
+        rationale="Accepted controlled Live A/B proves predicted-impact tasking, physical interception, concurrent threats, authority rejection, replication and cleanup for native server-owned shells. Owner-local observers, authenticated telemetry and acknowledged remote neutralization implement topology independence; native client/HC shell creation remains externally blocked and is not falsely claimed.",
         dependencies=("Tribunal native-artillery observer", "server-authoritative Iron Dome", "one authenticated client"),
         evidence_types=frozenset({"native-artillery", "trajectory", "impact", "damage", "authoritative-state", "replication", "locality", "adversarial-receipt"}),
-        locality_requirements="The native shell, physical interceptor, assignment, terminal decision, and engagement record are server-local/authoritative; client-a observes the exact replicated terminal event and supplies only the rejected authority probe.",
+        locality_requirements="The accepted native shells, physical interceptors, assignment and terminal decisions are server-local/authoritative; client-a observes the exact replicated event and supplies the rejected authority probe. Client/HC-owned native shell creation is an explicit external proof boundary.",
     ),
+    evidence_contract=EVIDENCE_CONTRACT,
 )

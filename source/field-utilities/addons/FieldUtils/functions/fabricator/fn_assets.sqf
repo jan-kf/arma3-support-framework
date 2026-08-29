@@ -85,6 +85,7 @@ YFU_assetsGetPicture = {
 };
 
 YFU_assetsInitPage = {
+    uiNamespace setVariable ["YFU_assets_page_ready", nil];
     [] spawn {
         disableSerialization;
         private _tries = 0;
@@ -112,6 +113,7 @@ YFU_assetsInitPage = {
         call YFU_assetsRefreshQueue;
         call YFU_assetsApplyDeliveryDefaults;
         [] call YFU_assetsSetSubmitOverlay;
+        uiNamespace setVariable ["YFU_assets_page_ready", diag_tickTime];
     };
 };
 
@@ -405,30 +407,71 @@ YFU_assetsAnnounceDelivery = {
 };
 
 YFU_assetsAirdropAnnounce = {
-    params ["_airAsset", "_targetATL", "_count", "_sourceASL"];
+    params ["_airAsset", "_targetATL", "_count", ["_taskId", ""]];
 
-    if (isNull _airAsset) exitWith {};
-    if ((typeName _sourceASL) != "ARRAY" || {(count _sourceASL) < 3}) then {
-        _sourceASL = getPosASL _airAsset;
+    if (isNull _airAsset) exitWith {false};
+    [_airAsset, +_targetATL, _count, _taskId] spawn {
+        params ["_airAsset", "_targetATL", "_count", "_taskId"];
+
+        // Wait for the accepted aircraft to establish real closing motion.
+        // This deliberately estimates only travel to Vigil's release gate;
+        // parachute descent and ETA-to-ground are separate, unpromised events.
+        private _deadline = diag_tickTime + 15;
+        private _closingSpeed = -1;
+        private _assetATL = [];
+        private _distance = -1;
+        waitUntil {
+            uiSleep 0.25;
+            if (!isNull _airAsset && {alive _airAsset}) then {
+                _assetATL = getPosATL _airAsset;
+                _distance = _airAsset distance2D _targetATL;
+                private _towardTarget = [
+                    (_targetATL # 0) - (_assetATL # 0),
+                    (_targetATL # 1) - (_assetATL # 1),
+                    0
+                ];
+                private _length = vectorMagnitude _towardTarget;
+                if (_length > 0) then {
+                    _towardTarget = _towardTarget vectorMultiply (1 / _length);
+                    private _velocity = velocity _airAsset;
+                    _closingSpeed = (_velocity # 0) * (_towardTarget # 0)
+                        + (_velocity # 1) * (_towardTarget # 1);
+                };
+            };
+            isNull _airAsset
+            || {!alive _airAsset}
+            || {_closingSpeed >= 15}
+            || {diag_tickTime > _deadline}
+        };
+        if (isNull _airAsset || {!alive _airAsset} || {_closingSpeed < 15} || {_distance < 0}) exitWith {};
+
+        private _releaseRadius = missionNamespace getVariable ["YSF_FW_LOGISTICS_RELEASE_RADIUS", 25];
+        private _radial = [(_assetATL # 0) - (_targetATL # 0), (_assetATL # 1) - (_targetATL # 1), 0];
+        private _radialLength = (vectorMagnitude _radial) max 0.001;
+        private _predictedReleaseATL = _targetATL vectorAdd (_radial vectorMultiply (_releaseRadius / _radialLength));
+        private _bearing = _targetATL getDir _predictedReleaseATL;
+        private _dirLabel = [_bearing] call YOSHI_GET_DIRECTION;
+        private _remaining = (_distance - _releaseRadius) max 0;
+        private _rawEta = _remaining / _closingSpeed;
+        private _eta = (5 * round (_rawEta / 5)) max 5;
+
+        private _speaker = effectiveCommander _airAsset;
+        if (isNull _speaker) then { _speaker = driver _airAsset; };
+        if (isNull _speaker) then { _speaker = player; };
+
+        private _msg = format [
+            "Airdrop inbound. %1 package(s); expect release %2 of target in approximately %3 seconds.",
+            _count,
+            _dirLabel,
+            _eta
+        ];
+        uiNamespace setVariable ["YFU_last_airdrop_announcement", [
+            _taskId, serverTime, +_assetATL, +_targetATL, +_predictedReleaseATL,
+            _bearing, _dirLabel, _eta, _remaining, _closingSpeed, _count, _msg
+        ]];
+        [_speaker, _msg] call YFU_fnc_emitSideChat;
     };
-
-    private _assetATL = getPosATL _airAsset;
-
-    private _bearing = _targetATL getDir _assetATL;
-    private _dirLabel = [_bearing] call YOSHI_GET_DIRECTION;
-    private _eta = [_assetATL select 2, _targetATL select 2] call YOSHI_GET_FALL_TIME;
-
-    private _speaker = effectiveCommander _airAsset;
-    if (isNull _speaker) then { _speaker = driver _airAsset; };
-    if (isNull _speaker) then { _speaker = player; };
-
-    private _msg = format [
-        "Airdrop in-bound. %1 package(s), %2, ETA %3s.",
-        _count,
-        _dirLabel,
-        _eta
-    ];
-    [_speaker, _msg] call YFU_fnc_emitSideChat;
+    true
 };
 
 YFU_airdropResultVariable = {
@@ -606,7 +649,7 @@ YFU_assetsFinalizeDeliveryAirdrop = {
     private _accepted = (_ack param [0, false]) isEqualTo true;
     uiNamespace setVariable ["YFU_last_airdrop_request", [_requestId, _airAsset, _containers, _targetATL, _ack]];
     if (_accepted) then {
-        [_airAsset, _targetATL, count _containers, getPosASL _airAsset] call YFU_assetsAirdropAnnounce;
+        [_airAsset, _targetATL, count _containers, _requestId] call YFU_assetsAirdropAnnounce;
     };
     _accepted
 };

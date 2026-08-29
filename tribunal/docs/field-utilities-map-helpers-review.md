@@ -3,7 +3,7 @@
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
 **Classification: marker surface `REVIEWED / DEFERRED`; delivery feedback
-`REVIEWED / NEEDS PRODUCT DECISION AND EXPERIMENTATION`.** The inventory had
+`REFINED; ACCEPTED / COVERED`.** The inventory had
 combined an unreachable marker scaffold with two live formatting helpers used
 only by the Fabricator/Vigil airdrop composition.
 
@@ -17,7 +17,10 @@ documented entry.
 
 `YOSHI_GET_DIRECTION` and `YOSHI_GET_FALL_TIME` are live only through
 `YFU_assetsAirdropAnnounce`, called on the requesting client after Vigil
-accepts a logistics request.
+accepts a logistics request. The 2026-08-28 refinement no longer calls the
+vacuum fall helper: it waits for real positive closing motion, predicts the
+aircraft/package position at Vigil's release gate, and reports a five-second
+rounded time to release.
 
 ## Canonical review questions
 
@@ -119,8 +122,26 @@ interval, audience, and omission policy. Then reuse a retained
 independently timestamp acceptance, release, chute, and landing at two ingress
 distances. A wrong/empty rejected order must prove rejection and silence.
 
+## 2026-08-28 resolved contract and evidence
+
+Direction is from the requested target toward the predicted release position,
+which tells the player where to expect the aircraft/package at release. ETA is
+acceptance-flight observation to package release only; it never means landing
+or ETA-to-ground. If the replicated aircraft does not establish at least
+15 m/s closing motion within the bounded observation window, no confidently
+misleading estimate is emitted.
+
+Permanent `vigil-fixed-wing-logistics` run
+`20260828T234039Z-8be1c0e0` passed the full physical delivery contract. The
+announcement observed 124.875 m/s closing motion, predicted a release West of
+target in 20 seconds, and the authoritative release occurred 19.138 seconds
+later and 17.257 m from the predicted point. Package count and release-only
+language were exact. Operational message audience is resolved side-wide;
+client-B delivery/isolation remains shared C1 proof;
+audio is not claimed.
+
 ## Disposition
 
 **ID/location markers: reviewed/deferred as unreachable scaffold. Airdrop
-direction/ETA: reviewed, product decision and controlled timing experiment
-required before coverage.** No scenario or product code changed.
+direction/ETA: refined, accepted and permanently covered for one requesting
+client.** Do not restore altitude-only vacuum-fall semantics.

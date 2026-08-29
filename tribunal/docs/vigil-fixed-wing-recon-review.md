@@ -1,10 +1,16 @@
 # Vigil fixed-wing reconnaissance review
 
-Review outcome: **DEFER**.
+Review outcome: **INTENTIONALLY DEFER; DEAD SCAFFOLD RETIRED**.
 
 The repository does not currently establish a coherent, executable fixed-wing
 reconnaissance product contract. Permanent gameplay coverage would require
 inventing the missing behavior, so no scenario is added by this review.
+
+On 2026-08-28 the unreachable Recon controls, disconnected client state helper,
+generic recon classifier, and empty post-init task registration/file were
+removed. This is retirement, not a recon implementation. The fixed-wing RECON
+role bit, registry/lifecycle model, governor/task seams, aviation observers and
+map infrastructure remain available for a later coherent product.
 
 ## What currently exists
 
@@ -23,22 +29,17 @@ That metadata does not lead to a reconnaissance task:
   [the UAV deployment boundary review](vigil-fixed-wing-uav-deploy-review.md);
 - the Fixed Wing controls expose Deploy, RTB, strike controls and Fabricator,
   but no reconnaissance request control;
-- the separate `TaskG_Recon` controls contain grid, altitude and radius fields,
-  but the submit button has no action;
-- the visible Assets toolbox has Transport, Artillery, CAS and Fixed Wing only,
-  so the separate `recon` task group cannot be selected normally;
-- `fn_recon_task.sqf` is zero bytes and has been empty since the repository's
-  bootstrap commit;
+- the visible Assets toolbox has Transport, Artillery, CAS and Fixed Wing only;
+- the former disconnected `TaskG_Recon`, client state helper and empty task file
+  have been retired rather than treated as supported behavior;
 - the fixed-wing map path explicitly ignores destination double-clicks;
 - no reconnaissance request, server task, sensor collection, detected-contact
   record, imagery, marker/report output, completion result, persistence policy,
   multiplayer propagation or cleanup implementation exists.
 
-The separate recon state helper only stores client-local `grid`, `alt` and
-`radius` values and mirrors them into controls. It does not dispatch anything.
-The generic asset classifier calls any friendly UAV/UGV a recon asset, but that
-is disconnected from the registered fixed-wing workflow and likewise has no
-task implementation.
+No separate recon state helper, classifier, form, submit path, or task
+registration remains. Future work begins from an explicit product contract and
+the retained fixed-wing/generic extension seams.
 
 The upstream README promises fixed-wing deployment, RTB and laser-guided bomb
 or missile requests. It does not promise reconnaissance output. Repository
@@ -90,7 +91,7 @@ history contains no earlier implementation that establishes missing intent.
 | UAV-derived RECON role bit and label | DEFER | intentional-looking metadata, but capability semantics are undefined |
 | fixed-wing UAV rejection boundary | ACCEPTED / COVERED | direct remote request is rejected before authoritative mutation |
 | fixed-wing UAV reconstruction | NEEDS EXPERIMENTATION | explicitly disabled as unstable; no controlled evidence yet |
-| separate recon grid/altitude/radius state | DEFER | disconnected client-only scaffolding |
+| former recon grid/altitude/radius state and empty task | RETIRED | disconnected scaffold removed; do not restore |
 | recon submit/request construction | DEFER | absent; submit control has no action |
 | server reconnaissance task/lifecycle | DEFER | absent |
 | ingress/orbit/dwell/RTB policy | DEFER | shared deployment exists, but recon-specific behavior is unspecified |

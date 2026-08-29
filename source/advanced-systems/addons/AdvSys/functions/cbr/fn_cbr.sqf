@@ -8,17 +8,21 @@ And over our camp, keep watch through the night.
 Amen.
 */
 
-YOSHI_CB_LINK_DIST = 100;
-YOSHI_CB_LEEWAY = 100;
+// One authoritative row per physical strike observation. Presentation groups
+// are derived on each client's map and never become storage containers.
+YOSHI_CB_UNCERTAINTY_RADIUS = 100;
+YOSHI_CB_VISUAL_LINK_FRACTION = 0.045;
+YOSHI_CB_ARMING_DIST = 5;
 YOSHI_CB_MEMBER_TTL = 2.0;
 
 YOSHI_CB_queue = [];
-YOSHI_CB_clusters = [];
+YOSHI_CB_observations = [];
+YOSHI_CB_visualClusters = [];
+YOSHI_CB_renderMarkers = [];
+YOSHI_CB_lastRenderSignature = "";
 YOSHI_CB_markerIndex = 0;
-YOSHI_CB_nextUid = 0;
 YOSHI_CB_airborneShells = [];
 
-YOSHI_CB_CENTER_UPDATE_DIST = 25;
 YOSHI_CB_PREDICT_STEP = 0.1;
 YOSHI_CB_PREDICT_MAX_TIME = 180;
 YOSHI_CB_LOCAL_UID_COUNTER = 0;
@@ -40,136 +44,25 @@ if (isNil { missionNamespace getVariable "YOSHI_CBR_MANAGER_THREAD" }) then {
 if (isNil { missionNamespace getVariable "YOSHI_CBR_ORIGIN_THREAD" }) then {
 	missionNamespace setVariable ["YOSHI_CBR_ORIGIN_THREAD", scriptNull];
 };
+if (isNil { missionNamespace getVariable "YOSHI_CBR_OBSERVATIONS" }) then {
+	missionNamespace setVariable ["YOSHI_CBR_OBSERVATIONS", []];
+};
 
 YOSHI_CB_enqueue = {
-	params ["_uid", "_impactPos", "_eta"];
+	params ["_uid", "_impactPos", "_eta", ["_provenance", []]];
 	private _exp = time + _eta + 1;
-	YOSHI_CB_queue pushBack [_uid, _impactPos, _eta, _exp];
+	YOSHI_CB_queue pushBack [_uid, _impactPos, _eta, _exp, time, +_provenance];
 };
 
-YOSHI_CB_recalcCluster = {
-	params ["_cluster"];
-
-	private _members = _cluster select 0;
-
-	private _sumX = 0;
-	private _sumY = 0;
-	private _n = count _members;
-	if (_n == 0) exitWith {[_cluster, [0,0,0], 0, 999, 999]};
-
-	{
-		private _p = _x select 1;
-		_sumX = _sumX + (_p select 0);
-		_sumY = _sumY + (_p select 1);
-	} forEach _members;
-
-	private _desiredCenter = [_sumX / _n, _sumY / _n, 0];
-
-	private _center = _cluster select 1;
-	if (isNil "_center") then {_center = _desiredCenter};
-
-	if ((_center distance2D _desiredCenter) > YOSHI_CB_CENTER_UPDATE_DIST) then {
-		_center = _desiredCenter;
-	};
-
-	private _maxD = 0;
-	private _etaMin = 999999;
-	private _etaMax = -1;
-
-	{
-		private _p = _x select 1;
-		private _eta = _x select 2;
-
-		private _d = _center distance2D _p;
-		if (_d > _maxD) then {_maxD = _d;};
-
-		if (_eta < _etaMin) then {_etaMin = _eta;};
-		if (_eta > _etaMax) then {_etaMax = _eta;};
-	} forEach _members;
-
-	private _radius = _maxD + YOSHI_CB_LEEWAY;
-
-	_cluster set [1, _center];
-	_cluster set [2, _radius];
-	_cluster set [3, _etaMin];
-	_cluster set [4, _etaMax];
-};
-
-
-YOSHI_CB_drawCluster = {
-	params ["_cluster"];
-
-	private _center = _cluster select 1;
-	private _radius = _cluster select 2;
-	private _etaMin = _cluster select 3;
-	private _etaMax = _cluster select 4;
-	private _members = _cluster select 0;
-
-	private _mCircle = _cluster select 5;
-	private _mIcon = _cluster select 6;
-
-	_mCircle setMarkerPos _center;
-	_mCircle setMarkerSize [_radius, _radius];
-
-	_mIcon setMarkerPos _center;
-	_mIcon setMarkerText format ["%1 shells | ETA %2-%3s", count _members, _etaMin, _etaMax];
-};
-
-YOSHI_CB_createCluster = {
-	params ["_member"];
-
-	private _idx = YOSHI_CB_markerIndex;
-	YOSHI_CB_markerIndex = YOSHI_CB_markerIndex + 1;
-
-	private _circleName = format ["YOSHI_cb_zone_%1", _idx];
-	private _iconName = format ["YOSHI_cb_txt_%1", _idx];
-
-	private _mCircle = createMarker [_circleName, _member select 1];
-	_mCircle setMarkerShape "ELLIPSE";
-	_mCircle setMarkerBrush "SolidBorder";
-	_mCircle setMarkerColor "ColorRed";
-	_mCircle setMarkerAlpha 0.35;
-
-	private _mIcon = createMarker [_iconName, _member select 1];
-	_mIcon setMarkerType "mil_warning";
-	_mIcon setMarkerColor "ColorRed";
-
-	private _cluster = [[_member], [0,0,0], 0, 999, 999, _circleName, _iconName];
-	[_cluster] call YOSHI_CB_recalcCluster;
-	[_cluster] call YOSHI_CB_drawCluster;
-
-	YOSHI_CB_clusters pushBack _cluster;
-};
-
-YOSHI_CB_addToCluster = {
-	params ["_cluster", "_member"];
-
-	(_cluster select 0) pushBack _member;
-	[_cluster] call YOSHI_CB_recalcCluster;
-	[_cluster] call YOSHI_CB_drawCluster;
+YOSHI_CB_publishObservations = {
+	if (!isServer) exitWith {};
+	missionNamespace setVariable ["YOSHI_CBR_OBSERVATIONS", +YOSHI_CB_observations, true];
 };
 
 YOSHI_CB_prune = {
-	private _now = time;
-
-	private _i = 0;
-	while {_i < count YOSHI_CB_clusters} do {
-		private _c = YOSHI_CB_clusters select _i;
-		private _members = _c select 0;
-
-		_members = _members select {(_x select 3) > _now};
-		_c set [0, _members];
-
-		if ((count _members) == 0) then {
-			deleteMarker (_c select 5);
-			deleteMarker (_c select 6);
-			YOSHI_CB_clusters deleteAt _i;
-		} else {
-			[_c] call YOSHI_CB_recalcCluster;
-			[_c] call YOSHI_CB_drawCluster;
-			_i = _i + 1;
-		};
-	};
+	private _before = count YOSHI_CB_observations;
+	YOSHI_CB_observations = YOSHI_CB_observations select {(_x select 6) > time};
+	if ((count YOSHI_CB_observations) != _before) then {call YOSHI_CB_publishObservations};
 };
 
 YOSHI_CB_processQueue = {
@@ -180,52 +73,171 @@ YOSHI_CB_processQueue = {
 		private _pos = _m select 1;
 		private _eta = _m select 2;
 		private _exp = _m select 3;
+		private _observedAt = _m select 4;
+		private _provenance = _m select 5;
 
-		private _updated = false;
+		private _index = YOSHI_CB_observations findIf {(_x select 0) isEqualTo _id};
+		if (_index >= 0) then {
+			private _observation = YOSHI_CB_observations select _index;
+			_observation set [1, +_pos];
+			_observation set [4, _observedAt];
+			_observation set [5, _eta];
+			_observation set [6, _exp];
+			_observation set [7, +_provenance];
+			YOSHI_CB_observations set [_index, _observation];
+		} else {
+			// [uid, position, uncertainty geometry, first/last observation times,
+			// eta, expiry, provenance]. Different physical UIDs are never folded
+			// together, even when their map presentation is visually clustered.
+			YOSHI_CB_observations pushBack [
+				_id, +_pos, ["ellipse", [YOSHI_CB_UNCERTAINTY_RADIUS, YOSHI_CB_UNCERTAINTY_RADIUS], 0],
+				_observedAt, _observedAt, _eta, _exp, +_provenance
+			];
+		};
+		call YOSHI_CB_publishObservations;
+	};
+};
 
-		for "_ci" from 0 to ((count YOSHI_CB_clusters) - 1) do {
-			private _c = YOSHI_CB_clusters select _ci;
-			private _members = _c select 0;
+YOSHI_CB_clearRenderMarkers = {
+	{deleteMarkerLocal _x} forEach YOSHI_CB_renderMarkers;
+	YOSHI_CB_renderMarkers = [];
+	YOSHI_CB_visualClusters = [];
+};
 
-			for "_mi" from 0 to ((count _members) - 1) do {
-				private _mem = _members select _mi;
-				if ((_mem select 0) == _id) exitWith {
-					_mem set [1, _pos];
-					_mem set [2, _eta];
-					_mem set [3, _exp];
-					_members set [_mi, _mem];
-					_c set [0, _members];
+YOSHI_CB_screenLinked = {
+	params ["_map", "_left", "_right", "_threshold"];
+	private _leftPos = _left select 1;
+	private _rightPos = _right select 1;
+	if ((_leftPos distance2D _rightPos) <= YOSHI_CB_ARMING_DIST) exitWith {true};
+	private _a = _map ctrlMapWorldToScreen _leftPos;
+	private _b = _map ctrlMapWorldToScreen _rightPos;
+	if ((count _a) < 2 || {(count _b) < 2}) exitWith {false};
+	private _dx = (_a select 0) - (_b select 0);
+	private _dy = (_a select 1) - (_b select 1);
+	sqrt ((_dx * _dx) + (_dy * _dy)) <= _threshold
+};
 
-					[_c] call YOSHI_CB_recalcCluster;
-					[_c] call YOSHI_CB_drawCluster;
-
-					_updated = true;
+YOSHI_CB_clusterForMap = {
+	params ["_map", "_observations"];
+	private _position = ctrlPosition _map;
+	private _threshold = YOSHI_CB_VISUAL_LINK_FRACTION * ((_position select 2) min (_position select 3));
+	private _remaining = +_observations;
+	private _groups = [];
+	while {(count _remaining) > 0} do {
+		private _group = [_remaining deleteAt 0];
+		private _front = 0;
+		while {_front < count _group} do {
+			private _seed = _group select _front;
+			for "_i" from ((count _remaining) - 1) to 0 step -1 do {
+				private _candidate = _remaining select _i;
+				if ([_map, _seed, _candidate, _threshold] call YOSHI_CB_screenLinked) then {
+					_group pushBack (_remaining deleteAt _i);
 				};
 			};
-			if (_updated) exitWith {};
+			_front = _front + 1;
 		};
+		_groups pushBack _group;
+	};
+	_groups
+};
 
-		if (!_updated) then {
-			private _member = [_id, _pos, _eta, _exp];
-
-			private _best = -1;
-			private _bestD = 1e12;
-
-			for "_i" from 0 to ((count YOSHI_CB_clusters) - 1) do {
-				private _c = YOSHI_CB_clusters select _i;
-				private _d = (_c select 1) distance2D _pos;
-				if (_d < _bestD) then {
-					_bestD = _d;
-					_best = _i;
-				};
-			};
-
-			if (_best == -1 || {_bestD > YOSHI_CB_LINK_DIST}) then {
-				[_member] call YOSHI_CB_createCluster;
-			} else {
-				[YOSHI_CB_clusters select _best, _member] call YOSHI_CB_addToCluster;
-			};
+YOSHI_CB_clusterEnvelope = {
+	params ["_members"];
+	private _first = (_members select 0) select 1;
+	private _endA = +_first;
+	private _endB = +_first;
+	private _longest = 0;
+	for "_i" from 0 to ((count _members) - 1) do {
+		for "_j" from (_i + 1) to ((count _members) - 1) do {
+			private _a = (_members select _i) select 1;
+			private _b = (_members select _j) select 1;
+			private _distance = _a distance2D _b;
+			if (_distance > _longest) then {_longest = _distance; _endA = +_a; _endB = +_b};
 		};
+	};
+	private _radius = 0;
+	private _dx = (_endB select 0) - (_endA select 0);
+	private _dy = (_endB select 1) - (_endA select 1);
+	{
+		private _point = _x select 1;
+		private _geometry = _x select 2;
+		private _uncertainty = selectMax (_geometry select 1);
+		private _offset = if (_longest <= 0) then {0} else {
+			abs ((_dy * ((_point select 0) - (_endA select 0))) - (_dx * ((_point select 1) - (_endA select 1)))) / _longest
+		};
+		_radius = _radius max (_offset + _uncertainty);
+	} forEach _members;
+	private _center = [((_endA select 0) + (_endB select 0)) / 2, ((_endA select 1) + (_endB select 1)) / 2, 0];
+	private _direction = if (_longest <= 0) then {0} else {_dx atan2 _dy};
+	private _etaValues = _members apply {_x select 5};
+	[_center, _endA, _endB, _longest / 2, _radius, _direction, selectMin _etaValues, selectMax _etaValues, count _members, _members apply {_x select 0}]
+};
+
+YOSHI_CB_renderMap = {
+	params ["_map"];
+	call YOSHI_CB_clearRenderMarkers;
+	private _observations = +(missionNamespace getVariable ["YOSHI_CBR_OBSERVATIONS", []]);
+	private _groups = [_map, _observations] call YOSHI_CB_clusterForMap;
+	{
+		private _envelope = [_x] call YOSHI_CB_clusterEnvelope;
+		_envelope params ["_center", "_endA", "_endB", "_halfLength", "_radius", "_direction", "_etaMin", "_etaMax", "_count"];
+		private _prefix = format ["YOSHI_cb_view_%1_%2", clientOwner, YOSHI_CB_markerIndex];
+		YOSHI_CB_markerIndex = YOSHI_CB_markerIndex + 1;
+		if (_count <= 1) then {
+			private _zone = createMarkerLocal [format ["%1_zone", _prefix], _center];
+			_zone setMarkerShapeLocal "ELLIPSE";
+			_zone setMarkerBrushLocal "SolidBorder";
+			_zone setMarkerColorLocal "ColorRed";
+			_zone setMarkerAlphaLocal 0.35;
+			_zone setMarkerSizeLocal [_radius, _radius];
+			YOSHI_CB_renderMarkers pushBack _zone;
+		} else {
+			// A real capsule: a narrow oriented body plus circular end caps. It
+			// bounds every constituent uncertainty disc without converting a
+			// walking barrage into a vast enclosing circle.
+			private _body = createMarkerLocal [format ["%1_body", _prefix], _center];
+			_body setMarkerShapeLocal "RECTANGLE";
+			_body setMarkerBrushLocal "SolidBorder";
+			_body setMarkerColorLocal "ColorRed";
+			_body setMarkerAlphaLocal 0.35;
+			_body setMarkerSizeLocal [_radius, _halfLength];
+			_body setMarkerDirLocal _direction;
+			YOSHI_CB_renderMarkers pushBack _body;
+			{
+				private _cap = createMarkerLocal [format ["%1_cap_%2", _prefix, _forEachIndex], _x];
+				_cap setMarkerShapeLocal "ELLIPSE";
+				_cap setMarkerBrushLocal "SolidBorder";
+				_cap setMarkerColorLocal "ColorRed";
+				_cap setMarkerAlphaLocal 0.35;
+				_cap setMarkerSizeLocal [_radius, _radius];
+				YOSHI_CB_renderMarkers pushBack _cap;
+			} forEach [_endA, _endB];
+		};
+		private _icon = createMarkerLocal [format ["%1_icon", _prefix], _center];
+		_icon setMarkerTypeLocal "mil_warning";
+		_icon setMarkerColorLocal "ColorRed";
+		_icon setMarkerTextLocal format ["%1 shells | ETA %2-%3s", _count, _etaMin, _etaMax];
+		YOSHI_CB_renderMarkers pushBack _icon;
+		YOSHI_CB_visualClusters pushBack _envelope;
+	} forEach _groups;
+};
+
+YOSHI_CB_rendererManager = {
+	while {hasInterface} do {
+		private _display = findDisplay 12;
+		private _map = if (isNull _display) then {controlNull} else {_display displayCtrl 51};
+		private _enabled = missionNamespace getVariable ["YOSHI_CBR_ENABLED", false];
+		if (_enabled && {!isNull _map} && {visibleMap}) then {
+			private _signature = str [ctrlMapScale _map, missionNamespace getVariable ["YOSHI_CBR_OBSERVATIONS", []]];
+			if (_signature isNotEqualTo YOSHI_CB_lastRenderSignature) then {
+				[_map] call YOSHI_CB_renderMap;
+				YOSHI_CB_lastRenderSignature = _signature;
+			};
+		} else {
+			if !(YOSHI_CB_renderMarkers isEqualTo []) then {call YOSHI_CB_clearRenderMarkers};
+			YOSHI_CB_lastRenderSignature = "";
+		};
+		uiSleep 0.1;
 	};
 };
 
@@ -313,7 +325,7 @@ YOSHI_predictFallTimeAndPos = {
 };
 
 YOSHI_handleArtilleryFire = {
-	params ["_shell"];
+	params ["_shell", ["_provenance", []]];
 
 	if (isNull _shell) exitWith {};
 
@@ -325,7 +337,7 @@ YOSHI_handleArtilleryFire = {
 	while {alive _shell} do {
 		if (time >= _next) then {
 			private _impact = _shell call YOSHI_predictFallTimeAndPos;
-			[_uid, _impact select 1, _impact select 0] remoteExecCall ["YOSHI_fnc_cbrReceiveTrackUpdate", 2];
+				[_uid, _impact select 1, _impact select 0, _provenance] remoteExecCall ["YOSHI_fnc_cbrReceiveTrackUpdate", 2];
 			_next = time + 0.5;
 		};
 		sleep 0.05;
@@ -356,29 +368,24 @@ YOSHI_fnc_cbrWarnSidePlayers = {
 };
 
 YOSHI_fnc_cbrReset = {
-	{
-		private _mCircle = _x select 5;
-		private _mIcon = _x select 6;
-		deleteMarker _mCircle;
-		deleteMarker _mIcon;
-	} forEach YOSHI_CB_clusters;
-
 	YOSHI_CB_queue = [];
-	YOSHI_CB_clusters = [];
+	YOSHI_CB_observations = [];
+	call YOSHI_CB_publishObservations;
 	YOSHI_CB_markerIndex = 0;
-	YOSHI_CB_nextUid = 0;
 	YOSHI_CB_airborneShells = [];
 };
 
 YOSHI_fnc_cbrReceiveTrackUpdate = {
 	if (!isServer) exitWith {};
-	params ["_uid", "_impactPos", "_eta"];
+	params ["_uid", "_impactPos", "_eta", ["_provenance", []]];
 
 	if (!(missionNamespace getVariable ["YOSHI_CBR_ENABLED", false])) exitWith {};
 	if (_uid isEqualTo "") exitWith {};
 	if !(_impactPos isEqualType [] && {(count _impactPos) >= 2}) exitWith {};
 
-	[_uid, _impactPos, _eta] call YOSHI_CB_enqueue;
+	private _receivedProvenance = +_provenance;
+	_receivedProvenance pushBack remoteExecutedOwner;
+	[_uid, _impactPos, _eta, _receivedProvenance] call YOSHI_CB_enqueue;
 };
 
 YOSHI_fnc_cbrHandleLocalArtilleryFire = {
@@ -410,10 +417,11 @@ YOSHI_fnc_cbrEnsureLocalHandler = {
 			_impactPos = (_shell call YOSHI_predictFallTimeAndPos) select 1;
 		};
 
-		private _artySide = if (!isNull _gunner) then { side group _gunner } else { side _vehicle };
-		private _isFirstLaunchInCycle = [_shell] call YOSHI_CB_registerAirborneShell;
-		[_vehicle, _artySide, _impactPos, _isFirstLaunchInCycle] remoteExecCall ["YOSHI_fnc_cbrHandleLocalArtilleryFire", 2];
-		[_shell] spawn YOSHI_handleArtilleryFire;
+			private _artySide = if (!isNull _gunner) then { side group _gunner } else { side _vehicle };
+			private _isFirstLaunchInCycle = [_shell] call YOSHI_CB_registerAirborneShell;
+			[_vehicle, _artySide, _impactPos, _isFirstLaunchInCycle] remoteExecCall ["YOSHI_fnc_cbrHandleLocalArtilleryFire", 2];
+			private _provenance = [clientOwner, if (isNull _vehicle) then {""} else {netId _vehicle}, _weapon, _ammo, str _artySide];
+			[_shell, _provenance] spawn YOSHI_handleArtilleryFire;
 	}];
 
 	true
@@ -485,3 +493,4 @@ YOSHI_fnc_cbrToggleEnabled = {
 };
 
 [] call YOSHI_fnc_cbrEnsureLocalHandler;
+if (hasInterface) then {[] spawn YOSHI_CB_rendererManager};

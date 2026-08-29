@@ -36,6 +36,17 @@ shows the selected occupied payload and resolves the user's current bindings at
 render time. The manager and HUD validate and apply the existing
 `YFU_monochromeBaseColor` theme setting.
 
+Installed payloads also remain UAV property at destruction. On an ordinary UAV
+kill, Payload Manager consumes the manifest exactly once, releases every
+grenade with inherited velocity, and detonates every installed satchel; this
+preserves the intended kinetic-impact satchel-drone use. An APS defensive kill
+sets a feature-owned marker that suppresses only Payload Manager's own crash
+release. APS and Payload Manager must never remove, replace, or rewrite object
+event handlers installed by missions or other mods. Those handlers remain
+installed and retain their normal semantics, including triggering third-party
+payload behavior. Pontifex does not claim that its marker can suppress an
+uncooperative third-party handler.
+
 ## Canonical review
 
 1. **User observation.** A nearby player sees one simple Payload Manager world
@@ -58,7 +69,10 @@ render time. The manager and HUD validate and apply the existing
    policy are Field Utilities semantics.
 5. **Product behavior.** Pontifex owns the manager UI, theme use, eight-unit
    capacity, inventory catalogue, ordered UAV manifest, non-refundable
-   installation, bindings, controller gate, HUD, and deploy effects.
+   installation, bindings, controller gate, HUD, deploy effects, ordinary-kill
+   manifest release, and its narrowly scoped APS suppression marker. Event
+   handlers owned by missions and other mods are explicitly outside Pontifex
+   ownership and must remain untouched.
 6. **Engine requirements.** Inventory mutation must execute where the player's
    inventory is local; consequential UAV state remains server-authoritative.
    The accepted run proves this split in the supported dedicated-server plus one
@@ -85,7 +99,7 @@ render time. The manager and HUD validate and apply the existing
 
 ## Permanent coverage boundary
 
-Accepted proof covers world entry, dialog creation, separated real inventory, validated theme, live binding resolution, authenticated three-item transfer, eight-unit capacity refusal, stale refusal, UAV-owned reorder, replication, authentic live-UAV control, negative context gating, occupied-only cycling, controller HUD with actual configured bindings and theme, grenade and satchel deployment causality, exact server authority/effect receipts, empty refusal, audit, and cleanup. Client-B/JIP and ownership migration remain shared program boundaries. Mortars are deliberately absent rather than uncovered. Broader ACE
+Accepted proof covers world entry, dialog creation, separated real inventory, validated theme, live binding resolution, authenticated three-item transfer, eight-unit capacity refusal, stale refusal, UAV-owned reorder, replication, authentic live-UAV control, negative context gating, occupied-only cycling, controller HUD with actual configured bindings and theme, grenade and satchel deployment causality, ordinary-kill satchel release, APS suppression limited to Pontifex-owned crash effects, survival and execution of an independently installed `Killed` handler, exact server authority/effect receipts, empty refusal, audit, and cleanup. Client-B/JIP and ownership migration remain shared program boundaries. Compatibility with arbitrary third-party payload implementations is not a finite matrix; the stable requirement is non-interference with their handlers. Mortars are deliberately absent rather than uncovered. Broader ACE
 dependency removal is outside this feature.
 
 ## False-PASS risks

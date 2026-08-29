@@ -18,6 +18,11 @@ There is no capacity or weight feature in the current UI or request contract.
 The permanent specification therefore rejects an empty manifest but does not
 invent capacity boundaries.
 
+The accepted announcement reports package count, the target-relative direction
+of the predicted release point, and a coarse five-second-rounded ETA to the
+authoritative 25 m release gate. It derives this from real horizontal closing
+velocity and does not estimate parachute descent or promise ETA-to-ground.
+
 ## Architecture and lifecycle
 
 Registration, snapshot data, reconstruction, role bitmask, ingress/egress
@@ -128,6 +133,19 @@ Fresh cold run `20260814T202618Z-836d4782` passed 19 server and 12 client
 assertions with zero failures and removed client, server, private network and
 runtime state. Final post-review run `20260814T203444Z-c44a034a` also passed 19 server and 12 client assertions with zero failures. It recorded chute `2:196` as server-local throughout observation, landed cargo `4:5` 42.20 m from the requested point with zero damage and exact inventory, sampled 5,330.45 m of RTB travel, and completed normal cleanup.
 
+Release-feedback closeout run `20260828T234039Z-8be1c0e0` passed the complete
+scenario with 15 server and 9 client feature assertions. The independent oracle
+recorded West, 20 seconds announced, 19.138 seconds actual to the authoritative
+`released` event, and 17.257 m predicted-position error. Three rejected fixture
+calibrations are not accepted evidence: they exposed that the old scenario
+queued an object absent from the hardened authoritative Fabricator catalogue;
+the final fixture registers and restores the exact source.
+
+The accepted package was ingested twice idempotently. This legacy scenario has
+no distillable proposition evaluation, so it adds delivery evidence without
+promoting a generic finding. The combined post-ingestion knowledge audit is
+accepted with no serious failures.
+
 ## Generic Tribunal tooling
 
 `tribunal.mission.delivery` is product-neutral. It normalizes physical container
@@ -136,8 +154,8 @@ locality, survival and delivery-error evidence. Vigil meaning—eligible role,
 request validation, manifest policy, dispatch, completion and reuse—remains in
 the product scenario.
 
-## Next feature review
+## Disposition
 
-Review fixed-wing reconnaissance next. It shares the proven registered-aircraft
-lifecycle while introducing a distinct observation/sensor contract; it should
-not inherit strike targeting or logistics cargo assumptions.
+This review is closed. Fixed-wing reconnaissance is intentionally deferred and
+its disconnected form/task scaffold has been retired; the shared registry and
+task seams remain available for a future coherent product design.

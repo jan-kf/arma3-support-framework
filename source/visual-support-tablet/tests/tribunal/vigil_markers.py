@@ -28,6 +28,8 @@ CLIENT_ASSERTIONS = [
     "vigil.marker.dynamicBacking",
     "vigil.marker.dynamicReplacement",
     "vigil.marker.cleanup",
+    "vigil.marker.tabLeaveCleanup",
+    "vigil.marker.tabReturnClean",
     "vigil.marker.closeArmed",
     "vigil.marker.closeCleanup",
 ]
@@ -35,7 +37,7 @@ CLIENT_ASSERTIONS = [
 EVIDENCE_CONTRACT = {
     "scenario": {
         "id": "vigil-markers",
-        "version": 1,
+        "version": 2,
         "feature_family": "pontifex-vigil-artillery-preview-markers",
         "name": "Vigil artillery preview-marker lifecycle",
         "definition": {
@@ -75,10 +77,16 @@ EVIDENCE_CONTRACT = {
             "assertions": [CLIENT_ASSERTIONS[8]],
         },
         {
+            "key": "tab_workspace_lifecycle",
+            "role": "treatment",
+            "description": "Leaving artillery deletes coordinate and strike drafts plus their state; returning creates a clean workspace",
+            "assertions": CLIENT_ASSERTIONS[9:11],
+        },
+        {
             "key": "active_escape_close",
             "role": "treatment",
             "description": "The authenticated Escape input arms a non-empty generation in KeyDown, captures strike, ETA, and selected-asset overlay identities, then permits the real onUnload cleanup",
-            "assertions": CLIENT_ASSERTIONS[9:],
+            "assertions": CLIENT_ASSERTIONS[11:],
         },
         {
             "key": "fixture_closeout",
@@ -106,14 +114,14 @@ EVIDENCE_CONTRACT = {
     "propositions": [
         {
             "id": "pontifex:vigil:artillery-preview-lifecycle",
-            "text": "For the tested client-local Vigil artillery page, real request changes replace visible strike and ETA previews, explicit count zero retires the prior generation, and closing through authenticated Escape retires every exact active strike, ETA, and selected-asset overlay marker identity.",
+            "text": "For the tested client-local Vigil artillery page, real request changes replace visible strike and ETA previews; leaving and returning clears every unsubmitted coordinate, strike, ETA, and draft-state value; and closing through authenticated Escape performs the same complete draft cleanup without changing submitted tasks.",
             "intended_use": "primary_result",
             "assertions": SERVER_ASSERTIONS + CLIENT_ASSERTIONS,
             "rationale": "Framebuffer changes are correlated with projected world geometry and exact allMapMarkers identities; the Escape KeyDown capture proves active names existed immediately before the product onUnload path and the post-close census proves those same names disappeared.",
         },
     ],
     "unresolved": [
-        "Coordinate-preview and tab-switch persistence await product decision C12; client-B, simultaneous previews, JIP/reconnect, line rendering, range colour, and VLS sizing remain outside this bounded proof."
+        "Client-B, simultaneous previews, JIP/reconnect, line rendering, range colour, and VLS sizing remain outside this bounded proof."
     ],
 }
 
@@ -262,6 +270,46 @@ private _positionsAfter = uiNamespace getVariable ["YOSHI_taskArty_strikePattern
 ["vigil.marker.cleanup", _remaining isEqualTo [] && {_storedAfter isEqualTo []} && {_positionsAfter isEqualTo []} && {((call YOSHI_taskArty_GetState) get "count") isEqualTo 0}, format ["old=%1|remaining=%2|stored=%3|positions=%4", _threeMarkers, _remaining, _storedAfter, _positionsAfter]] call _assert;
 diag_log format ["TRIBUNAL_VIGIL_MARKER|CLEARED_READY|token=%1|old=%2|remaining=%3", _token, _threeMarkers, _remaining];
 
+if (_mapReady) then {
+    [_gridControl] call YOSHI_assetCoordChanged;
+    _countControl ctrlSetText "3";
+    ["count", _countControl] call YOSHI_setCount;
+};
+private _tabDraftMarkers = +(uiNamespace getVariable ["YOSHI_sp_markers", []]);
+private _tabCoordinate = uiNamespace getVariable ["YSF_arty_coord_preview_var", ""];
+private _tabDraftArmed = (count _tabDraftMarkers) isEqualTo 4
+    && {_tabCoordinate isNotEqualTo ""}
+    && {_tabCoordinate in allMapMarkers};
+[controlNull, 0] call YOSHI_assetsTabChanged;
+uiSleep 0.25;
+private _tabOldRemaining = _tabDraftMarkers select {_x in allMapMarkers};
+private _tabStateGone = isNil {uiNamespace getVariable "YOSHI_taskArty_state"};
+private _tabLeaveClean = _tabDraftArmed
+    && {_tabOldRemaining isEqualTo []}
+    && {!(_tabCoordinate in allMapMarkers)}
+    && {(uiNamespace getVariable ["YSF_arty_coord_preview_var", ""]) isEqualTo ""}
+    && {(uiNamespace getVariable ["YOSHI_sp_markers", []]) isEqualTo []}
+    && {(uiNamespace getVariable ["YOSHI_taskArty_strikePattern", []]) isEqualTo []}
+    && {_tabStateGone};
+["vigil.marker.tabLeaveCleanup", _tabLeaveClean, format ["armed=%1|strike=%2|coord=%3|remaining=%4|stateGone=%5", _tabDraftArmed, _tabDraftMarkers, _tabCoordinate, _tabOldRemaining, _tabStateGone]] call _assert;
+
+[controlNull, 1] call YOSHI_assetsTabChanged;
+uiSleep 0.3;
+private _returnState = call YOSHI_taskArty_GetState;
+private _tabReturnClean = (uiNamespace getVariable ["YSF_asset_type", ""]) isEqualTo "arty"
+    && {(_returnState get "grid") isEqualTo [0,0,0]}
+    && {(_returnState get "count") isEqualTo 0}
+    && {(uiNamespace getVariable ["YOSHI_sp_markers", []]) isEqualTo []}
+    && {(uiNamespace getVariable ["YOSHI_taskArty_strikePattern", []]) isEqualTo []}
+    && {(uiNamespace getVariable ["YSF_arty_coord_preview_var", ""]) isEqualTo ""};
+["vigil.marker.tabReturnClean", _tabReturnClean, format ["type=%1|state=%2|strike=%3|positions=%4|coord=%5", uiNamespace getVariable ["YSF_asset_type", ""], _returnState, uiNamespace getVariable ["YOSHI_sp_markers", []], uiNamespace getVariable ["YOSHI_taskArty_strikePattern", []], uiNamespace getVariable ["YSF_arty_coord_preview_var", ""]]] call _assert;
+
+if (_mapReady) then {
+    if (_sourcePath isNotEqualTo []) then {[_tree, _sourcePath] call YOSHI_assetSelected};
+    _gridControl ctrlSetText "0468-0277";
+    [_gridControl] call YOSHI_assetCoordChanged;
+};
+
 if (!isNull _display) then {
     _display displayAddEventHandler ["KeyDown", {
         params ["_display", "_key"];
@@ -277,11 +325,13 @@ if (!isNull _display) then {
             private _ellipses = _strike select {markerShape _x isEqualTo "ELLIPSE"};
             private _overlays = +(uiNamespace getVariable ["YSF_map_overlay_markers", []]);
             private _positions = +(uiNamespace getVariable ["YOSHI_taskArty_strikePattern", []]);
-            private _all = _strike + _overlays;
+            private _coordinate = uiNamespace getVariable ["YSF_arty_coord_preview_var", ""];
+            private _all = _strike + _overlays + (if (_coordinate isEqualTo "") then {[]} else {[_coordinate]});
             private _kindsReady = (count _strike) isEqualTo 4
                 && {(count _etas) isEqualTo 1}
-                && {(count _ellipses) isEqualTo 3};
-            uiNamespace setVariable ["TRIBUNAL_VIGIL_MARKER_CLOSE_CAPTURE", [_strike, _etas, _overlays, _positions, _all apply {_x in allMapMarkers}, _kindsReady]];
+                && {(count _ellipses) isEqualTo 3}
+                && {_coordinate isNotEqualTo ""};
+            uiNamespace setVariable ["TRIBUNAL_VIGIL_MARKER_CLOSE_CAPTURE", [_strike, _etas, _overlays, _positions, _all apply {_x in allMapMarkers}, _kindsReady, _coordinate]];
         };
         false
     }];
@@ -297,16 +347,19 @@ private _closeOverlays = _closeCapture param [2, []];
 private _closePositions = _closeCapture param [3, []];
 private _aliveBeforeClose = _closeCapture param [4, []];
 private _kindsReady = _closeCapture param [5, false];
-private _captured = _closeStrike + _closeOverlays;
+private _closeCoordinate = _closeCapture param [6, ""];
+private _captured = _closeStrike + _closeOverlays + (if (_closeCoordinate isEqualTo "") then {[]} else {[_closeCoordinate]});
 private _remainingAfterClose = _captured select {_x in allMapMarkers};
 private _closeArmed = (count _closeStrike) isEqualTo 4
     && {(count _closeEtas) isEqualTo 1}
     && {(count _closeOverlays) isEqualTo 1}
+    && {_closeCoordinate isNotEqualTo ""}
     && {(count _closePositions) isEqualTo 3}
     && {_kindsReady}
     && {({!_x} count _aliveBeforeClose) isEqualTo 0};
-["vigil.marker.closeArmed", _closeArmed, format ["strike=%1|etas=%2|overlays=%3|positions=%4|alive=%5", _closeStrike, _closeEtas, _closeOverlays, _closePositions, _aliveBeforeClose]] call _assert;
-["vigil.marker.closeCleanup", _closed && {_closeArmed} && {_remainingAfterClose isEqualTo []}, format ["closed=%1|captured=%2|remaining=%3|strikeStore=%4|overlayStore=%5", _closed, _captured, _remainingAfterClose, uiNamespace getVariable ["YOSHI_sp_markers", []], uiNamespace getVariable ["YSF_map_overlay_markers", []]]] call _assert;
+["vigil.marker.closeArmed", _closeArmed, format ["strike=%1|etas=%2|overlays=%3|coord=%4|positions=%5|alive=%6", _closeStrike, _closeEtas, _closeOverlays, _closeCoordinate, _closePositions, _aliveBeforeClose]] call _assert;
+private _closeStateGone = isNil {uiNamespace getVariable "YOSHI_taskArty_state"};
+["vigil.marker.closeCleanup", _closed && {_closeArmed} && {_remainingAfterClose isEqualTo []} && {_closeStateGone} && {(uiNamespace getVariable ["YSF_arty_coord_preview_var", ""]) isEqualTo ""}, format ["closed=%1|captured=%2|remaining=%3|strikeStore=%4|overlayStore=%5|coordStore=%6|stateGone=%7", _closed, _captured, _remainingAfterClose, uiNamespace getVariable ["YOSHI_sp_markers", []], uiNamespace getVariable ["YSF_map_overlay_markers", []], uiNamespace getVariable ["YSF_arty_coord_preview_var", ""], _closeStateGone]] call _assert;
 missionNamespace setVariable ["TRIBUNAL_VIGIL_MARKER_CLIENT_DONE", _token, true];
 ''',
     metadata={
@@ -323,7 +376,7 @@ missionNamespace setVariable ["TRIBUNAL_VIGIL_MARKER_CLIENT_DONE", _token, true]
     },
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="Changing a valid artillery request updates the visible client-local preview count and position, replaces stale preview state, and removes it on clear/close.",
+        behavior_contract="Changing a valid artillery request updates the visible client-local preview count and position, replaces stale preview state, and removes every unsubmitted coordinate/strike draft and related state on tab exit or tablet close; returning starts clean.",
         outcome="KEEP AS-IS AND SPEC-TEST",
         rationale="Backing marker names and arrays are used only to disambiguate stale rendering; the stable contract is visible spatial/count lifecycle and cleanup.",
         dependencies=("Tribunal framebuffer/map observer", "Vigil artillery preview"),

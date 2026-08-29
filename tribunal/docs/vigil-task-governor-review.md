@@ -3,17 +3,20 @@
 Reviewed against [`feature-review-program.md`](feature-review-program.md).
 
 **Classification: REFINED; ACCEPTED / COVERED** for the one-client declarative
-request-authority boundary and the server-owned terminal lifecycle. Existing
-artillery, transport, and CAS scenarios retain their accepted physical consumer
-outcomes. Remote cancellation policy, durable history, client-N/JIP, ownership
-migration, and headless/client-owned vehicles remain excluded.
+request-authority boundary, server-owned terminal lifecycle, bounded per-asset
+queue/replacement/history policy, compact operational display, side-wide
+operational task messages, and task authority for legitimate tablet users.
+Existing artillery, transport, and CAS scenarios retain their accepted physical
+consumer outcomes. Client-N/JIP, ownership migration, headless/client-owned
+vehicles, and fixed-wing separate lifecycle remain excluded.
 
 ## Scope
 
 This review covers shared task construction, assignment, stage progression,
 terminal handling, finalization, and dispatch in
 `functions/governor/fn_governor.sqf`, plus the real artillery, transport, and CAS
-submission paths. The unreachable homepage task UI remains separately deferred.
+submission paths. The legacy homepage task UI remains a retirement candidate;
+the resolved lightweight task surface lives on the reachable Assets page.
 Questions 2–8 below record the pre-refinement source findings; the accepted
 continuations record the resulting product contract and evidence.
 
@@ -21,10 +24,13 @@ continuations record the resulting product contract and evidence.
 
 ### 1. What should the user or integrator observe?
 
-A valid Vigil request should create at most one authoritative task generation for
-its selected vehicle, progress through task-specific work, publish a truthful
-terminal result, and clean its owned resources. Invalid, duplicate, cancelled,
-failed, or vehicle-lost work must not overwrite active work or remain active.
+A valid Vigil request should create at most one active authoritative task
+generation for its selected vehicle, queue non-equivalent work FIFO within a
+small bound, or replace the active generation only through an explicit confirmed
+operation. Work progresses through task-specific stages, publishes truthful
+activation and terminal results, retains bounded recent history, and cleans its
+owned resources. Invalid or task-equivalent requests must not consume capacity
+or disturb active work.
 
 ### 2. What does the implementation actually do?
 
@@ -67,9 +73,11 @@ stages, eligibility, terminal policy, and finalizers.
 
 ### 5. Which behavior is product-owned?
 
-The accepted request schemas, one-active-task policy, cancellation authority,
-registered server handlers, ordered lifecycle, terminal causes, exact-once
-finalization, result acknowledgment, and record retention are Vigil semantics.
+The accepted request schemas, one-active-task policy, task-specific equivalence,
+FIFO/replacement admission, cancellation authority, registered server handlers,
+ordered lifecycle, terminal causes, exact-once finalization, result
+acknowledgment, bounded recent history, and operational snapshot are Vigil
+semantics.
 CORDIS supplies transport/dedupe mechanics only; it does not authorize the
 code-bearing payload or prove its execution.
 
@@ -113,17 +121,23 @@ state alone is not the governor oracle.
 ### 10. Which details must remain replaceable?
 
 Numeric stages, return strings, PFH cadence, map/key layout, task ID format,
-private signatures, record storage, and debug messages are free. Preserve only
-validated declarative authority, one-active policy, ordered work, truthful
-terminal state, exact-once finalization, and cleanup.
+private signatures, record storage, and debug messages are free. Preserve
+validated declarative authority, one-active policy, task-specific duplicate
+semantics, bounded FIFO/replacement behavior, activation/terminal messaging,
+bounded recent history, truthful terminal state, exact-once finalization, and
+cleanup.
 
 ### 11. What remains to characterize or decide?
 
-Clients should submit declarative requests and the server should build registered
-code; this is a mandatory security/authority correction rather than optional
-characterization. Product decisions remain for reject/queue/replace policy,
-cancellation eligibility, terminal-history retention, retry versus consumer
-bounds, invalid-result handling, and headless/client-owned vehicles.
+The declarative server-built request boundary, FIFO queue, confirmed
+replacement, bounded recent-history policy, task authority, and task-message
+audience are resolved. Any legitimate same-side Vigil tablet user may queue work
+or explicitly overwrite the active task after confirmation. That overwrite is
+the retained cancellation operation; no separate remote-cancel product surface
+exists. Operational task messages are side-wide. Retry versus consumer bounds
+and invalid-result handling remain separate low-frequency lifecycle policy;
+headless/client-owned vehicles, ownership migration, client-N and JIP remain
+topology boundaries.
 
 ### 12. What belongs in Tribunal?
 
@@ -256,3 +270,59 @@ second-pass counts and the Sacred Texts audit passed. Reviewed distillation now
 contains 22 findings: 10 intentionally project-specific, 7 generic lemmas, and
 1 generic conjecture. Both authority propositions are project-specific, so this
 continuation adds zero generic Sacred Texts notes.
+
+## Accepted continuation — bounded queue, history, and operational display
+
+The resolved product decision keeps exactly one active governor generation per
+asset. Up to four non-equivalent requests queue FIFO. Equivalence is
+task-specific: artillery compares ordered strike positions and ordnance,
+transport compares mode/options/altitude/destination, and CAS compares target,
+altitude, and duration. A fifth queued request fails atomically. Explicit
+replacement uses its own slot, requires client confirmation, cancels the exact
+active generation, activates ahead of the FIFO, and does not reorder that FIFO.
+Server ingress is serialized so concurrent remote calls cannot scramble
+admission order.
+
+Every newly active queued task emits its correlated start result and every
+terminal task emits the existing correlated terminal result. Each manager keeps
+only its eight newest terminal summaries. The replicated side-tagged
+operational snapshot contains data only, never handler code. While the real
+tablet is open, the Assets map draws every friendly active governor-managed
+artillery, transport, and rotary-CAS asset plus its current target line.
+Off-tab entries use 30 percent of the configured theme alpha; current-tab
+entries use full configured alpha. A compact selected-asset status/history
+display and the map refresh approximately every three seconds. Fixed-wing
+retains its separate registry lifecycle and is not falsely included.
+
+Permanent scenario `vigil-task-queue` uses one authenticated client, real
+server request ingress, real transport/artillery managers, real tablet controls,
+and an authenticated framebuffer tab driver. Accepted run
+`20260828T215908Z-8d34ac9c` (Evidence Contract v2) passed 9/0 server
+and 7/0 client feature assertions: independent actives, exact semantic duplicate
+rejection, four-entry bound, explicit replacement priority, fail-closed second
+pending replacement, exact FIFO activation, eight-entry history,
+activation/terminal receipts, side snapshot, cross-tab opacity, configured
+theme RGBA, movement refresh, compact status/history, and complete restoration.
+The permanent static contract separately guards the real client confirmation
+dialog and all three reachable Replace controls.
+The immutable package file SHA-256 is
+`5325bfcc3aa1f91841b765c9c12ff2fd8e5db1d1c049e6d2a8e49c70f6a92685`.
+Earlier accepted v1 run `20260828T214109Z-aca16fac` remains valid for its
+narrower contract; v2 is canonical because it adds the pending-replacement
+refusal boundary.
+
+Fresh post-change regressions `20260828T214313Z-1ec1f993`
+(`vigil-governor-authority`) and `20260828T214439Z-e370d418`
+(`vigil-governor-lifecycle`) also passed completely. All four accepted
+packages were ingested serially and were count-stable on repeat; the production
+ledger advanced to 47 packages, 48 runs, and 1,260 evidence artifacts. Reviewed
+distillation classified every new disposition as `PROJECT-SPECIFIC ONLY`,
+added no generic claim, was idempotent, and the full Sacred Texts audit passed.
+
+Standalone remote cancellation is not part of the retained product. Explicit
+confirmed overwrite supplies the resolved cancellation semantics and is
+available to any authenticated, eligible same-side tablet user. Operational
+task messages are side-wide. Client-B/JIP proof of audience isolation and
+concurrent authority, retry/invalid-return policy, headless/client-owned assets,
+and ownership migration remain excluded. The legacy full task-management
+homepage was not revived.

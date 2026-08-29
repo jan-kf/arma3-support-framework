@@ -9,7 +9,7 @@ of whom shall I be afraid?
 YAS_IRONDOME_BOX_CLASS = "YAS_OPHANIM_box";
 YAS_IRONDOME_MISSILE_CLASS = "M_Jian_AT";
 YAS_IRONDOME_SPAWN_OFFSET = [0, 0, 1];
-YAS_IRONDOME_FUSE_DISTANCE = 40;
+YAS_IRONDOME_FUSE_DISTANCE = 150;
 YAS_IRONDOME_INITIAL_SPEED = 350;
 YAS_IRONDOME_RETRY_INTERVAL = 15;
 YAS_IRONDOME_MAX_SHOTS = 6;
@@ -208,6 +208,8 @@ YAS_fnc_ironDomeCreateTask = {
         ["_shell", objNull, [objNull]],
         ["_source", objNull, [objNull]],
         ["_ammo", "", [""]],
+        ["_impactPos", [], [[]]],
+        ["_shellOwner", -1, [0]],
         ["_token", "", [""]]
     ];
 
@@ -221,6 +223,8 @@ YAS_fnc_ironDomeCreateTask = {
         ["shell", _shell],
         ["source", _source],
         ["ammo", _ammo],
+        ["impactPos", _impactPos],
+        ["shellOwner", _shellOwner],
         ["createdAt", serverTime],
         ["attempts", 0],
         ["nextAttemptAt", serverTime],
@@ -248,7 +252,8 @@ YAS_fnc_ironDomeCleanupTasks = {
 
         private _exhausted = (_task getOrDefault ["attempts", 0]) >= YAS_IRONDOME_MAX_SHOTS
             && {(_task getOrDefault ["activeAttempts", 0]) <= 0};
-        if (!isNull _shell && {!(_shell getVariable ["YAS_ironDome_hit", false])} && {!_exhausted}) then {
+        private _activeAttempts = _task getOrDefault ["activeAttempts", 0];
+        if (_activeAttempts > 0 || {!isNull _shell && {!(_shell getVariable ["YAS_ironDome_hit", false])} && {!_exhausted}}) then {
             _keep pushBack _task;
         } else {
             if (!isNull _shell) then {
@@ -281,13 +286,15 @@ YAS_fnc_ironDomeGetLauncherCandidatesForTask = {
     private _shell = _task getOrDefault ["shell", objNull];
     if (isNull _shell) exitWith {[]};
 
+    private _impactPos = _task getOrDefault ["impactPos", []];
+    if !(_impactPos isEqualType [] && {(count _impactPos) >= 2}) exitWith {[]};
     private _radius = call YAS_fnc_ironDomeGetEngagementRadius;
     private _candidates = [];
 
     {
         private _launcher = _x;
-        private _shellDistance = _launcher distance2D _shell;
-        if (_shellDistance <= _radius) then {
+        private _impactDistance = _launcher distance2D _impactPos;
+        if (_impactDistance <= _radius) then {
             private _candidateLaunchAt = _launcher getVariable ["YAS_ironDome_nextLaunchAt", -1];
             {
                 _x params ["_availabilityLauncher", "_availabilityAt"];
@@ -299,7 +306,7 @@ YAS_fnc_ironDomeGetLauncherCandidatesForTask = {
                 _candidateLaunchAt = serverTime;
             };
 
-            _candidates pushBack [_launcher, _candidateLaunchAt, _shellDistance];
+            _candidates pushBack [_launcher, _candidateLaunchAt, _impactDistance];
         };
     } forEach ([_token] call YAS_fnc_ironDomeRefreshRegistry);
 
@@ -445,6 +452,7 @@ YAS_fnc_ironDomeExecuteAssignedTasks = {
         private _shell = _task getOrDefault ["shell", objNull];
         private _launcher = _task getOrDefault ["assignedLauncher", objNull];
         private _scheduledLaunchAt = _task getOrDefault ["scheduledLaunchAt", -1];
+        private _impactPos = _task getOrDefault ["impactPos", []];
 
         if (!isNull _launcher && {_scheduledLaunchAt <= serverTime}) then {
             _task set ["assignedLauncher", objNull];
@@ -455,7 +463,7 @@ YAS_fnc_ironDomeExecuteAssignedTasks = {
                 || {_shell getVariable ["YAS_ironDome_hit", false]}
                 || {!alive _launcher}
                 || {!(_launcher getVariable ["YAS_ironDome_enabled", true])}
-                || {(_launcher distance2D _shell) > (call YAS_fnc_ironDomeGetEngagementRadius)}
+                || {(_launcher distance2D _impactPos) > (call YAS_fnc_ironDomeGetEngagementRadius)}
             ) then {
                 _launcher setVariable ["YAS_ironDome_taskedShell", objNull, true];
             } else {
@@ -476,7 +484,7 @@ YAS_fnc_ironDomeExecuteAssignedTasks = {
                         YAS_IRONDOME_MISSILE_CLASS,
                         YAS_IRONDOME_RETRY_INTERVAL,
                         YAS_IRONDOME_LAUNCH_SPACING,
-                        round (_launcher distance2D _shell),
+                        round (_launcher distance2D _impactPos),
                         round (call YAS_fnc_ironDomeGetEngagementRadius)
                     ]
                 ] call YAS_fnc_ironDomeLog;
@@ -585,6 +593,36 @@ YAS_fnc_ironDomeSpawnMissile = {
     };
 
     _missile
+};
+
+YAS_fnc_ironDomeNeutralizeAckServer = {
+    if (!isServer) exitWith {false};
+    params ["_shellUid", "_ok", "_wasLocal"];
+    private _task = createHashMap;
+    {
+        if ((_x getOrDefault ["shellUid", ""]) isEqualTo _shellUid) exitWith {_task = _x;};
+    } forEach YAS_IRONDOME_TASKS;
+    if ((count _task) <= 0) exitWith {false};
+    private _expectedOwner = _task getOrDefault ["shellOwner", -1];
+    private _accepted = remoteExecutedOwner isEqualTo _expectedOwner && {_ok} && {_wasLocal};
+    _task set ["neutralized", _accepted];
+    _task set ["neutralizeAck", true];
+    if (!_accepted) then {
+        private _token = localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""];
+        [_token, "shell-neutralize", "owner-rejected", remoteExecutedOwner, format ["expected=%1|shell=%2", _expectedOwner, _shellUid]] call YAS_fnc_ironDomeAudit;
+    };
+    _accepted
+};
+
+YAS_fnc_ironDomeNeutralizeShellLocal = {
+    params ["_shell", "_shellUid"];
+    private _wasLocal = !isNull _shell && {local _shell};
+    private _ok = _wasLocal;
+    if (_ok) then {
+        _shell setVariable ["YAS_ironDome_controllerActive", false];
+        deleteVehicle _shell;
+    };
+    [_shellUid, _ok, _wasLocal] remoteExecCall ["YAS_fnc_ironDomeNeutralizeAckServer", 2];
 };
 
 YAS_fnc_ironDomeMonitorIntercept = {
@@ -697,21 +735,48 @@ YAS_fnc_ironDomeMonitorIntercept = {
         false
     };
 
+    private _interceptPosATL = getPosATL _shell;
+    _shell setVariable ["YAS_ironDome_hit", true, true];
+    private _effectOwner = if (isServer && {local _shell}) then {2} else {owner _shell};
+    _task set ["shellOwner", _effectOwner];
+    _task set ["neutralized", false];
+    _task set ["neutralizeAck", false];
+    if (_effectOwner isEqualTo 2 && {local _shell}) then {
+        // The authoritative worker already owns this shell.  A remoteExec to
+        // the server does not carry a client-owner identity, so commit the
+        // owner-local delete directly and reserve the authenticated ack path
+        // for genuinely remote owners.
+        _shell setVariable ["YAS_ironDome_controllerActive", false];
+        deleteVehicle _shell;
+        _task set ["neutralized", true];
+        _task set ["neutralizeAck", true];
+    } else {
+        [_shell, _shellUid] remoteExecCall ["YAS_fnc_ironDomeNeutralizeShellLocal", _effectOwner];
+    };
+    private _neutralizeDeadline = diag_tickTime + 3;
+    waitUntil {
+        uiSleep 0.01;
+        _task getOrDefault ["neutralizeAck", false] || {diag_tickTime > _neutralizeDeadline}
+    };
+    if !(_task getOrDefault ["neutralized", false]) exitWith {
+        _task set ["activeAttempts", ((_task getOrDefault ["activeAttempts", 1]) - 1) max 0];
+        [_token, [
+            _shellUid, _launcherUid, _missileUid, "neutralize-failed", _attemptIndex,
+            _closestDistance, diag_tickTime, _ammo, _shellLocal, _missileLocal
+        ]] call YAS_fnc_ironDomeRecordEvent;
+        if (!isNull _missile) then {deleteVehicle _missile;};
+        false
+    };
+
     _launcher setVariable ["YAS_ironDome_successCount", (_launcher getVariable ["YAS_ironDome_successCount", 0]) + 1, true];
-    _shell setVariable ["YAS_ironDome_hit", true];
     _task set ["activeAttempts", ((_task getOrDefault ["activeAttempts", 1]) - 1) max 0];
     [_token, [
         _shellUid, _launcherUid, _missileUid, "intercepted", _attemptIndex,
-        _closestDistance, diag_tickTime, _ammo, _shellLocal, _missileLocal
+        _closestDistance, diag_tickTime, _ammo, _shellLocal, _missileLocal, _effectOwner
     ]] call YAS_fnc_ironDomeRecordEvent;
 
-    private _shellPosATL = if (!isNull _shell) then {getPosATL _shell} else {getPosATL _source};
+    private _shellPosATL = _interceptPosATL;
     "HelicopterExploSmall" createVehicle (_shellPosATL vectorAdd [0, 0, 0.1]);
-
-    if (!isNull _shell) then {
-        _shell setVariable ["YAS_ironDome_controllerActive", false];
-        deleteVehicle _shell;
-    };
 
     if (!isNull _missile) then {
         deleteVehicle _missile;
@@ -732,25 +797,17 @@ YAS_fnc_ironDomeMonitorIntercept = {
 };
 
 YAS_fnc_ironDomeHandleShellFired = {
-    params ["_vehicle", "_ammo", "_shell", ["_token", "", [""]]];
+    params ["_vehicle", "_ammo", "_shell", "_impactPos", "_shellOwner", ["_token", "", [""]]];
 
     if !([_token, "handle-shell-fired"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
     if (isNull _shell) exitWith {false};
+    if !(_impactPos isEqualType [] && {(count _impactPos) >= 2} && {(_impactPos # 0) isEqualType 0} && {(_impactPos # 1) isEqualType 0}) exitWith {false};
+    if ((count _impactPos) < 3) then {
+        _impactPos pushBack (getTerrainHeightASL [_impactPos # 0, _impactPos # 1, 0]);
+    };
 
     private _registry = [_token] call YAS_fnc_ironDomeRefreshRegistry;
     if (_registry isEqualTo []) exitWith {false};
-
-    if (!local _shell) exitWith {
-        [
-            format [
-                "shell %1 seen for source %2, but it is not local here. shellOwner=%3",
-                _shell,
-                _vehicle,
-                owner _shell
-            ]
-        ] call YAS_fnc_ironDomeLog;
-        false
-    };
 
     if (_shell getVariable ["YAS_ironDome_controllerActive", false]) exitWith {false};
     _shell setVariable ["YAS_ironDome_controllerActive", true];
@@ -758,37 +815,59 @@ YAS_fnc_ironDomeHandleShellFired = {
 
     [
         format [
-            "tracking shell=%1 ammo=%2 source=%3 activeOphanim=%4 radius=%5m tasking=enabled",
+            "tracking shell=%1 ammo=%2 source=%3 owner=%4 impact=%5 activeOphanim=%6 radius=%7m tasking=enabled",
             _shell,
             _ammo,
             _vehicle,
+            _shellOwner,
+            _impactPos,
             count _registry,
             round (call YAS_fnc_ironDomeGetEngagementRadius)
         ]
     ] call YAS_fnc_ironDomeLog;
 
-    [_shell, _vehicle, _ammo, _token] call YAS_fnc_ironDomeCreateTask;
+    [_shell, _vehicle, _ammo, _impactPos, _shellOwner, _token] call YAS_fnc_ironDomeCreateTask;
     [_token] call YAS_fnc_ironDomeEnsureDispatcher;
+    true
+};
+
+YAS_fnc_ironDomeSubmitShellTelemetry = {
+    if (!isServer) exitWith {false};
+    params ["_vehicle", "_ammo", "_shell", "_impactPos"];
+    private _sourceOwner = remoteExecutedOwner;
+    private _token = localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""];
+    if (isNull _shell || {_sourceOwner <= 0} || {_sourceOwner isNotEqualTo owner _shell}) exitWith {
+        [_token, "shell-telemetry", "owner-rejected", _sourceOwner, if (isNull _shell) then {"null"} else {format ["expected=%1|shell=%2", owner _shell, netId _shell]}] call YAS_fnc_ironDomeAudit;
+        false
+    };
+    [_vehicle, _ammo, _shell, _impactPos, _sourceOwner, _token] call YAS_fnc_ironDomeHandleShellFired
+};
+
+YAS_fnc_ironDomeEnsureLocalObserver = {
+    if (isNil "YAS_IRONDOME_ARTY_EH_ID") then {
+        YAS_IRONDOME_ARTY_EH_ID = -1;
+    };
+    if (YAS_IRONDOME_ARTY_EH_ID >= 0) exitWith {true};
+    YAS_IRONDOME_ARTY_EH_ID = addMissionEventHandler ["ArtilleryShellFired", {
+        params ["_vehicle", "_weapon", "_ammo", "_gunner", "_instigator", "_artilleryTarget", "_targetPosition", "_shell"];
+        if (isNull _shell || {!local _shell}) exitWith {};
+        private _impactPos = +_targetPosition;
+        if !(_impactPos isEqualType [] && {(count _impactPos) >= 2}) then {
+            _impactPos = (_shell call YOSHI_predictFallTimeAndPos) # 1;
+        };
+        if (isServer) then {
+            [_vehicle, _ammo, _shell, _impactPos, 2, localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""]] call YAS_fnc_ironDomeHandleShellFired;
+        } else {
+            [_vehicle, _ammo, _shell, _impactPos] remoteExecCall ["YAS_fnc_ironDomeSubmitShellTelemetry", 2];
+        };
+    }];
     true
 };
 
 YAS_fnc_ironDomeEnsureArtilleryEH = {
     params ["_token"];
     if !([_token, "ensure-artillery-eh"] call YAS_fnc_ironDomeAuthorized) exitWith {false};
-
-    if (isNil "YAS_IRONDOME_ARTY_EH_ID") then {
-        YAS_IRONDOME_ARTY_EH_ID = -1;
-    };
-
-    if (YAS_IRONDOME_ARTY_EH_ID >= 0) exitWith {true};
-
-    YAS_IRONDOME_ARTY_EH_ID = addMissionEventHandler ["ArtilleryShellFired", {
-        params ["_vehicle", "_weapon", "_ammo", "_gunner", "_instigator", "_artilleryTarget", "_targetPosition", "_shell"];
-        [_vehicle, _ammo, _shell, localNamespace getVariable ["YAS_IRONDOME_TOKEN", ""]] call YAS_fnc_ironDomeHandleShellFired;
-    }];
-
-    ["server ArtilleryShellFired listener installed for Iron Dome."] call YAS_fnc_ironDomeLog;
-    true
+    call YAS_fnc_ironDomeEnsureLocalObserver
 };
 
 YAS_fnc_ironDomeInitServer = {
@@ -839,3 +918,7 @@ YAS_fnc_ironDomeInitServer = {
 
     true
 };
+
+// Pre-init runs on every machine; only the machine local to a new shell emits
+// authenticated trajectory telemetry to the authoritative server.
+call YAS_fnc_ironDomeEnsureLocalObserver;

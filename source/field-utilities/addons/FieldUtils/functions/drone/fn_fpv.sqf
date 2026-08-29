@@ -69,6 +69,60 @@ YFU_fnc_payloadDeploymentAudit = {
     localNamespace setVariable ["YFU_PAYLOAD_DEPLOYMENTS", _rows];
 };
 
+YFU_fnc_payloadCrashServer = {
+    params ["_token", ["_uav", objNull, [objNull]]];
+    if (!isServer || {_token isNotEqualTo YFU_PAYLOAD_INTERNAL_TOKEN} || {isNull _uav}) exitWith {false};
+    if (_uav getVariable ["YFU_PAYLOAD_CRASH_HANDLED", false]) exitWith {false};
+    _uav setVariable ["YFU_PAYLOAD_CRASH_HANDLED", true, true];
+
+    private _state = [_uav] call YFU_fnc_payloadState;
+    _state params ["_revision", "_payloads", "_selected"];
+    if (_payloads isEqualTo []) exitWith {true};
+
+    // Consume the UAV-owned manifest exactly once before creating effects.
+    // Ordinary destruction releases every grenade and detonates every satchel.
+    // APS suppression is deliberately limited to this Pontifex-owned lifecycle;
+    // unrelated mod event handlers are never removed or rewritten.
+    _uav setVariable ["YFU_PAYLOAD_STATE", [_revision + 1, [], 0], true];
+    private _apsTransaction = _uav getVariable ["YOSHI_APS_AntiDroneNeutralized", ""];
+    if (_apsTransaction isNotEqualTo "") exitWith {
+        [YFU_PAYLOAD_INTERNAL_TOKEN, "crash", true, "aps-suppressed", 2, format ["uav=%1|transaction=%2|payloads=%3", netId _uav, _apsTransaction, _payloads apply {_x # 1}]] call YFU_fnc_payloadAudit;
+        true
+    };
+
+    private _position = getPosATL _uav;
+    private _inheritedVelocity = velocity _uav;
+    private _released = 0;
+    {
+        private _payload = _x;
+        _payload params ["_id", "_class", "_label", "_cost", "_deployKind", "_ammo"];
+        private _effect = createVehicle [_ammo, [0, 0, 100], [], 0, "CAN_COLLIDE"];
+        if (!isNull _effect) then {
+            _effect setPosATL (_position vectorAdd [0, 0, 0.1]);
+            if (_deployKind isEqualTo "drop") then {_effect setVelocity _inheritedVelocity;};
+            [YFU_PAYLOAD_INTERNAL_TOKEN, "crash-release", 2, _uav, _payload, _effect] call YFU_fnc_payloadDeploymentAudit;
+            if (_deployKind isEqualTo "satchel") then {_effect setDamage 1;};
+            _released = _released + 1;
+        } else {
+            [YFU_PAYLOAD_INTERNAL_TOKEN, "crash", false, "effect-create-failed", 2, format ["uav=%1|payload=%2|ammo=%3", netId _uav, _class, _ammo]] call YFU_fnc_payloadAudit;
+        };
+    } forEach _payloads;
+    [YFU_PAYLOAD_INTERNAL_TOKEN, "crash", _released isEqualTo count _payloads, "released", 2, format ["uav=%1|released=%2|payloads=%3", netId _uav, _released, count _payloads]] call YFU_fnc_payloadAudit;
+    _released isEqualTo count _payloads
+};
+
+if (isServer) then {
+    // Payloads are UAV property. The server consumes and releases the complete
+    // installed manifest on ordinary destruction. Defensive APS neutralization
+    // is explicit; unrelated handlers stay installed and retain their behavior.
+    addMissionEventHandler ["EntityKilled", {
+        params ["_entity"];
+        if (_entity isKindOf "UAV_01_base_F") then {
+            [YFU_PAYLOAD_INTERNAL_TOKEN, _entity] call YFU_fnc_payloadCrashServer;
+        };
+    }];
+};
+
 YFU_fnc_payloadResult = {
     if (!hasInterface) exitWith {};
     params ["_operation", "_accepted", "_reason", "_uavId", "_revision", ["_payloads", []]];

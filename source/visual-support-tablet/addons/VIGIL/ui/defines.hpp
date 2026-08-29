@@ -173,6 +173,7 @@ class YSF_Progress: RscProgress {
 class YSF_GridRef: YSF_RscEdit { idc=IDC_MAP_COORD; x=P_TXT_W; y=P_TXT_H; onKeyUp="_this call YOSHI_assetCoordChanged;"; onKillFocus="_this call YOSHI_assetCoordChanged;"; };
 class YSF_GridLbl: YSF_RscText { idc=-1; x=0; y=P_TXT_H; text="Task Grid Reference:"; };
 class YSF_BtnSubmit: YSF_RscButton { idc=IDC_TASK_SUBMIT; text="Submit"; x=SIZE_HALF-BTN_W; y=SIZE_HALF-BTN_H; };
+class YSF_BtnReplace: YSF_RscButton { idc=IDC_TASK_REPLACE; text="Replace"; x=SIZE_HALF-(BTN_W*2+PADDING); y=SIZE_HALF-BTN_H; };
 class YSF_Checkbox: RscCheckbox {};
 
 class YSF_UplinkStatusLbl: YSF_RscText { idc=-1; x=0; y=SIZE_FULL-TXT_H; text="Uplink Status:"; };

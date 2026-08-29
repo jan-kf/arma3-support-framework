@@ -1,13 +1,18 @@
 YSF_clearAllMarkers = {
-	private _strikePatternMarkers = uiNamespace getVariable ["YOSHI_sp_markers", []];
-	{
-		deleteMarker _x;
-	} forEach _strikePatternMarkers;
+	if !(isNil "YSF_taskArtyClearWorkspace") then {
+		call YSF_taskArtyClearWorkspace;
+	} else {
+		private _strikePatternMarkers = uiNamespace getVariable ["YOSHI_sp_markers", []];
+		{ deleteMarkerLocal _x; } forEach _strikePatternMarkers;
+		uiNamespace setVariable ["YOSHI_sp_markers", []];
+		uiNamespace setVariable ["YOSHI_taskArty_strikePattern", []];
+	};
 
 	private _displayMarkers = uiNamespace getVariable ["YSF_map_overlay_markers", []];
 	{
-		deleteMarker _x;
+		deleteMarkerLocal _x;
 	} forEach _displayMarkers;
+	uiNamespace setVariable ["YSF_map_overlay_markers", []];
 };
 
 YSF_fnc_debugMsg = {

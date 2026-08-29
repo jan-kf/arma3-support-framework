@@ -1,6 +1,7 @@
 #include "..\..\ui\idc.hpp"
 
 YOSHI_taskArty_submit = {
+    params [["_policy", "queue"]];
     private _vehicle = uiNamespace getVariable ["YSF_current_selected_asset", objNull];
     if (isNull _vehicle) exitWith {"No vehicle selected for artillery task" call YSF_fnc_debugMsg;};
     call YSF_submitButtonDebounce;
@@ -9,7 +10,7 @@ YOSHI_taskArty_submit = {
     private _ordinance = _s get "ord";
     private _strikePositions = uiNamespace getVariable ["YOSHI_taskArty_strikePattern", []];
 
-    [_vehicle, "artillery", [_strikePositions, _ordinance]] call YSF_taskRequestRemote;
+    [_vehicle, "artillery", [_strikePositions, _ordinance], _policy] call YSF_taskRequestRemote;
 };
 
 YOSHI_drawStrikePattern = {

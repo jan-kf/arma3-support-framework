@@ -1,5 +1,22 @@
 #include "..\..\ui\idc.hpp"
 
+YSF_taskArtyClearWorkspace = {
+  { deleteMarkerLocal _x } forEach (uiNamespace getVariable ["YOSHI_sp_markers", []]);
+  uiNamespace setVariable ["YOSHI_sp_markers", []];
+  uiNamespace setVariable ["YOSHI_taskArty_strikePattern", []];
+
+  private _coordinateMarker = uiNamespace getVariable ["YSF_arty_coord_preview_var", ""];
+  if (_coordinateMarker isNotEqualTo "") then {
+    deleteMarkerLocal _coordinateMarker;
+  };
+  uiNamespace setVariable ["YSF_arty_coord_preview_var", ""];
+
+  // Draft targeting state belongs to the artillery page, not to submitted
+  // tasks. Removing it makes every new visit construct a clean workspace.
+  uiNamespace setVariable ["YOSHI_taskArty_state", nil];
+  true
+};
+
 YOSHI_taskArty_GetState = {
   private _s = uiNamespace getVariable ["YOSHI_taskArty_state", objNull];
   if !(typeName _s isEqualTo "HASHMAP") then {

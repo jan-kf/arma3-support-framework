@@ -30,7 +30,9 @@ class Tablet_Page_Assets: YSF_RscControlsGroup {
     class Map: YSF_RscMap {
       idc = IDC_MAP_CTRL;
       x = SIZE_HALF+PADDING; y=0; w = SIZE_HALF; h = SIZE_HALF;
-      onMouseButtonDblClick = "[_this] call YOSHI_assets_mapClick;";   
+      onLoad = "[_this#0] call YSF_taskOperationalStart;";
+      onDraw = "_this call YSF_taskOperationalDraw;";
+      onMouseButtonDblClick = "[_this] call YOSHI_assets_mapClick;";
     };
 
     // 3rd quadrant
@@ -124,9 +126,25 @@ class Tablet_Page_Assets: YSF_RscControlsGroup {
       text = "Passengers:";
     };
     class PassengersData: YSF_RscText {
-      idc = IDC_ASSETS_DETAIL_PLAYERS; 
+      idc = IDC_ASSETS_DETAIL_PLAYERS;
       y = SIZE_HALF + TXT_H*6; x = P_TXT_W;
       text = "-";
+    };
+
+    class TaskStatusData: YSF_RscText {
+      idc = IDC_ASSETS_TASK_STATUS;
+      x = 0; y = SIZE_HALF + TXT_H*7;
+      w = SIZE_HALF; h = TXT_H*0.6;
+      sizeEx = C_FONT_SIZE*0.8;
+      text = "Task: idle";
+    };
+
+    class TaskRecentData: YSF_RscText {
+      idc = IDC_ASSETS_TASK_RECENT;
+      x = 0; y = SIZE_HALF + TXT_H*7.6;
+      w = SIZE_HALF; h = TXT_H*0.6;
+      sizeEx = C_FONT_SIZE*0.8;
+      text = "Recent: none";
     };
 
     // class CurrentTaskLabel: YSF_RscText {
@@ -174,7 +192,8 @@ class Tablet_Page_Assets: YSF_RscControlsGroup {
         // class LblDcl: YSF_RscText { idc=-1; x=0; y=P_TXT_H*4; text="Don't climb before landing:"; };
         // class ChkDcl: YSF_Checkbox { idc=IDC_TASK_TXP_DCL_CHK; x=P_TXT_W*1.75; y=P_TXT_H*4; w=BTN_H; h=BTN_H; onCheckedChanged = "['do_not_climb', _this#0] call YOSHI_setTRN_DoNotClimb;"; };
         class BtnSubmit: YSF_BtnSubmit { action = "call YOSHI_taskTRN_submit;";};
-        class BtnRTB: YSF_RscButton { idc=IDC_TASK_TXP_RTB_BTN; text="RTB"; x=SIZE_HALF-(BTN_W*2+PADDING); y=SIZE_HALF-BTN_H; action="call YOSHI_taskTRN_rtb;"; };
+        class BtnReplace: YSF_BtnReplace { action = "['replace'] call YOSHI_taskTRN_submit;"; };
+        class BtnRTB: YSF_RscButton { idc=IDC_TASK_TXP_RTB_BTN; text="RTB"; x=0; y=SIZE_HALF-BTN_H; action="call YOSHI_taskTRN_rtb;"; };
       };
     };
 
@@ -189,6 +208,7 @@ class Tablet_Page_Assets: YSF_RscControlsGroup {
         class LblTL: YSF_RscText { idc=-1; x=0; y=P_TXT_H*3; text="Time Limit (in minutes):"; };
         class EdtTL: YSF_RscEdit { idc=IDC_TASK_CAS_TL_EDIT; x=P_TXT_W; y=P_TXT_H*3; onKeyUp= "['time_limit', _this#0] call YOSHI_setCAS_TimeLimit;"; maxChars = 2;};
         class BtnSubmit: YSF_BtnSubmit {action = "call YOSHI_taskCAS_submit;";};
+        class BtnReplace: YSF_BtnReplace {action = "['replace'] call YOSHI_taskCAS_submit;";};
       };
     };
 
@@ -227,20 +247,7 @@ class Tablet_Page_Assets: YSF_RscControlsGroup {
           maxChars = 3;
         };
         class BtnSubmit: YSF_BtnSubmit { action = "call YOSHI_taskArty_submit;";};
-      };
-    };
-
-    class TaskG_Recon: YSF_RscControlsGroup {
-      idc = IDC_TASK_G_RECON; x=SIZE_HALF; y=SIZE_HALF; w=SIZE_HALF; h=SIZE_HALF;
-      // onLoad = "['recon', _this#0] call YOSHI_showOrHide;";
-      class Controls {
-        class LblCoord: YSF_GridLbl {};
-        class GridCoord: YSF_GridRef {idc=IDC_TASK_RECON_GRID_REF;};
-        class LblAlt: YSF_RscText { idc=-1; x=0; y=P_TXT_H*2; text="Flight Altitude (m):"; };
-        class EdtAlt: YSF_RscEdit { idc=IDC_TASK_RECON_ALT_EDIT; x=P_TXT_W; y=P_TXT_H*2; onKeyUp="['alt', _this#0] call YOSHI_setRecon_Altitude;"; };
-        class LblRad: YSF_RscText { idc=-1; x=0; y=P_TXT_H*3; text="Radius:"; };
-        class EdtRad: YSF_RscEdit { idc=IDC_TASK_RECON_RAD_EDIT; x=P_TXT_W; y=P_TXT_H*3; onKeyUp="['radius', _this#0] call YOSHI_setRecon_Radius;";};
-        class BtnSubmit: YSF_BtnSubmit {};
+        class BtnReplace: YSF_BtnReplace { action = "['replace'] call YOSHI_taskArty_submit;";};
       };
     };
 

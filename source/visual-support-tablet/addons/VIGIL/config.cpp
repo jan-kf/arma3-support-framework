@@ -78,11 +78,6 @@ class CfgFunctions {
             class transport {preInit = 1;};
             class transport_task {postInit = 1; };
         };
-        class TaskRecon {
-            file = "\VIGIL\functions\task_recon";
-            class recon {preInit = 1;};
-            class recon_task {postInit = 1; };
-        };
         class TaskFixedWing {
             file = "\VIGIL\functions\task_fixedWing";
             class fwModuleRegistry { preInit = 1; };
@@ -110,7 +105,7 @@ class YSF_Tablet_Dialog {
     movingEnable = 0;
     enableSimulation = 1;
     onLoad = "uiNamespace setVariable ['YSF_Tablet_Display', _this select 0]; call YSF_UI_Nav;";
-    onUnload = "call YSF_clearAllMarkers; uiNamespace setVariable ['YSF_Tablet_Display', displayNull];playSound 'TurnOff';";
+    onUnload = "call YSF_clearAllMarkers; uiNamespace setVariable ['YSF_task_operational_draw_rows', []]; uiNamespace setVariable ['YSF_task_operational_refresh_token', '']; uiNamespace setVariable ['YSF_Tablet_Display', displayNull];playSound 'TurnOff';";
     class controlsBackground {};
     class controls {
         #include "ui\tablet_base.hpp"

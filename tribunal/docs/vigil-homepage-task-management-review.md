@@ -6,7 +6,8 @@ This review applies the canonical feature-review program to the dormant Vigil
 homepage task list, row selection and cancellation helpers in
 `functions/tablet/fn_homepage.sqf` and `ui/pages/page_home.hpp`.
 
-**Classification: `DEFER` (reviewed; unreachable scaffold; not covered).**
+**Classification: `RETIRE / REMOVE CANDIDATE` (reviewed; unreachable legacy
+scaffold; not covered and no longer needed for the resolved task display).**
 
 The entire page class is commented out, page registration is commented out, the
 dialog does not include the page, and no shipped caller reaches its functions.
@@ -16,6 +17,12 @@ uses only vehicle identity, and does not drive the governor into its finalizer.
 No repository documentation establishes the missing visibility, authorization,
 history or cancellation policy. Runtime coverage would invent a feature by
 bypassing its absent entry.
+
+The later resolved task-queue decision deliberately did not revive this page.
+Reachable Assets-page controls now provide lightweight per-asset active status,
+bounded recent history, and the cross-tab operational overlay proven by
+`vigil-task-queue`. The old homepage's broad list/navigation/cancel scaffold
+therefore remains legacy removal work, not unfinished task visibility.
 
 ## Canonical review
 
@@ -104,25 +111,26 @@ None. Reuse existing UI-state, authority and lifecycle evidence after a real
 product entry exists. VNC is needed only if visual layout becomes contractual;
 data should prove task identity and cancellation.
 
-## Product decisions required
+## Resolved authority disposition
 
-1. Should the homepage task-management page ship at all?
-2. Who can see/cancel tasks: requester, crew, side, curator/admin or every user?
-3. Which task families and active/history records appear, and for how long?
-4. Which stages permit cancellation and is confirmation required?
-5. Does selection navigate elsewhere, and how are task types mapped?
-6. What are refresh, acknowledgment, disconnect and JIP semantics?
+The active/history/display and authority questions are resolved by the
+lightweight Assets-page contract. Any legitimate same-side Vigil tablet user may
+queue a task or explicitly overwrite the active generation after confirmation.
+That exact-generation overwrite is the supported cancellation operation.
+Vigil has no separate standalone remote-cancel product requirement. Disconnect,
+JIP, and simultaneous-client proof remain shared topology boundaries rather
+than an authority-policy decision.
 
 ## Precise continuation point and false-PASS boundary
 
-Do not uncomment the page or add a scenario until those decisions exist. Then
-define an exact server snapshot and cancellation transaction, correct governor
-finalization, and exercise two concurrent tasks with fresh identities. A
-fabricated client list, direct server helper call, local `cancelled` flag, empty
-table or handler-return `YSF_R_CANCEL` would all bypass the broken public path
-and cannot count as proof.
+Do not uncomment the page and do not add a standalone cancel control merely to
+revive its semantics. The accepted confirmed Replace transaction is the
+reachable authenticated cancellation path. A fabricated client list, direct
+server helper call, local `cancelled` flag, empty table or handler-return
+`YSF_R_CANCEL` would all bypass that public path and cannot count as proof.
 
 ## Terminal disposition
 
-The homepage task surface is removed from the unreviewed queue and explicitly
-deferred. No product/test code or runtime state is changed.
+The homepage task surface remains removed from the product and is now an
+explicit retirement candidate. The lightweight replacement is separately
+accepted; no coverage should be added solely to preserve this scaffold.

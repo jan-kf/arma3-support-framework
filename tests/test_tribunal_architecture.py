@@ -115,7 +115,11 @@ class TribunalArchitectureTests(unittest.TestCase):
             markers.client_sqf.index('displayAddEventHandler ["KeyDown"'),
             markers.client_sqf.index("private _closeDeadline"),
         )
-        self.assertNotIn("YSF_arty_coord_preview_var", markers.client_sqf)
+        self.assertIn("YSF_arty_coord_preview_var", markers.client_sqf)
+        self.assertIn("vigil.marker.tabLeaveCleanup", markers.client_expected)
+        self.assertIn("vigil.marker.tabReturnClean", markers.client_expected)
+        self.assertIn("[controlNull, 0] call YOSHI_assetsTabChanged", markers.client_sqf)
+        self.assertIn("[controlNull, 1] call YOSHI_assetsTabChanged", markers.client_sqf)
         self.assertNotIn("YOSHI_taskArty_submit", markers.client_sqf)
         self.assertEqual(multiplayer.FEATURE_SCENARIOS["vigil-markers"], markers)
         runner_source = inspect.getsource(multiplayer)

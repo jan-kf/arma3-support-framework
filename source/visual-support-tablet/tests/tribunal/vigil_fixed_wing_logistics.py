@@ -30,6 +30,7 @@ TRIBUNAL_SCENARIO = Scenario(
         "vigil.logistics.client.emptyRejected",
         "vigil.logistics.client.manifest",
         "vigil.logistics.client.request",
+        "vigil.logistics.client.releaseEstimate",
         "vigil.logistics.client.replication",
         "vigil.logistics.client.inventory",
         "vigil.logistics.client.locality",
@@ -72,6 +73,10 @@ _template addMagazineCargoGlobal ["30Rnd_65x39_caseless_mag", 4];
 _template addItemCargoGlobal ["FirstAidKit", 2];
 _template addBackpackCargoGlobal ["B_AssaultPack_khk", 1];
 _template allowDamage false;
+private _previousCatalogue = +(localNamespace getVariable ["YFU_MODULE_CATALOGUE", []]);
+private _previousCatalogueMirror = +(missionNamespace getVariable ["YFU_VIRTUAL_STORAGE_OBJECTS", []]);
+localNamespace setVariable ["YFU_MODULE_CATALOGUE", [_template]];
+missionNamespace setVariable ["YFU_VIRTUAL_STORAGE_OBJECTS", [_template], true];
 private _requestedRows = [_template] call TRIBUNAL_fnc_inventoryTree;
 private _requestedPayload = [_requestedRows] call TRIBUNAL_fnc_inventoryPayload;
 missionNamespace setVariable ["TRIBUNAL_LOGISTICS_FIXTURE", [_token, _assetId, netId _template, _targetATL, _exfil, _requestedPayload], true];
@@ -188,6 +193,8 @@ waitUntil {uiSleep 0.1; !isNil {missionNamespace getVariable "TRIBUNAL_LOGISTICS
 private _clientEgress = missionNamespace getVariable ["TRIBUNAL_LOGISTICS_CLIENT_EGRESS", []];
 {deleteVehicle _x} forEach _attached;
 if (!isNull _container) then {deleteVehicle _container};
+localNamespace setVariable ["YFU_MODULE_CATALOGUE", _previousCatalogue];
+missionNamespace setVariable ["YFU_VIRTUAL_STORAGE_OBJECTS", _previousCatalogueMirror, true];
 deleteVehicle _template;
 private _deleteDeadline = diag_tickTime + 3;
 waitUntil {uiSleep 0.05; (isNull _container && {isNull _template}) || {diag_tickTime > _deleteDeadline}};
@@ -230,8 +237,11 @@ waitUntil {
 call YOSHI_taskFW_logiStub;
 private _uiDeadline = diag_tickTime + 20;
 waitUntil {uiSleep 0.05; !isNull (uiNamespace getVariable ["YFU_FieldUtils_Display", displayNull]) || {diag_tickTime > _uiDeadline}};
+private _pageReadyDeadline = diag_tickTime + 10;
+waitUntil {uiSleep 0.05; !isNil {uiNamespace getVariable "YFU_assets_page_ready"} || {diag_tickTime > _pageReadyDeadline}};
 private _context = call YFU_assetsGetOpenContext;
 private _uiOk = !isNull (uiNamespace getVariable ["YFU_FieldUtils_Display", displayNull])
+    && {!isNil {uiNamespace getVariable "YFU_assets_page_ready"}}
     && {(_context getOrDefault ["isAirdrop", false]) isEqualTo true}
     && {(_context getOrDefault ["fabricator", objNull]) isEqualTo _aircraft};
 ["vigil.logistics.client.ui", _uiOk, format ["display=%1|aircraft=%2|context=%3", !isNull (uiNamespace getVariable ["YFU_FieldUtils_Display", displayNull]), if (isNull _aircraft) then {""} else {netId _aircraft}, _context]] call _assert;
@@ -289,6 +299,47 @@ private _duplicateAck = missionNamespace getVariable [_duplicateAckVariable, []]
 missionNamespace setVariable ["TRIBUNAL_LOGISTICS_DUPLICATE", [_token, _duplicateAck param [0, true], _duplicateAck param [1, ""]], true];
 deleteVehicle _duplicateCargo;
 
+private _announcementDeadline = diag_tickTime + 30;
+private _announcement = [];
+waitUntil {
+    uiSleep 0.1;
+    private _candidate = uiNamespace getVariable ["YFU_last_airdrop_announcement", []];
+    if ((_candidate param [0, ""]) isEqualTo _taskId) then {_announcement = _candidate};
+    _announcement isNotEqualTo [] || {diag_tickTime > _announcementDeadline}
+};
+private _releaseEventDeadline = diag_tickTime + 210;
+private _releaseEvent = [];
+waitUntil {
+    uiSleep 0.05;
+    private _candidate = missionNamespace getVariable ["YSF_FW_LOGISTICS_LAST_EVENT", []];
+    if ((_candidate param [0, ""]) isEqualTo _taskId && {(_candidate param [1, ""]) isEqualTo "released"}) then {_releaseEvent = _candidate};
+    _releaseEvent isNotEqualTo [] || {diag_tickTime > _releaseEventDeadline}
+};
+private _predictedRelease = _announcement param [4, []];
+private _announcedEta = _announcement param [7, -1];
+private _remainingAtAnnouncement = _announcement param [8, -1];
+private _closingAtAnnouncement = _announcement param [9, -1];
+private _message = _announcement param [11, ""];
+private _releaseRows = (_releaseEvent param [6, []]) param [0, []];
+private _actualReleaseASL = (_releaseRows param [0, []]) param [1, []];
+private _actualReleaseATL = if ((count _actualReleaseASL) >= 3) then {ASLToATL _actualReleaseASL} else {[]};
+private _actualInterval = (_releaseEvent param [7, -1]) - (_announcement param [1, -1]);
+private _estimateTolerance = 25 max (_announcedEta * 0.5);
+private _releaseEstimateOk = _announcement isNotEqualTo []
+    && {_releaseEvent isNotEqualTo []}
+    && {(count _predictedRelease) >= 3}
+    && {(count _actualReleaseATL) >= 3}
+    && {_predictedRelease distance2D _actualReleaseATL <= 75}
+    && {_announcedEta >= 5}
+    && {_remainingAtAnnouncement > YSF_FW_LOGISTICS_RELEASE_RADIUS}
+    && {_closingAtAnnouncement >= 15}
+    && {_actualInterval > 0}
+    && {abs (_actualInterval - _announcedEta) <= _estimateTolerance}
+    && {_message find "approximately" >= 0}
+    && {_message find "release" >= 0}
+    && {_message find "ground" < 0};
+["vigil.logistics.client.releaseEstimate", _releaseEstimateOk, format ["announcement=%1|release=%2|actualATL=%3|interval=%4|tolerance=%5|positionError=%6", _announcement, _releaseEvent, _actualReleaseATL, _actualInterval, _estimateTolerance, if ((count _actualReleaseATL) >= 3 && {(count _predictedRelease) >= 3}) then {_predictedRelease distance2D _actualReleaseATL} else {-1}]] call _assert;
+
 private _completeDeadline = diag_tickTime + 240;
 private _event = [];
 waitUntil {
@@ -338,7 +389,7 @@ missionNamespace setVariable ["TRIBUNAL_LOGISTICS_CLIENT_EGRESS", [_token, _clie
     },
     review=ScenarioReview(
         test_type="specification",
-        behavior_contract="A role-eligible registered fixed-wing logistics aircraft reconstructs once, accepts one non-empty physical-storage manifest from the real Vigil/Fabricator request path, flies to the requested area, releases the exact server-authoritative cargo under a real parachute, lands it intact and accurately with identical weapon, magazine, item, and backpack contents, rejects a concurrent duplicate, then physically egresses and remains reusable.",
+        behavior_contract="A role-eligible registered fixed-wing logistics aircraft reconstructs once, accepts one non-empty physical-storage manifest from the real Vigil/Fabricator request path, announces a coarse direction and ETA to the actual release gate from observed closing flight state, releases the exact server-authoritative cargo under a real parachute, lands it intact and accurately with identical weapon, magazine, item, and backpack contents, rejects a concurrent duplicate, then physically egresses and remains reusable.",
         outcome="REFINE BEFORE PERMANENT COVERAGE",
         rationale="Review found that the prior client-local helper reported success immediately, flung cargo from arbitrary loiter position, had no task guard, and left parachute completion implicit. The refined contract preserves the physical-object manifest model while making tasking, release, locality, completion, and RTB authoritative and observable.",
         dependencies=("Vigil fixed-wing registry", "Field Utilities fabricator/packing", "Tribunal aviation and delivery observers", "CBA"),

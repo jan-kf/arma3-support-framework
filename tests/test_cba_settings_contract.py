@@ -19,6 +19,8 @@ EXPECTED = {
     "YAS_playRadioMessages": ("advanced", "CHECKBOX", "true", "global"),
     "YAS_showDebugMessages": ("advanced", "CHECKBOX", "false", "global"),
     "YAS_ironDomeEngagementRadius": ("advanced", "SLIDER", "[100,5000,1000,0]", "global"),
+    "YAS_apsAntiDroneEngagementRadius": ("advanced", "SLIDER", "[5,100,25,0]", "global"),
+    "YAS_apsAntiDroneMinimumSpeed": ("advanced", "SLIDER", "[5,100,40,0]", "global"),
     "YSF_enableTablet": ("vigil", "CHECKBOX", "true", "global"),
     "YSF_playRadioMessages": ("vigil", "CHECKBOX", "true", "global"),
     "YSF_playSideMessages": ("vigil", "CHECKBOX", "true", "global"),
@@ -35,6 +37,8 @@ CONSUMERS = {
     "YAS_playRadioMessages": ("source/advanced-systems/addons/AdvSys/functions/global/fn_utils.sqf", '"YAS_playRadioMessages"'),
     "YAS_showDebugMessages": ("source/advanced-systems/addons/AdvSys/functions/global/fn_utils.sqf", '"YAS_showDebugMessages"'),
     "YAS_ironDomeEngagementRadius": ("source/advanced-systems/addons/AdvSys/functions/iron_dome/fn_ironDome.sqf", '["YAS_ironDomeEngagementRadius", 1000]'),
+    "YAS_apsAntiDroneEngagementRadius": ("source/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf", '["YAS_apsAntiDroneEngagementRadius", 25]'),
+    "YAS_apsAntiDroneMinimumSpeed": ("source/advanced-systems/addons/AdvSys/functions/aps/fn_aps.sqf", '["YAS_apsAntiDroneMinimumSpeed", 40]'),
     "YSF_enableTablet": ("source/visual-support-tablet/addons/VIGIL/functions/tablet/fn_ui_utils.sqf", '[\'YSF_enableTablet\', true]'),
     "YSF_playRadioMessages": ("source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf", '"YSF_playRadioMessages"'),
     "YSF_playSideMessages": ("source/visual-support-tablet/addons/VIGIL/functions/global/fn_utils.sqf", '"YSF_playSideMessages"'),
@@ -62,7 +66,7 @@ class CbaSettingsContractTests(unittest.TestCase):
         discovered: list[str] = []
         for source in sources.values():
             discovered.extend(re.findall(r'\[\s*"([^"]+)"\s*,\s*"(?:CHECKBOX|SLIDER|COLOR)"', source))
-        self.assertEqual(len(discovered), 13)
+        self.assertEqual(len(discovered), 15)
         self.assertEqual(set(discovered), set(EXPECTED))
         self.assertEqual(len(discovered), len(set(discovered)))
 

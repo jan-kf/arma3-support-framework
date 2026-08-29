@@ -275,7 +275,12 @@ Reviewed distillation remained at 32 findings, 19 project-only dispositions,
 both passes; this Bridge result added no generic Arma claim. Post-ingestion
 offline dossiers expose the two bounded Bridge theorems while `deleteVehicle`
 continues to report only its existing documented next-frame deletion behavior.
-Resource consumption and refunds still have no product contract and remain
-**NEEDS PRODUCT DECISION**. Second-player contention, client-B/JIP,
+Construction has no resource economy at this time. Planner/build leases are
+only concurrency and ownership grants; they are not consumable supply. No
+debit, refund, cost, or construction-supply semantics should be implemented or
+tested. This closes C13 without gameplay work. The server-authoritative plan /
+operation transaction remains a clean extension point if a broader Field
+Utilities economy is designed later; today's free construction is not declared
+an immutable future rule. Second-player contention, client-B/JIP,
 disconnect/reconnect, interruption during removal, and direct chain extension
 remain explicitly unclaimed.

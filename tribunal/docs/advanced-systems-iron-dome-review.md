@@ -9,7 +9,34 @@ physical interceptor, terminal result, bounded retry/task lifecycle, authority,
 locality, replication and cleanup.  Launch audio is configuration-checked but
 not claimed audible because autonomous clients run with `-noSound`.
 
-**Classification: `REFINE BEFORE PERMANENT COVERAGE` (refined and covered).**
+**Classification: `KEEP AS-IS AND SPEC-TEST` (refined; accepted / covered).**
+
+## Resolved threat/locality update (2026-08-28)
+
+Iron Dome now qualifies threats by predicted impact: an enabled launcher is a
+candidate when its distance to the predicted impact lies within the configured
+radius. It does not filter by side or by firing source. Merely passing near or
+over the defended area is not sufficient. The native `ArtilleryShellFired`
+observer runs on every machine; nonserver owners submit authenticated telemetry
+to the server, and successful engagement routes deletion to the shell's current
+owner with an authenticated acknowledgement. Server-local shells commit the
+same owner-local deletion directly. A 150 m fuse replaced the legacy 40 m value
+because controlled runs showed the Jian interceptor self-terminating between
+samples after reaching 134–149 m; 150 m is the smallest repeatedly stable
+observed envelope and remains a replaceable balance detail.
+
+Fresh accepted Evidence Contract v5 run `20260828T165140Z-686b63d6` passed all
+15 server and 2 client assertions. Native client/HC-fired shell creation remains
+externally blocked: the automated client could not make a local AI or player
+mortar emit the event, ammo objects had no stable `netId`/client object adapter,
+and `setOwner` did not migrate them. Rejected calibrations are diagnostic only;
+the accepted contract makes no client/HC-owned outcome claim.
+
+Corrected package revision v5 uses canonical numeric BIKI concept identities.
+Production ingestion advanced once from 41 to 42 packages and 42 to 43 runs;
+the identical second pass was count-stable and the full knowledge audit passed.
+Reviewed distillation classified the proposition as project-specific and added
+no generic Arma lemma; its identical second pass was idempotent.
 
 The original physical pipeline worked, but two bounded defects blocked honest
 coverage.  Any client could remote-execute globally named internal functions on
@@ -17,23 +44,26 @@ the server, and a live shell whose attempts were exhausted remained in the task
 array.  The accepted implementation gives internal operations an unpublished
 server capability, records rejected calls privately, retires exhausted tasks
 only after their active monitors finish, and publishes a bounded identity-only
-terminal event ledger.  No threat policy, weapon balance, or visual behavior
-was redesigned.
+terminal event ledger. The resolved work additionally changed threat policy
+from shell proximity to predicted-impact coverage. Visual/audio behavior was
+not redesigned.
 
 ## Stable contract
 
-An enabled, live OPHANIM automatically observes eligible server-local native
-artillery shells.  When a shell is within the configured engagement radius, the
-server assigns an available launcher, launches a real interceptor, and retries
-within bounded attempt limits until the exact shell is intercepted or becomes
-terminal.  Successful interception must physically prevent the impact that the
-same native artillery fixture produces without an eligible launcher.  Separate
-concurrent shells are handled independently.  A disabled/absent or unambiguously
-out-of-range launcher does not alter the real shell.  Consequential internal
-operations reject client-originated calls, the terminal event replicates, and
-finished work leaves no task or fixture state behind.
+An enabled, live OPHANIM observes native artillery shells on their owning
+machine and submits nonserver telemetry to the server. A launcher qualifies
+when the shell's predicted impact—not its current position or allegiance—lies
+inside that launcher's configured protected radius. The server assigns an
+available launcher, launches a real interceptor, and retries within bounded
+attempt limits until the exact shell is intercepted or becomes terminal.
+Successful interception must physically prevent the impact that the same native
+artillery fixture produces without an eligible launcher. Separate concurrent
+shells are handled independently. A disabled/absent launcher or a predicted
+impact unambiguously outside coverage does not alter the real shell.
+Consequential internal operations reject client-originated calls, terminal
+events replicate, and finished work leaves no task or fixture state behind.
 
-The contract deliberately does not promise Jian, the 40 m private fuse, the
+The contract deliberately does not promise Jian, the 150 m private fuse, the
 0.35 s steering delay, exact retry/spacing values, task/hash-map layout, object
 variable names, fixture coordinates, or ledger schema.
 

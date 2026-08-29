@@ -2,6 +2,99 @@
 
 YSF_VERSION = "v0.8.0";
 
+YSF_taskOperationalRows = {
+  private _sideKey = if (isNull player) then {""} else {str (side group player)};
+  (missionNamespace getVariable ["YSF_TASK_OPERATIONAL_ROWS", []]) select {
+    (_x param [1, ""]) isEqualTo _sideKey
+  }
+};
+
+YSF_taskOperationalTab = {
+  params ["_taskType"];
+  switch (_taskType) do {
+    case "artillery": {"arty"};
+    case "transport": {"transport"};
+    case "cas": {"cas"};
+    default {_taskType};
+  }
+};
+
+YSF_taskOperationalDraw = {
+  params ["_map"];
+  if (isNull _map) exitWith {};
+  private _selectedTab = uiNamespace getVariable ["YSF_asset_type", "transport"];
+  private _base = +(missionNamespace getVariable ["YSF_monochromeBaseColor", [0,1,0,1]]);
+  if ((count _base) < 4) then {_base = [0,1,0,1];};
+  private _drawRows = [];
+
+  {
+    _x params ["_vehicleId", "_side", "_active", "_taskType", "_state", "_stage", "_target", "_queue"];
+    if (_active && {_target isEqualType []} && {count _target >= 2}) then {
+      private _vehicle = objectFromNetId _vehicleId;
+      if (!isNull _vehicle && {alive _vehicle}) then {
+        private _taskTab = [_taskType] call YSF_taskOperationalTab;
+        private _alpha = if (_taskTab isEqualTo _selectedTab) then {_base # 3} else {(_base # 3) * 0.3};
+        private _color = [_base # 0, _base # 1, _base # 2, _alpha];
+        private _position = getPosATL _vehicle;
+        private _label = format ["%1 · %2%3", getText (configFile >> "CfgVehicles" >> typeOf _vehicle >> "displayName"), toUpper _taskType, if ((count _queue) > 0) then {format [" +%1", count _queue]} else {""}];
+        _map drawLine [_position, _target, _color];
+        _map drawIcon ["\a3\ui_f\data\map\markers\military\dot_ca.paa", _color, _position, 18, 18, 0, _label, 1, 0.025, "EtelkaMonospacePro", "right"];
+        _drawRows pushBack [_vehicleId, _taskType, _taskTab, _alpha, +_position, +_target, count _queue, +_color];
+      };
+    };
+  } forEach (call YSF_taskOperationalRows);
+  uiNamespace setVariable ["YSF_task_operational_draw_rows", _drawRows];
+};
+
+YSF_taskOperationalRefresh = {
+  disableSerialization;
+  private _display = uiNamespace getVariable ["YSF_Tablet_Display", displayNull];
+  if (isNull _display) exitWith {false};
+  private _vehicle = uiNamespace getVariable ["YSF_current_selected_asset", objNull];
+  private _status = "Task: idle";
+  private _recent = "Recent: none";
+  if (!isNull _vehicle) then {
+    private _vehicleId = netId _vehicle;
+    private _rowIndex = (call YSF_taskOperationalRows) findIf {(_x param [0, ""]) isEqualTo _vehicleId};
+    if (_rowIndex >= 0) then {
+      private _row = (call YSF_taskOperationalRows) # _rowIndex;
+      private _active = _row param [2, false];
+      private _queue = _row param [7, []];
+      private _history = _row param [8, []];
+      if (_active) then {
+        _status = format ["Task: %1 · %2 · %3 queued", toUpper (_row param [3, "unknown"]), toUpper (_row param [4, "running"]), count _queue];
+      } else {
+        _status = format ["Task: idle · %1 queued", count _queue];
+      };
+      if ((count _history) > 0) then {
+        private _last = _history # ((count _history) - 1);
+        _recent = format ["Recent: %1 · %2", toUpper (_last param [1, "unknown"]), toUpper (_last param [2, "unknown"])];
+      };
+    };
+  };
+  (_display displayCtrl IDC_ASSETS_TASK_STATUS) ctrlSetText _status;
+  (_display displayCtrl IDC_ASSETS_TASK_RECENT) ctrlSetText _recent;
+  uiNamespace setVariable ["YSF_task_operational_last_refresh", diag_tickTime];
+  true
+};
+
+YSF_taskOperationalStart = {
+  params ["_map"];
+  if (isNull _map) exitWith {false};
+  private _display = ctrlParent _map;
+  private _token = format ["%1:%2", diag_tickTime, random 1e9];
+  uiNamespace setVariable ["YSF_task_operational_refresh_token", _token];
+  call YSF_taskOperationalRefresh;
+  [_display, _token] spawn {
+    params ["_display", "_token"];
+    while {!isNull _display && {(uiNamespace getVariable ["YSF_task_operational_refresh_token", ""]) isEqualTo _token}} do {
+      call YSF_taskOperationalRefresh;
+      uiSleep 3;
+    };
+  };
+  true
+};
+
 YOSHI_getAllVehicles = {
   private _whitelistConfigured = missionNamespace getVariable ["YSF_WHITELIST_CONFIGURED", false];
   if (_whitelistConfigured) then {
@@ -174,7 +267,6 @@ YOSHI_showOrHideTaskOrders = {
     [IDC_TASK_G_TRANSPORT,"transport"],
     [IDC_TASK_G_CAS,"cas"],
     [IDC_TASK_G_ARTY,"arty"],
-    [IDC_TASK_G_RECON,"recon"],
     [IDC_TASK_G_FIXEDWING,"fixedwing"]
   ];
 
@@ -209,7 +301,6 @@ YOSHI_assetsShowTaskGroup = {
     [IDC_TASK_G_TRANSPORT,"transport"],
     [IDC_TASK_G_CAS,"cas"],
     [IDC_TASK_G_ARTY,"arty"],
-    [IDC_TASK_G_RECON,"recon"],
     [IDC_TASK_G_FIXEDWING,"fixedwing"]
   ];
   {
@@ -222,7 +313,6 @@ YOSHI_assetsShowTaskGroup = {
           case "transport": { call YOSHI_taskTRN_SyncControlsFromState; };
           case "cas": { call YOSHI_taskCAS_SyncControlsFromState; };
           case "arty": { call YOSHI_taskArty_SyncControlsFromState; };
-          case "recon": { call YOSHI_taskRecon_SyncControlsFromState; };
           case "fixedwing": { call YOSHI_taskFW_SyncControlsFromState; };
         };
       };
@@ -272,13 +362,7 @@ YOSHI_refreshAssetList = {
       }
     };
 
-    // Recon: drones (UAV/UGV) on player side
-    default { // "recon"
-      _allVehicles select {
-        alive _x
-        && {[_x] call YOSHI_isRecon}
-      }
-    };
+    default {[]};
   };
 
   // sort by distance
@@ -654,6 +738,7 @@ YOSHI_assetSelected = {
   if ((uiNamespace getVariable ["YSF_asset_type", "transport"]) isEqualTo "arty") then {
     call YOSHI_taskArty_DrawFromState;
   };
+  call YSF_taskOperationalRefresh;
   call YOSHI_checkUplinkStatus;
 };
 
@@ -661,6 +746,15 @@ YOSHI_assetSelected = {
 YOSHI_selectAssetType = {
   params ["_type"];
 
+  private _previousType = uiNamespace getVariable ["YSF_asset_type", "transport"];
+  if (_previousType isEqualTo "arty" && {_type isNotEqualTo "arty"}) then {
+    call YSF_taskArtyClearWorkspace;
+  };
+  if (_previousType isNotEqualTo "arty" && {_type isEqualTo "arty"}) then {
+    // Entry is defensive as well as lifecycle-defining: even a display or
+    // script interruption cannot resurrect an abandoned draft.
+    call YSF_taskArtyClearWorkspace;
+  };
   uiNamespace setVariable ["YSF_asset_type", _type];
   if !(_type isEqualTo "fixedwing") then {
     uiNamespace setVariable ["YSF_current_selected_fw_id", ""];
